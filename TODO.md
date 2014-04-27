@@ -1,5 +1,3 @@
---------------------------------------------------------------------------------
-
 # Newton Issues
 
 - Scene/Tree collisions may cause bodies to penetrate into them if the solver
@@ -79,7 +77,6 @@
 - Geared joints
 - Differential joint
 
-
 ## Other
 
 - Add "since" tag to first public release.
@@ -87,5 +84,3 @@
 - Create an installer that would automatically install AMS Library, and MSPhysics
   into the desired plugins folder. Make the installer replace an outdated Ruby
   interpreter with a stable one as well.
-
---------------------------------------------------------------------------------
