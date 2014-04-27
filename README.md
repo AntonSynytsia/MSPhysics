@@ -29,11 +29,14 @@ SketchyPhysics back to life.
 
 ## Installation
 
-Place the files within the <i>src</i> folder into the SketchUp's <i>Plugins</i> folder. Make sure to download AMS Library as well!
+Place the files within the _src_ folder into the SketchUp's _Plugins_ folder. Make sure to download AMS Library as well!
 
-* For SU8 and below the plugins folder is located in <b>C:\Program Files (x86)\Google\Google SketchUp [n]\</b>
-* For SU2013 the plugins folder is located in <b>C:\Program Files (x86)\SketchUp\SketchUp 2013\</b>
-* For SU2014 the plugins folder is located in <b>C:\Users\[User Name]\AppData\Roaming\SketchUp\SketchUp 2014\SketchUp\</b>
+* For SU8 and below the plugins folder is located in
+  - _C:\Program Files (x86)\Google\Google SketchUp [n]\_
+* For SU2013 the plugins folder is located in
+  - _C:\Program Files (x86)\SketchUp\SketchUp 2013\_
+* For SU2014 the plugins folder is located in
+  - _C:\Users\[User Name]\AppData\Roaming\SketchUp\SketchUp 2014\SketchUp\_
 
 
 ## Version
@@ -60,5 +63,5 @@ April 26, 2014
 
 ## Credits
 
-* <b>Juleo Jerez</b> for the NewtonDynamics physics engine.
-* <b>Chris Phillips</b> for SketchyPhysics.
+* **Juleo Jerez** for the NewtonDynamics physics engine.
+* **Chris Phillips** for SketchyPhysics.
