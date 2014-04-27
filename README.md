@@ -27,6 +27,15 @@ SketchyPhysics back to life.
 * [AMS_Library 1.0.9 +](http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835)
 
 
+## Installation
+
+Place the files within the <i>src</i> folder into the SketchUp's <i>Plugins</i> folder. Make sure to download AMS Library as well!
+
+* For SU8 and below the plugins folder is located in <b>C:\Program Files (x86)\Google\Google SketchUp 8\</b>
+* For SU2013 the plugins folder is located in <b>C:\Program Files (x86)\SketchUp\SketchUp 2013</b>
+* For SU2014 the plugins folder is located in <b>C:\Users\[User Name]\AppData\Roaming\SketchUp\SketchUp 2014\SketchUp\</b>
+
+
 ## Version
 
 * 0.1.0
