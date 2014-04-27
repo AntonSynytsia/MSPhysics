@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 
-Newton Issues:
+# Newton Issues
 
 - Scene/Tree collisions may cause bodies to penetrate into them if the solver
   model is set to exact. This may be seen as a dynamic object bouncing on a
@@ -12,9 +12,9 @@ Newton Issues:
 ~ NewtonMeshSimplify not working.
 
 
-Fix/Optimize/To Do:
+# Fix/Optimize/To Do
 
-Version 1.0.0
+## Version 1.0.0
 - Complete remove all physics attributes feature.
 - Default density and other settings.
 - Test the access of get/set_var vs body class variables and methods under
@@ -49,7 +49,7 @@ Version 1.0.0
 ~ Make sure user cant create joints inside a body, but compound.
 - Joint destructor callback
 
-Next Versions
+## Next Versions
 - Mac, Linux.
 - Custom bounding box is not properly calculated in some cases.
 - Align custom bounding box to the normal of the biggest face when creating
@@ -79,6 +79,8 @@ Next Versions
 - Geared joints
 - Differential joint
 
+
+## Other
 
 - Add "since" tag to first public release.
 - Add "see also" tags to the documentation overview.
