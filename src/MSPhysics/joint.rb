@@ -30,10 +30,10 @@ module MSPhysics
 
     end # proxy class
 
-	# @param [Array<Numeric>, Geom::Point3d] pos Origin of hinge in global
+    # @param [Array<Numeric>, Geom::Point3d] pos Origin of hinge in global
     #   space.
     # @param [Array<Numeric>, Geom::Vector3d] pin_dir Pivot direction in global
-	#	space.
+    #   space.
     # @param [Body, NilClass] parent
     # @param [Body, NilClass] child
     # @param [Numeric] dof Degrees of freedom
@@ -59,13 +59,16 @@ module MSPhysics
       @get_info = Proc.new { |joint_ptr, info_ptr|
         get_info(info_ptr)
       }
-	  @pos = Geom::Point3d.new(pos)
+      @pos = Conversion.convert_point(pos, :in, :m)
       @dir = Geom::Vector3d.new(pin_dir).normalize
-	  if @parent
-        tra = @parent.matrix.inverse
+      if parent
+        tra = @parent.get_matrix(0).inverse
         @pos.transform!(tra)
         @dir.transform!(tra)
       end
+      @local_matrix0 = nil
+      @local_matrix1 = nil
+      @angle = 0
       connect(child)
     end
 
@@ -84,6 +87,27 @@ module MSPhysics
     end
 
     def get_info(info_ptr)
+    end
+
+    def calc_angle(new_cos_angle, new_sin_angle)
+      sin_angle = Math.sin(@angle)
+      cos_angle = Math.cos(@angle)
+      sin_da = new_sin_angle * cos_angle - new_cos_angle * sin_angle
+      cos_da = new_cos_angle * cos_angle + new_sin_angle * sin_angle
+      @angle += Math.atan2(sin_da, cos_da)-Math::PI/2
+    end
+
+    def update_pos
+      pos = @pos.clone
+      dir = @dir.clone
+      if @parent
+        tra = @parent.get_matrix(0)
+        pos.transform!(tra)
+        dir.transform!(tra)
+      end
+      jnt_matrix = Geom::Transformation.new(pos, dir)
+      @local_matrix0 = jnt_matrix*@child.get_matrix(0).inverse
+      @local_matrix1 = @parent ? jnt_matrix*@parent.get_matrix(0).inverse : jnt_matrix
     end
 
     public
@@ -107,10 +131,10 @@ module MSPhysics
       raise 'The body is invalid!' unless body.valid?
       disconnect
       @child = body
-	  @local_matrix
-      body_ptr = body._body_ptr
-      world_ptr = Newton.bodyGetWorld(body_ptr)
-      @join_ptr = Newton.constraintCreateUserJoint(world_ptr, @dof, @submit_constraints, @get_info, body_ptr, @parent.body_ptr)
+      world_ptr = Newton.bodyGetWorld(@child._body_ptr)
+      parent_ptr = @parent ? @parent._body_ptr : nil
+      update_pos
+      @joint_ptr = Newton.constraintCreateUserJoint(world_ptr, @dof, @submit_constraints, @get_info, @child._body_ptr, parent_ptr)
       Newton.jointSetDestructor(@joint_ptr, @destructor_callback)
       true
     end
@@ -119,7 +143,7 @@ module MSPhysics
     # @return [Boolean] +true+ if successful.
     def disconnect
       return false unless connected?
-      world_ptr = Newton.bodyGetWorld(@child)
+      world_ptr = Newton.bodyGetWorld(@child._body_ptr)
       Newton.destroyJoint(world_ptr, @joint_ptr)
       @joint_ptr = nil
       true
@@ -131,103 +155,38 @@ module MSPhysics
       @joint_ptr ? true : false
     end
 
-  end # class Joint
+    # Get joint position in global space.
+    # @return [Geom::Vector3d]
+    def get_pos
+      pos =  @parent ? @pos.transform(@parent.get_matrix(0)) : @pos
+      Conversion.convert_point(pos, :m, :in)
+    end
 
-  class Hinge < Joint
-
-    # @param [Array<Numeric>, Geom::Point3d] pos Origin of hinge in global
-    #   space.
-    # @param [Array<Numeric>, Geom::Vector3d] pin_dir Pivot direction in global
-	#	space.
-    # @param [Body, NilClass] parent Pass +nil+ to create joint without a parent
-    #   body.
-    # @param [Body, NilClass] child Pass +nil+ to create an initially
-    #   disconnected joint.
-    # @param [Numeric] min Min angle in degrees.
-    # @param [Numeric] max Max angle in degrees.
-    # @param [Numeric] friction The coefficient of friction.
-    def initialize(pos, pin_dir, parent, child, min = 0, max = 0, friction = 0)
-      super(parent, child, 6)
-      @min = min
-      @max = max
-      @friction = friction
-      @enable_limits = true
-      @pos = Geom::Point3d.new(pos)
-      @dir = Geom::Vector3d.new(pin_dir).normalize
+    # Get joint axis of rotation vector in global space.
+    # @return [Geom::Vector3d]
+    def get_dir
       if @parent
-        tra = @parent.matrix.inverse
-        @pos.transform!(tra)
-        @dir.transform!(tra)
+        @dir.transform(@parent.get_matrix(0)).normalize
+      else
+        @dir.clone
       end
     end
 
-    # @!attribute [r] min Get min angle in degrees.
-    #   @return [Numeric]
-
-    # @!attribute [r] max Get max angle in degrees.
-    #   @return [Numeric]
-
-    # @!attribute [r] friction Get torque friction.
-    #   @return [Numeric]
-
-
-    attr_reader :min, :max, :friction
-
-    private
-
-    def submit_constraints(timestep)
-	  return unless connected?
-	  # Calculate position of pivot point in global space
-	  pos = @pos.clone
-	  pos.transform!(@parent.transformation) if @parent
-	  matrix1 = @child.matrix
-	  pos0 = pos.to_a.pack('F*')
-	  pos1 = matrix1.origin.to_a.pack('F*')
-	  # Restrict the movement of the pivot point along all three orthonormal
-	  # directions.
-      Newton.userJointAddLinearRow(@joint_ptr, pos0, pos1, matrix1.xaxis.to_a.pack('F*'))
-	  Newton.userJointAddLinearRow(@joint_ptr, pos0, pos1, matrix1.yaxis.to_a.pack('F*'))
-	  Newton.userJointAddLinearRow(@joint_ptr, pos0, pos1, matrix1.zaxis.to_a.pack('F*'))
-	  # Get a point along the pin axis at some reasonable large distance from
-	  # the pivot.
-	  q0 = pos + 
+    # Set joint position in global space.
+    # @param [Geom::Vector3d, Array<Numeric>] pos
+    def set_pos(pos)
+      @pos = Conversion.convert_point(pos, :in, :m)
+      @pos.transform!(@parent.get_matrix(0).inverse) if @parent
+      update_pos
     end
 
-    def get_info(info_ptr)
-	  return unless connected?
+    # Set joint axis of rotation vector in global space.
+    # @param [Geom::Vector3d, Array<Numeric>] dir
+    def set_dir(dir)
+      @dir = Geom::Vector3d.new(dir)
+      @dir.transform!(@parent.get_matrix(0).inverse) if @parent
+      update_pos
     end
 
-    public
-
-    # Set min angle in degrees.
-    # @param [Numeric] value
-    def min=(value)
-      @min = value.to_f
-    end
-
-    # Set max angle in degrees.
-    # @param [Numeric] value
-    def max=(value)
-      @max = value.to_f
-    end
-
-    # Set torque friction.
-    # @param [Numeric] value A value greater than or equal to zero.
-    def friction=(value)
-      @friction = value.to_f.abs
-    end
-
-    # Enable/Disable limits.
-    # @param [Boolean] state
-    def enable_limits(state = true)
-      @enable_limits = state ? true : false
-    end
-
-    # Determine whether the limits are on.
-    # @return [Boolean]
-    def limits_enabled?
-      @enable_limits
-    end
-
-  end # class Hinge
+  end # class Joint
 end # module MSPhysics
