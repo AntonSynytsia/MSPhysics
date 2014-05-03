@@ -638,18 +638,26 @@ module MSPhysics
     end
 
     # Get the transformation matrix of the body.
+    # @param [Fixnum] mode
+    #   0 - position units in meters,
+    #   1 - position units in inches.
     # @return [Geom::Transformation]
-    def get_matrix
+    def get_matrix(mode = 1)
       check_validity
       buffer = 0.chr*64
       Newton.bodyGetMatrix(@_body_ptr, buffer)
       matrix = buffer.unpack('F*')
-      matrix[12..14] = Conversion.convert_point(matrix[12..14], :m, :in).to_a
+      if mode == 1
+        matrix[12..14] = Conversion.convert_point(matrix[12..14], :m, :in).to_a
+      end
       tra = Geom::Transformation.new(matrix)
       Geometry.set_scale(tra, @_scale)
     end
 
-    # Set the transformation matrix of the body.
+    # Set the transformation matrix of the body. To scale body simply encrypt
+    # the scaling factors within the new transformation.
+    # @note Not all can bodies can be scaled though. Scaling compound and
+    #   staticmesh was disabled because Newton has some bugs here.
     # @param [Array<Numeric>, Geom::Transformation] tra An array of 16 numeric
     #   values or a Geom::Transformation object.
     def set_matrix(tra)
