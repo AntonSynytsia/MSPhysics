@@ -64,9 +64,9 @@ zoom tool activating, for instance.
 
 ## Scaled Bodies
 To scale body, simply call <tt>Body.#set_matrix(new_tra)</tt> with the scale
-factors within the new transfomration. Not all bodies can be scaled though. The
-scaling of the compound and staticmesh bodies is disabled because Newton is
-incomplete here.
+factors within the new transfomration. Not all bodies can be scaled though.
+Scaling compound and staticmesh bodies was disabled because Newton is incomplete
+here.
 
 
 ## Performance
