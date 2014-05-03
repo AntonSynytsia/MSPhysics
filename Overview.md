@@ -62,6 +62,13 @@ input. A mouse wheel could be used to switch weapons, rather than having the
 zoom tool activating, for instance.
 
 
+## Scaled Bodies
+To scale body, simply call <tt>Body.#set_matrix(new_tra)</tt> with the scale
+factors within the new transfomration. Not all bodies can be scaled though. The
+scaling of the compound and staticmesh bodies is disabled because Newton is
+incomplete here.
+
+
 ## Performance
 * Use exact solver model when precision is more important than speed.
 * Use interactive solver model when speed is more important than precision.
