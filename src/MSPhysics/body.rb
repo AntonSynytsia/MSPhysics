@@ -996,7 +996,7 @@ module MSPhysics
     # Determines whether the body is valid.
     # @return [Boolean]
     def valid?
-      @_entity and @_body_ptr and @_entity.valid?
+      (@_entity and @_body_ptr and @_entity.valid?) ? true : false
     end
 
     # Determines whether the body is invalid.

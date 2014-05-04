@@ -1,7 +1,7 @@
 module MSPhysics
   class Hinge < Joint
 
-    MIN_JOINT_PIN_LENGTH = 1.0
+    MIN_JOINT_PIN_LENGTH = 50
 
     # @param [Array<Numeric>, Geom::Point3d] pos Origin of hinge in global
     #   space.
@@ -39,8 +39,8 @@ module MSPhysics
     def submit_constraints(timestep)
       # Calculate the position of the pivot point and the Jacobian direction
       # vectors in global space.
-      matrix0 = @local_matrix0*@child.get_matrix(0)
-      matrix1 = @parent ? @local_matrix1*@parent.get_matrix(0) : @local_matrix1
+      matrix0 = @child.get_matrix(0)*@local_matrix0
+      matrix1 = @parent ? @parent.get_matrix(0)*@local_matrix1 : @local_matrix1
       pos0 = matrix0.origin.to_a.pack('F*')
       pos1 = matrix1.origin.to_a.pack('F*')
       # Restrict the movement on the pivot point along all three orthonormal
@@ -68,7 +68,7 @@ module MSPhysics
       omega1 = @parent ? @parent.get_omega : Geom::Vector3d.new(0,0,0)
       @omega = (omega0 - omega1) % matrix1.zaxis
       # Four possibilities.
-      if @friction > 0
+      if @friction != 0
         if @limits_enabled
           # Friction and limits at the same time.
           if (@angle < @min.degrees)
@@ -127,10 +127,6 @@ module MSPhysics
       end
     end
 
-    def get_info(info_ptr)
-      return unless connected?
-    end
-
     public
 
     # Set min angle in degrees.
@@ -169,10 +165,10 @@ module MSPhysics
       @angle.radians
     end
 
-    # Get joint omega.
+    # Get joint omega in degrees per second.
     # @return [Numeric]
     def omega
-      @omega
+      @omega.radians
     end
 
   end # class Hinge

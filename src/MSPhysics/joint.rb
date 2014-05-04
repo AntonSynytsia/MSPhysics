@@ -52,6 +52,10 @@ module MSPhysics
       @joint_ptr = nil
       @destructor_callback = Proc.new { |joint_ptr|
         @joint_ptr = nil
+        UI.start_timer(0.1,false){
+          @parent = nil if @parent and @parent.invalid?
+          @child = nil if @child and @child.invalid?
+        }
       }
       @submit_constraints = Proc.new { |joint_ptr, timestep, thread_index|
         submit_constraints(timestep)
@@ -72,15 +76,6 @@ module MSPhysics
       connect(child)
     end
 
-    # @!attribute [r] parent
-    #   @return [Body, NilClass]
-
-    # @!attribute [r] child
-    #   @return [Body, NilClass]
-
-
-    attr_reader :parent, :child
-
     private
 
     def submit_constraints(timestep)
@@ -97,20 +92,24 @@ module MSPhysics
       @angle += Math.atan2(sin_da, cos_da)-Math::PI/2
     end
 
-    def update_pos
-      pos = @pos.clone
-      dir = @dir.clone
-      if @parent
-        tra = @parent.get_matrix(0)
-        pos.transform!(tra)
-        dir.transform!(tra)
-      end
-      jnt_matrix = Geom::Transformation.new(pos, dir)
-      @local_matrix0 = jnt_matrix*@child.get_matrix(0).inverse
-      @local_matrix1 = @parent ? jnt_matrix*@parent.get_matrix(0).inverse : jnt_matrix
+    def check_validity
+      @parent = nil if @parent and @parent.invalid?
+      @child = nil if @child and @child.invalid?
     end
 
     public
+
+    # @return [Body, NilClass]
+    def parent
+      check_validity
+      @parent
+    end
+
+    # @return [Body, NilClass]
+    def child
+      check_validity
+      @child
+    end
 
     # Connect body to the joint.
     # @note Each joint can have one child body only.
@@ -123,17 +122,30 @@ module MSPhysics
     #   @param [Body] body
     # @return [Boolean] +true+ if successful.
     def connect(*args)
+      check_validity
       body = args.size.zero? ? @child : args[0]
-      return false unless body
+      return false if body.nil?
+      return false if connected? and body == @child
       unless body.is_a?(Body)
         raise ArgumentError, "Expected Body, but got #{body.class}."
       end
-      raise 'The body is invalid!' unless body.valid?
+      raise 'The body is invalid!' if body.invalid?
       disconnect
       @child = body
       world_ptr = Newton.bodyGetWorld(@child._body_ptr)
       parent_ptr = @parent ? @parent._body_ptr : nil
-      update_pos
+      # Update position
+      pos = @pos.clone
+      dir = @dir.clone
+      if @parent
+        tra = @parent.get_matrix(0)
+        pos.transform!(tra)
+        dir.transform!(tra)
+      end
+      jnt_matrix = Geom::Transformation.new(pos, dir)
+      @local_matrix0 = @child.get_matrix(0).inverse*jnt_matrix
+      @local_matrix1 = @parent ? @parent.get_matrix(0).inverse*jnt_matrix : jnt_matrix
+      # Create constraint
       @joint_ptr = Newton.constraintCreateUserJoint(world_ptr, @dof, @submit_constraints, @get_info, @child._body_ptr, parent_ptr)
       Newton.jointSetDestructor(@joint_ptr, @destructor_callback)
       true
@@ -142,6 +154,7 @@ module MSPhysics
     # Disconnect connected body from the joint.
     # @return [Boolean] +true+ if successful.
     def disconnect
+      check_validity
       return false unless connected?
       world_ptr = Newton.bodyGetWorld(@child._body_ptr)
       Newton.destroyJoint(world_ptr, @joint_ptr)
@@ -152,40 +165,27 @@ module MSPhysics
     # Determine whether a child body is connected to the joint.
     # @return [Boolean]
     def connected?
+      check_validity
       @joint_ptr ? true : false
     end
 
     # Get joint position in global space.
-    # @return [Geom::Vector3d]
-    def get_pos
+    # @return [Geom::Point3d]
+    def position
+      check_validity
       pos =  @parent ? @pos.transform(@parent.get_matrix(0)) : @pos
       Conversion.convert_point(pos, :m, :in)
     end
 
     # Get joint axis of rotation vector in global space.
     # @return [Geom::Vector3d]
-    def get_dir
+    def direction
+      check_validity
       if @parent
         @dir.transform(@parent.get_matrix(0)).normalize
       else
         @dir.clone
       end
-    end
-
-    # Set joint position in global space.
-    # @param [Geom::Vector3d, Array<Numeric>] pos
-    def set_pos(pos)
-      @pos = Conversion.convert_point(pos, :in, :m)
-      @pos.transform!(@parent.get_matrix(0).inverse) if @parent
-      update_pos
-    end
-
-    # Set joint axis of rotation vector in global space.
-    # @param [Geom::Vector3d, Array<Numeric>] dir
-    def set_dir(dir)
-      @dir = Geom::Vector3d.new(dir)
-      @dir.transform!(@parent.get_matrix(0).inverse) if @parent
-      update_pos
     end
 
   end # class Joint

@@ -332,8 +332,8 @@ module MSPhysics
         @simulation.do_on_update(@frame)
         @clicked.call_event(:onClicked) if @clicked
       rescue Exception => e
-        abort(e)
-        #abort("#{e}\n#{$@[0..2]}")
+        #abort(e)
+        abort("#{e}\n#{$@[0..2]}")
         return
       end if @frame > 0
       # Update camera
@@ -360,10 +360,10 @@ module MSPhysics
       # Process dragged body
       unless @picked.empty?
         body = @picked[0]
-        if body.entity.nil? or body.entity.deleted?
-          @picked.clear
-        else
+        if body.valid?
           Body.apply_pick_force(body, @picked[1], @picked[2], 100, 10)
+        else
+          @picked.clear
         end
       end
       # Update FPS

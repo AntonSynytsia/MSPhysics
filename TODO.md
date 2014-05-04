@@ -19,8 +19,8 @@
   controllers.
 - Magnetic bodies
 - Finish materials
-- Joints: Hinge, Servo, Motor, Spring, Up, Slider, Piston, Fixed, Ball, Universal,
-  CorkScrew.
+- Joints: Hinge, Servo, Motor, Spring, Up, Slider, Piston, Fixed, Ball,
+  Universal, CorkScrew.
 - Dialog
   - Update all options on mouse enter
   - If one body has an error, open the dialog and navigate to the error.
@@ -39,13 +39,10 @@
             - friction
             - mass
 - Remove many commands, and add them to the dialog - save space.
-- Update joint description that says 'Two bodies is the capacity of the joint.'
-- Differential joints
-- Automatically disconnect joint from a destroyed body.
-- Automatically destroy joint if the parent is a compound body, which is
-  destroyed.
-~ Make sure user cant create joints inside a body, but compound.
-- Joint destructor callback
+- Add toggle continuous collision command.
+- Body.#get_connected_joints
+- Control flipped bodies.
+
 
 ## Next Versions
 - Mac, Linux.
@@ -65,7 +62,6 @@
 - Fractured compounds.
 - Soft bodies.
 - Cloth.
-- Control flipped bodies.
 - Fix collision offset of scaled :static_mesh and :compound_from_mesh body.
 - Create sphere, cone, cube with all size parameters of one. Then scale
   collision by the length of each side of the bounding box. That way sphere
@@ -74,8 +70,8 @@
 - Edit properties of multiple bodies and joints at once via the dialog.
 - Classify collisions. That way each collision will have its own scale function
   that would scale bodies properly.
-- Geared joints
-- Differential joint
+- Geared joints.
+- Differential joint if possible.
 
 ## Other
 

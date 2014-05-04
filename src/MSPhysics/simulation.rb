@@ -7,7 +7,7 @@ module MSPhysics
       @points_queue = []
       @points_queue2 = []
       @world_ptr = nil
-      @solver_model = 1
+      @solver_model = 0
       @friction_model = 0
       @gravity = -9.8
       @mat_id = 0
@@ -452,22 +452,24 @@ module MSPhysics
       Newton.setFrictionModel(@world_ptr, @friction_model)
       @mat_id = Newton.materialGetDefaultGroupID(@world_ptr)
       Newton.materialSetCollisionCallback(@world_ptr, @mat_id, @mat_id, nil, @aabb_overlap_callback, @contacts_callback)
-      Newton.materialSetSurfaceThickness(@world_ptr, @mat_id, @mat_id, @thickness)
-      Newton.materialSetDefaultFriction(@world_ptr, @mat_id, @mat_id, @material.static_friction, @material.kinetic_friction)
-      Newton.materialSetDefaultElasticity(@world_ptr, @mat_id, @mat_id, @material.elasticity)
-      Newton.materialSetDefaultSoftness(@world_ptr, @mat_id, @mat_id, @material.softness)
+      #Newton.materialSetSurfaceThickness(@world_ptr, @mat_id, @mat_id, @thickness)
+      #Newton.materialSetDefaultFriction(@world_ptr, @mat_id, @mat_id, @material.static_friction, @material.kinetic_friction)
+      #Newton.materialSetDefaultElasticity(@world_ptr, @mat_id, @mat_id, @material.elasticity)
+      #Newton.materialSetDefaultSoftness(@world_ptr, @mat_id, @mat_id, @material.softness)
       # Create Bodies
       count = 0
       model.entities.each { |ent|
         begin
           body = add_entity(ent)
           next unless body
-          if count == 0
+          if count == 2
             script =%q`
 onStart {
   @b1 = simulation.get_bodies[0]
-  @b2 = simulation.get_bodies[2]
+  @b2 = simulation.get_bodies[1]
   @color = Sketchup::Color.new(0,255,0)
+  @jnt = Hinge.new([0,0,0], [0,0,1], @b2, @b1, -60, 30, 100)
+  @jnt.enable_limits(true)
 }
 onUpdate {
   # draw(points, color, type = :line, width = 1, stipple = '', mode = 1)
@@ -481,7 +483,11 @@ onUpdate {
     hits.each { |hit|
       simulation.draw_points(hit.point, 5, 2, 'black')
     }
+    @orig = @b1.get_matrix.xaxis
+    #simulation.log_line("#{@jnt.omega.round(2)}")
   end
+  @jnt.connect if key('w') == 1
+  @jnt.disconnect if key('s') == 1
 }`
             #body.set_script(script)
           end

@@ -12,15 +12,15 @@ module MSPhysics
     # Structures
     # --------------------------------------------------------------------------
     class Point3d < AMS::FFI::Struct
-        layout :x, :float,
-          :y, :float,
-          :z, :float
+      layout :x, :float,
+        :y, :float,
+        :z, :float
     end
 
     class Vector3d < AMS::FFI::Struct
-        layout :x, :float,
-          :y, :float,
-          :z, :float
+      layout :x, :float,
+        :y, :float,
+        :z, :float
     end
 
     class WorldConvexCastReturnInfo < AMS::FFI::Struct
@@ -55,6 +55,20 @@ module MSPhysics
         :vertex, :pointer,
         :faceIndexCount, :pointer,
         :faceVertexIndex, :pointer
+    end
+
+    class NewtonJointRecord < AMS::FFI::Struct
+      layout :attachmentMatrix0, :pointer,
+        :attachmentMatrix1, :pointer,
+        :minLinearDof, :pointer,
+        :maxLinearDof, :pointer,
+        :minAngularDof, :pointer,
+        :maxAngularDof, :pointer,
+        :attachmentBody0, :pointer,
+        :attachmentBody1, :pointer,
+        :extraParameters, :pointer,
+        :bodiesCollisionOn, :int,
+        :descriptionType, :pointer
     end
 
     # --------------------------------------------------------------------------
