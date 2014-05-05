@@ -30,12 +30,13 @@ module MSPhysics
 
     end # proxy class
 
-    # @param [Array<Numeric>, Geom::Point3d] pos Origin of hinge in global
-    #   space.
+    # @param [Array<Numeric>, Geom::Point3d] pos Attach point global space.
     # @param [Array<Numeric>, Geom::Vector3d] pin_dir Pivot direction in global
     #   space.
-    # @param [Body, NilClass] parent
-    # @param [Body, NilClass] child
+    # @param [Body, NilClass] parent Pass +nil+ to create joint without a parent
+    #   body.
+    # @param [Body, NilClass] child Pass +nil+ to create an initially
+    #   disconnected joint.
     # @param [Numeric] dof Degrees of freedom
     def initialize(pos, pin_dir, parent, child, dof = 0)
       if parent
@@ -52,10 +53,7 @@ module MSPhysics
       @joint_ptr = nil
       @destructor_callback = Proc.new { |joint_ptr|
         @joint_ptr = nil
-        UI.start_timer(0.1,false){
-          @parent = nil if @parent and @parent.invalid?
-          @child = nil if @child and @child.invalid?
-        }
+        on_disconnect
       }
       @submit_constraints = Proc.new { |joint_ptr, timestep, thread_index|
         submit_constraints(timestep)
@@ -72,7 +70,6 @@ module MSPhysics
       end
       @local_matrix0 = nil
       @local_matrix1 = nil
-      @angle = 0
       connect(child)
     end
 
@@ -84,12 +81,10 @@ module MSPhysics
     def get_info(info_ptr)
     end
 
-    def calc_angle(new_cos_angle, new_sin_angle)
-      sin_angle = Math.sin(@angle)
-      cos_angle = Math.cos(@angle)
-      sin_da = new_sin_angle * cos_angle - new_cos_angle * sin_angle
-      cos_da = new_cos_angle * cos_angle + new_sin_angle * sin_angle
-      @angle += Math.atan2(sin_da, cos_da)-Math::PI/2
+    def on_connect
+    end
+
+    def on_disconnect
     end
 
     def check_validity
@@ -148,6 +143,7 @@ module MSPhysics
       # Create constraint
       @joint_ptr = Newton.constraintCreateUserJoint(world_ptr, @dof, @submit_constraints, @get_info, @child._body_ptr, parent_ptr)
       Newton.jointSetDestructor(@joint_ptr, @destructor_callback)
+      on_connect
       true
     end
 
@@ -190,3 +186,8 @@ module MSPhysics
 
   end # class Joint
 end # module MSPhysics
+
+# Load joints
+dir = File.dirname(__FILE__)
+files = Dir.glob(File.join(dir, 'joints', '*.{rb, rbs}'))
+files.each{ |file| require file }

@@ -468,8 +468,9 @@ onStart {
   @b1 = simulation.get_bodies[0]
   @b2 = simulation.get_bodies[1]
   @color = Sketchup::Color.new(0,255,0)
-  @jnt = Hinge.new([0,0,0], [0,0,1], @b2, @b1, -60, 30, 100)
-  @jnt.enable_limits(true)
+  #@jnt = Hinge.new(@b1.entity.bounds.center, [0,0,1], @b2, @b1, 0, 0, 0)
+  #@jnt.limits_enabled = true
+  @jnt = Fixed.new(@b1.entity.bounds.center, @b2, @b1, 0)
 }
 onUpdate {
   # draw(points, color, type = :line, width = 1, stipple = '', mode = 1)
@@ -484,12 +485,12 @@ onUpdate {
       simulation.draw_points(hit.point, 5, 2, 'black')
     }
     @orig = @b1.get_matrix.xaxis
-    #simulation.log_line("#{@jnt.omega.round(2)}")
+    simulation.log_line("#{@b1.get_force.length.to_i}")
   end
   @jnt.connect if key('w') == 1
   @jnt.disconnect if key('s') == 1
 }`
-            #body.set_script(script)
+            body.set_script(script)
           end
           count += 1
         rescue Exception => e

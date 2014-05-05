@@ -25,7 +25,6 @@ require File.join(dir, 'body_observer.rb')
 require File.join(dir, 'body.rb')
 require File.join(dir, 'body_context.rb')
 require File.join(dir, 'joint.rb')
-require File.join(dir, 'hinge.rb')
 require File.join(dir, 'simulation.rb')
 require File.join(dir, 'simulation_tool.rb')
 

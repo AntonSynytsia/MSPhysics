@@ -1,10 +1,9 @@
 module MSPhysics
   class Hinge < Joint
 
-    MIN_JOINT_PIN_LENGTH = 50
+    PIN_LENGTH = 50
 
-    # @param [Array<Numeric>, Geom::Point3d] pos Origin of hinge in global
-    #   space.
+    # @param [Array<Numeric>, Geom::Point3d] pos Attach point in global space.
     # @param [Array<Numeric>, Geom::Vector3d] pin_dir Pivot direction in global
     #   space.
     # @param [Body, NilClass] parent Pass +nil+ to create joint without a parent
@@ -20,6 +19,8 @@ module MSPhysics
       @max = max
       @friction = friction
       @limits_enabled = true
+      @angle = 0
+      @omega = 0
     end
 
     # @!attribute [r] min Get min angle in degrees.
@@ -36,6 +37,14 @@ module MSPhysics
 
     private
 
+    def calc_angle(new_cos_angle, new_sin_angle)
+      sin_angle = Math.sin(@angle)
+      cos_angle = Math.cos(@angle)
+      sin_da = new_sin_angle * cos_angle - new_cos_angle * sin_angle
+      cos_da = new_cos_angle * cos_angle + new_sin_angle * sin_angle
+      @angle += Math.atan2(sin_da, cos_da)-Math::PI/2
+    end
+
     def submit_constraints(timestep)
       # Calculate the position of the pivot point and the Jacobian direction
       # vectors in global space.
@@ -51,10 +60,10 @@ module MSPhysics
       # Get a point along the pin axis at some reasonable large distance from
       # the pivot.
       v1 = matrix0.zaxis
-      v1.length = MIN_JOINT_PIN_LENGTH
+      v1.length = PIN_LENGTH
       q0 = (matrix0.origin + v1).to_a.pack('F*')
       v2 = matrix1.zaxis
-      v2.length = MIN_JOINT_PIN_LENGTH
+      v2.length = PIN_LENGTH
       q1 = (matrix1.origin + v2).to_a.pack('F*')
       # Add two constraints row perpendicular to the pin vector.
       Newton.userJointAddLinearRow(@joint_ptr, q0, q1, matrix1.xaxis.to_a.pack('F*'))
@@ -77,20 +86,20 @@ module MSPhysics
             @angle = @min.degrees
             # Tell joint error will minimize the exceeded angle error
             Newton.userJointAddAngularRow(@joint_ptr, rel_angle, matrix1.zaxis.to_a.pack('F*'))
-            # Need high stiffness here
-            Newton.userJointSetRowStiffness(@joint_ptr, 1.0)
             # Allow the joint to move back freely
             Newton.userJointSetRowMinimumFriction(@joint_ptr, 0.0)
+            # Need high stiffness here
+            Newton.userJointSetRowStiffness(@joint_ptr, 1.0)
           elsif @angle > @max.degrees
             rel_angle = @angle - @max.degrees
             # Clip the angle and save new clip limit
             @angle = @max.degrees
             # Tell joint error will minimize the exceeded angle error
             Newton.userJointAddAngularRow(@joint_ptr, rel_angle, matrix1.zaxis.reverse.to_a.pack('F*'))
-            # Need high stiffness here
-            Newton.userJointSetRowStiffness(@joint_ptr, 1.0)
             # Allow the joint to move back freely
             Newton.userJointSetRowMinimumFriction(@joint_ptr, 0.0)
+            # Need high stiffness here
+            Newton.userJointSetRowStiffness(@joint_ptr, 1.0)
           else
             # Friction but no limits.
             alpha = @omega / timestep.to_f
@@ -110,21 +119,26 @@ module MSPhysics
           Newton.userJointSetRowStiffness(@joint_ptr, 1.0)
         end
       elsif @limits_enabled
-        # No friction but limits.
+        # Limits but no friction
         if @angle < @min.degrees
           rel_angle = @min.degrees - @angle
           @angle = @min.degrees
           Newton.userJointAddAngularRow(@joint_ptr, rel_angle, matrix1.zaxis.to_a.pack('F*'))
-          Newton.userJointSetRowStiffness(@joint_ptr, 1.0)
           Newton.userJointSetRowMinimumFriction(@joint_ptr, 0.0)
+          Newton.userJointSetRowStiffness(@joint_ptr, 1.0)
         elsif @angle > @max.degrees
           rel_angle = @angle - @max.degrees
           @angle = @max.degrees
           Newton.userJointAddAngularRow(@joint_ptr, rel_angle, matrix1.zaxis.reverse.to_a.pack('F*'))
-          Newton.userJointSetRowStiffness(@joint_ptr, 1.0)
           Newton.userJointSetRowMinimumFriction(@joint_ptr, 0.0)
+          Newton.userJointSetRowStiffness(@joint_ptr, 1.0)
         end
       end
+    end
+
+    def on_disconnect
+      @angle = 0
+      @omega = 0
     end
 
     public
@@ -149,7 +163,7 @@ module MSPhysics
 
     # Enable/Disable limits.
     # @param [Boolean] state
-    def enable_limits(state = true)
+    def limits_enabled=(state)
       @limits_enabled = state ? true : false
     end
 
