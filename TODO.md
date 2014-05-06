@@ -42,6 +42,9 @@
 - Add toggle continuous collision command.
 - Body.#get_connected_joints
 - Control flipped bodies.
+- Add plugin description in MSPhysics.rb
+- Remove test and debugging code.
+- Reset error handlers.
 
 
 ## Next Versions
