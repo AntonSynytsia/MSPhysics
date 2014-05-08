@@ -1,8 +1,6 @@
 module MSPhysics
   class Fixed < Joint
 
-    PIN_LENGTH = 50
-
     # @param [Array<Numeric>, Geom::Point3d] pos Attach point in global space.
     # @param [Body, NilClass] parent Pass +nil+ to create joint without a parent
     #   body.

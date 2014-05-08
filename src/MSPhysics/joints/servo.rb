@@ -1,5 +1,5 @@
 module MSPhysics
-  class Hinge < Joint
+  class Servo < Joint
 
     # @param [Array<Numeric>, Geom::Point3d] pos Attach point in global space.
     # @param [Array<Numeric>, Geom::Vector3d] pin_dir Pivot direction in global
@@ -10,22 +10,19 @@ module MSPhysics
     #   disconnected joint.
     # @param [Numeric] min Min angle in degrees.
     # @param [Numeric] max Max angle in degrees.
-    # @param [Numeric] friction Rotational friction in Newton meters.
-    def initialize(pos, pin_dir, parent, child, min = 0, max = 0, friction = 0)
+    # @param [Numeric] rate Angular rate in degrees per second.
+    # @param [Numeric] power Rotational force power in Newton meters.
+    def initialize(pos, pin_dir, parent, child, min = 0, max = 0, rate = 50, power = 50000)
       super(pos, pin_dir, parent, child, 6)
       @min = min.degrees
       @max = max.degrees
-      @friction = friction.abs
+      @angular_rate = rate.degrees.abs
+      @power = power.abs
       @limits_enabled = true
+      @target_angle = nil
       @angle = 0
       @omega = 0
     end
-
-    # @!attribute [r] friction Get rotational friction in Newton meters.
-    #   @return [Numeric]
-
-
-    attr_reader :friction
 
     private
 
@@ -34,7 +31,7 @@ module MSPhysics
       cos_angle = Math.cos(@angle)
       sin_da = new_sin_angle * cos_angle - new_cos_angle * sin_angle
       cos_da = new_cos_angle * cos_angle + new_sin_angle * sin_angle
-      @angle += Math.atan2(sin_da, cos_da)-Math::PI/2
+      @angle += Math.atan2(sin_da, cos_da) - Math::PI/2
     end
 
     def submit_constraints(timestep)
@@ -83,16 +80,32 @@ module MSPhysics
           Newton.userJointSetRowMinimumFriction(@joint_ptr, 0.0)
         else
           apply_std = true
+          tar_angle = MSPhysics.clamp(@target_angle, @min, @max) if @target_angle
         end
       else
         apply_std = true
+        tar_angle = @target_angle if @target_angle
       end
-      if apply_std and @friction != 0
-        alpha = @omega / timestep.to_f
-        Newton.userJointAddAngularRow(@joint_ptr, 0, matrix1.zaxis.to_a.pack('F*'))
-        Newton.userJointSetRowAcceleration(@joint_ptr, -alpha)
-        Newton.userJointSetRowMinimumFriction(@joint_ptr, -@friction)
-        Newton.userJointSetRowMaximumFriction(@joint_ptr, @friction)
+      if apply_std
+        if @target_angle
+          rel_angle = @angle - tar_angle
+          step = @angular_rate * timestep
+          if rel_angle.abs < step.abs
+            Newton.userJointAddAngularRow(@joint_ptr, 0, matrix0.zaxis.to_a.pack('F*'))
+          else
+            Newton.userJointAddAngularRow(@joint_ptr, rel_angle, matrix0.zaxis.to_a.pack('F*'))
+            desired_speed = (rel_angle >= 0 ? 1 : -1) * -@angular_rate
+            current_speed = @omega
+            accel = (desired_speed - current_speed).to_f / timestep
+            Newton.userJointSetRowAcceleration(@joint_ptr, accel)
+          end
+        else
+          Newton.userJointAddAngularRow(@joint_ptr, 0, matrix0.zaxis.to_a.pack('F*'))
+        end
+        if @power != 0
+          Newton.userJointSetRowMinimumFriction(@joint_ptr, -@power)
+          Newton.userJointSetRowMaximumFriction(@joint_ptr, @power)
+        end
       end
       Newton.userJointSetRowStiffness(@joint_ptr, 1.0)
     end
@@ -128,10 +141,10 @@ module MSPhysics
       @max = value.degrees
     end
 
-    # Set rotational friction in Newton meters.
+    # Set torque friction.
     # @param [Numeric] value A value greater than or equal to zero.
     def friction=(value)
-      @friction = value.to_f.abs
+      @friction = value.abs
     end
 
     # Enable/Disable limits.
@@ -158,5 +171,41 @@ module MSPhysics
       @omega.radians
     end
 
-  end # class Hinge
+    # Get target angle in degrees.
+    # @return [Numeric, NilClass]
+    def target_angle
+      @target_angle.radians
+    end
+
+    # Set target angle in degrees.
+    # @param [Numeric, NilClass] theta Pass +nil+ to have the servo off.
+    def target_angle=(theta)
+      @target_angle = theta.is_a?(Numeric) ? theta.degrees : nil
+    end
+
+    # Get angular rate in degrees per second.
+    # @return [Numeric]
+    def angular_rate
+      @angular_rate.radians
+    end
+
+    # Set angular rate in degrees per second.
+    # @param [Numeric] rate
+    def angular_rate=(rate)
+      @angular_rate = rate.degrees.abs
+    end
+
+    # Get the maximum force applied to the rotation of servo in Newton meters.
+    # @return [Numeric]
+    def power
+      @power
+    end
+
+    # Set the maximum force applied to the rotation of servo in Newton meters.
+    # @param [Numeric] force
+    def power=(force)
+      @power = force.abs
+    end
+
+  end # class Servo
 end # module MSPhysics

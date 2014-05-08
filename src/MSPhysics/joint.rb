@@ -1,6 +1,7 @@
 module MSPhysics
   class Joint
 
+    PIN_LENGTH = 50
     TYPES = [
       :hinge,
       :servo,
