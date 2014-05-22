@@ -59,10 +59,16 @@ module MSPhysics
     end
 
     # Assign a string of code to the body context.
-    # @param [String] script
-    def set_script(script)
-      @_script = script.to_s
+    # @param [String] code
+    def set_script(code)
+      # Clear assigned script.
+      @_events.keys.each { |key|
+        @_events[key] = nil
+      }
+      # Assign new script.
+      @_script = code.to_s
       eval(@_script)
+
     end
 
     # Assign a block of code to an event or a list of events.

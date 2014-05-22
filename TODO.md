@@ -26,25 +26,24 @@
   - If one body has an error, open the dialog and navigate to the error.
   - Check syntax errors
   Tabs:
-    - Simulation UI
-    - Joint UI
-    - Body Script
-    - Body Properties
-        - shape
-            - convex hull
-        - material
-            - density
-            - elasticity
-            - softness
-            - friction
-            - mass
+	- Simulation UI
+	- Joint UI
+	- Body Script
+	- Body Properties
+		- shape
+			- convex hull
+		- material
+			- density
+			- elasticity
+			- softness
+			- friction
+			- mass
 - Remove many commands, and add them to the dialog - save space.
 - Add toggle continuous collision command.
 - Body.#get_connected_joints
 - Control flipped bodies.
-- Add plugin description in MSPhysics.rb
-- Remove test and debugging code.
-- Reset error handlers.
+- Use entity ID when recording animations.
+- Add dialog to the animation tool.
 
 
 ## Next Versions

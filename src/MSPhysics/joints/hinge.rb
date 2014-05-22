@@ -10,7 +10,7 @@ module MSPhysics
     #   disconnected joint.
     # @param [Numeric] min Min angle in degrees.
     # @param [Numeric] max Max angle in degrees.
-    # @param [Numeric] friction Rotational friction in Newton meters.
+    # @param [Numeric] friction Rotational friction in Newtons.
     def initialize(pos, pin_dir, parent, child, min = 0, max = 0, friction = 0)
       super(pos, pin_dir, parent, child, 6)
       @min = min.degrees
@@ -21,7 +21,7 @@ module MSPhysics
       @omega = 0
     end
 
-    # @!attribute [r] friction Get rotational friction in Newton meters.
+    # @!attribute [r] friction Get rotational friction in Newtons.
     #   @return [Numeric]
 
 
@@ -34,7 +34,7 @@ module MSPhysics
       cos_angle = Math.cos(@angle)
       sin_da = new_sin_angle * cos_angle - new_cos_angle * sin_angle
       cos_da = new_cos_angle * cos_angle + new_sin_angle * sin_angle
-      @angle += Math.atan2(sin_da, cos_da)-Math::PI/2
+      @angle += Math.atan2(sin_da, cos_da) - Math::PI/2
     end
 
     def submit_constraints(timestep)
@@ -71,7 +71,7 @@ module MSPhysics
       # Apply forces
       apply_std = false
       if @limits_enabled
-        if (@angle < @min)
+        if @angle < @min
           rel_angle = @min - @angle
           @angle = @min
           Newton.userJointAddAngularRow(@joint_ptr, rel_angle, matrix1.zaxis.to_a.pack('F*'))
@@ -128,7 +128,7 @@ module MSPhysics
       @max = value.degrees
     end
 
-    # Set rotational friction in Newton meters.
+    # Set rotational friction in Newtons.
     # @param [Numeric] value A value greater than or equal to zero.
     def friction=(value)
       @friction = value.to_f.abs

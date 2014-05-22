@@ -1,6 +1,9 @@
 module MSPhysics
   class Fixed < Joint
 
+    # @!visibility private
+    TO_DISCONNECT = []
+
     # @param [Array<Numeric>, Geom::Point3d] pos Attach point in global space.
     # @param [Body, NilClass] parent Pass +nil+ to create joint without a parent
     #   body.
@@ -25,7 +28,7 @@ module MSPhysics
 
     def submit_constraints(timestep)
       if @breaking_force != 0 and @child.get_force.length >= @breaking_force
-        disconnect
+        TO_DISCONNECT << self
         return
       end
       # Calculate the position of the pivot point and the Jacobian direction
@@ -63,7 +66,7 @@ module MSPhysics
     public
 
     # Set required disconnection force in Newtons.
-    # @param [Numeric] force
+    # @param [Numeric] force Pass zero to disable disconnection by force.
     def breaking_force=(force)
       @breaking_force = breaking_force.to_f.abs
     end

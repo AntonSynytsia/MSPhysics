@@ -372,10 +372,10 @@ module MSPhysics
 
     # Set static friction coefficient of the body.
     # @return [Numeric] coefficient
-    #   This value is clamped between +0.01+ and +2.0+.
+    #   This value is clamped between +0.01+ and +2.00+.
     def set_static_friction(coefficient)
       check_validity
-      @_static_friction = MSPhysics.clamp(coefficient, 0.01, 2.0)
+      @_static_friction = MSPhysics.clamp(coefficient, 0.01, 2.00)
     end
 
     # Get dynamic friction coefficient of the body.
@@ -387,15 +387,15 @@ module MSPhysics
 
     # Set dynamic friction coefficient of the body.
     # @return [Numeric] coefficient
-    #   This value is clamped between +0.01+ and +2.0+.
+    #   This value is clamped between +0.01+ and +2.00+.
     def set_kinetic_friction(coefficient)
       check_validity
-      @_kinetic_friction = MSPhysics.clamp(coefficient, 0.01, 2.0)
+      @_kinetic_friction = MSPhysics.clamp(coefficient, 0.01, 2.00)
     end
 
     # Enable/Disable contact friction of the body.
     # @param [Boolean] state
-    def enable_friction(state = true)
+    def friction_enabled=(state)
       check_validity
       @_friction_enabled = state ? true : false
     end
@@ -418,10 +418,10 @@ module MSPhysics
     # basketball has a rebound ratio of 0.83. This means the new height of a
     # basketball is 83% of original height within each bounce.
     # @param [Numeric] coefficient
-    #   This value is clamped between +0.01+ and +1.00+.
+    #   This value is clamped between +0.01+ and +2.00+.
     def set_elasticity(coefficient)
       check_validity
-      @_elasticity = MSPhysics.clamp(coefficient, 0.01, 1.0)
+      @_elasticity = MSPhysics.clamp(coefficient, 0.01, 2.00)
     end
 
     # Get contact softness coefficient of the body.
@@ -436,7 +436,7 @@ module MSPhysics
     #   This value is clamped between +0.01+ and +1.00+.
     def set_softness(coefficient)
       check_validity
-      @_softness = MSPhysics.clamp(coefficient, 0.01, 1.0)
+      @_softness = MSPhysics.clamp(coefficient, 0.01, 1.00)
     end
 
     # Get the centre of mass of the body.

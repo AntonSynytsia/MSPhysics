@@ -11,7 +11,7 @@ module MSPhysics
     # @param [Numeric] min Min angle in degrees.
     # @param [Numeric] max Max angle in degrees.
     # @param [Numeric] rate Angular rate in degrees per second.
-    # @param [Numeric] power Rotational force power in Newton meters.
+    # @param [Numeric] power Rotational force power in Watts (Joules / second).
     def initialize(pos, pin_dir, parent, child, min = 0, max = 0, rate = 50, power = 50000)
       super(pos, pin_dir, parent, child, 6)
       @min = min.degrees
@@ -68,7 +68,7 @@ module MSPhysics
       # Apply forces
       apply_std = false
       if @limits_enabled
-        if (@angle < @min)
+        if @angle < @min
           rel_angle = @min - @angle
           @angle = @min
           Newton.userJointAddAngularRow(@joint_ptr, rel_angle, matrix1.zaxis.to_a.pack('F*'))
@@ -141,12 +141,6 @@ module MSPhysics
       @max = value.degrees
     end
 
-    # Set torque friction.
-    # @param [Numeric] value A value greater than or equal to zero.
-    def friction=(value)
-      @friction = value.abs
-    end
-
     # Enable/Disable limits.
     # @param [Boolean] state
     def limits_enabled=(state)
@@ -195,16 +189,16 @@ module MSPhysics
       @angular_rate = rate.degrees.abs
     end
 
-    # Get the maximum force applied to the rotation of servo in Newton meters.
+    # Get the maximum power applied to the rotation of servo in Joules.
     # @return [Numeric]
     def power
       @power
     end
 
-    # Set the maximum force applied to the rotation of servo in Newton meters.
-    # @param [Numeric] force
-    def power=(force)
-      @power = force.abs
+    # Set the maximum power applied to the rotation of servo in Joules.
+    # @param [Numeric] power
+    def power=(power)
+      @power = power.abs
     end
 
   end # class Servo

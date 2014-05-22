@@ -1,7 +1,7 @@
 module MSPhysics
   class Joint
 
-    PIN_LENGTH = 50
+    PIN_LENGTH = 100
     TYPES = [
       :hinge,
       :servo,
@@ -39,7 +39,8 @@ module MSPhysics
     # @param [Body, NilClass] child Pass +nil+ to create an initially
     #   disconnected joint.
     # @param [Numeric] dof Degrees of freedom
-    def initialize(pos, pin_dir, parent, child, dof = 0)
+    # @param [Boolean] create Whether to create constraint.
+    def initialize(pos, pin_dir, parent, child, dof = 0, create = true)
       if parent
         unless parent.is_a?(Body)
           raise ArgumentError, "Expected Body, but got #{parent.class}."
@@ -52,6 +53,11 @@ module MSPhysics
       @child = nil
       @dof = dof.abs # degrees of freedom
       @joint_ptr = nil
+      @connect_proc = Proc.new {
+        world_ptr = Newton.bodyGetWorld(@child._body_ptr)
+        parent_ptr = @parent ? @parent._body_ptr : nil
+        @joint_ptr = Newton.constraintCreateUserJoint(world_ptr, @dof, @submit_constraints, @get_info, @child._body_ptr, parent_ptr)
+      }
       @destructor_callback = Proc.new { |joint_ptr|
         @joint_ptr = nil
         on_disconnect
@@ -71,8 +77,24 @@ module MSPhysics
       end
       @local_matrix0 = nil
       @local_matrix1 = nil
-      connect(child)
+      @collidable = true
+      @solver = 0
+      @max_contact_joints = 100
+      connect(child) if create
     end
+
+    # @!attribute [r] joint_ptr
+    #   @return [AMS::FFI::Pointer, NilClass]
+
+    # @!attribute [r] solver
+    #   @return [Fixnum] +0+ : exact, +1+ : interactive. Exact solver makes
+    #     joint a lot stronger, but a little slower in performance.
+
+    # @!attribute [r] max_contact_joints
+    #   @return [Fixnum]
+
+
+    attr_reader :joint_ptr, :solver, :max_contact_joints
 
     private
 
@@ -91,6 +113,19 @@ module MSPhysics
     def check_validity
       @parent = nil if @parent and @parent.invalid?
       @child = nil if @child and @child.invalid?
+    end
+
+    def update_pos
+      pos = @pos.clone
+      dir = @dir.clone
+      if @parent
+        tra = @parent.get_matrix(0)
+        pos.transform!(tra)
+        dir.transform!(tra)
+      end
+      jnt_matrix = Geom::Transformation.new(pos, dir)
+      @local_matrix0 = @child.get_matrix(0).inverse*jnt_matrix
+      @local_matrix1 = @parent ? @parent.get_matrix(0).inverse*jnt_matrix : jnt_matrix
     end
 
     public
@@ -128,22 +163,14 @@ module MSPhysics
       raise 'The body is invalid!' if body.invalid?
       disconnect
       @child = body
-      world_ptr = Newton.bodyGetWorld(@child._body_ptr)
-      parent_ptr = @parent ? @parent._body_ptr : nil
       # Update position
-      pos = @pos.clone
-      dir = @dir.clone
-      if @parent
-        tra = @parent.get_matrix(0)
-        pos.transform!(tra)
-        dir.transform!(tra)
-      end
-      jnt_matrix = Geom::Transformation.new(pos, dir)
-      @local_matrix0 = @child.get_matrix(0).inverse*jnt_matrix
-      @local_matrix1 = @parent ? @parent.get_matrix(0).inverse*jnt_matrix : jnt_matrix
+      update_pos
       # Create constraint
-      @joint_ptr = Newton.constraintCreateUserJoint(world_ptr, @dof, @submit_constraints, @get_info, @child._body_ptr, parent_ptr)
+      @connect_proc.call
       Newton.jointSetDestructor(@joint_ptr, @destructor_callback)
+      self.bodies_collidable = @collidable
+      self.solver = @solver
+      self.max_contact_joints = @max_contact_joints
       on_connect
       true
     end
@@ -167,16 +194,27 @@ module MSPhysics
     end
 
     # Get joint position in global space.
+    # @param [Boolean] convert whether to convert units from meters to inches.
     # @return [Geom::Point3d]
-    def position
+    def get_position(convert = true)
       check_validity
       pos =  @parent ? @pos.transform(@parent.get_matrix(0)) : @pos
+      return pos.clone unless convert
       Conversion.convert_point(pos, :m, :in)
+    end
+
+    # Set joint position in global space.
+    # @param [Array<Numeric>, Geom::Point3d] pos
+    def set_position(pos)
+      check_validity
+      pos = MSPhysics::Conversion.convert_point(pos, :in, :m)
+      @pos = @parent ? pos.transform(@parent.get_matrix(0).inverse) : pos
+      update_pos
     end
 
     # Get joint axis of rotation vector in global space.
     # @return [Geom::Vector3d]
-    def direction
+    def get_direction
       check_validity
       if @parent
         @dir.transform(@parent.get_matrix(0)).normalize
@@ -185,10 +223,53 @@ module MSPhysics
       end
     end
 
+    # Set joint pin direction in global space.
+    # @param [Array<Numeric>, Geom::Vector3d] dir
+    def set_direction(dir)
+      check_validity
+      dir = Geom::Vector3d.new(dir.to_a)
+      @dir = @parent ? dir.transform(@parent.get_matrix(0).inverse) : dir
+      update_pos
+    end
+
+    # Modify parent and child body collision state.
+    # @param [Boolean]
+    def bodies_collidable=(state)
+      check_validity
+      @collidable = state ? true : false
+      Newton.jointSetCollisionState(@joint_ptr, @collidable ? 1 : 0) if connected?
+    end
+
+    # Determine whether the parent and child bodies are collidable with each
+    # other.
+    # @return [Boolean]
+    def bodies_collidable?
+      check_validity
+      @collidable
+    end
+
+    # Set joint solver mode.
+    # @note Exact solver makes joint a lot stronger, but a little slower in
+    #   performance.
+    # @param [Fixnum] mode +0+ : exact, +1+ : interactive.
+    def solver=(mode)
+      check_validity
+      @solver = mode.zero? ? 0 : 1
+      Newton.userJointSetSolver(@joint_ptr, @solver, @max_contact_joints) if connected?
+    end
+
+    # Set joint maximum number of contact joints.
+    # @param [Fixnum] count
+    def max_contact_joints=(count)
+      check_validity
+      @max_contact_joints = count.to_i.abs
+      Newton.userJointSetSolver(@joint_ptr, @solver, @max_contact_joints) if connected?
+    end
+
   end # class Joint
 end # module MSPhysics
 
 # Load joints
 dir = File.dirname(__FILE__)
 files = Dir.glob(File.join(dir, 'joints', '*.{rb, rbs}'))
-files.each{ |file| require file }
+files.each { |file| require file }

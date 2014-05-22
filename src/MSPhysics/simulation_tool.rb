@@ -203,6 +203,12 @@ module MSPhysics
         printf("  simulation time : %.2f seconds\n", @time[:sim])
         printf("  total time      : %.2f seconds\n", @time[:total])
       end
+      UI.start_timer(0.2,false){
+      if @simulation.animation.record_size > 0
+        @simulation.animation.play
+        @simulation.animation.speed = 2
+      end
+      }
     end
 
     def onCancel(reason, view)

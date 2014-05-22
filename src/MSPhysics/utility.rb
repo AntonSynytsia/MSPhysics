@@ -72,5 +72,36 @@ module MSPhysics
       value
     end
 
+    # Get numeric value sign.
+    # @param [Numeric] value
+    # @return [Fixnum] -1, 0, or 1
+    def sign(value)
+      value.zero? ? 0 : (value > 0 ? 1 : -1)
+    end
+
+    # Scale vector.
+    # @param [Array<Numeric>, Geom::Vector3d] vector
+    # @param [Numeric] scale
+    # @return [Geom::Vector3d]
+    def scale_vector(vector, scale)
+      Geom::Vector3d.new(vector[0]*scale, vector[1]*scale, vector[2]*scale)
+    end
+
+    # Get least value of the two values.
+    # @param [Numeric] a
+    # @param [Numeric] b
+    # @return [Numeric]
+    def min(a, b)
+      a < b ? a : b
+    end
+
+    # Get greatest value of the two values.
+    # @param [Numeric] a
+    # @param [Numeric] b
+    # @return [Numeric]
+    def max(a, b)
+      a > b ? a : b
+    end
+
   end # class << self
 end # module MSPhysics

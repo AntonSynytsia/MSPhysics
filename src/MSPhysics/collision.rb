@@ -158,6 +158,8 @@ module MSPhysics
           create_compound_from_mesh(world, ent, true, 2)
         when :static_mesh
           create_static_mesh(world, ent, true, 2)
+        when :deformable
+          create_deformable(world, ent, true, 2)
         else
           raise 'Failed to create collision!'
       end
@@ -170,7 +172,7 @@ module MSPhysics
       unless VALID_TYPES.include?(ent.class)
         raise ArgumentError, INVALID_OBJECT
       end
-      bb = Group.get_bounding_box_from_faces(ent, true, false)
+      bb = MSPhysics::Group.get_bounding_box_from_faces(ent, true, false)
       if bb.depth.zero? or bb.height.zero? or bb.width.zero?
         raise TypeError, INVALID_SHAPE
       end
@@ -285,7 +287,7 @@ module MSPhysics
       unless VALID_TYPES.include?(ent.class)
         raise ArgumentError, INVALID_OBJECT
       end
-      pts = Group.get_vertices_from_faces(ent, true, transform)
+      pts = MSPhysics::Group.get_vertices_from_faces(ent, true, transform)
       if Geometry.points_coplanar?(pts)
         raise TypeError, INVALID_SHAPE
       end
@@ -353,7 +355,7 @@ module MSPhysics
       unless VALID_TYPES.include?(ent.class)
         raise ArgumentError, INVALID_OBJECT
       end
-      faces = Group.get_polygons_from_faces(ent, true, false)
+      faces = MSPhysics::Group.get_polygons_from_faces(ent, true, false)
       if Geometry.points_coplanar?(faces.flatten(1))
         raise TypeError, INVALID_SHAPE
       end
@@ -403,7 +405,7 @@ module MSPhysics
       unless VALID_TYPES.include?(ent.class)
         raise ArgumentError, INVALID_OBJECT
       end
-      faces = Group.get_polygons_from_faces(ent, true, true)
+      faces = MSPhysics::Group.get_polygons_from_faces(ent, true, true)
       if faces.size.zero?
         raise TypeError, INVALID_SHAPE
       end
@@ -432,6 +434,53 @@ module MSPhysics
       Newton.meshFixTJoints(mesh)
       col = Newton.createTreeCollisionFromMesh(world, mesh, 0)
       Newton.meshDestroy(mesh)
+      col
+    end
+
+    # Create soft collision.
+    # @param [AMS::FFI::Pointer] world A pointer to the newton world.
+    # @param [Sketchup::Group, Sketchup::ComponentInstance] ent
+    # @param [Boolean] simplify Whether to remove unused edges.
+    # @param [Fixnum] optimize Optimization mode:
+    #   +0+ - none,
+    #   +1+ - triangulate,
+    #   +2+ - polygonize.
+    # @return [AMS::FFI::Pointer]
+    def create_deformable(world, ent, simplify = true, optimize = 0)
+      unless VALID_TYPES.include?(ent.class)
+        raise ArgumentError, INVALID_OBJECT
+      end
+      faces = MSPhysics::Group.get_polygons_from_faces(ent, true, true)
+      if faces.size.zero?
+        raise TypeError, INVALID_SHAPE
+      end
+      tra = Geometry.extract_scale(ent.transformation).inverse
+      mesh = Newton.meshCreate(world)
+      Newton.meshBeginFace(mesh)
+      faces.each { |face|
+        pts = []
+        face.each { |pt|
+          pt.transform!(tra)
+          pts.push Conversion.convert_point(pt, :in, :m).to_a
+        }
+        Newton.meshAddFace(mesh, pts.size, pts.flatten.pack('F*'), 12, 0)
+      }
+      Newton.meshEndFace(mesh)
+      if simplify
+        vertex_remap_array = 0.chr*4*faces.flatten.size
+        Newton.removeUnusedVertices(mesh, vertex_remap_array)
+      end
+      Newton.meshSimplify(mesh, faces.flatten.size, PROGRESS_REPORT, nil)
+      if optimize == 1
+        Newton.meshTriangulate(mesh)
+      elsif optimize == 2
+        Newton.meshPolygonize(mesh)
+      end
+      Newton.meshFixTJoints(mesh)
+      col = Newton.createDeformableMesh(world, mesh, 0)
+      Newton.meshDestroy(mesh)
+      Newton.deformableMeshSetSkinThickness(col, 0.05)
+      Newton.deformableMeshCreateClusters(col, 8, 0.15)
       col
     end
 

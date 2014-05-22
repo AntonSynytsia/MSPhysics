@@ -25,6 +25,7 @@ require File.join(dir, 'body_observer.rb')
 require File.join(dir, 'body.rb')
 require File.join(dir, 'body_context.rb')
 require File.join(dir, 'joint.rb')
+require File.join(dir, 'animation.rb')
 require File.join(dir, 'simulation.rb')
 require File.join(dir, 'simulation_tool.rb')
 
@@ -65,6 +66,23 @@ unless file_loaded?(__FILE__)
   }
   cmd.small_icon = 'images/small/reset.png'
   cmd.large_icon = 'images/large/reset.png'
+  toolbar.add_item(cmd)
+  sim_menu.add_item(cmd)
+
+
+  cmd = UI::Command.new('cmd'){
+    next unless sim_tool.active?
+    sim = sim_tool.instance.simulation
+    sim.record_animation = !sim.animation_recording?
+  }
+  cmd.menu_text = cmd.tooltip = 'Record'
+  cmd.status_bar_text = 'Toggle record simulation.'
+  cmd.set_validation_proc {
+    next MF_GRAYED unless sim_tool.active?
+    sim_tool.instance.simulation.animation_recording? ? MF_CHECKED : MF_UNCHECKED
+  }
+  cmd.small_icon = 'images/small/record.png'
+  cmd.large_icon = 'images/large/record.png'
   toolbar.add_item(cmd)
   sim_menu.add_item(cmd)
 
