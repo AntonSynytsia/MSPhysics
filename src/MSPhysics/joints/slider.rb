@@ -19,6 +19,7 @@ module MSPhysics
       @limits_enabled = false
       @position = 0
       @speed = 0
+      @controller = 0
     end
 
     # @!attribute [r] friction Get moving friction in Newtons.
@@ -39,18 +40,23 @@ module MSPhysics
       p0p = p0.to_a.pack('F*')
       p1p = p1.to_a.pack('F*')
       Newton.userJointAddLinearRow(@joint_ptr, p0p, p1p, matrix0.yaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       Newton.userJointAddLinearRow(@joint_ptr, p0p, p1p, matrix0.xaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
 
       q0 = (p0 + MSPhysics.scale_vector(matrix0.zaxis, PIN_LENGTH)).to_a.pack('F*')
       q1 = (p1 + MSPhysics.scale_vector(matrix1.zaxis, PIN_LENGTH)).to_a.pack('F*')
 
       Newton.userJointAddLinearRow(@joint_ptr, q0, q1, matrix0.yaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       Newton.userJointAddLinearRow(@joint_ptr, q0, q1, matrix0.xaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
 
       r0 = (p0 + MSPhysics.scale_vector(matrix0.yaxis, PIN_LENGTH)).to_a.pack('F*')
       r1 = (p1 + MSPhysics.scale_vector(matrix1.yaxis, PIN_LENGTH)).to_a.pack('F*')
 
       Newton.userJointAddLinearRow(@joint_ptr, r0, r1, matrix1.xaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
 
       v0 = @child.get_velocity
       v1 = @parent ? @parent.get_velocity : Geom::Vector3d.new(0,0,0)
@@ -63,12 +69,14 @@ module MSPhysics
           p0 = matrix0.origin.to_a.pack('F*')
           p1 = (matrix0.origin + MSPhysics.scale_vector(matrix0.zaxis, @min - @position)).to_a.pack('F*')
           Newton.userJointAddLinearRow(@joint_ptr, p0, p1, matrix0.zaxis.to_a.pack('F*'))
+          Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
           Newton.userJointSetRowMinimumFriction(@joint_ptr, 0.0)
           return
         elsif @position > @max
           p0 = matrix0.origin.to_a.pack('F*')
           p1 = (matrix0.origin + MSPhysics.scale_vector(matrix0.zaxis, @max - @position)).to_a.pack('F*')
           Newton.userJointAddLinearRow(@joint_ptr, p0, p1, matrix0.zaxis.reverse.to_a.pack('F*'))
+          Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
           Newton.userJointSetRowMinimumFriction(@joint_ptr, 0.0)
           return
         end
@@ -83,6 +91,7 @@ module MSPhysics
 
       p0p = p0.to_a.pack('F*')
       Newton.userJointAddLinearRow(@joint_ptr, p0p, p0p, matrix0.zaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       Newton.userJointSetRowAcceleration(@joint_ptr, rel_accel)
       Newton.userJointSetRowMinimumFriction(@joint_ptr, -@friction)
       Newton.userJointSetRowMaximumFriction(@joint_ptr, @friction)
@@ -147,6 +156,20 @@ module MSPhysics
     # @return [Numeric]
     def speed
       @speed.m
+    end
+
+    # Get joint target position along the pin axis.
+    # @return [Numeric, NilClass] Joint target position along the pin axis or
+    #   +nil+ if there is no target position.
+    def controller
+      @controller
+    end
+
+    # Set joint target position along the pin axis.
+    # @param [Numeric, NilClass] value Pass +nil+ to enable free motion along
+    #   the pin axis.
+    def controller=(value)
+      @controller = value.is_a(Numeric) ? value.to_f : nil
     end
 
   end # class Slider

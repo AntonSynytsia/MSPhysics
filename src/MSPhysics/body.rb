@@ -279,12 +279,14 @@ module MSPhysics
       @_destroy_called    = false
       @_applied_forces    = {}
       @_up_vector         = nil
+      @_enabled           = true
+      @_contact_mode      = 0
       @@_instances[body_ptr.address] = self
       BodyObserver.call_event(:on_create, self)
     end
 
     # @!visibility private
-    attr_reader :_applied_forces, :_world_ptr, :_body_ptr, :_collision_ptr, :_up_vector
+    attr_reader :_applied_forces, :_world_ptr, :_body_ptr, :_collision_ptr, :_up_vector, :_contact_mode
 
     private
 
@@ -321,6 +323,19 @@ module MSPhysics
       @_volume
     end
 
+    # Set the volume of the body.
+    # @note Volume and mass are connected. If you change volume the mass will
+    #   automatically be recalculated.
+    # @param [Numeric] volume in cubic meters.
+    # @return [Boolean] +true+ (if successful).
+    def set_volume(volume)
+      check_validity
+      return false if volume <= 0 or @_volume == 0
+      @_volume = volume
+      set_mass(@_volume*@_density)
+      true
+    end
+
     # Get the mass of the body.
     # @return [Numeric] in kilograms.
     def get_mass
@@ -329,16 +344,16 @@ module MSPhysics
     end
 
     # Set the mass of the body.
+    # @note Mass and density are connected. If you change mass the density will
+    #   automatically be recalculated.
     # @param [Numeric] mass in kilograms.
     # @return [Boolean] +true+ (if successful).
     def set_mass(mass)
       check_validity
-      return false if (mass <= 0 or @_static)
+      return false if mass <= 0 or @_volume == 0
       @_mass = mass
       @_density = @_mass/@_volume.to_f
-      mass = @_static ? 0 : @_mass
-      Newton.bodySetMassProperties(@_body_ptr, mass, @_collision_ptr)
-      @_static = false
+      Newton.bodySetMassProperties(@_body_ptr, @_mass, @_collision_ptr) unless @_static
       true
     end
 
@@ -350,17 +365,28 @@ module MSPhysics
     end
 
     # Set the density of the body.
+    # @note Density and mass are connected. If you change density the mass will
+    #   automatically be recalculated.
     # @param [Numeric] density in kilograms per cubic meter.
     # @return [Boolean] +true+ (if successful).
     def set_density(density)
       check_validity
-      return false if (density <= 0 or @_shape == :staticmesh)
+      return false if density <= 0 or @_volume == 0
       @_density = density
       @_mass = @_density*@_volume
-      mass = @_static ? 0 : @_mass
-      Newton.bodySetMassProperties(@_body_ptr, mass, @_collision_ptr)
-      @_static = false
+      Newton.bodySetMassProperties(@_body_ptr, @_mass, @_collision_ptr) unless @_static
       true
+    end
+
+    # Modify body density, static friction, kinetic friction, coefficient of
+    # restitution, and softness at once by setting material.
+    # @param [Material] mat
+    def set_material(mat)
+      set_density(mat.density)
+      set_static_friction(mat.static_friction)
+      set_kinetic_friction(mat.kinetic_friction)
+      set_elasticity(mat.elasticity)
+      set_softness(mat.softness)
     end
 
     # Get static friction coefficient of the body.
@@ -431,7 +457,8 @@ module MSPhysics
       @_softness
     end
 
-    # Set contact softness coefficient of the body.
+    # Set contact softness coefficient of the body. The higher the softness
+    # coefficient the higher the stiffness is.
     # @param [Numeric] coefficient
     #   This value is clamped between +0.01+ and +1.00+.
     def set_softness(coefficient)
@@ -815,8 +842,7 @@ module MSPhysics
     #   active.
     def set_sleep_state(state)
       check_validity
-      state = state ? true : false
-      Newton.bodySetSleepState(@_body_ptr, state ? 0 : 1)
+      @_applied_forces[:sleep] = (state ? 1 : 0)
     end
 
     # Get the auto-sleep mode of the body.
@@ -848,7 +874,17 @@ module MSPhysics
       Newton.bodyGetContinuousCollisionMode(@_body_ptr) == 1
     end
 
-    # Set continuous collision mode for the body.
+    # Set continuous collision mode for the body. Enabling continuous collision
+    # ensures that stacks of bodies don't penetrate into each other.
+    # @note This will not prevent bodies from passing other bodies at high
+    #   speed. This will prevent bodies from merging into other bodies, for
+    #   instance block stacks. To prevent bodies from intersecting each other at
+    #   high speeds, simply reduce the update rate to 1/256.0.
+    # @note Huge blocks stacks are known to affect performance significantly.
+    #   To simulate wall stacks it is recommended to use small update rate
+    #   rather than enabling continuous collision mode. Small update rate will
+    #   ensure that bodies are not penetrating into each other, plus smooth
+    #   performance.
     # @param [Boolean] state +true+ to set continuous collision check on, or
     #   +false+ to set continuous collision check off.
     def set_continuous_collision_mode(state)
@@ -966,12 +1002,70 @@ module MSPhysics
     def enable
       check_validity
       Newton.bodyEnableSimulation(@_body_ptr)
+      @_enabled = true
     end
 
     # Disable simulation of the body.
     def disable
       check_validity
       Newton.bodyDisableSimulation(@_body_ptr)
+      @_enabled = false
+    end
+
+    # Determine whether the body is enabled in simulation.
+    # @return [Boolean]
+    def enabled?
+      check_validity
+      @_enabled
+    end
+
+    # Get joints created within the body.
+    # @return [Array<Joint>]
+    def get_joints
+      check_validity
+      Joint.get_joints(self)
+    end
+
+    # Get joints the body is connected to.
+    # @return [Array<Joint>]
+    def get_connected_joints
+      check_validity
+      Joint.get_connected_joints(self)
+    end
+
+    # Get all collidable bodies.
+    # @return [Array<Body>]
+    def get_collidable_bodies
+    end
+
+    # Get all non-collidable bodies.
+    # @return [Array<Body>]
+    def get_noncollidable_bodies
+    end
+
+    # Set collidable bodies.
+    # @param [Array<Body>] bodies
+    def set_collidable_bodies(bodies)
+    end
+
+    # Set non-collidable bodies.
+    # @param [Array<Body>] bodies
+    def set_noncollidable_bodies(bodies)
+    end
+
+    # Set all bodies collidable.
+    # Another way to set all bodies collidable is by writing
+    # <tt>this.set_noncollidable_bodies([])</tt>.
+    def set_all_bodies_collidable
+      set_noncollidable_bodies([])
+    end
+
+    # Set all bodies non-collidable.
+    # Another way to set all bodies non-collidable is by simply writing
+    # <tt>this.set_collidable_bodies([])</tt> or
+    # <tt>this.collidable = false</tt>.
+    def set_all_bodies_noncollidable
+      set_collidable_bodies([])
     end
 
     # Destroy the body.
@@ -991,6 +1085,12 @@ module MSPhysics
       @_collision_ptr = nil
       @_world_ptr = nil
       true
+    end
+
+    # Determine whether the body is destroyed.
+    # @return [Boolean]
+    def destroyed?
+      @_destroy_called
     end
 
     # Determines whether the body is valid.

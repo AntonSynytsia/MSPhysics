@@ -1,19 +1,23 @@
 module MSPhysics
   class Joint
 
-    PIN_LENGTH = 100
+    # @!visibility private
+    @@joints = []
+    # @!visibility private
+    PIN_LENGTH = 1
+    # @!visibility private
     TYPES = [
       :hinge,
-      :servo,
       :motor,
-      :spring,
+      :servo,
       :slider,
       :piston,
-      :up,
-      :fixed,
-      :ball,
+      :up_vector,
+      :spring,
+      :corkscrew,
+      :ball_and_socket,
       :universal,
-      :corkscrew
+      :fixed
     ]
 
     class << self
@@ -23,10 +27,40 @@ module MSPhysics
       # @return [Symbol, NilClass] Proper name if successful.
       def optimize_joint_name(name)
         name = name.to_s.downcase.gsub(/\s|_/, '')
-        JOINT_TYPES.each { |type|
+        TYPES.each { |type|
           return type if type.to_s.gsub(/_/, '') == name
         }
         nil
+      end
+
+      # Destroy all joints.
+      def destroy_all
+        @@joints.each { |joint|
+          joint.disconnect
+        }
+        @@joints.clear
+      end
+
+      # Get joints created within the body.
+      # @param [Body] body
+      # @return [Array<Joint>]
+      def get_joints(body)
+        list = []
+        @@joints.each { |joint|
+          list << joint if joint.parent == body
+        }
+        list
+      end
+
+      # Get joints the body is connected to.
+      # @param [Body] body
+      # @return [Array<Joint>]
+      def get_connected_joints(body)
+        list = []
+        @@joints.each { |joint|
+          list << joint if joint.child == body and joint.connected?
+        }
+        list
       end
 
     end # proxy class
@@ -63,6 +97,7 @@ module MSPhysics
         on_disconnect
       }
       @submit_constraints = Proc.new { |joint_ptr, timestep, thread_index|
+        @child.set_sleep_state(false)
         submit_constraints(timestep)
       }
       @get_info = Proc.new { |joint_ptr, info_ptr|
@@ -80,6 +115,7 @@ module MSPhysics
       @collidable = true
       @solver = 0
       @max_contact_joints = 100
+      @stiffness = 0.9
       connect(child) if create
     end
 
@@ -93,8 +129,10 @@ module MSPhysics
     # @!attribute [r] max_contact_joints
     #   @return [Fixnum]
 
+    # @!attribute [r] stiffness
+    #   @return [Numeric]
 
-    attr_reader :joint_ptr, :solver, :max_contact_joints
+    attr_reader :joint_ptr, :solver, :max_contact_joints, :stiffness
 
     private
 
@@ -168,6 +206,7 @@ module MSPhysics
       # Create constraint
       @connect_proc.call
       Newton.jointSetDestructor(@joint_ptr, @destructor_callback)
+      @@joints << self unless @@joints.include?(self)
       self.bodies_collidable = @collidable
       self.solver = @solver
       self.max_contact_joints = @max_contact_joints
@@ -233,7 +272,7 @@ module MSPhysics
     end
 
     # Modify parent and child body collision state.
-    # @param [Boolean]
+    # @param [Boolean] state
     def bodies_collidable=(state)
       check_validity
       @collidable = state ? true : false
@@ -264,6 +303,22 @@ module MSPhysics
       check_validity
       @max_contact_joints = count.to_i.abs
       Newton.userJointSetSolver(@joint_ptr, @solver, @max_contact_joints) if connected?
+    end
+
+    # Set joint stiffness; set the maximum percentage of the constraint force
+    # that will be applied to the constraint.
+    # @note Ideally the value should be 1.0 (100% stiff), but dues to numerical
+    #   integration error this could be the joint a little unstable, and lower
+    #   values are preferred.
+    # @param [Numeric] stiff A numeric value between 0.0 and 1.0.
+    def stiffness=(stiff)
+      @stiffness = MSPhysics.clamp(stiff, 0.0, 1.0)
+    end
+
+    # Disconnect and remove joint from the joints pointer.
+    def destroy
+      disconnect
+      @@joints.delete(self)
     end
 
   end # class Joint

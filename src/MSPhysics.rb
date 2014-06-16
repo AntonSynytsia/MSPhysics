@@ -1,3 +1,44 @@
+# ------------------------------------------------------------------------------
+# ** MSPhysics **
+#
+# Overview
+#   MSPhysics is a physics simulation tool for SketchUp. MSPhysics uses
+#   NewtonDynamics physics engine by Juleo Jerez in order to produce fast and
+#   reliable physics effects. In many ways the goal of this project is to bring
+#   SketchyPhysics back to life.
+#
+# Homepage
+#   http://sketchucation.com/forums/viewtopic.php?f=323&t=56852
+#
+# Access
+#   * (Menu) Plugins → MSPhysics → [option]
+#   * MSPhysics Toolbars
+#
+# Compatibility and Requirements
+#   * Microsoft Windows XP, Vista, 7, or 8. This plugin will not work for Macs
+#     as many of the techniques and features are achieved via the Windows API,
+#     which are not available on the other operating systems.
+#   * SketchUp 6 or later. SU 2014 is highly recommended!
+#   * Ruby core 1.8.7 for SU2013 and below. See plugin homepage for ruby upgrade
+#     instructions.
+#   * AMS_Library 1.0.9 +.
+#
+# Version
+#   * 0.2.0
+#   * NewtonDynamics 3.12
+#
+# Release Date
+#   June 26, 2014
+#
+# Licence
+#   MIT © 2014, Anton Synytsia
+#
+# Credits
+#   * Juleo Jerez for the NewtonDynamics physics engine.
+#   * Chris Phillips for SketchyPhysics.
+#
+# ------------------------------------------------------------------------------
+
 require 'sketchup.rb'
 require 'extensions.rb'
 
@@ -57,8 +98,8 @@ end
 module MSPhysics
 
   NAME         = 'MSPhysics'.freeze
-  VERSION      = '0.1.0'.freeze
-  RELEASE_DATE = 'April 26, 2014'.freeze
+  VERSION      = '0.2.0'.freeze
+  RELEASE_DATE = 'June 26, 2014'.freeze
 
   # Create the extension.
   @extension = SketchupExtension.new NAME, 'MSPhysics/main.rb'

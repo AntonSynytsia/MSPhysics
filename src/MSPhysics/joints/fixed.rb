@@ -40,8 +40,11 @@ module MSPhysics
       # Restrict the movement on the pivot point along all three orthonormal
       # directions.
       Newton.userJointAddLinearRow(@joint_ptr, pos0, pos1, matrix0.xaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       Newton.userJointAddLinearRow(@joint_ptr, pos0, pos1, matrix0.yaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       Newton.userJointAddLinearRow(@joint_ptr, pos0, pos1, matrix0.zaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       # Get a point along the pin axis at some reasonable large distance from
       # the pivot.
       v1 = matrix0.zaxis
@@ -52,7 +55,9 @@ module MSPhysics
       q1 = (matrix1.origin + v2).to_a.pack('F*')
       # Add two constraints row perpendicular to the pin vector.
       Newton.userJointAddLinearRow(@joint_ptr, q0, q1, matrix0.xaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       Newton.userJointAddLinearRow(@joint_ptr, q0, q1, matrix0.yaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       # Now get the ankle point
       v1 = matrix0.yaxis
       v1.length = PIN_LENGTH
@@ -61,6 +66,7 @@ module MSPhysics
       v2.length = PIN_LENGTH
       r1 = (matrix1.origin + v2).to_a.pack('F*')
       Newton.userJointAddLinearRow(@joint_ptr, r0, r1, matrix0.xaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
     end
 
     public

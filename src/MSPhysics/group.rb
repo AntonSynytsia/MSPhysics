@@ -35,7 +35,7 @@ module MSPhysics
       end
       edges = []
       get_entities(ent).each { |e|
-        if VALID_TYPES.include?(e.class) and recursive
+        if VALID_TYPES.include?(e.class) and recursive and MSPhysics.get_entity_type(e) == 'Body'
           edges.concat get_edges(e, true, true)
           next
         end
@@ -65,7 +65,7 @@ module MSPhysics
       end
       pts = []
       get_entities(ent).each { |e|
-        if VALID_TYPES.include?(e.class) and recursive
+        if VALID_TYPES.include?(e.class) and recursive and MSPhysics.get_entity_type(e) == 'Body'
           pts.concat get_vertices_from_edges(e, true, true)
           next
         end
@@ -92,7 +92,7 @@ module MSPhysics
       end
       faces = []
       get_entities(ent).each { |e|
-        if VALID_TYPES.include?(e.class) and recursive
+        if VALID_TYPES.include?(e.class) and recursive and MSPhysics.get_entity_type(e) == 'Body'
           faces.concat get_faces(e, true, true)
           next
         end
@@ -122,7 +122,7 @@ module MSPhysics
       end
       pts = []
       get_entities(ent).each { |e|
-        if VALID_TYPES.include?(e.class) and recursive
+        if VALID_TYPES.include?(e.class) and recursive and MSPhysics.get_entity_type(e) == 'Body'
           pts.concat get_vertices_from_faces(e, true, true)
           next
         end
@@ -149,7 +149,7 @@ module MSPhysics
       end
       pts = []
       get_entities(ent).each { |e|
-        if VALID_TYPES.include?(e.class) and recursive
+        if VALID_TYPES.include?(e.class) and recursive and MSPhysics.get_entity_type(e) == 'Body'
           pts.concat get_construction(e, true, true)
           next
         end
@@ -180,7 +180,7 @@ module MSPhysics
       end
       faces = []
       get_entities(ent).each { |e|
-        if VALID_TYPES.include?(e.class) and recursive
+        if VALID_TYPES.include?(e.class) and recursive and MSPhysics.get_entity_type(e) == 'Body'
           faces.concat get_polygons_from_faces(e, true, true)
           next
         end
@@ -189,7 +189,7 @@ module MSPhysics
           faces << e.mesh.polygon_points_at(i+1)
         }
       }
-	    if transform
+        if transform
         tra = ent.transformation
         faces.each { |face|
           face.each { |pt| pt.transform!(tra) }
@@ -228,7 +228,7 @@ module MSPhysics
       end
       bb = Geom::BoundingBox.new
       get_entities(ent).each { |e|
-        if VALID_TYPES.include?(e.class) and recursive
+        if VALID_TYPES.include?(e.class) and recursive and MSPhysics.get_entity_type(e) == 'Body'
           bb.add get_bounding_box_from_faces(e, true, true)
           next
         end

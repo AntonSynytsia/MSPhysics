@@ -39,7 +39,9 @@ module MSPhysics
       p1 = (matrix1.origin + front)
 
       Newton.userJointAddLinearRow(@joint_ptr, p0.to_a.pack('F*'), p1.to_a.pack('F*'), matrix0.xaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       Newton.userJointAddLinearRow(@joint_ptr, p0.to_a.pack('F*'), p1.to_a.pack('F*'), matrix0.yaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
 
       v0 = matrix0.zaxis
       v0.length = PIN_LENGTH
@@ -49,7 +51,9 @@ module MSPhysics
       q1 = (p1 + v1).to_a.pack('F*')
 
       Newton.userJointAddLinearRow(@joint_ptr, q0, q1, matrix0.xaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       Newton.userJointAddLinearRow(@joint_ptr, q0, q1, matrix0.yaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
 
       # Determine joint angle.
       sin_angle = (matrix0.yaxis * matrix1.yaxis) % matrix1.zaxis
@@ -65,11 +69,13 @@ module MSPhysics
           rel_angle = @angular_limits[0] - @angle
           @angle = @angular_limits[0]
           Newton.userJointAddAngularRow(@joint_ptr, rel_angle, matrix0.zaxis.to_a.pack('F*'))
+          Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
           Newton.userJointSetRowMinimumFriction(@joint_ptr, 0.0)
         elsif @angle > @angular_limits[1]
           rel_angle = @angle - @angular_limits[1]
           @angle = @angular_limits[1]
           Newton.userJointAddAngularRow(@joint_ptr, rel_angle, matrix0.zaxis.reverse.to_a.pack('F*'))
+          Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
           Newton.userJointSetRowMinimumFriction(@joint_ptr, 0.0)
         end
       end
@@ -80,11 +86,13 @@ module MSPhysics
           @dist = @linear_limits[0]
           pos = matrix0.origin.to_a.pack('F*')
           Newton.userJointAddLinearRow(@joint_ptr, pos, pos, matrix0.zaxis.to_a.pack('F*'))
+          Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
           Newton.userJointSetRowMinimumFriction(@joint_ptr, 0.0)
         elsif @dist > @linear_limits[1]
           @dist = @linear_limits[1]
           pos = matrix0.origin.to_a.pack('F*')
           Newton.userJointAddLinearRow(@joint_ptr, pos, pos, matrix0.zaxis.reverse.to_a.pack('F*'))
+          Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
           Newton.userJointSetRowMinimumFriction(@joint_ptr, 0.0)
         end
       end

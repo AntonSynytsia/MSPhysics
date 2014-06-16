@@ -30,7 +30,7 @@ module MSPhysics
     PROGRESS_REPORT = Proc.new { |progress|
       progress = (progress*100).to_i
       next true if @progress == progress
-      # printf("%d\%\n", progress)
+      printf("%d\%\n", progress)
       @progress = progress
       true
     }
@@ -136,7 +136,7 @@ module MSPhysics
           create_null(world)
         when :compound
           child_data = {}
-          handle = ATTR_NAME
+          handle = 'MSPhysics Body'
           definition = ent.respond_to?(:definition) ? ent.definition : ent
           definition.entities.each{ |e|
             next unless VALID_TYPES.include?(e.class)
@@ -418,7 +418,7 @@ module MSPhysics
           pt.transform!(tra)
           pts.push Conversion.convert_point(pt, :in, :m).to_a
         }
-        Newton.meshAddFace(mesh, pts.size, pts.flatten.pack('F*'), 12, 0)
+        Newton.meshAddFace(mesh, pts.size, pts.flatten.pack('F*'), 12, 1)
       }
       Newton.meshEndFace(mesh)
       if simplify

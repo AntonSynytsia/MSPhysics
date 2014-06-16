@@ -22,16 +22,20 @@ module MSPhysics
         angle = Math.asin(mag)
         # Add an angular constraint to correct the error angle.
         Newton.userJointAddAngularRow(@joint_ptr, angle, lateral_dir.to_a.pack('F*'))
+        Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
         # In theory only one correction is needed, but this produces instability
         # as the body may move sideways. Add a lateral correction prevent this
         # from happening.
         front_dir = lateral_dir * matrix1.zaxis
         Newton.userJointAddAngularRow(@joint_ptr, 0.0, front_dir.to_a.pack('F*'))
+        Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       else
         # If the angle error is very small then two angular correction along the
         # plane axis will do the trick.
         Newton.userJointAddAngularRow(@joint_ptr, 0.0, matrix0.yaxis.to_a.pack('F*'))
+        Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
         Newton.userJointAddAngularRow(@joint_ptr, 0.0, matrix0.xaxis.to_a.pack('F*'))
+        Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       end
     end
 

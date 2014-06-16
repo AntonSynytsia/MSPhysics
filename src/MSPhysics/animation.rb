@@ -3,6 +3,7 @@ module MSPhysics
 
     def initialize
       @record = {}
+      @fetched_record = {}
       @speed = 1
       @frame = 0
       @position = 0
@@ -14,14 +15,15 @@ module MSPhysics
       @max_frame = nil
     end
 
-    # @!attribute [r] min_frame
-    #   @return [Fixnum]
+    # @return [Fixnum]
+    def min_frame
+      @min_frame.to_i
+    end
 
-    # @!attribute [r] max_frame
-    #   @return [Fixnum]
-
-
-    attr_reader :min_frame, :max_frame
+    # @return [Fixnum]
+    def max_frame
+      @max_frame.to_i
+    end
 
     # Add entities transformation to record.
     # @note You cannot modify record while the tool is active.
@@ -34,8 +36,9 @@ module MSPhysics
       unless [Sketchup::Group, Sketchup::ComponentInstance].include?(entity.class)
         raise ArgumentError, "Expected group or a component, but got #{entity.class}."
       end
-      @record[entity] ||= []
-      @record[entity][frame] = entity.transformation
+      id = entity.entityID
+      @record[id] ||= []
+      @record[id][frame] = entity.transformation
       @min_frame = frame if @min_frame.nil? or frame < @min_frame
       @max_frame = frame if @max_frame.nil? or frame > @max_frame
       true
@@ -103,9 +106,9 @@ module MSPhysics
     end
 
     # Set replay speed factor and direction via sign.
-    # @param [Numeric] value A value between -16 and 16.
+    # @param [Numeric] value A value between -20 and 20.
     def speed=(value)
-      @speed = MSPhysics.clamp(value, -16, 16)
+      @speed = MSPhysics.clamp(value, -20, 20)
     end
 
     # Get replay frame.
@@ -135,6 +138,12 @@ module MSPhysics
         state = model.close_active
       end
       @active = true
+      @fetched_record.clear
+      @record.keys.each { |id|
+        e = MSPhysics.get_entity_by_id(id)
+        next unless e
+        @fetched_record[e] = @record[id].dup
+      }
       model.active_view.animation = self
       show_dialog
     end
@@ -148,6 +157,7 @@ module MSPhysics
       @paused = false
       @resumed = true
       @entered = true
+      @fetched_record.clear
       close_dialog
     end
 
@@ -158,9 +168,9 @@ module MSPhysics
       end
       @position += @speed
       self.frame = @position
-      @record.keys.each { |ent|
-        @record.delete(ent) if ent.deleted?
-        tra = @record[ent][@frame]
+      @fetched_record.keys.each { |ent|
+        @fetched_record.delete(ent) if ent.deleted?
+        tra = @fetched_record[ent][@frame]
         next unless tra
         ent.transformation = tra if tra
       }
@@ -169,6 +179,17 @@ module MSPhysics
       end
       view.show_frame
       true
+    end
+
+    def getExtents
+      model = Sketchup.active_model
+      bb = model.bounds
+      if Sketchup.version.to_i > 6
+        model.entities.each { |ent|
+          bb.add(ent.bounds)
+        }
+      end
+      bb
     end
 
     def resume(view)

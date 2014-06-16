@@ -6,14 +6,14 @@ module MSPhysics
 
     class << self
 
-      # Add material to the materials list.
+      # Add/Overwrite material to/in the materials list.
       # @param [Material] mat
       # @return [Boolean] +true+ (if successful).
       def add(mat)
         return false unless mat.is_a?(MSPhysics::Material)
         return false if @instances.include?(mat)
         remove_by_name(mat.name)
-        @instances << self
+        @instances << mat
       end
 
       # Remove material from the materials list.
@@ -38,10 +38,10 @@ module MSPhysics
       end
 
       # Get material by name.
+      # @note Case sensitive.
       # @param [String] name
       # @return [Material, NilClass]
-      def get(name)
-        name = name.to_s.downcase
+      def get_by_name(name)
         @instances.each { |mat|
           return mat if mat.name == name
         }
@@ -50,7 +50,7 @@ module MSPhysics
 
       # Get a list of all existing material names.
       # @return [Array<String>]
-      def get_names
+      def get_name
         names = []
         @instances.each { |mat|
           names << mat.name

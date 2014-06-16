@@ -1,8 +1,72 @@
 # Overview
 
-## Documentation
-Each Newton body has its own body context.
-See {MSPhysics::BodyContext}
+## Scripting Documentation
+Each Newton body has its own body context, see {MSPhysics::BodyContext}.
+
+### Simulation Events
+    # Triggered once at the beginning of simulation.
+    onStart {
+    }
+
+    # Triggered every frame, just before the physics simulation step.
+    onPreUpdate {
+    }
+
+    # Triggered every frame, just after the physics simulation step.
+    onUpdate {
+    }
+
+    # Triggered every frame, just after the onUpdate event is called.
+    onPostUpdate {
+    }
+
+    # Triggered once at the end of simulation.
+    onEnd {
+    }
+
+    # Triggered when the body is touched.
+    onTouch { |toucher, position, normal, speed|
+    }
+
+    # Triggered when the body is in an extended contact with another body.
+    onTouching { |toucher|
+    }
+
+    # Triggered when the body stops touching another body.
+    onUntouch { |toucher|
+    }
+
+    # Triggered when the body is clicked.
+    onClick {
+    }
+
+    # Triggered every next frame after the body is clicked and stops until the
+    # body is unclicked.
+    onClicked {
+    }
+
+    # Triggered when the body is unclicked.
+    onUnclick {
+    }
+
+### Basic Functions
+
+#### Simulation Variables
+Variables are used to communicate between fields and bodies. Setting a variable
+in the scripted field and reading it in a controller field for example.
+
+- <tt>set_var(name, value)</tt> - Set variable value.
+- <tt>get_var(name)</tt> - Get variable value.
+- <tt>get_set_var(name, value)</tt> - Get original value and set new value at the same time.
+
+#### Keyboard Input
+<tt>key(vk)</tt> - Get key value. For example, <tt>key('space')</tt> returns +1+ if down or +0+ if up.
+
+### Utility
+- See {MSPhysics::Body}
+- See {MSPhysics::BodyContext}
+- See {MSPhysics::CommonContext}
+- See {MSPhysics::Simulation}
 
 
 ## Script Errors
@@ -20,12 +84,12 @@ further processing. Don't be afraid to use <code>Body.#destroy</code> or
 * Use instance variables (<tt>@my_var</tt>) to implement data under the current
   body's scope.
 * Use class variables (<tt>@@my_var</tt>) or +get_var+/+set_var+/+get_set_var+
-  to implement data under all body scopes and controllers.
+  functions to implement data under all body scopes and controllers.
 
 
 ## Security
-* Avoid creating variables with an underscore in front. This will ensure that
-  none of the body variables are modified.
+* Avoid creating instance or class variables with an underscore in front. This
+  will ensure that none of the body variables are modified.
 * Avoid calling start/abort/commit operation or undo/redo while simulation is
   running; otherwise, simulation will reset improperly.
 
@@ -39,7 +103,7 @@ further processing. Don't be afraid to use <code>Body.#destroy</code> or
 
 ## Rules
 * Minimize the use of the <b>Compound From Mesh</b> shape, as it takes time to
-  generate the collision, and as the collisions are generated improperly for the
+  generate collision, and as the collisions are generated improperly for some
   complex shapes.
 * Avoid the use of high poly models as they cause lag, and are known to crash
   SketchUp while generating collisions.
@@ -64,9 +128,9 @@ zoom tool activating, for instance.
 
 ## Scaled Bodies
 To scale body, simply call <tt>Body.#set_matrix(new_tra)</tt> with the scale
-factors within the new transfomration. Not all bodies can be scaled though.
-Scaling compound and staticmesh bodies was disabled because Newton is incomplete
-here.
+factors inscribed within the new transformation matrix. Not all bodies can be
+scaled though. Scaling compound and staticmesh bodies was disabled because
+Newton is incomplete here.
 
 
 ## Performance

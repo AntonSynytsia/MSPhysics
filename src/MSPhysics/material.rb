@@ -14,16 +14,13 @@ module MSPhysics
     #   This value is clamped between +0.01+ and +2.00+.
     # @param [Numeric] softness The softness coefficient. Typical value is 0.15.
     #   This value is clamped between +0.01+ and +1.00+.
-    # @param [Numeric] thickness Collision thickness in meters.
-    #   Typical value is 0.00. This value is clamped between +0.00+ and +0.125+.
-    def initialize(name, density, static_friction, kinetic_friction, elasticity, softness, thickness)
-      @name = name.to_s.downcase
+    def initialize(name, density, static_friction, kinetic_friction, elasticity, softness)
+      @name = name.to_s
       @density = MSPhysics.clamp(density, 0.01, nil)
       @static_friction = MSPhysics.clamp(static_friction, 0.01, 2.00)
       @kinetic_friction = MSPhysics.clamp(kinetic_friction, 0.01, 2.00)
       @elasticity = MSPhysics.clamp(elasticity, 0.01, 2.00)
       @softness = MSPhysics.clamp(softness, 0.01, 1.00)
-      @thickness = MSPhysics.clamp(thickness, 0.00, 0.125)
     end
 
     # @!attribute [r] name
@@ -44,11 +41,8 @@ module MSPhysics
     # @!attribute [r] softness
     #   @return [Numeric] Softness coefficient.
 
-    # @!attribute [r] thickness
-    #   @return [Numeric] Material thickness in meters.
 
-
-    attr_reader :name, :density, :static_friction, :kinetic_friction, :elasticity, :softness, :thickness
+    attr_reader :name, :density, :static_friction, :kinetic_friction, :elasticity, :softness
 
     # Modify body density.
     # @param [Numeric] value Material density in kilograms per cubic meter.
@@ -78,12 +72,6 @@ module MSPhysics
     # @param [Numeric] coefficient
     def softness=(coefficient)
       @softness = MSPhysics.clamp(coefficient, 0.01, 1.0)
-    end
-
-    # Modify material thickness.
-    # @param [Numeric] value
-    def thickness=(value)
-      @thickness = MSPhysics.clamp(value, 0.00, 0.125)
     end
 
   end # class Material

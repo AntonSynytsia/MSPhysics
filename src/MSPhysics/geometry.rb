@@ -165,11 +165,14 @@ module MSPhysics
     # @return [Array<Numeric>] An array of three numeric values containing the
     #   scale of the x_axis, y_axis, and z_axis.
     def get_scale(tra)
-      matrix = Geom::Transformation.new(tra.to_a).to_a
+      m = Geom::Transformation.new(tra.to_a).to_a
       scale = []
-      scale[0] = Geom::Vector3d.new(matrix[0,3]).length
-      scale[1] = Geom::Vector3d.new(matrix[4,3]).length
-      scale[2] = Geom::Vector3d.new(matrix[8,3]).length
+      sign = m[2] < 0 ? -1 : 1
+      scale[0] = Geom::Vector3d.new(m[0,3]).length * sign
+      sign = m[6] < 0 ? -1 : 1
+      scale[1] = Geom::Vector3d.new(m[4,3]).length * sign
+      sign = m[10] < 0 ? -1 : 1
+      scale[2] = Geom::Vector3d.new(m[8,3]).length * sign
       scale
     end
 

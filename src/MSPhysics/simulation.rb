@@ -11,7 +11,8 @@ module MSPhysics
       @friction_model = 0
       @gravity = -9.8
       @mat_id = 0
-      @material = Material.new('wood', 700, 0.50, 0.25, 0.40, 0.15, 0.00)
+      @material = Material.new('Wood', 700, 0.50, 0.25, 0.40, 0.01)
+      @thickness = 0.00
       @bb = Geom::BoundingBox.new
       @mlt = nil
       @bodies = {}
@@ -26,6 +27,7 @@ module MSPhysics
       @show_bodies = true
       @animation = Animation.new
       @record_animation = false
+      @ccm = false
       @collision = {
         :show           => false,
         :line_width     => 1,
@@ -63,9 +65,17 @@ module MSPhysics
         :line_stipple   => '',
         :color          => Sketchup::Color.new(0,0,255)
       }
+      @record = {
+        :color          => Sketchup::Color.new(50,240,50,200),
+        :radius         => 10,
+        :origin         => [50,30],
+        :flash_time     => 0.5,
+        :flash          => true,
+        :last_time      => Time.now
+      }
       # The smaller the time step, the more accurate the simulation is!
-      # Min: 1/1024.0; Max: 1/32.0; Normal: 1/64.
-      @update_step = 1/64.0
+      # Min: 1/1200.0; Max: 1/30.0; Normal: 1/60.
+      @update_step = 1/60.0
       # Update bodies' transformation every n frames.
       @update_rate = 1
       # Callbacks
@@ -79,6 +89,8 @@ module MSPhysics
       @force_callback = Proc.new { |body_ptr, time_step, thread_index|
         body = get_body_by_body_ptr(body_ptr)
         next unless body
+        data = body._applied_forces
+        Newton.bodySetSleepState(body_ptr, data[:sleep]) if data[:sleep]
         if @gravity != 0
           mass = 0.chr*4
           ixx  = 0.chr*4
@@ -89,7 +101,6 @@ module MSPhysics
           force = [0,0, @gravity*mass]
           Newton.bodySetForce(body_ptr, force.pack('F*'))
         end
-        data = body._applied_forces
         Newton.bodySetForce(body_ptr, data[:set_force]) if data[:set_force]
         Newton.bodySetTorque(body_ptr, data[:set_torque]) if data[:set_torque]
         Newton.bodyAddForce(body_ptr, data[:add_force].pack('F*')) if data[:add_force]
@@ -398,6 +409,20 @@ module MSPhysics
       view.draw(GL_LINES, lines)
     end
 
+    def draw_record(view)
+      return unless @record_animation
+      if Time.now-@record[:last_time] > @record[:flash_time]
+        @record[:flash] = !@record[:flash]
+        @record[:last_time] = Time.now
+      end
+      return unless @record[:flash]
+      x = view.vpwidth - @record[:origin][0]
+      y = @record[:origin][1]
+      pts = points_on_circle2d([x,y], @record[:radius], 12, 0)
+      view.drawing_color = @record[:color]
+      view.draw2d(GL_POLYGON, pts)
+    end
+
     def clear_drawing_queues
       @draw_queue.clear
       @points_queue.clear
@@ -412,12 +437,15 @@ module MSPhysics
     def add_entity(entity)
       return unless [Sketchup::Group, Sketchup::ComponentInstance].include?(entity.class)
       return if get_body_by_entity(entity)
-      handle = MSPhysics::ATTR_NAME
+      handle = 'MSPhysics Body'
       return if entity.get_attribute(handle, 'Ignore')
       type = :dynamic
       shape = entity.get_attribute(handle, 'Shape', 'Convex Hull')
+      mat_name = entity.get_attribute(handle, 'Material', 'Wood')
+      mat = Materials.get_by_name(mat_name)
+      mat = @material unless mat
       begin
-        body = BodyContext.new(@world_ptr, entity, type, shape, @material)
+        body = BodyContext.new(@world_ptr, entity, type, shape, mat)
       rescue Exception => e
         puts "#{e}\n#{$@[0]}"
         index = Sketchup.active_model.entities.to_a.index(entity)
@@ -436,6 +464,8 @@ module MSPhysics
       if entity.get_attribute(handle, 'No Collision')
         body.collidable = false
       end
+      script = entity.get_attribute('MSPhysics Script', 'Value', '')
+      body.set_script(script)
       body
     end
 
@@ -466,239 +496,23 @@ module MSPhysics
       Newton.setFrictionModel(@world_ptr, @friction_model)
       @mat_id = Newton.materialGetDefaultGroupID(@world_ptr)
       Newton.materialSetCollisionCallback(@world_ptr, @mat_id, @mat_id, nil, @aabb_overlap_callback, @contacts_callback)
-      Newton.materialSetSurfaceThickness(@world_ptr, @mat_id, @mat_id, @material.thickness)
+      Newton.materialSetSurfaceThickness(@world_ptr, @mat_id, @mat_id, @thickness)
       Newton.materialSetDefaultFriction(@world_ptr, @mat_id, @mat_id, @material.static_friction, @material.kinetic_friction)
       Newton.materialSetDefaultElasticity(@world_ptr, @mat_id, @mat_id, @material.elasticity)
       Newton.materialSetDefaultSoftness(@world_ptr, @mat_id, @mat_id, @material.softness)
       # Create Bodies
-      count = 0
-      model.entities.each { |ent|
+      ents = []
+      #~ Create from selection (if any)
+      #~ model.selection.each { |e|
+      #~  ents << e if MSPhysics.get_entity_type(e) == 'Body'
+      #~ }
+      ents = model.entities if ents.empty?
+      ents.each { |ent|
+        next if MSPhysics.get_entity_type(ent) != 'Body'
         begin
-          body = add_entity(ent)
-          next unless body
-          if count == 0
-            script =%q`
-class Vehicle
-
-  # @param [Numeric] wheelbase distance between the axles of front and rear wheels.
-  # @param [Numeric] track distance between the steering axles of two front wheels.
-  def initialize(wheelbase, track)
-    @wheelbase = wheelbase.to_f.abs
-    @track = track.to_f.abs
-    @theta = 0
-    @front_center_radius = 0
-    @rear_center_radius = 0
-  end
-
-  attr_reader :front_center_radius, :rear_center_radius
-
-  def get_steering_angle
-    @theta.radians
-  end
-
-  # Set steering angle of the center between two front wheels in degrees.
-  # @param [Numeric] angle
-  def set_steering_angle(angle)
-    @theta = angle.degrees
-    return if @theta.zero?
-    @front_center_radius = @wheelbase / Math.sin(@theta)
-    @rear_center_radius = Math.tan(Math::PI/2 - @theta)*@wheelbase
-  end
-
-  # Get steering angle of the front left wheel in degrees.
-  # @return [Numeric]
-  def steer1
-    return 0 if @theta.zero?
-    Math.atan(@wheelbase.to_f/(@rear_center_radius - @track/2)).radians
-  end
-
-  # Get steering angle of the front right wheel in degrees.
-  # @return [Numeric]
-  def steer2
-    return 0 if @theta.zero?
-    Math.atan(@wheelbase.to_f/(@rear_center_radius + @track/2)).radians
-  end
-
-  # Get rotational coefficient of the front left wheel.
-  # @return [Numeric]
-  def wheel1
-    return 1 if @theta.zero?
-    r = (@wheelbase**2 + (@rear_center_radius - @track/2)**2)**0.5
-    (r.to_f / @front_center_radius).abs
-  end
-
-  # Get rotational coefficient of the front right wheel.
-  # @return [Numeric]
-  def wheel2
-    return 1 if @theta.zero?
-    r = (@wheelbase**2 + (@rear_center_radius + @track/2)**2)**0.5
-    (r.to_f / @front_center_radius).abs
-  end
-
-  # Get rotational coefficient of the rear left wheel.
-  # @return [Numeric]
-  def wheel3
-    return 1 if @theta.zero?
-    r = @rear_center_radius - @track/2
-    (r.to_f / @front_center_radius).abs
-  end
-
-  # Get rotational coefficient of the rear right wheel.
-  # @return [Numeric]
-  def wheel4
-    return 1 if @theta.zero?
-    r = @rear_center_radius + @track/2
-    (r.to_f / @front_center_radius).abs
-  end
-
-end
-
-onStart {
-ents = Sketchup.active_model.entities
-@bodies = {}
-@joints = {}
-# get bodies
-ents.to_a.each { |e|
-  next unless [Sketchup::Group, Sketchup::ComponentInstance].include?(e.class)
-  next if e.name.size.zero?
-  body = simulation.get_body_by_entity(e)
-  @bodies[e.name.to_sym] = body
-  if e.name == 'ground'
-    #body.set_static_friction(1.4)
-    #body.set_kinetic_friction(0.8)
-  elsif e.name.include?('wheel')
-    body.set_static_friction(1.16)
-    body.set_kinetic_friction(1.16)
-    body.set_softness(1.00)
-  end
-  #body.set_auto_sleep(false)
-  #body.set_mass(1)
-}
-# connect
-@joints[:steer1] = Servo.new(@bodies[:box1].entity.bounds.center, @bodies[:box1].entity.transformation.zaxis, @bodies[:body], @bodies[:box1], -45, 45, 200, 50000)
-@joints[:steer2] = Servo.new(@bodies[:box2].entity.bounds.center, @bodies[:box2].entity.transformation.zaxis, @bodies[:body], @bodies[:box2], -45, 45, 200, 50000)
-=begin
-accel = 1
-damp = 0.5
-@joints[:motor1] = Motor.new(@bodies[:wheel1].entity.bounds.center, @bodies[:wheel1].entity.transformation.xaxis, @bodies[:box1], @bodies[:wheel1], accel, damp)
-@joints[:motor2] = Motor.new(@bodies[:wheel2].entity.bounds.center, @bodies[:wheel2].entity.transformation.xaxis, @bodies[:box2], @bodies[:wheel2], accel, damp)
-@joints[:motor3] = Motor.new(@bodies[:wheel3].entity.bounds.center, @bodies[:wheel3].entity.transformation.xaxis, @bodies[:body], @bodies[:wheel3], accel, damp)
-@joints[:motor4] = Motor.new(@bodies[:wheel4].entity.bounds.center, @bodies[:wheel4].entity.transformation.xaxis, @bodies[:body], @bodies[:wheel4], accel, damp)
-=end
-@joints[:motor1] = Hinge.new(@bodies[:wheel1].entity.bounds.center, @bodies[:wheel1].entity.transformation.xaxis, @bodies[:box1], @bodies[:wheel1])
-@joints[:motor1].limits_enabled = false
-@joints[:motor2] = Hinge.new(@bodies[:wheel2].entity.bounds.center, @bodies[:wheel2].entity.transformation.xaxis, @bodies[:box2], @bodies[:wheel2])
-@joints[:motor2].limits_enabled = false
-@joints[:motor3] = Hinge.new(@bodies[:wheel3].entity.bounds.center, @bodies[:wheel3].entity.transformation.xaxis, @bodies[:body], @bodies[:wheel3])
-@joints[:motor3].limits_enabled = false
-@joints[:motor4] = Hinge.new(@bodies[:wheel4].entity.bounds.center, @bodies[:wheel4].entity.transformation.xaxis, @bodies[:body], @bodies[:wheel4])
-@joints[:motor4].limits_enabled = false
-@joints[:gear_box] = Fixed.new(@bodies[:gear_box].entity.bounds.center, @bodies[:body], @bodies[:gear_box], 0)
-
-@vehicle = Vehicle.new(60, 40)
-@note = Sketchup.active_model.add_note('note', 0.01, 0.02)
-@mass = 0
-@bodies.each { |name, body|
-  next if name == :ground
-  @mass += body.get_mass
-}
-simulation.set_solver_model(0)
-simulation.set_update_timestep(1/64.0)
-}
-
-onUpdate {
-v = key('a')-key('d')
-s1 = 0
-s2 = 0
-if v == 1
-  s1 = 16.3
-  s2 = 20
-elsif v == -1
-  s1 = -20
-  s2 = -16.3
-end
-@vehicle.set_steering_angle((key('a')-key('d'))*20)
-@joints[:steer1].target_angle = @vehicle.steer1
-@joints[:steer2].target_angle = @vehicle.steer2
-f = (key('s') - key('w'))*1
-=begin
-@joints[:motor1].controller = f*@vehicle.wheel1
-@joints[:motor2].controller = f*@vehicle.wheel2
-@joints[:motor3].controller = f*@vehicle.wheel3
-@joints[:motor4].controller = f*@vehicle.wheel4
-=end
-force = @bodies[:gear_box].entity.transformation.xaxis
-force = MSPhysics.scale_vector(force, (key('w') - key('s'))*5000)
-@bodies[:gear_box].add_force(force)
-vc = @bodies[:gear_box].get_velocity.length.to_f
-
-@note.text = "Vehicle Properties
-steer1 : #{@vehicle.steer1.round(2)}
-steer2 : #{@vehicle.steer2.round(2)}
-wheel1 : #{@vehicle.wheel1.round(2)}
-wheel2 : #{@vehicle.wheel2.round(2)}
-wheel3 : #{@vehicle.wheel3.round(2)}
-wheel4 : #{@vehicle.wheel4.round(2)}
-front center radius  : #{@vehicle.front_center_radius.round(2)}
-rear center radius   : #{@vehicle.rear_center_radius.round(2)}
-average distribution : #{((@vehicle.wheel1 + @vehicle.wheel2 + @vehicle.wheel3 + @vehicle.wheel4)/4.0).round(2)}
-
-Mass: #{@mass.round(2)}
-Static friction: #{@bodies[:wheel1].get_static_friction}
-Kinetic friction: #{@bodies[:wheel1].get_kinetic_friction}
-Current Ratios
-
-center : #{vc.round(2)}
-wheel1 : #{(@bodies[:wheel1].get_velocity.length / vc).round(2)}
-wheel2 : #{(@bodies[:wheel2].get_velocity.length / vc).round(2)}
-wheel3 : #{(@bodies[:wheel3].get_velocity.length / vc).round(2)}
-wheel4 : #{(@bodies[:wheel4].get_velocity.length / vc).round(2)}
-"
-}`
-
-script2 = %q`
-onStart {
-ents = Sketchup.active_model.entities
-@joints = []
-# get bodies
-ents.to_a.each { |e|
-  next unless [Sketchup::Group, Sketchup::ComponentInstance].include?(e.class)
-  next if e.name != 'ball'
-  body = simulation.get_body_by_entity(e)
-  body.set_density(7870)
-  body.set_elasticity(1.05)
-  body.set_softness(0.00)
-  body.friction_enabled = false
-  body.set_auto_sleep(false)
-  #body.set_continuous_collision_mode(false)
-  pos = e.bounds.center
-  pos.z += 60
-  jnt = Hinge.new(pos, [1,0,0], nil, body, 0, 0, 20)
-  jnt.limits_enabled = false
-  @joints << jnt
-}
-simulation.set_solver_model(0)
-simulation.set_update_timestep(1/128.0)
-}`
-script3 = %q`
-onStart{
-simulation.get_bodies.each { |body|
-  next if body.entity.name != 'brick'
-  body.set_density(1500)
-  body.set_elasticity(0.1)
-  body.set_softness(0.00)
-}
-simulation.set_solver_model(1)
-simulation.set_friction_model(1)
-simulation.set_update_timestep(1/256.0)
-}
-`
-
-            #body.set_script(script3)
-          end
-          count += 1
+          add_entity(ent)
         rescue Exception => e
-          raise "An error occurred while starting simulation!\nError:\n  #{e}\nLocation:\n  #{$@[0]}\n"
+          raise "An error occurred while starting simulation!\n#{e}"
         end
       }
       call_event(:onStart)
@@ -720,6 +534,7 @@ simulation.set_update_timestep(1/256.0)
     def do_on_update(frame)
       @frame = frame
       clear_drawing_queues
+      call_event(:onPreUpdate)
       Newton.update(@world_ptr, @update_step)
       raise @error if @error
       # Update particular joints
@@ -753,6 +568,7 @@ simulation.set_update_timestep(1/256.0)
         }
       end
       call_event(:onUpdate)
+      call_event(:onPostUpdate)
       # Trigger the onUntouch events for the untouched bodies.
       @contact_data.reject! { |body0, body1, last_frame|
         next false if frame == last_frame
@@ -775,6 +591,7 @@ simulation.set_update_timestep(1/256.0)
       draw_axis(view)
       draw_bounding_box(view)
       draw_contacts(view)
+      draw_record(view)
     end
 
     # Draw with OpenGL.
@@ -830,7 +647,7 @@ simulation.set_update_timestep(1/256.0)
       @draw_queue.push([points, color, type, width, stipple, mode.to_i])
     end
 
-    # Draw 2d.
+    # Draw 2D.
     # @param [Array<Array[Numeric]>, Array<Geom::Point3d>] points An array of
     #   points.
     # @param [Array, String, Sketchup::Color] color
@@ -843,7 +660,7 @@ simulation.set_update_timestep(1/256.0)
       draw(points, color, type, width, stipple, 0)
     end
 
-    # Draw 3d.
+    # Draw 3D.
     # @param [Array<Array[Numeric]>, Array<Geom::Point3d>] points An array of
     #   points.
     # @param [Array, String, Sketchup::Color] color
@@ -874,7 +691,7 @@ simulation.set_update_timestep(1/256.0)
       @points_queue.push([points, size, style, color, width, stipple])
     end
 
-    # Draws 3d points width style. Unlike the {#draw_points}, this function
+    # Draws 3d points with style. Unlike the {#draw_points}, this function
     # avoids drawing points behind camera and behind object.
     # @param (see #draw_points)
     def draw_points2(points, size = 1, style = 0, color = [0,0,0], width = 1, stipple = '')
@@ -882,6 +699,54 @@ simulation.set_update_timestep(1/256.0)
       points = [points] if points[0].is_a?(Numeric)
       raise 'Not enough points: At least one required!' if points.empty?
       @points_queue2.push([points, size, style, color, width, stipple])
+    end
+
+    # Get points on a 2D circle.
+    # @param [Array<Numeric>] origin
+    # @param [Numeric] radius
+    # @param [Fixnum] num_seg Number of segments.
+    # @param [Numeric] rot_angle Rotate angle in degrees.
+    # @return [Array<Array<Numeric>>] An array of points on circle.
+    def points_on_circle2d(origin, radius, num_seg = 16, rot_angle = 0)
+      ra = rot_angle.degrees
+      offset = Math::PI*2/num_seg.to_i
+      pts = []
+      for n in 0...num_seg.to_i
+        angle = ra + (n*offset)
+        x = Math.cos(angle)*radius
+        y = Math.sin(angle)*radius
+        pts << [x + origin[0], y + origin[1]]
+      end
+      pts
+    end
+
+    # Get points on a 3D circle.
+    # @param [Array<Numeric>, Geom::Point3d] origin
+    # @param [Array<Numeric>, Geom::Vector3d] normal
+    # @param [Numeric] radius
+    # @param [Fixnum] num_seg Number of segments.
+    # @param [Numeric] rot_angle Rotate angle in degrees.
+    # @return [Array<Geom::Point3d>] An array of points on circle.
+    def points_on_circle3d(origin, radius, normal = [0,0,1], num_seg = 16, rot_angle = 0)
+      # Get the x and y axes
+      origin = Geom::Point3d.new(origin)
+      axes = Geom::Vector3d.new(normal).axes
+      xaxis = axes[0]
+      yaxis = axes[1]
+      xaxis.length = radius
+      yaxis.length = radius
+      # Compute points
+      ra = rot_angle.degrees
+      offset = Math::PI*2/num_seg.to_i
+      pts = []
+      for n in 0...num_seg.to_i
+        angle = ra + (n*offset)
+        cosa = Math.cos(angle)
+        sina = Math.sin(angle)
+        vec = Geom::Vector3d.linear_combination(cosa, xaxis, sina, yaxis)
+        pts << origin + vec
+      end
+      pts
     end
 
     # Add text to the log line.
@@ -1065,9 +930,9 @@ simulation.set_update_timestep(1/256.0)
 
     # Set simulation update time-step in seconds. The smaller the time step, the
     # more accurate simulation is.
-    # @param [Numeric] step Min: +1/1024.0+; Max: +1/32.0+; Normal: +1/64.0+.
+    # @param [Numeric] step Min: +1/1200.0+; Max: +1/30.0+; Normal: +1/60.0+.
     def set_update_timestep(step)
-      @update_step = MSPhysics.clamp(step, 1/1024.0, 1/32.0)
+      @update_step = MSPhysics.clamp(step, 1/1200.0, 1/30.0)
     end
 
     # Get gravity.
@@ -1084,16 +949,16 @@ simulation.set_update_timestep(1/256.0)
 
     # Get material thickness in meters.
     # @return [Numeric]
-    def get_material_thickness(thickness)
-      @material.thickness
+    def get_material_thickness
+      @thickness
     end
 
     # Set material thickness in meters.
     # @param [Numeric] thickness
     #   This value is clamped between +0.00+ and +0.125+ meters.
     def set_material_thickness(thickness)
-      @material.thickness = thickness
-      Newton.materialSetSurfaceThickness(@world_ptr, @mat_id, @mat_id, @material.thickness)
+      @thickness = MSPhysics.clamp(thickness, 0, 0.125)
+      Newton.materialSetSurfaceThickness(@world_ptr, @mat_id, @mat_id, @thickness)
     end
 
     # Shoot a ray from +point1+ to +point2+ and get all ray intersections.
@@ -1123,7 +988,7 @@ simulation.set_update_timestep(1/256.0)
     end
 
     # Enable/Disable animation recording.
-    # @param [Boolean]
+    # @param [Boolean] state
     def record_animation=(state)
       @record_animation = state ? true : false
     end
@@ -1132,6 +997,21 @@ simulation.set_update_timestep(1/256.0)
     # @return [Boolean]
     def animation_recording?
       @record_animation
+    end
+
+    # Enable/Disable continuous collision mode for all bodies at once.
+    # @param [Boolean] state
+    def continuous_collision_mode_enabled=(state)
+      @ccm = state ? true : false
+      get_bodies.each { |body|
+        body.set_continuous_collision_mode(@ccm)
+      }
+    end
+
+    # Determine whether continuous collision mode is enabled.
+    # @return [Boolean]
+    def continuous_collision_mode_enabled?
+      @ccm
     end
 
   end # class Simulation

@@ -1,24 +1,30 @@
 module MSPhysics
-
-  # @!visibility private
-  ATTR_NAME = 'MSPhysics'.freeze
-
   class << self
 
+    # Validate object type.
+    # @param [Object] obj
+    # @param [Object] type
+    # @raise [ArgumentError] if object class doesn't match the specified type.
+    def validate_type(obj, type)
+      return if obj.is_a?(type)
+      raise ArgumentError, "Expected #{type}, but got #{obj.class}."
+    end
+
     # Get common attribute value from a collection of entities.
-    # @param [Array] ents A collection of entities.
+    # @param [Sketchup::Entity, Array<Sketchup::Entity>] ents A collection of entities.
+    # @param [String] handle Dictionary name.
     # @param [String] name Attribute name.
     # @param [Object] default_value The value to return if the attribute value
     #   is not found.
     # @return [String, NilClass] Common attribute value, or +nil+ if one of the
     #   entity attributes is different.
-    def get_attribute(ents, name, default_value = nil)
-      name = name.to_s
-      ents = [ents] unless ents.is_a?(Array)
+    def get_attribute(ents, handle, name, default_value = nil)
+      unless ents.is_a?(Array)
+        ents = ents.respond_to?(:to_a) ? ents.to_a : [ents]
+      end
       shape = nil
       ents.each { |e|
-        next unless [Sketchup::Group, Sketchup::ComponentInstance].include?(e.class)
-        s = e.get_attribute(ATTR_NAME, name, nil)
+        s = e.get_attribute(handle, name, nil)
         shape ||= s
         return if s != shape
       }
@@ -27,32 +33,35 @@ module MSPhysics
     end
 
     # Assign attribute value to a collection of entities.
-    # @param [Array] ents A collection of entities.
+    # @param [Sketchup::Entity, Array<Sketchup::Entity>] ents A collection of entities.
+    # @param [String] handle Dictionary name.
     # @param [String] name Attribute name.
     # @param [String] value Attribute value.
-    def set_attribute(ents, name, value)
-      name = name.to_s
-      ents = [ents] unless ents.is_a?(Array)
+    def set_attribute(ents, handle, name, value)
+      unless ents.is_a?(Array)
+        ents = ents.respond_to?(:to_a) ? ents.to_a : [ents]
+      end
       ents.each { |e|
-        next unless [Sketchup::Group, Sketchup::ComponentInstance].include?(e.class)
-        e.set_attribute(ATTR_NAME, name, value)
+        e.set_attribute(handle, name, value)
       }
     end
 
     # Delete MSPhysics attributes from a collection of entities.
-    # @param [Array] ents A collection of entities.
+    # @param [Sketchup::Entity, Array<Sketchup::Entity>] ents A collection of entities.
     def delete_attributes(ents)
-      ents = [ents] unless ents.is_a?(Array)
+      unless ents.is_a?(Array)
+        ents = ents.respond_to?(:to_a) ? ents.to_a : [ents]
+      end
       ents.each { |e|
-        e.delete_attribute(ATTR_NAME)
+        e.delete_attribute('MSPhysics')
+        e.delete_attribute('MSPhysics Body')
+        e.delete_attribute('MSPhysics Joint')
       }
     end
 
     # Delete MSPhysics attributes from all entities.
     def delete_all_attributes
-      Sketchup.active_model.entities.each { |e|
-        e.delete_attribute(ATTR_NAME)
-      }
+      delete_attributes(Sketchup.active_model.entities)
     end
 
     # Get newton physics engine version number.
@@ -101,6 +110,34 @@ module MSPhysics
     # @return [Numeric]
     def max(a, b)
       a > b ? a : b
+    end
+
+    # Get entity by entity ID.
+    # @param [Fixnum] id
+    # @return [Sketchup::Entity, NilClass]
+    def get_entity_by_id(id)
+      Sketchup.active_model.entities.each { |e|
+        return e if e.entityID == id
+      }
+      nil
+    end
+
+    # Get entity type.
+    # @param [Sketchup::Entity] e
+    # @return [String, NilClass]
+    def get_entity_type(e)
+      type = e.get_attribute('MSPhysics', 'Type', nil)
+      if type.nil? && [Sketchup::Group, Sketchup::ComponentInstance].include?(e.class)
+        type = 'Body'
+      end
+      type
+    end
+
+    # Set entity type.
+    # @param [Sketchup::Entity] e
+    # @param [String] type
+    def set_entity_type(e, type)
+      e.set_attribute('MSPhysics', 'Type', type.to_s)
     end
 
   end # class << self

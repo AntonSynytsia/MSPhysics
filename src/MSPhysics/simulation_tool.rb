@@ -26,6 +26,7 @@ module MSPhysics
       @ip = Sketchup::InputPoint.new
       @picked = []
       @clicked = nil
+      @selection = []
       @drag = {
         :line_width     => 2,
         :line_stipple   => '_',
@@ -33,6 +34,16 @@ module MSPhysics
         :point_style    => 4,
         :point_color    => Sketchup::Color.new(255,0,0),
         :line_color     => Sketchup::Color.new(0,0,255)
+      }
+      @pause_tag = {
+        :offset         => [[10,10], [50,10]],
+        :points         => [[0,0],[30,0],[30,70],[0,70]],
+        :color1         => [0,60,200,255],
+        :color2         => [0,0,10,255],
+        :stipple        => '',
+        :width          => 2,
+        :opacity        => 0,
+        :rate           => 15
       }
     end
 
@@ -149,23 +160,34 @@ module MSPhysics
       model = Sketchup.active_model
       view = model.active_view
       cam = view.camera
+	  # Wrap operations
       args = ['MSPhysics']
       args << true if Sketchup.version.to_i > 6
       model.start_operation(*args)
-      model.selection.clear
+	  # Close active path
       state = true
       while state
         state = model.close_active
       end
+	  # Save camera orientation
       @camera[:orig] = [cam.eye, cam.target, cam.up]
+	  # Activate tools
       AMS::InputProc.select_tool(self, true, false, false)
       AMS::Sketchup.add_observer(self)
+	  # Save original selection
+      model.selection.to_a.each{ |e|
+	    # Use entity ID to get proper reference if entity was once deleted.
+        @selection << e.entityID
+      }
+	  # Start simulation
       begin
         @simulation.do_on_start
       rescue Exception => e
         abort(e)
+        #abort("#{e}\n#{e.backtrace.join("\n")}")
         return
       end
+      model.selection.clear
       # Initialize timers
       t = Time.now
       @time[:start] = t
@@ -176,22 +198,40 @@ module MSPhysics
 
     def deactivate(view)
       view.animation = nil
+	  # End simulation
       begin
         @simulation.do_on_end
       rescue Exception => e
         abort(e) unless @error
       end
+	  # Reset Data
       CommonContext.reset_data
       Body.reset_data
       Collision.reset_data
+      Joint.destroy_all # Clear the joints queue
+	  # Remove observers and deselect tools
       AMS::Sketchup.remove_observer(self)
       AMS::InputProc.deselect_tool(self)
+	  # Use abort operation rather than commit operation.
+	  # The abort operation command sets bodies to original transformation.
       Sketchup.active_model.abort_operation
+	  # Set camera to original placements
       view.camera.set(*@camera[:orig])
+      sel = Sketchup.active_model.selection
+      sel.clear
+      to_select = []
+      @selection.each{ |id|
+        e = MSPhysics.get_entity_by_id(id)
+        to_select << e if e
+      }
+      sel.add(to_select)
       view.invalidate
       if @error
         puts 'MSPhysics Simulation was aborted due to an error!'
         UI.messagebox("MSPhysics Simulation was aborted due to an error!\n\n#{@error}")
+        data = MSPhysics::BodyContext._error_reference
+        Dialog.lead_to_error(data)
+        MSPhysics::BodyContext._error_reference = nil
       else
         @time[:end] = Time.now
         @time[:total] = @time[:end] - @time[:start]
@@ -203,12 +243,6 @@ module MSPhysics
         printf("  simulation time : %.2f seconds\n", @time[:sim])
         printf("  total time      : %.2f seconds\n", @time[:total])
       end
-      UI.start_timer(0.2,false){
-      if @simulation.animation.record_size > 0
-        @simulation.animation.play
-        @simulation.animation.speed = 2
-      end
-      }
     end
 
     def onCancel(reason, view)
@@ -338,8 +372,7 @@ module MSPhysics
         @simulation.do_on_update(@frame)
         @clicked.call_event(:onClicked) if @clicked
       rescue Exception => e
-        #abort(e)
-        abort("#{e}\n#{$@[0..2]}")
+        abort(e)
         return
       end if @frame > 0
       # Update camera
@@ -396,6 +429,38 @@ module MSPhysics
         view.animation = self
         @animation_stop = false
       end
+      animate_pause = false
+      if @paused or @suspended or @deactivated
+        animate_pause = true
+        v = @pause_tag[:opacity]
+        v += @pause_tag[:rate]
+        v = 240 if v > 240
+        @pause_tag[:opacity] = v
+      elsif @pause_tag[:opacity] > 0
+        animate_pause = true
+        v = @pause_tag[:opacity]
+        v -= @pause_tag[:rate]
+        v = 0 if v < 0
+        @pause_tag[:opacity] = v
+      end
+      if animate_pause
+        @pause_tag[:offset].each { |ox,oy|
+          pts = []
+          @pause_tag[:points].each { |x,y|
+            pts << [x+ox, y+oy]
+          }
+          c1 = @pause_tag[:color1]
+          c1[3] = @pause_tag[:opacity].to_i
+          c2 = @pause_tag[:color2]
+          c2[3] = @pause_tag[:opacity].to_i
+          view.drawing_color = c1
+          view.draw2d(GL_POLYGON, pts)
+          view.drawing_color = c2
+          view.line_stipple = @pause_tag[:stipple]
+          view.line_width = @pause_tag[:width]
+          view.draw2d(GL_LINE_LOOP, pts)
+        }
+      end
       unless @picked.empty?
         if @picked[0].entity.deleted?
           @picked.clear
@@ -415,7 +480,7 @@ module MSPhysics
       begin
         @simulation.do_on_draw(view)
       rescue Exception => e
-        abort("#{e}\n#{$@[0]}")
+        abort(e)
       end
     end
 

@@ -3,6 +3,19 @@ module MSPhysics
 
     include CommonContext
 
+    # @!visibility private
+    @@_error_reference = nil
+
+    # @!visibility private
+    def self._error_reference
+      @@_error_reference
+    end
+
+    # @!visibility private
+    def self._error_reference=(ref)
+      @@_error_reference = ref
+    end
+
     # @overload initialize(world, ent, type, shape, material, bb_tra)
     #   Create a body from scratch.
     #   @param [AMS::FFI:::Pointer] world A pointer to the newton world.
@@ -21,6 +34,8 @@ module MSPhysics
       @_events = {
         :onStart                => nil,
         :onUpdate               => nil,
+        :onPreUpdate            => nil,
+        :onPostUpdate           => nil,
         :onEnd                  => nil,
         :onPlay                 => nil,
         :onPause                => nil,
@@ -58,17 +73,65 @@ module MSPhysics
       @_script
     end
 
-    # Assign a string of code to the body context.
+    # Add to the existing script or overwrite the current script.
+    # @param [String] code
+    def add_script(code)
+      begin
+        eval(code.to_s)
+      rescue Exception => e
+        @@_error_reference = [@_entity.entityID]
+        index = Sketchup.active_model.entities.to_a.index(@_entity)
+        test = '(eval):'
+        ref = e.backtrace[0].to_s
+        found = ref.include?(test)
+        unless found
+          ref = e.message.to_s
+          found = ref.include?(test)
+        end
+        if found
+          line = ref.split(':')[1].to_i
+          @@_error_reference << line
+          raise "Exception in entity [#{index}], line #{line}!\n\n#{e}\n"
+        else
+          raise "Exception in entity [#{index}]!\n\n#{e}\n"
+        end
+      end
+      @_script += "\n" + code.to_s
+    end
+
+    # Clear and assign new script to the body.
     # @param [String] code
     def set_script(code)
-      # Clear assigned script.
+      clear_script
+      @_script = code.to_s
+      begin
+        eval(@_script)
+      rescue Exception => e
+        @@_error_reference = [@_entity.entityID]
+        index = Sketchup.active_model.entities.to_a.index(@_entity)
+        test = '(eval):'
+        ref = e.backtrace[0].to_s
+        found = ref.include?(test)
+        unless found
+          ref = e.message.to_s
+          found = ref.include?(test)
+        end
+        if found
+          line = ref.split(':')[1].to_i
+          @@_error_reference << line
+          raise "Exception in entity [#{index}], line #{line}!\n\n#{e}\n"
+        else
+          raise "Exception in entity [#{index}]!\n\n#{e}\n"
+        end
+      end
+    end
+
+    # Clear body script.
+    def clear_script
       @_events.keys.each { |key|
         @_events[key] = nil
       }
-      # Assign new script.
-      @_script = code.to_s
-      eval(@_script)
-
+      @_script = ''
     end
 
     # Assign a block of code to an event or a list of events.
@@ -147,8 +210,22 @@ module MSPhysics
       begin
         e.call(*args)
       rescue Exception => e
+        @@_error_reference = [@_entity.entityID]
         index = Sketchup.active_model.entities.to_a.index(@_entity)
-        raise "Exception in entities[#{index}]!\n#{event} Error:\n  #{e}\nLocation:\n  #{$@[0..2].join("\n  ")}\n"
+        test = '(eval):'
+        ref = e.backtrace[0].to_s
+        found = ref.include?(test)
+        unless found
+          ref = e.message.to_s
+          found = ref.include?(test)
+        end
+        if found
+          line = ref.split(':')[1].to_i
+          @@_error_reference << line
+          raise "Exception in entity [#{index}], line #{line}!\n#{event} error:\n\n#{e}\n"
+        else
+          raise "Exception in entity [#{index}]!\n#{event} error:\n\n#{e}\n"
+        end
       end
       true
     end
@@ -156,22 +233,36 @@ module MSPhysics
     # @!group Simulation Events
 
     # Assign a block of code to the onStart event.
-    # @yield This event is called when simulation starts, hence when the frame
-    #   is zero. No transformation updates are made at this point.
+    # @yield This event is triggered once when simulation starts, hence when the
+    #   frame is zero. No transformation updates are made at this point.
     def onStart(&block)
       assign_proc(__method__, block)
     end
 
     # Assign a block of code to the onUpdate event.
-    # @yield This event is called once a frame after the simulation starts,
+    # @yield This event is triggered every frame after the simulation starts,
     #   hence when the frame is greater than zero. Specifically, it is called
     #   after the newton update takes place.
     def onUpdate(&block)
       assign_proc(__method__, block)
     end
 
+    # Assign a block of code to the onPreUpdate event.
+    # @yield This event is triggered every frame before the newton update
+    #   occurs.
+    def onPreUpdate(&block)
+      assign_proc(__method__, block)
+    end
+
+    # Assign a block of code to the onUpdate event.
+    # @yield This event is triggered every frame after the #{onUpdate} event is
+    #   called.
+    def onPostUpdate(&block)
+      assign_proc(__method__, block)
+    end
+
     # Assign a block of code to the onEnd event.
-    # @yield This event is called when the simulation is reset; right before the
+    # @yield This event is triggered once when simulation ends; right before the
     #   bodies are moved back to their starting transformation.
     def onEnd(&block)
       assign_proc(__method__, block)
@@ -191,8 +282,8 @@ module MSPhysics
     end
 
     # Assign a block of code to the onDestroy event.
-    # @yield This event is called when the body is destroyed. It is not called
-    #   when the simulation ends, though.
+    # @yield This event is triggered when the body is destroyed. It is not
+    #   called when the simulation ends, though.
     def onDestroy(&block)
       assign_proc(__method__, block)
     end
@@ -208,16 +299,15 @@ module MSPhysics
     end
 
     # Assign a block of code to the onTouching event.
-    # @yield This event is called the body is in an extended contact with
-    #   another body. Specifically this event is triggered every next frame
-    #   until the body is untouched.
+    # @yield This event is triggered every frame when the body is in an extended
+    #   contact with another body.
     # @yieldparam [Body] toucher
     def onTouching(&block)
       assign_proc(__method__, block)
     end
 
     # Assign a block of code to the onUntouch event.
-    # @yield This event is called when the body is no longer in contact with
+    # @yield This event is triggered when the body is no longer in contact with
     #   another body. When this procedure is triggered it doesn't always mean
     #   the body is free from all contacts. It means that a particular +toucher+
     #   has stopped touching the body. In many cases, this procedure is
@@ -231,20 +321,20 @@ module MSPhysics
     end
 
     # Assign a block of code to the onClick event.
-    # @yield This event is called when the body is clicked.
+    # @yield This event is triggered when the body is clicked.
     def onClick(&block)
       assign_proc(__method__, block)
     end
 
     # Assign a block of code to the onClicked event.
-    # @yield This event is called every next frame after the body is clicked,
+    # @yield This event is triggered every next frame after the body is clicked,
     #   and it is called until the body is unclicked.
     def onClicked(&block)
       assign_proc(__method__, block)
     end
 
     # Assign a block of code to the onUnclick event.
-    # @yield This event is called when the body is unclicked.
+    # @yield This event is triggered when the body is unclicked.
     def onUnclick(&block)
       assign_proc(__method__, block)
     end

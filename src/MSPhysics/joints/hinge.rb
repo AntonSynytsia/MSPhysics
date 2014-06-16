@@ -47,8 +47,11 @@ module MSPhysics
       # Restrict the movement on the pivot point along all three orthonormal
       # directions.
       Newton.userJointAddLinearRow(@joint_ptr, pos0, pos1, matrix1.xaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       Newton.userJointAddLinearRow(@joint_ptr, pos0, pos1, matrix1.yaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       Newton.userJointAddLinearRow(@joint_ptr, pos0, pos1, matrix1.zaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       # Get a point along the pin axis at some reasonable large distance from
       # the pivot.
       v1 = matrix0.zaxis
@@ -59,7 +62,9 @@ module MSPhysics
       q1 = (matrix1.origin + v2).to_a.pack('F*')
       # Add two constraints row perpendicular to the pin vector.
       Newton.userJointAddLinearRow(@joint_ptr, q0, q1, matrix1.xaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       Newton.userJointAddLinearRow(@joint_ptr, q0, q1, matrix1.yaxis.to_a.pack('F*'))
+      Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
       # Determine joint angle.
       sin_angle = (matrix0.yaxis * matrix1.yaxis) % matrix1.zaxis
       cos_angle = matrix0.yaxis % matrix1.yaxis
@@ -75,11 +80,13 @@ module MSPhysics
           rel_angle = @min - @angle
           @angle = @min
           Newton.userJointAddAngularRow(@joint_ptr, rel_angle, matrix1.zaxis.to_a.pack('F*'))
+          Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
           Newton.userJointSetRowMinimumFriction(@joint_ptr, 0.0)
         elsif @angle > @max
           rel_angle = @angle - @max
           @angle = @max
           Newton.userJointAddAngularRow(@joint_ptr, rel_angle, matrix1.zaxis.reverse.to_a.pack('F*'))
+          Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
           Newton.userJointSetRowMinimumFriction(@joint_ptr, 0.0)
         else
           apply_std = true
@@ -90,11 +97,11 @@ module MSPhysics
       if apply_std and @friction != 0
         alpha = @omega / timestep.to_f
         Newton.userJointAddAngularRow(@joint_ptr, 0, matrix1.zaxis.to_a.pack('F*'))
+        Newton.userJointSetRowStiffness(@joint_ptr, @stiffness)
         Newton.userJointSetRowAcceleration(@joint_ptr, -alpha)
         Newton.userJointSetRowMinimumFriction(@joint_ptr, -@friction)
         Newton.userJointSetRowMaximumFriction(@joint_ptr, @friction)
       end
-      Newton.userJointSetRowStiffness(@joint_ptr, 1.0)
     end
 
     def on_disconnect
@@ -152,7 +159,7 @@ module MSPhysics
       @angle.radians
     end
 
-    # Get joint omega in degrees per second.
+    # Get joint angular velocity in degrees per second.
     # @return [Numeric]
     def omega
       @omega.radians
