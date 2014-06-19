@@ -49,15 +49,21 @@ module MSPhysics
         :zaxis          => Sketchup::Color.new(0,0,255)
       }
       @contacts = {
-        :show_points    => false,
-        :show_forces    => false,
-        :force_ratio    => 30,
-        :line_width     => 1,
-        :line_stipple   => '',
-        :point_size     => 5,
+        :show           => false,
+        :point_size     => 3,
         :point_style    => 2,
         :point_color    => Sketchup::Color.new(255,0,0),
-        :line_color     => Sketchup::Color.new(0,80,255)
+        :line_size      => 5,
+        :line_width     => 1,
+        :line_stipple   => '',
+        :line_color     => Sketchup::Color.new(0,0,255)
+      }
+      @forces = {
+        :show           => false,
+        :ratio          => 5,
+        :line_color     => Sketchup::Color.new(0,80,255),
+        :line_width     => 1,
+        :line_stipple   => ''
       }
       @aabb = {
         :show           => false,
@@ -89,8 +95,6 @@ module MSPhysics
       @force_callback = Proc.new { |body_ptr, time_step, thread_index|
         body = get_body_by_body_ptr(body_ptr)
         next unless body
-        data = body._applied_forces
-        Newton.bodySetSleepState(body_ptr, data[:sleep]) if data[:sleep]
         if @gravity != 0
           mass = 0.chr*4
           ixx  = 0.chr*4
@@ -101,10 +105,12 @@ module MSPhysics
           force = [0,0, @gravity*mass]
           Newton.bodySetForce(body_ptr, force.pack('F*'))
         end
+        data = body._applied_forces
         Newton.bodySetForce(body_ptr, data[:set_force]) if data[:set_force]
         Newton.bodySetTorque(body_ptr, data[:set_torque]) if data[:set_torque]
         Newton.bodyAddForce(body_ptr, data[:add_force].pack('F*')) if data[:add_force]
         Newton.bodyAddTorque(body_ptr, data[:add_torque].pack('F*')) if data[:add_torque]
+        Newton.bodySetSleepState(body_ptr, data[:sleep]) if data[:sleep]
         data.clear
       }
       @aabb_overlap_callback = Proc.new { |material, body_ptr0, body_ptr1, thread_index|
@@ -112,10 +118,23 @@ module MSPhysics
         body1 = get_body_by_body_ptr(body_ptr1)
         # Verify the existence of both Body objects.
         next 1 unless body0 and body1
-        next 1 if !body0.proc_assigned?(:onTouching) and !body1.proc_assigned?(:onTouching)
+        # Skip collision if both bodies are frozen.
+        next 0 if body0.frozen? and body1.frozen?
+        # Skip collision if bodies are set non-collidable.
+        next 0 unless body0.collidable_with?(body1)
+        next 0 unless body1.collidable_with?(body0)
+        # Generate onTouching event if the bodies overlap
+        skip = true
+        [:onTouch, :onTouching, :onUntouch].each { |evt|
+          if body0.proc_assigned?(evt) or body1.proc_assigned?(evt)
+            skip = false
+            break
+          end
+        }
+        next 1 if skip
         found_data = false
         @contact_data.each{ |data|
-          if data.include?(body0) and data.include?(body1)
+          if data[:body0] == body0 and data[:body1] == body1
             found_data = data
             break
           end
@@ -127,7 +146,6 @@ module MSPhysics
           body1.call_event(:onTouching, body0)
         rescue Exception => e
           @error = e
-          next 1
         end
         1
       }
@@ -137,12 +155,11 @@ module MSPhysics
         body0 = get_body_by_body_ptr(body_ptr0)
         body1 = get_body_by_body_ptr(body_ptr1)
         # Verify the existence of both Body objects.
-        next unless body0
-        next unless body1
+        next unless body0 and body1
         # Unfreeze bodies unless both of them are frozen.
         next if body0.frozen? and body1.frozen?
-        body0.frozen = false
-        body1.frozen = false
+        body0.frozen = false if body0.frozen?
+        body1.frozen = false if body1.frozen?
         # Update contacts.
         contact = Newton.contactJointGetFirstContact(contact_joint)
         while !contact.null?
@@ -162,11 +179,18 @@ module MSPhysics
           Newton.materialSetContactSoftness(mat, sft)
           contact = Newton.contactJointGetNextContact(contact_joint, contact)
         end
-        next if !body0.proc_assigned?(:onTouch) and !body1.proc_assigned?(:onTouch)
+        skip = true
+        [:onTouch, :onTouching, :onUntouch].each { |evt|
+          if body0.proc_assigned?(evt) or body1.proc_assigned?(evt)
+            skip = false
+            break
+          end
+        }
+        next if skip
         # Do the rest for the onTouch event.
         found = false
         @contact_data.each{ |data|
-          if data.include?(body0) and data.include?(body1)
+          if data[:body0] == body0 and data[:body1] == body1
             found = true
             break
           end
@@ -175,7 +199,7 @@ module MSPhysics
         # Get first contact material.
         contact = Newton.contactJointGetFirstContact(contact_joint)
         next if contact.null?
-        @contact_data.push [body0, body1, @frame]
+        @contact_data << { :body0 => body0, :body1 => body1, :frame => @frame }
         material = Newton.contactGetMaterial(contact)
         point = 0.chr*12
         normal = 0.chr*12
@@ -189,7 +213,6 @@ module MSPhysics
           body1.call_event(:onTouch, body0, point, normal, speed)
         rescue Exception => e
           @error = e
-          next
         end
       }
       @tree_collision_callback = Proc.new { |static_body_ptr, body_ptr, face_id, count, vertices, stride|
@@ -358,29 +381,47 @@ module MSPhysics
     end
 
     def draw_contacts(view)
-      return unless @contacts[:show_points] or @contacts[:show_forces]
+      return unless @contacts[:show]
       points = []
-      lines = []
+      #lines = []
       @bodies.values.each{ |body|
         next if body.static?
         body.get_contacts.each { |contact|
-          points.push(contact.position.to_a) if @contacts[:show_points]
-          if @contacts[:show_forces]
-            pos = contact.position
-            force = contact.force
-            next if force.length == 0
-            force.length *= @contacts[:force_ratio]/body.get_mass.to_f
-            lines << pos
-            lines << pos + force
-          end
+          points << contact.position.to_a
+          #v = contact.normal
+          #v.length = @contacts[:line_size]
+          #lines << contact.position
+          #lines << contact.position + v
         }
       }
-      points.uniq!
-      view.draw_points(points, @contacts[:point_size], @contacts[:point_style], @contacts[:point_color]) unless points.empty?
+      #points.uniq!
+      return if points.empty?
+      view.draw_points(points, @contacts[:point_size], @contacts[:point_style], @contacts[:point_color])
+      #view.drawing_color = @contacts[:line_color]
+      #view.line_width = @contacts[:line_width]
+      #view.line_stipple = @contacts[:line_stipple]
+      #view.draw(GL_LINES, lines)
+    end
+
+    def draw_forces(view)
+      return unless @forces[:show]
+      lines = []
+      @bodies.values.each{ |body|
+        next if body.static?
+        mass = body.get_mass.to_f
+        body.get_contacts.each { |contact|
+          pos = contact.position
+          force = contact.force
+          next if force.length == 0
+          force.length *= @forces[:ratio]/mass
+          lines << pos
+          lines << pos + force
+        }
+      }
       return if lines.empty?
-      view.drawing_color = @contacts[:line_color]
-      view.line_width = @contacts[:line_width]
-      view.line_stipple = @contacts[:line_stipple]
+      view.drawing_color = @forces[:line_color]
+      view.line_width = @forces[:line_width]
+      view.line_stipple = @forces[:line_stipple]
       view.draw(GL_LINES, lines)
     end
 
@@ -435,7 +476,7 @@ module MSPhysics
     # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
     # @return [Body, NilClass] A body object (if successful).
     def add_entity(entity)
-      return unless [Sketchup::Group, Sketchup::ComponentInstance].include?(entity.class)
+      return unless entity.is_a?(Sketchup::Group) or entity.is_a?(Sketchup::ComponentInstance)
       return if get_body_by_entity(entity)
       handle = 'MSPhysics Body'
       return if entity.get_attribute(handle, 'Ignore')
@@ -526,7 +567,7 @@ module MSPhysics
         Newton.destroy(@world_ptr)
         @world_ptr = nil
       }
-      show_collision(false)
+      self.collision_visible = false
       call_event(:onEnd)
     end
 
@@ -555,12 +596,12 @@ module MSPhysics
       }
       # Check whether the emitted body must be destroyed
       @emitted.reject! { |body, life_end|
-        next false if frame < life_end
+        next false if @frame < life_end
         body.destroy(true)
         true
       }
       # Update entities
-      if frame % @update_rate == 0
+      if @frame % @update_rate == 0
         @bodies.values.each{ |body|
           next if body.get_sleep_state
           body.entity.transformation = body.get_matrix
@@ -570,10 +611,10 @@ module MSPhysics
       call_event(:onUpdate)
       call_event(:onPostUpdate)
       # Trigger the onUntouch events for the untouched bodies.
-      @contact_data.reject! { |body0, body1, last_frame|
-        next false if frame == last_frame
-        body0.call_event(:onUntouch, body1)
-        body1.call_event(:onUntouch, body0)
+      @contact_data.reject! { |data|
+        next false if @frame == data[:frame]
+        data[:body0].call_event(:onUntouch, data[:body1])
+        data[:body1].call_event(:onUntouch, data[:body0])
         true
       }
       # Remove all bodies if destroy all called
@@ -591,7 +632,12 @@ module MSPhysics
       draw_axis(view)
       draw_bounding_box(view)
       draw_contacts(view)
+      draw_forces(view)
       draw_record(view)
+      view.drawing_color = 'black'
+      view.line_width = 1
+      view.line_stipple = ''
+      call_event(:onDraw, view)
     end
 
     # Draw with OpenGL.
@@ -607,7 +653,7 @@ module MSPhysics
     #   Line).
     # @param [Boolean] mode Drawing mode: +1+ : 3d, +0+ : 2d.
     def draw(points, color, type = :line, width = 1, stipple = '', mode = 1)
-      raise ArgumentError, 'Expected an array of points.' unless [Array, Geom::Point3d].include?(points.class)
+      raise ArgumentError, 'Expected an array of points.' unless points.is_a?(Array) or points.is_a?(Geom::Point3d)
       points = [points] if points[0].is_a?(Numeric)
       s = points.size
       raise 'Not enough points: At least one required!' if s == 0
@@ -685,7 +731,7 @@ module MSPhysics
     #   Line), '_' (Long Dashes Line), '-.-' (Dash Dot Dash Line), '' (Solid
     #   Line).
     def draw_points(points, size = 1, style = 0, color = [0,0,0], width = 1, stipple = '')
-      raise ArgumentError, 'Expected an array of points.' unless [Array, Geom::Point3d].include?(points.class)
+      raise ArgumentError, 'Expected an array of points.' unless points.is_a?(Array) or points.is_a?(Geom::Point3d)
       points = [points] if points[0].is_a?(Numeric)
       raise 'Not enough points: At least one required!' if points.empty?
       @points_queue.push([points, size, style, color, width, stipple])
@@ -695,7 +741,7 @@ module MSPhysics
     # avoids drawing points behind camera and behind object.
     # @param (see #draw_points)
     def draw_points2(points, size = 1, style = 0, color = [0,0,0], width = 1, stipple = '')
-      raise ArgumentError, 'Expected an array of points.' unless [Array, Geom::Point3d].include?(points.class)
+      raise ArgumentError, 'Expected an array of points.' unless points.is_a?(Array) or points.is_a?(Geom::Point3d)
       points = [points] if points[0].is_a?(Numeric)
       raise 'Not enough points: At least one required!' if points.empty?
       @points_queue2.push([points, size, style, color, width, stipple])
@@ -779,7 +825,7 @@ module MSPhysics
 
     # Get all bodies in simulation.
     # @return [Array<Body>]
-    def get_bodies
+    def bodies
       @bodies.values
     end
 
@@ -805,7 +851,7 @@ module MSPhysics
 
     # Show/hide bodies' collision.
     # @param [Boolean] state
-    def show_collision(state = true)
+    def collision_visible=(state)
       state = state ? true : false
       return if (@collision[:show] == state)
       @collision[:show] = state
@@ -830,7 +876,7 @@ module MSPhysics
 
     # Show/hide bodies' centre of mass.
     # @param [Boolean] state
-    def show_axis(state = true)
+    def axis_visible=(state)
       @axis[:show] = state ? true : false
     end
 
@@ -842,31 +888,31 @@ module MSPhysics
 
     # Show/hide body contact points.
     # @param [Boolean] state
-    def show_contact_points(state = true)
-      @contacts[:show_points] = state ? true : false
+    def contact_points_visible=(state)
+      @contacts[:show] = state ? true : false
     end
 
     # Determine whether the body contact points are visible.
     # @return [Boolean]
     def contact_points_visible?
-      @contacts[:show_points]
+      @contacts[:show]
     end
 
     # Show/hide body contact forces.
     # @param [Boolean] state
-    def show_contact_forces(state = true)
-      @contacts[:show_forces] = state ? true : false
+    def contact_forces_visible=(state)
+      @forces[:show] = state ? true : false
     end
 
     # Determine whether the body contact forces are visible.
     # @return [Boolean]
     def contact_forces_visible?
-      @contacts[:show_forces]
+      @forces[:show]
     end
 
     # Show/hide bodies' bounding box (AABB).
     # @param [Boolean] state
-    def show_bounding_box(state = true)
+    def bounding_box_visible=(state)
       @aabb[:show] = state ? true : false
     end
 
@@ -878,7 +924,7 @@ module MSPhysics
 
     # Show/hide all bodies.
     # @param [Boolean] state
-    def show_bodies(state = true)
+    def bodies_visible=(state = true)
       state = state ? true : false
       @bodies.values.each { |body|
         body.entity.visible = state
@@ -894,7 +940,7 @@ module MSPhysics
 
     # Get Newton solver model.
     # @return [Fixnum] +0+ - exact, +n+ - interactive.
-    def get_solver_model
+    def solver_model
       @solver_model
     end
 
@@ -903,60 +949,60 @@ module MSPhysics
     #   Use exact solver model when precision is more important than speed.
     #   Use interactive solver model when good degree of stability is important,
     #   but not as important as speed.
-    def set_solver_model(model)
+    def solver_model=(model)
       @solver_model = model.to_i.abs
       Newton.setSolverModel(@world_ptr, @solver_model)
     end
 
     # Get Newton friction model.
     # @return [Fixnum] +0+ - exact, +1+ - adaptable.
-    def get_friction_model
+    def friction_model
       @friction_model
     end
 
     # Set coulomb model of friction.
     # @param [Fixnum] model +0+ - exact coulomb, +1+ - adaptive coulomb.
     #   Adaptive coulomb is about 10% faster than exact coulomb.
-    def set_friction_model(model)
+    def friction_model=(model)
       @friction_model = (model == 1 ? 1 : 0)
       Newton.setFrictionModel(@world_ptr, @friction_model)
     end
 
     # Get simulation update time-step for every second.
     # @return [Numeric]
-    def get_update_timestep
+    def update_timestep
       @update_step
     end
 
     # Set simulation update time-step in seconds. The smaller the time step, the
     # more accurate simulation is.
     # @param [Numeric] step Min: +1/1200.0+; Max: +1/30.0+; Normal: +1/60.0+.
-    def set_update_timestep(step)
+    def update_timestep=(step)
       @update_step = MSPhysics.clamp(step, 1/1200.0, 1/30.0)
     end
 
     # Get gravity.
     # @return [Numeric] in m/s/s.
-    def get_gravity
+    def gravity
       @gravity
     end
 
     # Set gravity.
-    # @param [Numeric] gravity in m/s/s.
-    def set_gravity(gravity)
+    # @param [Numeric] accel in m/s/s.
+    def gravity=(accel)
       @gravity = gravity.to_f
     end
 
     # Get material thickness in meters.
     # @return [Numeric]
-    def get_material_thickness
+    def material_thickness
       @thickness
     end
 
     # Set material thickness in meters.
     # @param [Numeric] thickness
     #   This value is clamped between +0.00+ and +0.125+ meters.
-    def set_material_thickness(thickness)
+    def material_thickness=(thickness)
       @thickness = MSPhysics.clamp(thickness, 0, 0.125)
       Newton.materialSetSurfaceThickness(@world_ptr, @mat_id, @mat_id, @thickness)
     end
@@ -1003,7 +1049,7 @@ module MSPhysics
     # @param [Boolean] state
     def continuous_collision_mode_enabled=(state)
       @ccm = state ? true : false
-      get_bodies.each { |body|
+      self.bodies.each { |body|
         body.set_continuous_collision_mode(@ccm)
       }
     end

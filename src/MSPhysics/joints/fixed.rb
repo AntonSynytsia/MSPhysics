@@ -9,20 +9,13 @@ module MSPhysics
     #   body.
     # @param [Body, NilClass] child Pass +nil+ to create an initially
     #   disconnected joint.
-    # @param [Numeric] breaking_force The force required for the body to
-    #   disconnect. Given force must be in Newtons. Pass +0+ to remain the body
+    # @param [Numeric] bforce The force required for the body to
+    #   disconnect. Given force must be in Newtons. Pass +0+ to have the body
     #   connected regardless of force.
-    def initialize(pos, parent, child, breaking_force = 0)
+    def initialize(pos, parent, child, bforce = 0)
       super(pos, [0,0,1], parent, child, 6)
-      @breaking_force = breaking_force.to_f.abs
+      @breaking_force = bforce.to_f.abs
     end
-
-    # @!attribute [r] breaking_force Get required disconnection force in
-    #   Newtons.
-    #   @return [Numeric]
-
-
-    attr_reader :breaking_force
 
     private
 
@@ -71,7 +64,13 @@ module MSPhysics
 
     public
 
-    # Set required disconnection force in Newtons.
+    # Get breaking force in Newtons required to the disconnect the joint.
+    # @return [Numeric]
+    def breaking_force
+      @breaking_force
+    end
+
+    # Set breaking force in Newtons required to the disconnect the joint.
     # @param [Numeric] force Pass zero to disable disconnection by force.
     def breaking_force=(force)
       @breaking_force = breaking_force.to_f.abs

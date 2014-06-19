@@ -3,8 +3,6 @@ module MSPhysics
 
     # @!visibility private
     @@instance = nil
-    # @!visibility private
-    CURSOR_IDS = {}
 
     class << self
 
@@ -35,13 +33,12 @@ module MSPhysics
         state = model.close_active
       end
       model.selection.clear
-      create_cursors if CURSOR_IDS.empty?
       @ctrl_down    = false
       @shift_down   = false
       @parent       = nil
       @picked       = nil
       @connected    = []
-      @cursor_id    = CURSOR_IDS[:select]
+      @cursor_id    = MSPhysics::CURSORS[:select]
       @body_color   = [100,0,160]
       @joint_color  = [255,255,0]
       @line_width1  = 3
@@ -56,17 +53,8 @@ module MSPhysics
       onSetCursor
     end
 
-    def create_cursors
-      dir = File.dirname(__FILE__)
-      path = File.join(dir, 'images')
-      names = [:select, :select_plus, :select_plus_minus]
-      names.each { |name|
-        CURSOR_IDS[name] = UI.create_cursor(File.join(path, name.to_s + '.png'), 5, 12)
-      }
-    end
-
     def add_to_connected(ent)
-      if @cursor_id == CURSOR_IDS[:select_plus]
+      if @cursor_id == MSPhysics::CURSORS[:select_plus]
         unless @connected.include?(ent)
           @connected << ent
         end
@@ -120,7 +108,7 @@ module MSPhysics
 
     # Get body entities connected to the specified joint entity.
     # @param [Array<Sketchup::ComponentInstance>] picked_joint
-    # @param [Sketchup::Group, Sketchup::ComponentDefinition]
+    # @return [Array<Sketchup::Group, Sketchup::ComponentInstance>]
     def get_connected_bodies(picked_joint)
       data = picked_joint.get_attribute('MSPhysics Joint', 'Connected', '[]')
       begin
@@ -225,12 +213,12 @@ module MSPhysics
     def onKeyDown(key, rpt, flags, view)
       if key == COPY_MODIFIER_KEY && rpt == 1
         @ctrl_down = true
-        @cursor_id = CURSOR_IDS[:select_plus]
+        @cursor_id = MSPhysics::CURSORS[:select_plus]
         refresh_viewport
       end
       if key == CONSTRAIN_MODIFIER_KEY && rpt == 1
         @shift_down = true
-        @cursor_id = CURSOR_IDS[:select_plus_minus]
+        @cursor_id = MSPhysics::CURSORS[:select_plus_minus]
         refresh_viewport
       end
     end
@@ -238,12 +226,12 @@ module MSPhysics
     def onKeyUp(key, rpt, flags, view)
       if key == COPY_MODIFIER_KEY
         @ctrl_down = false
-        @cursor_id = @shift_down ? CURSOR_IDS[:select_plus_minus] : CURSOR_IDS[:select]
+        @cursor_id = @shift_down ? MSPhysics::CURSORS[:select_plus_minus] : MSPhysics::CURSORS[:select]
         refresh_viewport
       end
       if key == CONSTRAIN_MODIFIER_KEY
         @shift_down = false
-        @cursor_id = @ctrl_down ? CURSOR_IDS[:select_plus] : CURSOR_IDS[:select]
+        @cursor_id = @ctrl_down ? MSPhysics::CURSORS[:select_plus] : MSPhysics::CURSORS[:select]
         refresh_viewport
       end
     end

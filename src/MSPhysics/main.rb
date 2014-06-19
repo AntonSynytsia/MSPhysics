@@ -81,7 +81,7 @@ unless file_loaded?(__FILE__)
 
 
   cmd = UI::Command.new('cmd'){
-    MSPhysics::Dialog.show(!MSPhysics::Dialog.visible?)
+    MSPhysics::Dialog.visible = !MSPhysics::Dialog.visible?
   }
   cmd.menu_text = cmd.tooltip = 'UI'
   cmd.status_bar_text = 'Show/Hide MSPhysics UI.'
@@ -190,14 +190,14 @@ unless file_loaded?(__FILE__)
     cmd = UI::Command.new('cmd'){
       next unless sim_tool.active?
       sim = sim_tool.instance.simulation
-      sim.set_solver_model(model)
+      sim.solver_model = model
     }
     cmd.menu_text = cmd.tooltip = name
     cmd.status_bar_text = description
     cmd.set_validation_proc {
       next MF_GRAYED if sim_tool.inactive?
       sim = sim_tool.instance.simulation
-      sim.get_solver_model == model ? MF_CHECKED : MF_UNCHECKED
+      sim.solver_model == model ? MF_CHECKED : MF_UNCHECKED
     }
     solver_menu.add_item(cmd)
   }
@@ -217,12 +217,12 @@ unless file_loaded?(__FILE__)
     item = speed_menu.add_item(name){
       next unless sim_tool.active?
       sim = sim_tool.instance.simulation
-      sim.set_update_timestep(step)
+      sim.update_timestep = step
     }
     speed_menu.set_validation_proc(item){
       next MF_GRAYED if sim_tool.inactive?
       sim = sim_tool.instance.simulation
-      sim.get_update_timestep == step ? MF_CHECKED : MF_UNCHECKED
+      sim.update_timestep == step ? MF_CHECKED : MF_UNCHECKED
     }
   }
 
@@ -251,7 +251,7 @@ unless file_loaded?(__FILE__)
   cmd = UI::Command.new('cmd'){
     next unless sim_tool.active?
     sim = sim_tool.instance.simulation
-    sim.show_collision(!sim.collision_visible?)
+    sim.collision_visible = !sim.collision_visible?
   }
   cmd.menu_text = cmd.tooltip = 'Collision Wireframe'
   cmd.status_bar_text = "Show/Hide bodies' collision wireframe."
@@ -269,7 +269,7 @@ unless file_loaded?(__FILE__)
   cmd = UI::Command.new('cmd'){
     next if sim_tool.inactive?
     sim = sim_tool.instance.simulation
-    sim.show_axis(!sim.axis_visible?)
+    sim.axis_visible = !sim.axis_visible?
   }
   cmd.menu_text = cmd.tooltip = 'Centre of Mass'
   cmd.status_bar_text = "Show/Hide bodies' centre of mass axis."
@@ -287,7 +287,7 @@ unless file_loaded?(__FILE__)
   cmd = UI::Command.new('cmd'){
     next if sim_tool.inactive?
     sim = sim_tool.instance.simulation
-    sim.show_bounding_box(!sim.bounding_box_visible?)
+    sim.bounding_box_visible = !sim.bounding_box_visible?
   }
   cmd.menu_text = cmd.tooltip = 'Bounding Box'
   cmd.status_bar_text = "Show/Hide bodies' world axis aligned bounding box (AABB)."
@@ -305,7 +305,7 @@ unless file_loaded?(__FILE__)
   cmd = UI::Command.new('cmd'){
     next if sim_tool.inactive?
     sim = sim_tool.instance.simulation
-    sim.show_contact_points(!sim.contact_points_visible?)
+    sim.contact_points_visible = !sim.contact_points_visible?
   }
   cmd.menu_text = cmd.tooltip = 'Contact Points'
   cmd.status_bar_text = 'Show/Hide body contact points.'
@@ -323,7 +323,7 @@ unless file_loaded?(__FILE__)
   cmd = UI::Command.new('cmd'){
     next if sim_tool.inactive?
     sim = sim_tool.instance.simulation
-    sim.show_contact_forces(!sim.contact_forces_visible?)
+    sim.contact_forces_visible = !sim.contact_forces_visible?
   }
   cmd.menu_text = cmd.tooltip = 'Contact Forces'
   cmd.status_bar_text = 'Show/Hide body contact forces.'
@@ -341,7 +341,7 @@ unless file_loaded?(__FILE__)
   cmd = UI::Command.new('cmd'){
     next if sim_tool.inactive?
     sim = sim_tool.instance.simulation
-    sim.show_bodies(!sim.bodies_visible?)
+    sim.bodies_visible = !sim.bodies_visible?
   }
   cmd.menu_text = cmd.tooltip = 'Bodies'
   cmd.status_bar_text = 'Show/Hide all bodies.'
@@ -358,7 +358,7 @@ unless file_loaded?(__FILE__)
 
   cmd = UI::Command.new('cmd'){
     msg = "This option removes all MSPhysics assigned properties and scripts.\n"
-    msg << 'Are you sure you want to delete them?'
+    msg << 'Are you sure you want to proceed?'
     choice = UI.messagebox(msg, MB_YESNO)
     MSPhysics.delete_all_attributes if choice == IDYES
   }
@@ -400,7 +400,6 @@ unless file_loaded?(__FILE__)
     if active.is_a?(Array)
       next if active.size > 1
       parent = active[0]
-      #next if MSPhysics.get_attribute(parent, 'MSPhysics Body', 'Ignore')
       shape = MSPhysics.get_attribute(parent, 'MSPhysics Body', 'Shape')
       next if shape != 'Compound'
     end
@@ -468,8 +467,8 @@ unless file_loaded?(__FILE__)
     end
 
     msp_menu.add_item('Delete Attributes'){
-      msg = "This option removes MSPhysics assigned properties and scripts from the selected bodies.\n"
-      msg << 'Are you sure you want to delete them?'
+      msg = "This option removes MSPhysics assigned properties and scripts from the selected entities.\n"
+      msg << 'Are you sure you want to proceed?'
       choice = UI.messagebox(msg, MB_YESNO)
       MSPhysics.delete_attributes(bodies) if choice == IDYES
     }

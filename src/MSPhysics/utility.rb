@@ -1,4 +1,23 @@
 module MSPhysics
+
+  CURSORS = {
+    :select             => 0,
+    :select_plus        => 0,
+    :select_plus_minus  => 0,
+    :hand               => 671,
+    :target             => 0
+  }
+
+  # Create cursors
+  dir = File.dirname(__FILE__)
+  path = File.join(dir, 'images/cursors')
+    names = [:select, :select_plus, :select_plus_minus]
+    names.each { |name|
+    CURSORS[name] = UI.create_cursor(File.join(path, name.to_s + '.png'), 5, 12)
+  }
+  CURSORS[:target] = UI.create_cursor(File.join(path, 'target.png'), 15, 15)
+
+
   class << self
 
     # Validate object type.
@@ -53,7 +72,7 @@ module MSPhysics
         ents = ents.respond_to?(:to_a) ? ents.to_a : [ents]
       end
       ents.each { |e|
-        e.delete_attribute('MSPhysics')
+        #e.delete_attribute('MSPhysics')
         e.delete_attribute('MSPhysics Body')
         e.delete_attribute('MSPhysics Joint')
       }

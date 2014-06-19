@@ -15,6 +15,8 @@ module MSPhysics
     @selected_joint = nil
     # @!visibility private
     @last_active_body_tab = 2
+    # @!visibility private
+    @min_size = nil
 
     # @!visibility private
     def update_state
@@ -47,9 +49,9 @@ module MSPhysics
           cmd << "$('#tab3-none').css('display', 'none');"
           cmd << "$('#tab3-content').css('display', 'block');"
           script = @selected_body.get_attribute('MSPhysics Script', 'Value', '').inspect
-          cmd << "editorSetScript(#{script});"
+          cmd << "editor_set_script(#{script});"
           line = @selected_body.get_attribute('MSPhysics Script', 'Line', 0).to_i
-          cmd << "editorGoToLine(#{line});"
+          cmd << "editor_set_line(#{line});"
         else
           cmd << "$('#tab3-none').css('display', 'block');"
           cmd << "$('#tab3-content').css('display', 'none');"
@@ -60,7 +62,7 @@ module MSPhysics
             cmd << "$('#tab2-content2').css('display', 'block');"
           end
         end
-        cmd << "activateTab(#{@last_active_body_tab});"
+        cmd << "activate_tab(#{@last_active_body_tab});"
       else
         @selected_body = nil
         cmd << "$('#tab2-none').css('display', 'block');"
@@ -83,7 +85,7 @@ module MSPhysics
           cmd << "$('#tab4-#{type}').css('display', '#{display}');"
         }
         cmd << "$('#tab4-none').css('display', '#{found ? 'none' : 'block'}');"
-        cmd << "activateTab(4);"
+        cmd << "activate_tab(4);"
       else
         @selected_joint = nil
         cmd << "$('#tab4-none').css('display', 'block');"
@@ -97,7 +99,7 @@ module MSPhysics
     # Open/Close MSPhysics UI.
     # @param [Boolean] state
     # @return [Boolean] true if state changed.
-    def show(state = true)
+    def visible=(state)
       state = state == true
       return false if state == visible?
       if state
@@ -105,19 +107,23 @@ module MSPhysics
         width = 500
         height = 500
         @dlg = UI::WebDialog.new(title, false, 'MSPhysics UI', width, height, 800, 600, true)
-        @dlg.set_size(width, height)
+        @dlg.set_size(width, height) unless @min_size
         # Callbacks
         @dlg.add_action_callback('init'){ |dlg, params|
           update_state
           next if @init_called
-          w,h = eval(params)
-          if Sketchup.version.to_i > 6
-            @dlg.min_width = 447 + width - w
-            @dlg.min_height = 150 + height - h
+          unless @min_size
+            w,h = eval(params)
+            if Sketchup.version.to_i > 6
+              @min_size = [447 + width - w, 200 + height - h]
+              @dlg.min_width = @min_size[0]
+              @dlg.min_height = @min_size[1]
+            end
           end
           @init_called = true
           if @first_time
             Sketchup.active_model.selection.add_observer(self)
+            Sketchup.add_observer(self)
             @first_time = false
           end
         }
@@ -125,6 +131,8 @@ module MSPhysics
           next unless @selected_body
           code = dlg.get_element_value('temp-area')
           @selected_body.set_attribute('MSPhysics Script', 'Value', code)
+        }
+        @dlg.add_action_callback('cursor_changed'){ |dlg, params|
           @selected_body.set_attribute('MSPhysics Script', 'Line', params)
         }
         @dlg.add_action_callback('open_link'){ |dlg, params|
@@ -165,12 +173,18 @@ module MSPhysics
       sel = Sketchup.active_model.selection
       sel.clear
       sel.add(ent)
-      self.show
-      @dlg.execute_script('activateTab(3);')
-      return unless line
-      UI.start_timer(0.2, false){
-        @dlg.execute_script("editorGoToLine(#{line}); editorSelectCurrentLine();")
-      }
+      if self.visible?
+        @dlg.execute_script('activate_tab(3);')
+        return unless line
+        @dlg.execute_script("editor_set_line(#{line}); editor_select_current_line();")
+      else
+        self.visible = true
+        UI.start_timer(0.5, false){
+          @dlg.execute_script('activate_tab(3);')
+          next unless line
+          @dlg.execute_script("editor_set_line(#{line}); editor_select_current_line();")
+        }
+      end
     end
 
     # @!visibility private
@@ -191,6 +205,16 @@ module MSPhysics
     # @!visibility private
     def onSelectionRemoved(sel, element)
       update_state
+    end
+
+    # @!visibility private
+    def onNewModel(model)
+      model.selection.add_observer(self) if visible?
+    end
+
+    # @!visibility private
+    def onOpenModel(model)
+      model.selection.add_observer(self) if visible?
     end
 
   end # module Dialog

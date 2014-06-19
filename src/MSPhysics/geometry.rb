@@ -167,12 +167,12 @@ module MSPhysics
     def get_scale(tra)
       m = Geom::Transformation.new(tra.to_a).to_a
       scale = []
-      sign = m[2] < 0 ? -1 : 1
-      scale[0] = Geom::Vector3d.new(m[0,3]).length * sign
-      sign = m[6] < 0 ? -1 : 1
-      scale[1] = Geom::Vector3d.new(m[4,3]).length * sign
-      sign = m[10] < 0 ? -1 : 1
-      scale[2] = Geom::Vector3d.new(m[8,3]).length * sign
+      #sign = m[2] < 0 ? -1 : 1
+      scale[0] = Geom::Vector3d.new(m[0,3]).length# * sign
+      #sign = m[6] < 0 ? -1 : 1
+      scale[1] = Geom::Vector3d.new(m[4,3]).length# * sign
+      #sign = m[10] < 0 ? -1 : 1
+      scale[2] = Geom::Vector3d.new(m[8,3]).length# * sign
       scale
     end
 

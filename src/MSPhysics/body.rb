@@ -179,6 +179,16 @@ module MSPhysics
         false
       end
 
+      # Determine whether the two bodies can collide with each other.
+      # @param [Body] body1
+      # @param [Body] body2
+      # @return [Boolean]
+      def bodies_coolidable?(body1, body2)
+        return false unless body1.collidable?
+        return false unless body2.collidable?
+        body1.collidable_with?(body2) and body2.collidable_with?(body1)
+      end
+
     end # proxy class
 
     # @overload initialize(world, ent, type, shape, material, bb_tra)
@@ -281,12 +291,13 @@ module MSPhysics
       @_up_vector         = nil
       @_enabled           = true
       @_contact_mode      = 0
+      @_contact_bodies    = []
       @@_instances[body_ptr.address] = self
       BodyObserver.call_event(:on_create, self)
     end
 
     # @!visibility private
-    attr_reader :_applied_forces, :_world_ptr, :_body_ptr, :_collision_ptr, :_up_vector, :_contact_mode
+    attr_reader :_world_ptr, :_body_ptr, :_collision_ptr, :_up_vector, :_applied_forces
 
     private
 
@@ -788,6 +799,7 @@ module MSPhysics
     # @return [Boolean] Whether the body is frozen.
     def frozen?
       check_validity
+      return true if this.static?
       Newton.bodyGetFreezeState(@_body_ptr) == 1
     end
 
@@ -842,7 +854,7 @@ module MSPhysics
     #   active.
     def set_sleep_state(state)
       check_validity
-      @_applied_forces[:sleep] = (state ? 1 : 0)
+      @_applied_forces[:sleep] = (state ? 0 : 1)
     end
 
     # Get the auto-sleep mode of the body.
@@ -1036,21 +1048,58 @@ module MSPhysics
     # Get all collidable bodies.
     # @return [Array<Body>]
     def get_collidable_bodies
+      check_validity
+      return @_contact_bodies if @_contact_mode == 1
+      sim_tool = SimulationTool.instance
+      return [] unless sim_tool
+      bodies = sim_tool.simulation.bodies
+      bodies.delete(self)
+      @_contact_mode == 0 ? bodies : bodies - @_contact_bodies
     end
 
     # Get all non-collidable bodies.
     # @return [Array<Body>]
     def get_noncollidable_bodies
+      check_validity
+      return [] if @_contact_mode == 0
+      return @_contact_bodies if @_contact_mode == 1
+      sim_tool = SimulationTool.instance
+      return [] unless sim_tool
+      bodies = sim_tool.simulation.bodies
+      bodies.delete(self)
+      bodies - @_contact_bodies
+    end
+
+    # Determine whether the body is collidable with another body.
+    # @param [Body] body
+    # @return [Boolean]
+    def collidable_with?(body)
+      check_validity
+      return true if @_contact_mode == 0
+      return @_contact_bodies.include?(body) if @_contact_mode == 1
+      return !@_contact_bodies.include?(body) if @_contact_mode == 2
     end
 
     # Set collidable bodies.
     # @param [Array<Body>] bodies
     def set_collidable_bodies(bodies)
+      check_validity
+      @_contact_bodies = bodies.to_a.dup
+      @_contact_mode = 1
+      sim_tool = SimulationTool.instance
+      return unless sim_tool
+      if (sim_tool.simulation.bodies - @_contact_bodies).empty?
+        @_contact_bodies.clear
+        @_contact_mode = 0
+      end
     end
 
     # Set non-collidable bodies.
     # @param [Array<Body>] bodies
     def set_noncollidable_bodies(bodies)
+      check_validity
+      @_contact_bodies = bodies.to_a.dup
+      @_contact_mode = @_contact_bodies.empty? ? 0 : 2
     end
 
     # Set all bodies collidable.
@@ -1087,17 +1136,13 @@ module MSPhysics
       true
     end
 
-    # Determine whether the body is destroyed.
-    # @return [Boolean]
-    def destroyed?
-      @_destroy_called
-    end
-
     # Determines whether the body is valid.
     # @return [Boolean]
     def valid?
       (@_entity and @_body_ptr and @_entity.valid?) ? true : false
     end
+
+    alias destroyed? valid?
 
     # Determines whether the body is invalid.
     # @return [Boolean]

@@ -8,13 +8,12 @@
   do.
 - Convex bodies jump on scaled tree collisions, and sometimes fall through them.
 ~ NewtonMeshSimplify not working.
-- Compound from mesh doesn't work properly in all cases.
+- Compound from mesh doesn't work properly in many cases.
 
 
 # Fix/Optimize/To Do
 
 ## Version 1.0.0
-- Complete remove all physics attributes feature.
 - Test the access of get/set_var vs body class variables and methods under
   controllers.
 - Magnetic bodies
@@ -36,9 +35,7 @@
 - Remove many commands, and add them to the dialog - save space.
 - Control flipped bodies.
 - Add dialog to the animation tool.
-- Work on body materials.
 - Make sure animation tool is similar to SketchyPhysics, so that Twilight is compatible.
-- Add options to the editor, control font, theme, and line wrap-up.
 - Add air density
 - Modify Body.#look_at method, add accel, damp
 - Fix the jumping of bodies and improper behaviours!
@@ -53,6 +50,16 @@
       have joints as well.
     - Create joints from joint attributes. Don't forget to find joint parent.
 - Default Settings
+- Add cursors target, select, hand, make sure they are accessible to the user.
+- Collidable bodies
+- Optimize delete attributes method.
+- Remove not needed methods from the body. Body.set_sleep_state not working...
+- Choose particular bodies to be available in the solver:
+    http://newtondynamics.com/forum/viewtopic.php?f=9&t=6923&hilit=frozen+bodies#p47966
+    ~ simulation.set_simulation_bodies
+- Joints go to sleep
+    http://newtondynamics.com/forum/viewtopic.php?f=9&t=7710&p=52972&hilit=set+body+sleeping#p52972
+- Update link when posting
 
 
 ## Next Versions
@@ -90,11 +97,13 @@
 - Change get_function_name, set_fucntion_name to function_name, function_name=
 - Run simulation of selected bodies.
 - Add Body.#set_collidable_bodies - By default all bodies are collidable.
-~ Recompile Newton to static library (.so). Make sure it's under the proper namespace and
+~ Recompile Newton to static library (.so). Make sure it's under the proper name-space and
   compatible with Ruby.
 - Joystick input
 - Custom compound from mesh groups.
 - Reset simulation with saved body positions.
+- Set editor theme, font, and some other editor settings.
+~ Make a move to Bullet
 
 
 ## Other

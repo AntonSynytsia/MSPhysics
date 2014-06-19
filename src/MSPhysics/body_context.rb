@@ -37,6 +37,7 @@ module MSPhysics
         :onPreUpdate            => nil,
         :onPostUpdate           => nil,
         :onEnd                  => nil,
+        :onDraw                 => nil,
         :onPlay                 => nil,
         :onPause                => nil,
         :onDestroy              => nil,
@@ -119,9 +120,9 @@ module MSPhysics
         if found
           line = ref.split(':')[1].to_i
           @@_error_reference << line
-          raise "Exception in entity [#{index}], line #{line}!\n\n#{e}\n"
+          raise "Exception in entity [#{index}], line #{line}!\n\n#{e}\n\n"
         else
-          raise "Exception in entity [#{index}]!\n\n#{e}\n"
+          raise "Exception in entity [#{index}]!\n\n#{e}\n\n"
         end
       end
     end
@@ -196,7 +197,7 @@ module MSPhysics
     # @param [Symbol] event
     # @return [Boolean]
     def proc_assigned?(event)
-      @_events[event].nil? ? false : true
+      @_events[event] ? true : false
     end
 
     # Trigger an event.
@@ -222,9 +223,9 @@ module MSPhysics
         if found
           line = ref.split(':')[1].to_i
           @@_error_reference << line
-          raise "Exception in entity [#{index}], line #{line}!\n#{event} error:\n\n#{e}\n"
+          raise "Exception in entity [#{index}], line #{line}!\n#{event} error:\n\n#{e}\n\n"
         else
-          raise "Exception in entity [#{index}]!\n#{event} error:\n\n#{e}\n"
+          raise "Exception in entity [#{index}]!\n#{event} error:\n\n#{e}\n\n"
         end
       end
       true
@@ -255,7 +256,7 @@ module MSPhysics
     end
 
     # Assign a block of code to the onUpdate event.
-    # @yield This event is triggered every frame after the #{onUpdate} event is
+    # @yield This event is triggered every frame after the {#onUpdate} event is
     #   called.
     def onPostUpdate(&block)
       assign_proc(__method__, block)
@@ -265,6 +266,14 @@ module MSPhysics
     # @yield This event is triggered once when simulation ends; right before the
     #   bodies are moved back to their starting transformation.
     def onEnd(&block)
+      assign_proc(__method__, block)
+    end
+
+    # Assign a block of code to the onDraw event.
+    # @yield This event is triggered whenever the view is redrawn, even when
+    #   simulation is paused.
+    # @yieldparam [Sketchup::View] view
+    def onDraw(&block)
       assign_proc(__method__, block)
     end
 

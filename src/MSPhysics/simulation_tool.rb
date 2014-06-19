@@ -109,7 +109,7 @@ module MSPhysics
     # @return [Fixnum]
     #   +0+ - Interactive mode: The drag tool and rotating camera is enabled.
     #   +1+ - Game mode: The drag tool and rotating camera is disabled.
-    def get_mode
+    def mode
       @mode
     end
 
@@ -117,7 +117,7 @@ module MSPhysics
     # @param [Fixnum] mode
     #   +0+ - Interactive mode: The drag tool and rotating camera is enabled.
     #   +1+ - Game mode: The drag tool and rotating camera is disabled.
-    def set_mode(mode)
+    def mode=(mode)
       @mode = (mode == 1 ? 1 : 0)
     end
 
@@ -160,26 +160,26 @@ module MSPhysics
       model = Sketchup.active_model
       view = model.active_view
       cam = view.camera
-	  # Wrap operations
+      # Wrap operations
       args = ['MSPhysics']
       args << true if Sketchup.version.to_i > 6
       model.start_operation(*args)
-	  # Close active path
+      # Close active path
       state = true
       while state
         state = model.close_active
       end
-	  # Save camera orientation
+      # Save camera orientation
       @camera[:orig] = [cam.eye, cam.target, cam.up]
-	  # Activate tools
+      # Activate tools
       AMS::InputProc.select_tool(self, true, false, false)
       AMS::Sketchup.add_observer(self)
-	  # Save original selection
+      # Save original selection
       model.selection.to_a.each{ |e|
-	    # Use entity ID to get proper reference if entity was once deleted.
+        # Use entity ID to get proper reference if entity was once deleted.
         @selection << e.entityID
       }
-	  # Start simulation
+      # Start simulation
       begin
         @simulation.do_on_start
       rescue Exception => e
@@ -198,24 +198,24 @@ module MSPhysics
 
     def deactivate(view)
       view.animation = nil
-	  # End simulation
+      # End simulation
       begin
         @simulation.do_on_end
       rescue Exception => e
         abort(e) unless @error
       end
-	  # Reset Data
+      # Reset Data
       CommonContext.reset_data
       Body.reset_data
       Collision.reset_data
       Joint.destroy_all # Clear the joints queue
-	  # Remove observers and deselect tools
+      # Remove observers and deselect tools
       AMS::Sketchup.remove_observer(self)
       AMS::InputProc.deselect_tool(self)
-	  # Use abort operation rather than commit operation.
-	  # The abort operation command sets bodies to original transformation.
+      # Use abort operation rather than commit operation.
+      # The abort operation command sets bodies to original transformation.
       Sketchup.active_model.abort_operation
-	  # Set camera to original placements
+      # Set camera to original placements
       view.camera.set(*@camera[:orig])
       sel = Sketchup.active_model.selection
       sel.clear
@@ -485,7 +485,7 @@ module MSPhysics
     end
 
     def onSetCursor
-      UI.set_cursor(671)
+      UI.set_cursor(MSPhysics::CURSORS[:target])
     end
 
     def getInstructorContentDirectory

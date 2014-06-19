@@ -3,68 +3,8 @@
 ## Scripting Documentation
 Each Newton body has its own body context, see {MSPhysics::BodyContext}.
 
-### Simulation Events
-    # Triggered once at the beginning of simulation.
-    onStart {
-    }
 
-    # Triggered every frame, just before the physics simulation step.
-    onPreUpdate {
-    }
-
-    # Triggered every frame, just after the physics simulation step.
-    onUpdate {
-    }
-
-    # Triggered every frame, just after the onUpdate event is called.
-    onPostUpdate {
-    }
-
-    # Triggered once at the end of simulation.
-    onEnd {
-    }
-
-    # Triggered when the body is touched.
-    onTouch { |toucher, position, normal, speed|
-    }
-
-    # Triggered when the body is in an extended contact with another body.
-    onTouching { |toucher|
-    }
-
-    # Triggered when the body stops touching another body.
-    onUntouch { |toucher|
-    }
-
-    # Triggered when the body is clicked.
-    onClick {
-    }
-
-    # Triggered every next frame after the body is clicked and stops until the
-    # body is unclicked.
-    onClicked {
-    }
-
-    # Triggered when the body is unclicked.
-    onUnclick {
-    }
-
-### Basic Functions
-
-#### Simulation Variables
-Variables are used to communicate between fields and bodies. Setting a variable
-in the scripted field and reading it in a controller field for example.
-
-- <tt>set_var(name, value)</tt> - Set variable value.
-- <tt>get_var(name)</tt> - Get variable value.
-- <tt>get_set_var(name, value)</tt> - Get original value and set new value at the same time.
-
-#### Keyboard Input
-<tt>key(vk)</tt> - Get key value. For example, <tt>key('space')</tt> returns +1+ if down or +0+ if up.
-
-### Utility
-- See {MSPhysics::Body}
-- See {MSPhysics::BodyContext}
+## Utility
 - See {MSPhysics::CommonContext}
 - See {MSPhysics::Simulation}
 
@@ -117,7 +57,7 @@ further processing. Don't be afraid to use <code>Body.#destroy</code> or
 Switch simulation to the <i>game mode</i> when creating FPS type games:
 
     onStart {
-      simulation_tool.set_mode(1)
+      simulation_tool.mode = 1
       # ...
     }
 

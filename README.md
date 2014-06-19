@@ -18,7 +18,7 @@ SketchyPhysics back to life.
 
 * Microsoft Windows XP, Vista, 7, or 8.
   This plugin will not work for Macs as many of the techniques and features are
-  achieved via the Windows API, which are not available on the other operating
+  achieved via the Windows API, which is not available on the other operating
   systems.
 * SketchUp 6 +.
   SU 2014 is highly recommended!
@@ -32,11 +32,11 @@ SketchyPhysics back to life.
 Place the files within the _src_ folder into the SketchUp's _Plugins_ folder. Make sure to download AMS Library as well!
 
 * For SU8 and below the plugins folder is located in
-  - _C:\Program Files (x86)\Google\Google SketchUp [n]\_
+    - <i>C:/Program Files (x86)/Google/Google SketchUp [n]/</i>
 * For SU2013 the plugins folder is located in
-  - _C:\Program Files (x86)\SketchUp\SketchUp 2013\_
+    - <i>C:/Program Files (x86)/SketchUp/SketchUp 2013/</i>
 * For SU2014 the plugins folder is located in
-  - _C:\Users\[User Name]\AppData\Roaming\SketchUp\SketchUp 2014\SketchUp\_
+    - <i>C:/Users/[User Name]/AppData/Roaming/SketchUp/SketchUp 2014/SketchUp/</i>
 
 
 ## Version
@@ -54,8 +54,8 @@ June 26, 2014
 
 * **June 26, 2014**: 0.2.0
     - Added dialog.
-	- Added joints.
-	- Fixed a lot of stuff.
+    - Added joints.
+    - Fixed a lot of stuff.
 * **April 26, 2014**: 0.1.0
     - Alpha release 1.
 
