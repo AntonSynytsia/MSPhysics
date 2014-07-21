@@ -16,11 +16,10 @@ require File.join(dir, 'utility.rb')
 require File.join(dir, 'newton.rb')
 require File.join(dir, 'collision.rb')
 require File.join(dir, 'contact.rb')
-require File.join(dir, 'simple_contact.rb')
 require File.join(dir, 'hit.rb')
 require File.join(dir, 'material.rb')
 require File.join(dir, 'materials.rb')
-require File.join(dir, 'common_context.rb')
+require File.join(dir, 'context.rb')
 require File.join(dir, 'body_observer.rb')
 require File.join(dir, 'body.rb')
 require File.join(dir, 'body_context.rb')
@@ -30,6 +29,8 @@ require File.join(dir, 'simulation.rb')
 require File.join(dir, 'simulation_tool.rb')
 require File.join(dir, 'joint_tool.rb')
 require File.join(dir, 'joint_connection_tool.rb')
+require File.join(dir, 'custom_cloth.rb')
+require File.join(dir, 'particle_effects.rb')
 require File.join(dir, 'dialog.rb')
 
 unless file_loaded?(__FILE__)
@@ -236,7 +237,7 @@ unless file_loaded?(__FILE__)
     sim.continuous_collision_mode_enabled = !sim.continuous_collision_mode_enabled?
   }
   cmd.menu_text = cmd.tooltip = 'Continuous Collision Mode'
-  cmd.status_bar_text = "Enable/Disable continuous collision mode. Continuous collision mode prevents bodies from penetrating into each other. It's recommended to reduce simulation speed rather than enabling cont. col. mode when performing box stacks."
+  cmd.status_bar_text = "Enable/Disable continuous collision check. Continuous collision check prevents bodies from penetrating into each other and passing other bodies at high speeds."
   cmd.set_validation_proc {
     next MF_GRAYED if sim_tool.inactive?
     sim = sim_tool.instance.simulation
@@ -425,8 +426,8 @@ unless file_loaded?(__FILE__)
       shape_menu = msp_menu.add_submenu('Shape')
       mat_menu = msp_menu.add_submenu('Material') unless parent
 
-      options = ['Ignore', 'No Collision']
-      options.concat ['Static', 'Frozen'] unless parent
+      options = ['Ignore', 'Not Collidable']
+      options.concat ['Static', 'Frozen', 'Magnetic'] unless parent
       options.each { |option|
         item = state_menu.add_item(option){
           state = MSPhysics.get_attribute(bodies, 'MSPhysics Body', option) ? true : false
@@ -455,13 +456,17 @@ unless file_loaded?(__FILE__)
       }
 
       unless parent
-        MSPhysics::Materials.get_name.each { |name|
+        names = ['Default'] + MSPhysics::Materials.get_names
+        count = 0
+        names.each { |name|
           item = mat_menu.add_item(name){
             MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Material', name)
           }
           mat_menu.set_validation_proc(item){
-            MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Material', 'Wood') == name ? MF_CHECKED : MF_UNCHECKED
+            MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Material', 'Default') == name ? MF_CHECKED : MF_UNCHECKED
           }
+          mat_menu.add_separator if count == 0
+          count += 1
         }
       end
     end

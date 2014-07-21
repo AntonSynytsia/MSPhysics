@@ -8,38 +8,30 @@ module MSPhysics
     ].freeze
 
     # @!visibility private
-    COLLISION_ITERATOR = Proc.new { |user_data, vertex_count, face_array, face_id|
-      vc = face_array.get_array_of_float(0, vertex_count*3)
-      face = []
-      for i in 0...vertex_count
-        face.push Conversion.convert_point(vc[i*3,3], :m, :in)
-      end
-      @@_faces.push face
-    }
-
-    # @!visibility private
     @@_instances ||= {}
-    # @!visibility private
-    @@_faces ||= []
 
     class << self
 
-      private
-
-      def check_validity(body)
-        e = 'The body is invalid!'
-        raise e unless body.is_a?(Body)
-        raise e unless body.valid?
+      # Get all body instances.
+      # @return [Array<Body>]
+      def instances
+        @@_instances.values
       end
 
-      public
+      # @api private
+      # @param [Body] body
+      # @raise [StandardError] if the body is invalid or destroyed.
+      def check_validity(body)
+        MSPhysics.validate_type(body, MSPhysics::Body)
+        raise 'The body is destroyed!' unless body.valid?
+      end
 
       # Get body by group/component.
       # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
       # @return [Body, NilClass]
       def get_body_by_entity(entity)
         @@_instances.values.each{ |body|
-          return body if body._entity == entity
+          return body if body.entity == entity
         }
         nil
       end
@@ -48,17 +40,8 @@ module MSPhysics
       # @param [AMS::FFI::Pointer, Fixnum] body_ptr
       # @return [Body, NilClass]
       def get_body_by_body_ptr(body_ptr)
-        if body_ptr.is_a?(AMS::FFI::Pointer)
-          key = body_ptr.address
-        else
-          key = body_ptr
-        end
+        key = body_ptr.is_a?(AMS::FFI::Pointer) ? body_ptr.address : body_ptr.to_i
         @@_instances[key]
-      end
-
-      # @!visibility private
-      def reset_data
-        @@_instances.clear
       end
 
       # Drag the body to a specific position by applying force and torque.
@@ -179,11 +162,33 @@ module MSPhysics
         false
       end
 
+      # Determine whether the collision bounding box of one body overlaps with
+      # the collision bounding box of another body.
+      # @param [Body] body1
+      # @param [Body] body2
+      # return [Boolean]
+      def bodies_aabb_overlap?(body1, body2)
+        check_validity(body1)
+        check_validity(body2)
+        ab1 = body1.get_aabb
+        ab2 = body2.get_aabb
+        for i in 0..2
+          if (ab1.min[i].between?(ab2.min[i], ab2.max[i]) ||
+              ab1.max[i].between?(ab2.min[i], ab2.max[i]) ||
+              ab2.min[i].between?(ab1.min[i], ab1.max[i]) ||
+              ab2.max[i].between?(ab1.min[i], ab1.max[i]))
+            next
+          end
+          return false
+        end
+        true
+      end
+
       # Determine whether the two bodies can collide with each other.
       # @param [Body] body1
       # @param [Body] body2
       # @return [Boolean]
-      def bodies_coolidable?(body1, body2)
+      def bodies_collidable?(body1, body2)
         return false unless body1.collidable?
         return false unless body2.collidable?
         body1.collidable_with?(body2) and body2.collidable_with?(body1)
@@ -201,48 +206,54 @@ module MSPhysics
     # @overload initialize(body, tra)
     #   Create a copy of the body.
     #   @param [Body] body A body Object.
-    #   @param [Array<Numeric>, Geom::Transformation, Geom::Point3d] tra New
-    #     position or new transformation.
+    #   @param [Geom::Transformation, Array<Numeric>] tra
     def initialize(*args)
       if args.size == 2
         # Create a copy of the body.
         body, tra = args
-        tra = tra.to_a
-        if tra.size == 3
-          t = body._entity.transformation.to_a
-          t[12..14] = tra
-          tra = Geom::Transformation.new(t)
-        else
-          tra = Geom::Transformation.new(tra)
-        end
+        tra = Geom::Transformation.new(tra.to_a)
         if body.entity.respond_to?(:definition)
           ent = Sketchup.active_model.entities.add_instance(body.entity.definition, tra)
         else
           ent = body.entity.copy
-          ent.transformation = tra
+          ent.move! tra
         end
-        ent.material = body.entity.material
-        world = body._world_ptr
-        col = Newton.collisionCreateInstance(body._collision_ptr)
-        type = body.get_type
-        shape = body.get_shape
-        density = body.get_density
-        static_friction = body.get_static_friction
-        kinetic_friction = body.get_kinetic_friction
-        elasticity = body.get_elasticity
-        softness = body.get_softness
+        ent.material        = body.entity.material
+        world               = body._world_ptr
+        col                 = Newton.collisionCreateInstance(body._collision_ptr)
+        type                = body.get_type
+        shape               = body.get_shape
+        _density            = body.get_density
+        _static_friction    = body.get_static_friction
+        _kinetic_friction   = body.get_kinetic_friction
+        _elasticity         = body.get_elasticity
+        _softness           = body.get_softness
+        _friction_enabled   = body.friction_enabled?
+        _magnetic           = body.magnetic?
+        _magnet_force       = body.get_magnet_force
+        _magnet_range       = body.get_magnet_range
+        _collidable         = body.collidable?
+        _contact_mode       = body.instance_variable_get(:@_contact_mode)
+        _contact_bodies     = body.instance_variable_get(:@_contact_bodies).clone
       else
         # Create a new body.
         world, ent, type, shape, material = args
-        type = type.to_s.downcase.to_sym
-        shape = Collision.optimize_shape_name(shape)
-        col = Collision.create(world, ent, shape)
-        tra = ent.transformation
-        density = material.density
-        static_friction = material.static_friction
-        kinetic_friction = material.kinetic_friction
-        elasticity = material.elasticity
-        softness = material.softness
+        tra                 = ent.transformation
+        type                = type.to_s.downcase.to_sym
+        shape               = Collision.optimize_shape_name(shape)
+        col                 = Collision.create(world, ent, shape)
+        _density            = material.density
+        _static_friction    = material.static_friction
+        _kinetic_friction   = material.kinetic_friction
+        _elasticity         = material.elasticity
+        _softness           = material.softness
+        _friction_enabled   = true
+        _magnetic           = false
+        _magnet_force       = 0
+        _magnet_range       = 10
+        _collidable         = true
+        _contact_mode       = 0
+        _contact_bodies     = []
       end
       # Extract scale
       scale = Geometry.get_scale(tra)
@@ -250,16 +261,17 @@ module MSPhysics
       matrix[12..14] = Conversion.convert_point(matrix[12..14], :in, :m).to_a
       buffer = matrix.pack('F*')
       volume = Newton.convexCollisionCalculateVolume(col)
-      mass = volume*density.to_f
+      mass = volume*_density.to_f
+      mass = 0.001 if mass < 0.001
       # Create body
       case type
-        when :kinematic
-          body_ptr = Newton.createKinematicBody(world, col, buffer)
-        when :deformable
-          body_ptr = Newton.createDeformableBody(world, col, buffer)
-        else
-          type = :dynamic
-          body_ptr = Newton.createDynamicBody(world, col, buffer)
+      when :kinematic
+        body_ptr = Newton.createKinematicBody(world, col, buffer)
+      when :deformable
+        body_ptr = Newton.createDeformableBody(world, col, buffer)
+      else
+        type = :dynamic
+        body_ptr = Newton.createDynamicBody(world, col, buffer)
       end
       # Calculate centre of mass and moments of inertia.
       Newton.bodySetMassProperties(body_ptr, mass, col)
@@ -274,42 +286,61 @@ module MSPhysics
       @_type              = type
       @_shape             = shape
       @_static            = (shape == :static_mesh or mass.zero?)
-      @_collidable        = true
-      @_magnetic          = false
-      @_magnet_force      = 0
+      @_magnetic          = _magnetic
+      @_magnet_force      = _magnet_force
+      @_magnet_range      = _magnet_range
       @_mass              = mass
       @_volume            = volume
-      @_density           = density
-      @_static_friction   = static_friction
-      @_kinetic_friction  = kinetic_friction
-      @_friction_enabled  = true
-      @_elasticity        = elasticity
-      @_softness          = softness
+      @_density           = _density
+      @_static_friction   = _static_friction
+      @_kinetic_friction  = _kinetic_friction
+      @_friction_enabled  = _friction_enabled
+      @_elasticity        = _elasticity
+      @_softness          = _softness
       @_scale             = scale
-      @_destroy_called    = false
       @_applied_forces    = {}
       @_up_vector         = nil
       @_enabled           = true
-      @_contact_mode      = 0
-      @_contact_bodies    = []
+      @_collidable        = _collidable
+      @_contact_mode      = _contact_mode
+      @_contact_bodies    = _contact_bodies
+      @_faces             = []
+      @_collision_iterator = Proc.new { |user_data, vertex_count, face_array, face_id|
+        vc = face_array.get_array_of_float(0, vertex_count*3)
+        face = []
+        for i in 0...vertex_count
+          face << Conversion.convert_point(vc[i*3,3], :m, :in)
+        end
+        @_faces << face
+      }
+      @_destructor_callback = Proc.new { |body_ptr|
+        BodyObserver.call_event(:on_body_removed, self)
+        @_world_ptr     = nil
+        @_body_ptr      = nil
+        @_collision_ptr = nil
+        @_applied_forces.clear
+        @_contact_bodies.clear
+        @_faces.clear
+        @@_instances.delete(body_ptr.address)
+        @_entity.remove_observer(self) if @_entity.valid?
+      }
+      Newton.bodySetDestructorCallback(@_body_ptr, @_destructor_callback)
       @@_instances[body_ptr.address] = self
-      BodyObserver.call_event(:on_create, self)
+      @_entity.add_observer(self)
+      BodyObserver.call_event(:on_body_added, self)
     end
 
     # @!visibility private
     attr_reader :_world_ptr, :_body_ptr, :_collision_ptr, :_up_vector, :_applied_forces
 
-    private
-
+    # @api private
+    # @raise [StandardError] if the body is invalid or destroyed.
     def check_validity
-      raise 'The body is destroyed!' if invalid?
+      raise 'The body is destroyed!' unless valid?
     end
-
-    public
 
     # @return [Sketchup::Group, Sketchup::ComponentInstance]
     def entity
-      check_validity
       @_entity
     end
 
@@ -357,12 +388,12 @@ module MSPhysics
     # Set the mass of the body.
     # @note Mass and density are connected. If you change mass the density will
     #   automatically be recalculated.
-    # @param [Numeric] mass in kilograms.
+    # @param [Numeric] mass in kilograms. Min mass is 0.001 kilograms.
     # @return [Boolean] +true+ (if successful).
     def set_mass(mass)
       check_validity
       return false if mass <= 0 or @_volume == 0
-      @_mass = mass
+      @_mass = (mass < 0.001) ? 0.001 : mass
       @_density = @_mass/@_volume.to_f
       Newton.bodySetMassProperties(@_body_ptr, @_mass, @_collision_ptr) unless @_static
       true
@@ -516,7 +547,7 @@ module MSPhysics
     end
 
     # Get the world axis aligned bounding box (AABB) of the body.
-    # @return [Array<Geom::Point3d>] +[min_pt, max_pt]+
+    # @return [Geom::BoundingBox]
     def get_bounding_box
       check_validity
       min_pt = 0.chr*12
@@ -524,8 +555,12 @@ module MSPhysics
       Newton.bodyGetAABB(@_body_ptr, min_pt, max_pt)
       min = Conversion.convert_point(min_pt.unpack('F*'), :m, :in)
       max = Conversion.convert_point(max_pt.unpack('F*'), :m, :in)
-      [min, max]
+      bb = Geom::BoundingBox.new
+      bb.add(min,max)
+      bb
     end
+
+    alias get_aabb get_bounding_box
 
     # Get the global linear velocity of the body.
     # @return [Geom::Vector3d] The magnitude is in meters per second.
@@ -677,8 +712,8 @@ module MSPhysics
 
     # Get the transformation matrix of the body.
     # @param [Fixnum] mode
-    #   0 - position units in meters,
-    #   1 - position units in inches.
+    #   0 - specify position units in meters,
+    #   1 - specify position units in inches.
     # @return [Geom::Transformation]
     def get_matrix(mode = 1)
       check_validity
@@ -688,16 +723,16 @@ module MSPhysics
       if mode == 1
         matrix[12..14] = Conversion.convert_point(matrix[12..14], :m, :in).to_a
       end
-      tra = Geom::Transformation.new(matrix)
-      Geometry.set_scale(tra, @_scale)
+      Geometry.set_scale(matrix, @_scale)
     end
 
-    # Set the transformation matrix of the body. To scale body simply encrypt
-    # the scaling factors within the new transformation.
-    # @note Not all can bodies can be scaled though. Scaling compound and
-    #   staticmesh was disabled because Newton has some bugs here.
-    # @param [Array<Numeric>, Geom::Transformation] tra An array of 16 numeric
-    #   values or a Geom::Transformation object.
+    # Set body transformation matrix.
+    # @note You may scale body by encrypting the scale factors within the
+    #   transformation matrix. Keep in mind that <b>static_mesh</b> and
+    #   <b>compound_from_mesh</b> bodies cannot be scaled as NewtonDynamics
+    #   has some bugs in scaling. You may apply new scale to them, but
+    #   it will be overwritten with original scale.
+    # @param [Geom::Transformation, Array<Numeric>] tra
     def set_matrix(tra)
       check_validity
       scale = Geometry.get_scale(tra)
@@ -714,7 +749,7 @@ module MSPhysics
           @_volume *= r
         end
         Newton.collisionSetMatrix(@_collision_ptr, offset_matrix.pack('F*'))
-        @_scale = scale
+        for i in 0..2; @_scale[i] = scale[i] * (@_scale[i] <=> 0) end
         @_mass = @_volume*@_density
         mass = @_static ? 0 : @_mass
         Newton.bodySetMassProperties(@_body_ptr, mass, @_collision_ptr)
@@ -722,7 +757,7 @@ module MSPhysics
       matrix = Geometry.extract_scale(tra).to_a
       matrix[12..14] = Conversion.convert_point(matrix[12..14], :in, :m).to_a
       Newton.bodySetMatrix(@_body_ptr, matrix.pack('F*'))
-      @_entity.transformation = tra
+      @_entity.move! tra
     end
 
     # Get the global position of the body.
@@ -810,19 +845,19 @@ module MSPhysics
       Newton.bodySetFreezeState(@_body_ptr, state ? 1 : 0)
     end
 
-    # Get the collidable state of the body.
-    # @return [Boolean] Whether the body is collidable.
+    # Determine whether the body is collidable.
+    # @return [Boolean]
     def collidable?
       check_validity
       @_collidable
     end
 
-    # Set the collidable state of the body.
+    # Set body collidable/non-collidable.
     # @param [Boolean] state
     def collidable=(state)
       check_validity
       @_collidable = state ? true : false
-      Newton.collisionSetCollisonMode(@_collision_ptr, @_collidable ? 1 : 0)
+      Newton.collisionSetCollisionMode(@_collision_ptr, @_collidable ? 1 : 0)
     end
 
     # Get the static state of the body.
@@ -844,17 +879,20 @@ module MSPhysics
 
     # Get the sleep mode of the body.
     # @return [Boolean] Whether the body is sleeping.
-    def get_sleep_state
+    def get_sleep_mode
       check_validity
       Newton.bodyGetSleepState(@_body_ptr) == 1
     end
 
     # Set the sleep mode of the body.
+    # @note You can force the body to become active by passing +false+, but you
+    #   can't force body to go to sleep, so passing +true+ will do nothing.
     # @param [Boolean] state +true+ to set body sleeping, +false+ to set body
     #   active.
-    def set_sleep_state(state)
+    # @see #frozen=
+    def set_sleep_mode(state)
       check_validity
-      @_applied_forces[:sleep] = (state ? 0 : 1)
+      @_applied_forces[:sleep] = (state ? 1 : 0)
     end
 
     # Get the auto-sleep mode of the body.
@@ -888,14 +926,13 @@ module MSPhysics
 
     # Set continuous collision mode for the body. Enabling continuous collision
     # ensures that stacks of bodies don't penetrate into each other.
-    # @note This will not prevent bodies from passing other bodies at high
-    #   speed. This will prevent bodies from merging into other bodies, for
-    #   instance block stacks. To prevent bodies from intersecting each other at
-    #   high speeds, simply reduce the update rate to 1/256.0.
+    # @note This will prevent this body from passing other bodies at high speed,
+    #   and prevent this body from penetrating into other bodies. This is useful
+    #   for performing box stacks, or testing falling objects at heights.
     # @note Huge blocks stacks are known to affect performance significantly.
-    #   To simulate wall stacks it is recommended to use small update rate
-    #   rather than enabling continuous collision mode. Small update rate will
-    #   ensure that bodies are not penetrating into each other, plus smooth
+    #   To simulate wall stacks it is recommended to use small update rate, for
+    #   instance, setting an update rate to 1/256.0 of a second, rather than
+    #   enabling continuous collision mode. Small update rate will ensure smooth
     #   performance.
     # @param [Boolean] state +true+ to set continuous collision check on, or
     #   +false+ to set continuous collision check off.
@@ -935,33 +972,106 @@ module MSPhysics
       @_magnet_force = force.to_f
     end
 
+    # Get magnet range in meters.
+    # @return [Numeric]
+    def get_magnet_range
+      @_magnet_range
+    end
+
+    # Set magnet range in meters.
+    # @param [Numeric] range
+    def set_magnet_range(range)
+      @_magnet_range = range.to_f.abs
+    end
+
     # Get all bodies touching this body.
+    # @param [Boolean] inc_noncol_bodies Whether to include non-collidable
+    #   bodies.
     # @return [Array<Body>]
-    def get_bodies_in_contact
+    def get_bodies_in_contact(inc_noncol_bodies = false)
       check_validity
       bodies = []
+      if inc_noncol_bodies
+        colA = self._collision_ptr
+        matA = 0.chr*64
+        Newton.bodyGetMatrix(self._body_ptr, matA)
+        @@_instances.values.each { |body|
+          next if body == self
+          next if body._world_ptr.address != self._world_ptr.address
+          next if Body.bodies_collidable?(self, body)
+          next unless Body.bodies_aabb_overlap?(self, body)
+          colB = body._collision_ptr
+          matB = 0.chr*64
+          Newton.bodyGetMatrix(body._body_ptr, matB)
+          res = Newton.collisionIntersectionTest(@_world_ptr, colA, matA, colB, matB, 0)
+          bodies << body if res == 1
+        }
+      end
       joint = Newton.bodyGetFirstContactJoint(@_body_ptr)
       while !joint.null?
-        body_ptr1 = Newton.jointGetBody1(joint)
-        body1 = Body.get_body_by_body_ptr(body_ptr1)
-        bodies.push(body1) if body1
+        toucher_ptr = Newton.jointGetBody0(joint)
+        if @_body_ptr.address == toucher_ptr.address
+          toucher_ptr = Newton.jointGetBody1(joint)
+        end
+        toucher = Body.get_body_by_body_ptr(toucher_ptr)
+        bodies << toucher if toucher
         joint = Newton.bodyGetNextContactJoint(@_body_ptr, joint)
       end
       bodies
     end
 
-    # Get all body contact points.
-    # @return [Array<SimpleContact>]
-    def get_contacts
+    # Get all body contacts.
+    # @param [Boolean] inc_noncol_bodies Whether to include non-collidable
+    #   bodies.
+    # @return [Array<Contact>]
+    def get_contacts(inc_noncol_bodies = false)
       check_validity
       contacts = []
+      if inc_noncol_bodies
+      begin
+        colA = self._collision_ptr
+        matA = 0.chr*64
+        Newton.bodyGetMatrix(self._body_ptr, matA)
+        limit = 30
+        @@_instances.values.each { |body|
+          next if body == self
+          next if body._world_ptr.address != self._world_ptr.address
+          next if Body.bodies_collidable?(self, body)
+          next unless Body.bodies_aabb_overlap?(self, body)
+          colB = body._collision_ptr
+          matB = 0.chr*64
+          Newton.bodyGetMatrix(body._body_ptr, matB)
+          buf1 = 0.chr*12*limit
+          buf2 = 0.chr*12*limit
+          buf3 = 0.chr*12*limit
+          attrA = 0.chr*4*limit
+          attrB = 0.chr*4*limit
+          count = Newton.collisionCollide(@_world_ptr, limit, colA, matA, colB, matB, buf1, buf2, buf3, attrA, attrB, 0)
+          next if count == 0
+          points = buf1.unpack('F'*3*count)
+          normals = buf2.unpack('F'*3*count)
+          for i in 0...count
+            contacts << Contact2.new(body, points[i*3,3], normals[i*3,3])
+          end
+        }
+        rescue Exception => e
+          puts "#{e}\n#{e.backtrace.first}"
+        end
+      end
       joint = Newton.bodyGetFirstContactJoint(@_body_ptr)
       while !joint.null?
-        contact = Newton.contactJointGetFirstContact(joint)
-        while !contact.null?
-          material = Newton.contactGetMaterial(contact)
-          contacts.push SimpleContact.new(material, @_body_ptr)
-          contact = Newton.contactJointGetNextContact(joint, contact)
+        toucher_ptr = Newton.jointGetBody0(joint)
+        if @_body_ptr.address == toucher_ptr.address
+          toucher_ptr = Newton.jointGetBody1(joint)
+        end
+        toucher = Body.get_body_by_body_ptr(toucher_ptr)
+        if toucher
+          contact = Newton.contactJointGetFirstContact(joint)
+          while !contact.null?
+            material = Newton.contactGetMaterial(contact)
+            contacts << Contact.new(material, @_body_ptr, toucher)
+            contact = Newton.contactJointGetNextContact(joint, contact)
+          end
         end
         joint = Newton.bodyGetNextContactJoint(@_body_ptr, joint)
       end
@@ -970,14 +1080,15 @@ module MSPhysics
 
     # Get collision faces of the body.
     # @return [Array<Array<Geom::Point3d>>] An array of faces. Each face
-    #   represents an array of points.
+    #   represents an array of points. The points are coordinated in global
+    #   space.
     def get_collision_faces
       check_validity
       matrix = 0.chr*64
       Newton.bodyGetMatrix(@_body_ptr, matrix)
-      @@_faces.clear
-      Newton.collisionForEachPolygonDo(@_collision_ptr, matrix, COLLISION_ITERATOR, nil)
-      @@_faces.dup
+      @_faces.clear
+      Newton.collisionForEachPolygonDo(@_collision_ptr, matrix, @_collision_iterator, nil)
+      @_faces.dup
     end
 
     # Turn the body with a constraint.
@@ -1003,30 +1114,28 @@ module MSPhysics
     end
 
     # Create a copy of the body.
-    # @param [Array<Numeric>, Geom::Transformation] tra New position or transformation.
-    # @return [Body] New body.
+    # @param [Geom::Transformation, Array<Numeric>] tra
+    # @return [Body] New body instance.
     def copy(tra = self.get_matrix)
       check_validity
       self.class.new(self, tra)
     end
 
-    # Enable simulation of the body.
-    def enable
+    # Enable/Disable simulation of the body.
+    # @param [Boolean] state
+    def simulation_enabled=(state)
       check_validity
-      Newton.bodyEnableSimulation(@_body_ptr)
-      @_enabled = true
-    end
-
-    # Disable simulation of the body.
-    def disable
-      check_validity
-      Newton.bodyDisableSimulation(@_body_ptr)
-      @_enabled = false
+      @_enabled = state ? true : false
+      if state
+        Newton.bodyEnableSimulation(@_body_ptr)
+      else
+        Newton.bodyDisableSimulation(@_body_ptr)
+      end
     end
 
     # Determine whether the body is enabled in simulation.
     # @return [Boolean]
-    def enabled?
+    def simulation_enabled?
       check_validity
       @_enabled
     end
@@ -1050,10 +1159,12 @@ module MSPhysics
     def get_collidable_bodies
       check_validity
       return @_contact_bodies if @_contact_mode == 1
-      sim_tool = SimulationTool.instance
-      return [] unless sim_tool
-      bodies = sim_tool.simulation.bodies
-      bodies.delete(self)
+      bodies = []
+      @@_instances.values.each { |body|
+        next if body.world_ptr == @_world_ptr
+        next if body == self
+        bodies << body
+      }
       @_contact_mode == 0 ? bodies : bodies - @_contact_bodies
     end
 
@@ -1062,11 +1173,13 @@ module MSPhysics
     def get_noncollidable_bodies
       check_validity
       return [] if @_contact_mode == 0
-      return @_contact_bodies if @_contact_mode == 1
-      sim_tool = SimulationTool.instance
-      return [] unless sim_tool
-      bodies = sim_tool.simulation.bodies
-      bodies.delete(self)
+      return @_contact_bodies if @_contact_mode == 2
+      bodies = []
+      @@_instances.values.each { |body|
+        next if body.world_ptr == @_world_ptr
+        next if body == self
+        bodies << body
+      }
       bodies - @_contact_bodies
     end
 
@@ -1086,9 +1199,13 @@ module MSPhysics
       check_validity
       @_contact_bodies = bodies.to_a.dup
       @_contact_mode = 1
-      sim_tool = SimulationTool.instance
-      return unless sim_tool
-      if (sim_tool.simulation.bodies - @_contact_bodies).empty?
+      bodies = []
+      @@_instances.values.each { |body|
+        next if body.world_ptr == @_world_ptr
+        next if body == self
+        bodies << body
+      }
+      if (bodies - @_contact_bodies).empty?
         @_contact_bodies.clear
         @_contact_mode = 0
       end
@@ -1117,37 +1234,51 @@ module MSPhysics
       set_collidable_bodies([])
     end
 
-    # Destroy the body.
-    # @param [Boolean] delete_entity Whether to delete the entity belonging to
-    #   the body.
-    # @param [Boolean] destroy_pointer Whether to destroy the body pointer.
-    # @return [Boolean] +true+ (if successful).
-    def destroy(delete_entity = true, destroy_pointer = true)
-      return false if @_destroy_called
-      @_destroy_called = true
-      Newton.destroyBody(@_body_ptr) if destroy_pointer
-      BodyObserver.call_event(:on_destroy, self)
-      @@_instances.delete(@_body_ptr)
-      @_entity.erase! if delete_entity and @_entity.valid?
-      @_entity = nil
-      @_body_ptr = nil
-      @_collision_ptr = nil
-      @_world_ptr = nil
-      true
+    # Add some buoyancy to the body.
+    # @param [Geom::Vector3d, Array] gravity
+    # @param [Geom::Vector3d, Array] plane
+    # @param [Numeric] density Fluid density in cubic meters per kilogram.
+    # @param [Numeric] viscosity Fluid viscosity.
+    def add_buoyancy(gravity = [0,0,-9.8], plane = [0,0,1], density = 997.04, viscosity = 0.894)
+      check_validity
+      matrix = 0.chr*64
+      Newton.bodyGetMatrix(@_body_ptr, matrix)
+      tra = Geom::Transformation.new(matrix.unpack('F*'))
+      cog = 0.chr*12
+      Newton.bodyGetCentreOfMass(@_body_ptr, cog)
+      centre = Geom::Point3d.new(cog.unpack('F*'))
+      centre.transform!(tra)
+      cog = centre.to_a.pack('F*')
+      grav = gravity.to_a.pack('FFF')
+      norm = plane.to_a.pack('FFF')
+      dens = 1.0/(0.9*@_volume)
+      accel_per_unit_mass = 0.chr*12
+      torque_per_unit_mass = 0.chr*12
+      Newton.convexCollisionCalculateBuoyancyAcceleration(@_collision_ptr, matrix, cog, grav, norm, dens, viscosity, accel_per_unit_mass, torque_per_unit_mass)
+      accel = MSPhysics.scale_vector(accel_per_unit_mass.unpack('F*'), @_mass)
+      torque = MSPhysics.scale_vector(torque_per_unit_mass.unpack('F*'), @_mass)
+      add_force(accel)
+      add_torque(torque)
     end
 
-    # Determines whether the body is valid.
+    # Destroy the body.
+    # @param [Boolean] erase_ent Whether to delete body entity.
+    def destroy(erase_ent = true)
+      check_validity
+      Newton.destroyBody(@_body_ptr)
+      @_entity.erase! if erase_ent and @_entity.valid?
+      @_entity = nil
+    end
+
+    # Determine whether the body is valid.
     # @return [Boolean]
     def valid?
-      (@_entity and @_body_ptr and @_entity.valid?) ? true : false
+      @_body_ptr ? true : false
     end
 
-    alias destroyed? valid?
-
-    # Determines whether the body is invalid.
-    # @return [Boolean]
-    def invalid?
-      !valid?
+    # @!visibility private
+    def onEraseEntity(ent)
+      destroy(false)
     end
 
   end # class Body

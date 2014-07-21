@@ -19,16 +19,14 @@
 #     as many of the techniques and features are achieved via the Windows API,
 #     which are not available on the other operating systems.
 #   * SketchUp 6 or later. SU 2014 is highly recommended!
-#   * Ruby core 1.8.7 for SU2013 and below. See plugin homepage for ruby upgrade
-#     instructions.
 #   * AMS_Library 1.0.9 +.
 #
 # Version
-#   * 0.2.0
-#   * NewtonDynamics 3.12
+#   * 1.0.0
+#   * NewtonDynamics 3.13
 #
 # Release Date
-#   June 26, 2014
+#   August 07, 2014
 #
 # Licence
 #   MIT © 2014, Anton Synytsia
@@ -57,6 +55,7 @@ unless win
   continue = false if (input == IDNO)
 end
 
+=begin
 # Check whether SU is using Ruby core 1.8.7 or later.
 if continue and RUBY_VERSION.delete('.').to_i < 187
   msg = "MSPhysics extension requires Ruby 1.8.7 or later! "
@@ -64,10 +63,11 @@ if continue and RUBY_VERSION.delete('.').to_i < 187
   msg << "Click OK to launch a browser to the Ruby upgrade page."
   input = UI.messagebox(msg, MB_OKCANCEL)
   if input == IDOK
-    UI.openURL('http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835')
+    UI.openURL('http://sketchucation.com/forums/viewtopic.php?f=323&t=56852')
   end
   continue = false
 end
+=end
 
 # Check for AMS Library.
 if continue
@@ -98,8 +98,8 @@ end
 module MSPhysics
 
   NAME         = 'MSPhysics'.freeze
-  VERSION      = '0.2.0'.freeze
-  RELEASE_DATE = 'June 26, 2014'.freeze
+  VERSION      = '1.0.0'.freeze
+  RELEASE_DATE = 'August 07, 2014'.freeze
 
   # Create the extension.
   @extension = SketchupExtension.new NAME, 'MSPhysics/main.rb'

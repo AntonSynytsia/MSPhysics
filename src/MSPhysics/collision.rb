@@ -23,15 +23,15 @@ module MSPhysics
     ]
 
     # @!visibility private
-    @progress = nil
+    @percent = nil
     @data ||= {}
 
     # @!visibility private
     PROGRESS_REPORT = Proc.new { |progress|
-      progress = (progress*100).to_i
-      next true if @progress == progress
-      printf("%d\%\n", progress)
-      @progress = progress
+      percent = (progress*100).to_i
+      next true if @percent == percent
+      printf("%d\%#{@percent == 100 ? "\n" : "\s"}", percent)
+      @percent = percent
       true
     }
 
@@ -321,10 +321,10 @@ module MSPhysics
         no_collision = data[1]
         begin
           c = create(world, e, shape, true)
-          Newton.collisionSetCollisonMode(c, 0) if no_collision
+          Newton.collisionSetCollisionMode(c, 0) if no_collision
           col_data << c
         rescue Exception => error
-          # puts "#{error}\n#{$@[0]}"
+          # puts "#{error}\n#{error.backtrace.first}"
         end
       }
       if col_data.empty?
@@ -364,7 +364,7 @@ module MSPhysics
       faces.each { |face|
         pts = []
         face.each { |pt|
-          pts.push Conversion.convert_point(pt, :in, :m).to_a
+          pts << Conversion.convert_point(pt, :in, :m).to_a
         }
         Newton.meshAddFace(mesh, pts.size, pts.flatten.pack('F*'), 12, 0)
       }
@@ -382,7 +382,7 @@ module MSPhysics
       index = Sketchup.active_model.entities.to_a.index(ent)
       puts "Generating convex approximation for entities[#{index}]..."
       # mesh, max_concavity, back_face_distance_factor, max_count, max_vertex_per_hull, progress_report_callback, report_data
-      convex_approximation = Newton.meshApproximateConvexDecomposition(mesh, 0.01, 0.2, 256, 100, PROGRESS_REPORT, nil)
+      convex_approximation = Newton.meshApproximateConvexDecomposition(mesh, 0.01, 0.2, 32, 100, PROGRESS_REPORT, nil)
       col = Newton.createCompoundCollisionFromMesh(world, convex_approximation, 0.001, 0, 0)
       Newton.meshDestroy(mesh)
       Newton.meshDestroy(convex_approximation)
@@ -416,9 +416,9 @@ module MSPhysics
         pts = []
         face.each { |pt|
           pt.transform!(tra)
-          pts.push Conversion.convert_point(pt, :in, :m).to_a
+          pts << Conversion.convert_point(pt, :in, :m).to_a
         }
-        Newton.meshAddFace(mesh, pts.size, pts.flatten.pack('F*'), 12, 1)
+        Newton.meshAddFace(mesh, pts.size, pts.flatten.pack('F*'), 12, 0)
       }
       Newton.meshEndFace(mesh)
       if simplify

@@ -1,0 +1,15 @@
+Compiling Newton
+
+Read this post for details on compiling Newton:
+http://newtondynamics.com/forum/viewtopic.php?f=9&t=8508#p55371
+
+
+Compile Newton for MSPhysics with the following settings:
+
+- Disable threads, see post for details. Threads in SU are unstable and affect
+  performance.
+
+- Open ../NewtonDynamics/coreLibrary_300/source/newton/NewtonClass.h, and scroll
+  down to line 31:
+    a. Set DG_MAX_TIMESTEP to 1/30.0
+    b. Set DG_MIN_TIMESTEP to 1/1200.0

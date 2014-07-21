@@ -5,8 +5,24 @@ Each Newton body has its own body context, see {MSPhysics::BodyContext}.
 
 
 ## Utility
+- See {MSPhysics::Body}
 - See {MSPhysics::CommonContext}
 - See {MSPhysics::Simulation}
+
+
+## Accessing Simulation Instances
+To get reference to {MSPhysics::SimulationTool} instance you may use the
+following:
+
+* <tt>this.simulation_tool</tt> if you code inside the Body scope only.
+* <tt>MSPhysics::SimulationTool.instance</tt>.
+* <tt>$msp_simulation_tool</tt>
+
+To get reference to {MSPhysics::Simulation} instance you may use the following:
+
+* <tt>this.simulation</tt> if you code inside the Body scope only.
+* <tt>MSPhysics::SimulationTool.instance.simulation</tt>.
+* <tt>$msp_simulation</tt>.
 
 
 ## Script Errors
@@ -39,6 +55,10 @@ further processing. Don't be afraid to use <code>Body.#destroy</code> or
 * Make sure to have all back faces inside and all front faces outside, as Newton
   calculates collision intersections for the front faces only.
 * Use entity's x-axis as the up vector for shapes like cone, and cylinder.
+* You may assign null collision to the bodies with the main script. Null
+  collision makes the body act like a static, non-collidable body.
+* For some reason bricks stacks from the box collision work improperly, use
+  convex collision instead.
 
 
 ## Rules
@@ -69,8 +89,29 @@ zoom tool activating, for instance.
 ## Scaled Bodies
 To scale body, simply call <tt>Body.#set_matrix(new_tra)</tt> with the scale
 factors inscribed within the new transformation matrix. Not all bodies can be
-scaled though. Scaling compound and staticmesh bodies was disabled because
-Newton is incomplete here.
+scaled though. You cannot scale compound and staticmesh bodies as Newton doesn't
+support that feature.
+
+
+# Flipped Entities
+Flipped entities will force the body to unflip when simulation starts. This is
+the bug that could be fixed in the next version.
+
+
+## Small Bodies
+Small bodies are not recommended, as the centre of mass is calculated improperly
+for them. Make sure all physics bodies are in realistic scale.
+
+
+## Collision at High Speeds / Box Stacks
+To prevent objects from passing or penetrating through each other at high
+speeds, you can either enable continuous collision or reduce simulation speed.
+It's recommended to reduce simulation speed rather than enabling c.c. mode when
+performing box stacks as c.c. check is known to affect performance.
+
+
+## Speed Rule
+The smaller the speed (update step), the more accurate the simulation is.
 
 
 ## Performance

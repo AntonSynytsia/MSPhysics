@@ -75,12 +75,15 @@ module MSPhysics
         #e.delete_attribute('MSPhysics')
         e.delete_attribute('MSPhysics Body')
         e.delete_attribute('MSPhysics Joint')
+        e.delete_attribute('MSPhysics Script')
       }
     end
 
     # Delete MSPhysics attributes from all entities.
     def delete_all_attributes
-      delete_attributes(Sketchup.active_model.entities)
+      Sketchup.active_model.definitions.each { |definition|
+        delete_attributes(definition.instances)
+      }
     end
 
     # Get newton physics engine version number.
@@ -157,6 +160,83 @@ module MSPhysics
     # @param [String] type
     def set_entity_type(e, type)
       e.set_attribute('MSPhysics', 'Type', type.to_s)
+    end
+
+    # Get points on a 2D circle.
+    # @param [Array<Numeric>] origin
+    # @param [Numeric] radius
+    # @param [Fixnum] num_seg Number of segments.
+    # @param [Numeric] rot_angle Rotate angle in degrees.
+    # @return [Array<Array<Numeric>>] An array of points on circle.
+    def points_on_circle2d(origin, radius, num_seg = 16, rot_angle = 0)
+      ra = rot_angle.degrees
+      offset = Math::PI*2/num_seg.to_i
+      pts = []
+      for n in 0...num_seg.to_i
+        angle = ra + (n*offset)
+        x = Math.cos(angle)*radius
+        y = Math.sin(angle)*radius
+        pts << [x + origin[0], y + origin[1]]
+      end
+      pts
+    end
+
+    # Get points on a 3D circle.
+    # @param [Array<Numeric>, Geom::Point3d] origin
+    # @param [Array<Numeric>, Geom::Vector3d] normal
+    # @param [Numeric] radius
+    # @param [Fixnum] num_seg Number of segments.
+    # @param [Numeric] rot_angle Rotate angle in degrees.
+    # @return [Array<Geom::Point3d>] An array of points on circle.
+    def points_on_circle3d(origin, radius, normal = [0,0,1], num_seg = 16, rot_angle = 0)
+      # Get the x and y axes
+      origin = Geom::Point3d.new(origin)
+      axes = Geom::Vector3d.new(normal).axes
+      xaxis = axes[0]
+      yaxis = axes[1]
+      xaxis.length = radius
+      yaxis.length = radius
+      # Compute points
+      ra = rot_angle.degrees
+      offset = Math::PI*2/num_seg.to_i
+      pts = []
+      for n in 0...num_seg.to_i
+        angle = ra + (n*offset)
+        cosa = Math.cos(angle)
+        sina = Math.sin(angle)
+        vec = Geom::Vector3d.linear_combination(cosa, xaxis, sina, yaxis)
+        pts << origin + vec
+      end
+      pts
+    end
+
+    # Blend colors.
+    # @param [Numeric] ratio between 0.0 and 1.0.
+    # @param [Array<Sketchup::Color, String, Array>] colors An array of colors to blend.
+    # @return [Sketchup::Color]
+    def blend_colors(ratio, colors = ['white', 'black'])
+      if colors.empty?
+        raise ArgumentError, 'Expected at least one color, but got none.'
+      end
+      return Sketchup::Color.new(colors[0]) if colors.size == 1
+      ratio = MSPhysics.clamp(ratio, 0, 1)
+      cr = (colors.length-1)*ratio
+      dec = cr-cr.to_i
+      if dec == 0
+        color = colors[cr]
+      else
+        a = colors[cr.to_i]
+        b = colors[cr.ceil]
+        a = Sketchup::Color.new(a) unless a.is_a?(Sketchup::Color)
+        b = Sketchup::Color.new(b) unless b.is_a?(Sketchup::Color)
+        a = a.to_a
+        b = b.to_a
+        color = []
+        for i in 0..3
+          color << ((b[i] - a[i])*dec + a[i]).round
+        end
+      end
+      Sketchup::Color.new(color)
     end
 
   end # class << self

@@ -41,18 +41,18 @@ Place the files within the _src_ folder into the SketchUp's _Plugins_ folder. Ma
 
 ## Version
 
-* 0.2.0
+* 1.0.0
 * NewtonDynamics 3.12
 
 
 ## Release Date
 
-June 26, 2014
+July 26, 2014
 
 
 ## Change Log
 
-* **June 26, 2014**: 0.2.0
+* **July 26, 2014**: 1.0.0
     - Added dialog.
     - Added joints.
     - Fixed a lot of stuff.

@@ -17,6 +17,8 @@ module MSPhysics
     @last_active_body_tab = 2
     # @!visibility private
     @min_size = nil
+    # @!visibility private
+    @cleared = false
 
     # @!visibility private
     def update_state
@@ -50,8 +52,8 @@ module MSPhysics
           cmd << "$('#tab3-content').css('display', 'block');"
           script = @selected_body.get_attribute('MSPhysics Script', 'Value', '').inspect
           cmd << "editor_set_script(#{script});"
-          line = @selected_body.get_attribute('MSPhysics Script', 'Line', 0).to_i
-          cmd << "editor_set_line(#{line});"
+          cursor = ( eval(@selected_body.get_attribute('MSPhysics Script', 'Cursor', '[1,0]')) rescue [1,0] )
+          cmd << "editor_set_cursor(#{cursor[0]}, #{cursor[1]});"
         else
           cmd << "$('#tab3-none').css('display', 'block');"
           cmd << "$('#tab3-content').css('display', 'none');"
@@ -133,13 +135,17 @@ module MSPhysics
           @selected_body.set_attribute('MSPhysics Script', 'Value', code)
         }
         @dlg.add_action_callback('cursor_changed'){ |dlg, params|
-          @selected_body.set_attribute('MSPhysics Script', 'Line', params)
+          next unless @selected_body
+          @selected_body.set_attribute('MSPhysics Script', 'Cursor', params)
         }
         @dlg.add_action_callback('open_link'){ |dlg, params|
           UI.openURL(params)
         }
+        @dlg.add_action_callback('open_ruby_core'){ |dlg, params|
+          UI.openURL("http://ruby-doc.org/core-#{RUBY_VERSION}/")
+        }
         @dlg.add_action_callback('tab_changed'){ |dlg, params|
-          num = params[-1].to_i
+          num = params.to_i
           @last_active_body_tab = num if (num == 2 or num == 3)
         }
         @dlg.set_on_close(){
@@ -175,26 +181,31 @@ module MSPhysics
       sel.add(ent)
       if self.visible?
         @dlg.execute_script('activate_tab(3);')
+        @last_active_body_tab = 3
         return unless line
-        @dlg.execute_script("editor_set_line(#{line}); editor_select_current_line();")
+        @dlg.execute_script("editor_set_cursor(#{line}, 0); editor_select_current_line();")
       else
         self.visible = true
         UI.start_timer(0.5, false){
           @dlg.execute_script('activate_tab(3);')
           next unless line
-          @dlg.execute_script("editor_set_line(#{line}); editor_select_current_line();")
+          @dlg.execute_script("editor_set_cursor(#{line}, 0); editor_select_current_line();")
         }
       end
     end
 
     # @!visibility private
     def onSelectionBulkChange(sel)
+      @cleared = false
       update_state
     end
 
     # @!visibility private
     def onSelectionCleared(sel)
-      update_state
+      @cleared = true
+      UI.start_timer(0.1, false){
+        update_state if @cleared
+      }
     end
 
     # @!visibility private

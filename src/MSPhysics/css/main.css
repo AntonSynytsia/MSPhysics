@@ -231,7 +231,27 @@ table{
 	border: 1px solid rgba(0,0,0, 0.2);
 }
 
-.my-table {
+.joint-table {
 	width: 20em;
 	padding-left: 2em;
+}
+
+.body-table {
+	width: 26em;
+	padding-left: 2em;
+}
+
+.main-wrap {
+	/* overflow to handle inner floating block */
+	overflow: hidden;
+}
+
+#column1 {
+	float: left;
+	width: 18em;
+}
+
+#column2 {
+	float: left;
+	width: 18em;
 }

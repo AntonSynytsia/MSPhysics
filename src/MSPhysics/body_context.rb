@@ -26,8 +26,7 @@ module MSPhysics
     # @overload initialize(body, tra)
     #   Create a copy of the body.
     #   @param [BodyContext] body A body Object.
-    #   @param [Array<Numeric>, Geom::Transformation, Geom::Point3d] tra New
-    #     position or new transformation.
+    #   @param [Geom::Transformation, Array<Numeric>] tra
     def initialize(*args)
       super(*args)
       @_script = ''
@@ -40,12 +39,11 @@ module MSPhysics
         :onDraw                 => nil,
         :onPlay                 => nil,
         :onPause                => nil,
-        :onDestroy              => nil,
         :onTouch                => nil,
         :onTouching             => nil,
         :onUntouch              => nil,
         :onClick                => nil,
-        :onClicked              => nil,
+        :onDrag                 => nil,
         :onUnclick              => nil,
         :onKeyDown              => nil,
         :onKeyUp                => nil,
@@ -66,17 +64,20 @@ module MSPhysics
         :onMouseWheelRotate     => nil,
         :onMouseWheelTilt       => nil
       }
+      @_script_enabled = true
     end
 
     # Get the string of code assigned to the body context.
     # @return [String]
     def get_script
+      check_validity
       @_script
     end
 
     # Add to the existing script or overwrite the current script.
     # @param [String] code
     def add_script(code)
+      check_validity
       begin
         eval(code.to_s)
       rescue Exception => e
@@ -103,6 +104,7 @@ module MSPhysics
     # Clear and assign new script to the body.
     # @param [String] code
     def set_script(code)
+      check_validity
       clear_script
       @_script = code.to_s
       begin
@@ -129,6 +131,7 @@ module MSPhysics
 
     # Clear body script.
     def clear_script
+      check_validity
       @_events.keys.each { |key|
         @_events[key] = nil
       }
@@ -144,6 +147,7 @@ module MSPhysics
     #     simulation.log_line(key)
     #   }
     def on(*events, &block)
+      check_validity
       count = 0
       events.flatten.each{ |evt|
         evt = evt.to_s.downcase
@@ -166,6 +170,7 @@ module MSPhysics
     # @param [Symbol] event Event name.
     # @return [Proc, NilClass] A procedure object (if successful).
     def get_proc(event)
+      check_validity
       @_events[event]
     end
 
@@ -174,6 +179,7 @@ module MSPhysics
     # @param [Proc] proc A block of code.
     # @return [Boolean] +true+ (if successful).
     def set_proc(event, proc)
+      check_validity
       return false unless @_events.keys.include?(event)
       @_events[event] = proc
       true
@@ -185,6 +191,7 @@ module MSPhysics
     # @param [Symbol] event Event name.
     # @return [Boolean] +true+ (if successful).
     def delete_proc(event)
+      check_validity
       e = @_events[event]
       return false unless e
       @_events[event] = nil
@@ -197,6 +204,7 @@ module MSPhysics
     # @param [Symbol] event
     # @return [Boolean]
     def proc_assigned?(event)
+      check_validity
       @_events[event] ? true : false
     end
 
@@ -206,10 +214,12 @@ module MSPhysics
     # @return [Boolean] +true+ (if successful).
     # @api private
     def call_event(event, *args)
-      e = @_events[event]
-      return false unless e
+      check_validity
+      return false unless @_script_enabled
+      evt = @_events[event]
+      return false unless evt
       begin
-        e.call(*args)
+        evt.call(*args)
       rescue Exception => e
         @@_error_reference = [@_entity.entityID]
         index = Sketchup.active_model.entities.to_a.index(@_entity)
@@ -229,6 +239,21 @@ module MSPhysics
         end
       end
       true
+    end
+
+    # Enable/Disable body script. Disabling script will prevent all body
+    # procedures from being called.
+    # @param [Boolean] state
+    def script_enabled=(state)
+      check_validity
+      @_script_enabled = state ? true : false
+    end
+
+    # Determine whether body script is enabled.
+    # @return [Boolean]
+    def script_enabled=(state)
+      check_validity
+      @_script_enabled
     end
 
     # @!group Simulation Events
@@ -273,6 +298,17 @@ module MSPhysics
     # @yield This event is triggered whenever the view is redrawn, even when
     #   simulation is paused.
     # @yieldparam [Sketchup::View] view
+    # @yieldparam [Geom::BoundingBox] bb
+    # @example
+    #   onDraw { |view, bb|
+    #     pts = [[0,0,100], [100,100,100]]
+    #     # Add points to the view bounding box to prevent the line from being
+    #     # clipped.
+    #     bb.add(pts)
+    #     # Now, draw the line in red.
+    #     view.drawing_color = 'red'
+    #     view.draw(GL_LINES, pts)
+    #   }
     def onDraw(&block)
       assign_proc(__method__, block)
     end
@@ -290,18 +326,12 @@ module MSPhysics
       assign_proc(__method__, block)
     end
 
-    # Assign a block of code to the onDestroy event.
-    # @yield This event is triggered when the body is destroyed. It is not
-    #   called when the simulation ends, though.
-    def onDestroy(&block)
-      assign_proc(__method__, block)
-    end
-
     # Assign a block of code to the onTouch event.
-    # @yield This event is triggered when the body is touched.
+    # @yield This event is triggered when the body is touched by another body.
     # @yieldparam [Body] toucher
     # @yieldparam [Geom::Point3d] position
     # @yieldparam [Geom::Vector3d] normal
+    # @yieldparam [Geom::Vector3d] force in Newtons.
     # @yieldparam [Numeric] speed in meters per second.
     def onTouch(&block)
       assign_proc(__method__, block)
@@ -311,6 +341,10 @@ module MSPhysics
     # @yield This event is triggered every frame when the body is in an extended
     #   contact with another body.
     # @yieldparam [Body] toucher
+    # @yieldparam [Geom::Point3d] position
+    # @yieldparam [Geom::Vector3d] normal
+    # @yieldparam [Geom::Vector3d] force in Newtons.
+    # @yieldparam [Numeric] speed in meters per second.
     def onTouching(&block)
       assign_proc(__method__, block)
     end
@@ -331,14 +365,15 @@ module MSPhysics
 
     # Assign a block of code to the onClick event.
     # @yield This event is triggered when the body is clicked.
+    # @yieldparam [Geom::Point3d] pos Clicked position in global space.
     def onClick(&block)
       assign_proc(__method__, block)
     end
 
-    # Assign a block of code to the onClicked event.
-    # @yield This event is triggered every next frame after the body is clicked,
-    #   and it is called until the body is unclicked.
-    def onClicked(&block)
+    # Assign a block of code to the onDrag event.
+    # @yield This event is triggered every frame after the body is clicked,
+    #   and is called until the body is unclicked.
+    def onDrag(&block)
       assign_proc(__method__, block)
     end
 

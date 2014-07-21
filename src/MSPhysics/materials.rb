@@ -50,7 +50,7 @@ module MSPhysics
 
       # Get a list of all existing material names.
       # @return [Array<String>]
-      def get_name
+      def get_names
         names = []
         @instances.each { |mat|
           names << mat.name

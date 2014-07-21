@@ -1,7 +1,13 @@
+var last_cursor = [1,0];
+
 String.prototype.contains = function(it) { return this.indexOf(it) != -1; };
 
 function is_int(n) {
    return typeof n === 'number' && parseFloat(n) == parseInt(n, 10) && !isNaN(n);
+}
+
+function type(obj){
+    return Object.prototype.toString.call(obj).slice(8, -1);
 }
 
 function callback(name, data) {
@@ -12,6 +18,9 @@ function callback(name, data) {
 $(document).on('click', 'a[href]', function() {
     if (this.href.contains("http")){
         callback('open_link', this.href);
+        return false;
+    } else if (this.href.contains('ruby_core')){
+        callback('open_ruby_core', '');
         return false;
     }
 });
@@ -24,26 +33,28 @@ function init() {
 }
 
 function editor_set_script(code) {
-    var editor = ace.edit('editor');
-    editor.getSession().getUndoManager().reset;
-    editor.getSession().setValue(code);
+    // window.aceEditor.focus();
+    $( '#temp-area' ).val(code);
+    window.aceEditor.getSession().getUndoManager().reset;
+    window.aceEditor.getSession().setValue(code);
 }
 
-function editor_set_line(line) {
-    var editor = ace.edit('editor');
-    editor.gotoLine(line);
+function editor_set_cursor(row, col) {
+    var timer = setInterval(function() {
+        window.aceEditor.gotoLine(row, col, true);
+        last_cursor = [row, col];
+        window.clearInterval(timer);
+    }, 50);
 }
 
 function editor_select_current_line() {
-    var editor = ace.edit('editor');
-    editor.selection.selectLineEnd();
+    window.aceEditor.selection.selectLineEnd();
 }
 
 function activate_tab(number) {
     $('#tab'+number).fadeIn(400).siblings().hide();
     $('a[href$="#tab'+number+'"]').parent('li').addClass('active').siblings().removeClass('active');
 }
-
 
 $(document).ready( function() {
 
@@ -72,14 +83,15 @@ $(document).ready( function() {
     });*/
 
     // Initialize Ace editor
-    var editor = ace.edit("editor");
-    var container = document.getElementById("editor");
-    var saved = true;
-    var StatusBar = ace.require("ace/ext/statusbar").StatusBar;
-    var statusbar = new StatusBar(editor, document.getElementById("status-bar"));
-    editor.session.setMode("ace/mode/ruby");
-    editor.setTheme("ace/theme/dawn");
-    editor.setSelectionStyle("text");
+    var editor = ace.edit('editor');
+    window.aceEditor = editor;
+    var script_saved = true;
+    var container = document.getElementById('editor');
+    var StatusBar = ace.require('ace/ext/statusbar').StatusBar;
+    var statusbar = new StatusBar(editor, document.getElementById('status-bar'));
+    editor.session.setMode('ace/mode/ruby');
+    editor.setTheme('ace/theme/dawn');
+    editor.setSelectionStyle('text');
     editor.setHighlightActiveLine(true);
     editor.setShowInvisibles(false);
     editor.setDisplayIndentGuides(true);
@@ -88,22 +100,24 @@ $(document).ready( function() {
     editor.renderer.setShowPrintMargin(true);
     editor.session.setUseSoftTabs(true);
     editor.session.setTabSize(2);
-    editor.session.setUseWrapMode(true);
+    editor.session.setUseWrapMode(false);
     editor.setHighlightSelectedWord(true);
     editor.setBehavioursEnabled(true);
     editor.setFadeFoldWidgets(true);
-    editor.setOption("scrollPastEnd", false);
+    editor.setOption('scrollPastEnd', false);
     container.style.fontSize = '12px';
-    editor.on("change", function(e) {
-        saved = false;
+    editor.getSession().on('change', function(e) {
+        script_saved = false;
     });
 
     function editor_changed() {
-        if (saved) return;
+        if (script_saved) return;
         var code = editor.getSession().getValue();
+        // Return if no changes made
+        if ($( '#temp-area' ).val() == code) return;
         $( '#temp-area' ).val(code);
         callback('editor_changed', '');
-        saved = true;
+        script_saved = true;
     }
 
     // Save editor script on the following events.
@@ -111,15 +125,18 @@ $(document).ready( function() {
         editor_changed();
     });
     $('#editor').mouseout(function() {
-        //var pos = editor.selection.getSelectionAnchor();
-        var pos = editor.getSelection().getCursor();
-        if (pos) callback('cursor_changed', pos.row+1);
+        var pos = editor.selection.getSelectionAnchor();
+        //var pos = editor.getSelection().getCursor();
+        if (pos && (pos.row+1 != last_cursor[0] || pos.column != last_cursor[1])) {
+          last_cursor = [pos.row+1, pos.column];
+          callback('cursor_changed', '['+last_cursor+']');
+        }
         editor_changed();
     });
     // Focus editor on mouse enter.
-    $('#editor').mouseenter(function() {
+    /*$('#editor').mouseenter(function() {
         editor.focus();
-    });
+    });*/
 
     // Initialize tabs
     $('.tabs .tab-links a').on('click', function(e) {
@@ -128,7 +145,7 @@ $(document).ready( function() {
         $('.tabs ' + currentAttrValue).fadeIn(400).siblings().hide();
         // Change/remove current tab to active
         $(this).parent('li').addClass('active').siblings().removeClass('active');
-        callback('tab_changed', currentAttrValue);
+        callback('tab_changed', currentAttrValue.charAt(currentAttrValue.length-1));
         e.preventDefault();
     });
 

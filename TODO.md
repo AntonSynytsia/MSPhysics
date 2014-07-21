@@ -8,58 +8,49 @@
   do.
 - Convex bodies jump on scaled tree collisions, and sometimes fall through them.
 ~ NewtonMeshSimplify not working.
-- Compound from mesh doesn't work properly in many cases.
 
 
 # Fix/Optimize/To Do
 
 ## Version 1.0.0
-- Test the access of get/set_var vs body class variables and methods under
-  controllers.
-- Magnetic bodies
-- Joints: Hinge, Servo, Motor, Spring, Up, Slider, Piston, Fixed, Ball,
-  Universal, CorkScrew.
-  Ensure that auto_sleep is off when force is added to a joint.
-- Dialog
-  Tabs:
-    - Simulation UI
-    - Joint UI
-    - Body Properties
-        - shape
-            - convex hull
-        - material
-            - density
-            - elasticity
-            - softness
-            - friction
-- Remove many commands, and add them to the dialog - save space.
-- Control flipped bodies.
-- Add dialog to the animation tool.
 - Make sure animation tool is similar to SketchyPhysics, so that Twilight is compatible.
-- Add air density
 - Modify Body.#look_at method, add accel, damp
 - Fix the jumping of bodies and improper behaviours!
 - Slider on interactive solver works improperly
 - Add position= to slider
-- Fix script error that generates after executing this script
-  this.entity.erase!
 - When simulation starts
     - Create all bodies first
     - Use Sketchup.active_model.entities to check for top level joints.
     - Look in un-ignored group entities one level deep and see if they
       have joints as well.
-    - Create joints from joint attributes. Don't forget to find joint parent.
-- Default Settings
-- Add cursors target, select, hand, make sure they are accessible to the user.
-- Collidable bodies
-- Optimize delete attributes method.
+    - Create joints from joint attributes.
+- Create examples, such as onTouch, explosion, emitter, thruster, joints.
 - Remove not needed methods from the body. Body.set_sleep_state not working...
+
 - Choose particular bodies to be available in the solver:
     http://newtondynamics.com/forum/viewtopic.php?f=9&t=6923&hilit=frozen+bodies#p47966
     ~ simulation.set_simulation_bodies
 - Joints go to sleep
     http://newtondynamics.com/forum/viewtopic.php?f=9&t=7710&p=52972&hilit=set+body+sleeping#p52972
-- Update link when posting
+- Spline Joint
+    http://newtondynamics.com/forum/viewtopic.php?f=9&t=4716&p=33835#p33835
+
+- Body.#add_buoyancy doesn't work properly.
+- Update links when posting
+- Add script version
+- Check which functions to add from the LazyScript.
+- Particle effects
+- Joints dialog
+- Joints: Hinge, Servo, Motor, Spring, Up, Slider, Piston, Fixed, Ball,
+  Universal, CorkScrew.
+- Test the access of get/set_var vs body class variables and methods under
+  controllers.
+- Default settings
+- Simulation dialog
+- Finish body dialog
+- Reset simulation when new model is opened.
+- Replace tree collision with user mesh collision
+- Record version
 
 
 ## Next Versions
@@ -103,11 +94,22 @@
 - Custom compound from mesh groups.
 - Reset simulation with saved body positions.
 - Set editor theme, font, and some other editor settings.
-~ Make a move to Bullet
+- Make another version of MSPhysics with Bullet physics engine.
+- Compound from mesh doesn't work properly in many cases. Create your own that
+  would automatically divide any group into convex hulls.
+- Fluid
+- Add air density
+- Add world destructor
+- Add body destructor to the custom cloth.
+- Compile Newton to double precision and change to double precision!
+  pack('F') -> pack('D')
+  pack('FFF') -> pack('DDD')
+  pack('F*') -> pack('D*')
+  Change all buffers size from 4 bytes per var to 8 bytes per var.
+- Handle flipped bodies.
 
 
 ## Other
-
 - Add "since" tag to first public release.
 - Add "see also" tags to the documentation overview.
 - Create an installer that would automatically install AMS Library, and MSPhysics

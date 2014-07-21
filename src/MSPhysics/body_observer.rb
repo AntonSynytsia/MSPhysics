@@ -29,21 +29,21 @@ module MSPhysics
             instance.method(event).call(*args)
             false
           rescue Exception => e
-            puts "#{e}\n#{$@[0]}"
+            puts "#{e}\n#{e.backtrace.first}"
             true
           end
         }
       end
     end
 
-    # Called when the body is created.
+    # Triggered when the body is created.
     # @param [Body] body
-    def on_create(body)
+    def on_body_added(body)
     end
 
-    # Called when the body is destroyed.
+    # Triggered when the body is destroyed.
     # @param [Body] body
-    def on_destroy(body)
+    def on_body_removed(body)
     end
 
   end # module BodyObserver

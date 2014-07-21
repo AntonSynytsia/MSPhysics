@@ -139,9 +139,11 @@ module MSPhysics
       end
       @active = true
       @fetched_record.clear
+      @saved_matrix = {}
       @record.keys.each { |id|
         e = MSPhysics.get_entity_by_id(id)
         next unless e
+        @saved_matrix[id] = e.transformation
         @fetched_record[e] = @record[id].dup
       }
       model.active_view.animation = self
@@ -151,6 +153,11 @@ module MSPhysics
     def deactivate(view)
       view.animation = nil
       Sketchup.active_model.abort_operation
+      @saved_matrix.each { |id, tra|
+        e = MSPhysics.get_entity_by_id(id)
+        next unless e
+        e.move! tra if e.valid?
+      }
       @frame = 0
       @position = 0
       @active = false
@@ -158,6 +165,7 @@ module MSPhysics
       @resumed = true
       @entered = true
       @fetched_record.clear
+      @saved_matrix.clear
       close_dialog
     end
 
@@ -172,7 +180,7 @@ module MSPhysics
         @fetched_record.delete(ent) if ent.deleted?
         tra = @fetched_record[ent][@frame]
         next unless tra
-        ent.transformation = tra if tra
+        ent.move! tra if tra
       }
       if @resumed and @entered
         Sketchup.status_text = "Frame : #{@frame}    Speed : #{@speed}"

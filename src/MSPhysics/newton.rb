@@ -175,8 +175,8 @@ module MSPhysics
     attach_function :getBroadphaseAlgorithm, :NewtonGetBroadphaseAlgorithm, [:pointer], :int
     attach_function :selectBroadphaseAlgorithm, :NewtonSelectBroadphaseAlgorithm, [:pointer, :int], :void
 
-    attach_function :update, :NewtonUpdate, [:pointer, :float], :void, :blocking => true
-    attach_function :updateAsync, :NewtonUpdateAsync, [:pointer, :float], :void, :blocking => true
+    attach_function :update, :NewtonUpdate, [:pointer, :float], :void#, :blocking => true
+    attach_function :updateAsync, :NewtonUpdateAsync, [:pointer, :float], :void#, :blocking => true
     attach_function :waitForUpdateToFinish, :NewtonWaitForUpdateToFinish, [:pointer], :void
 
     attach_function :serializeToFile, :NewtonSerializeToFile, [:pointer, :string], :void
@@ -219,11 +219,11 @@ module MSPhysics
 
     attach_function :worldSetCollisionConstructorDestuctorCallback, :NewtonWorldSetCollisionConstructorDestuctorCallback, [:pointer, :collisionCopyConstructionCallback, :collisionDestructorCallback], :void
 
-    attach_function :worldRayCast, :NewtonWorldRayCast, [:pointer, :pointer, :pointer, :worldRayFilterCallback, :pointer, :worldRayPrefilterCallback, :int], :void, :blocking => true
-    attach_function :worldConvexRayCast, :NewtonWorldConvexRayCast, [:pointer, :pointer, :pointer, :pointer, :worldRayFilterCallback, :pointer, :worldRayPrefilterCallback, :int], :void, :blocking => true
+    attach_function :worldRayCast, :NewtonWorldRayCast, [:pointer, :pointer, :pointer, :worldRayFilterCallback, :pointer, :worldRayPrefilterCallback, :int], :void
+    attach_function :worldConvexRayCast, :NewtonWorldConvexRayCast, [:pointer, :pointer, :pointer, :pointer, :worldRayFilterCallback, :pointer, :worldRayPrefilterCallback, :int], :void
 
-    attach_function :worldCollide, :NewtonWorldCollide, [:pointer, :pointer, :pointer, :pointer, :worldRayPrefilterCallback, :pointer, :int, :int], :int, :blocking => true
-    attach_function :worldConvexCast, :NewtonWorldConvexCast, [:pointer, :pointer, :pointer, :pointer, :pointer, :pointer, :worldRayPrefilterCallback, :pointer, :int, :int], :int, :blocking => true
+    attach_function :worldCollide, :NewtonWorldCollide, [:pointer, :pointer, :pointer, :pointer, :worldRayPrefilterCallback, :pointer, :int, :int], :int
+    attach_function :worldConvexCast, :NewtonWorldConvexCast, [:pointer, :pointer, :pointer, :pointer, :pointer, :pointer, :worldRayPrefilterCallback, :pointer, :int, :int], :int
 
     attach_function :worldGetBodyCount, :NewtonWorldGetBodyCount, [:pointer], :int
     attach_function :worldGetConstraintCount, :NewtonWorldGetConstraintCount, [:pointer], :int
@@ -301,7 +301,7 @@ module MSPhysics
     attach_function :createConvexHullFromMesh, :NewtonCreateConvexHullFromMesh, [:pointer, :pointer, :float, :int], :pointer
 
     attach_function :collisionGetMode, :NewtonCollisionGetMode, [:pointer], :int
-    attach_function :collisionSetCollisonMode, :NewtonCollisionSetCollisonMode, [:pointer, :int], :void
+    attach_function :collisionSetCollisionMode, :NewtonCollisionSetCollisionMode, [:pointer, :int], :void
 
     attach_function :convexHullGetFaceIndices, :NewtonConvexHullGetFaceIndices, [:pointer, :int, :pointer], :int
     attach_function :convexHullGetVetexData, :NewtonConvexHullGetVetexData, [:pointer, :pointer, :pointer], :int

@@ -50,26 +50,32 @@ module MSPhysics
 
     def create_geometry(pt1, pt2, view)
       model = Sketchup.active_model
+      ents = model.active_entities
       model.start_operation('Create Joint')
       begin
+        if ents.parent.is_a?(Sketchup::ComponentDefinition)
+          type = ents.parent.instances.first.get_attribute('MSPhysics', 'Type', nil)
+          raise 'Cannot create a recursively defined joint!' if type == 'Joint'
+        end
         cd = model.definitions.load(@path)
         tra = Geom::Transformation.new(pt1, pt1.vector_to(pt2))
         layer = model.layers.add('MSPhysics Joints')
-        layer.color = [0,80,255]
-        ent = model.active_entities.add_instance(cd, tra)
+        layer.color = [0,80,255] if Sketchup.version.to_i >= 14
+        ent = ents.add_instance(cd, tra)
         ent.layer = layer
         assign_attributes(ent)
         model.selection.clear
         model.selection.add(ent)
       rescue Exception => e
-        UI.messagebox(e)
         model.abort_operation
+        UI.messagebox(e)
+        return
       end
       model.commit_operation
     end
 
     def assign_attributes(ent)
-	  ent.set_attribute('MSPhysics', 'Type', 'Joint')
+      ent.set_attribute('MSPhysics', 'Type', 'Joint')
       ent.set_attribute('MSPhysics Joint', 'Type', @joint_type.to_s)
     end
 

@@ -4,6 +4,11 @@ module MSPhysics
     # @!visibility private
     VALID_TYPES = [Sketchup::Group, Sketchup::ComponentInstance]
 
+    # Holds reference to {MSPhysics::Simulation} instance.
+    $msp_simulation = nil
+    # Holds reference to {MSPhysics::SimulationTool} instance.
+    $msp_simulation_tool = nil
+
     def initialize
       @time = { :start => 0, :end => 0, :last => 0, :sim => 0, :total => 0 }
       @fps = { :val => 0, :update_rate => 10, :last => 0, :change => 0 }
@@ -27,6 +32,7 @@ module MSPhysics
       @picked = []
       @clicked = nil
       @selection = []
+      @cursor_id = MSPhysics::CURSORS[:hand]
       @drag = {
         :line_width     => 2,
         :line_stipple   => '_',
@@ -121,6 +127,19 @@ module MSPhysics
       @mode = (mode == 1 ? 1 : 0)
     end
 
+    # Get cursor id.
+    # @return [Fixnum]
+    def cursor_id
+      @cursor_id
+    end
+
+    # Set cursor id.
+    # @see {MSPhysics::CURSORS}
+    # @param [Fixnum] id
+    def cursor_id=(id)
+      @cursor_id = id.to_i
+    end
+
     private
 
     def update_status_text
@@ -145,7 +164,6 @@ module MSPhysics
     end
 
     def abort(e)
-      puts e
       @error = e
       self.class.reset
     end
@@ -161,9 +179,11 @@ module MSPhysics
       view = model.active_view
       cam = view.camera
       # Wrap operations
-      args = ['MSPhysics']
-      args << true if Sketchup.version.to_i > 6
-      model.start_operation(*args)
+      if Sketchup.version.to_i > 6
+        model.start_operation('MSPhysics', true, false, false)
+      else
+        model.start_operation('MSPhysics')
+      end
       # Close active path
       state = true
       while state
@@ -173,18 +193,21 @@ module MSPhysics
       @camera[:orig] = [cam.eye, cam.target, cam.up]
       # Activate tools
       AMS::InputProc.select_tool(self, true, false, false)
+      Sketchup.active_model.add_observer(self)
       AMS::Sketchup.add_observer(self)
       # Save original selection
       model.selection.to_a.each{ |e|
         # Use entity ID to get proper reference if entity was once deleted.
         @selection << e.entityID
       }
+      # Create global variables for easy access
+      $msp_simulation = @simulation
+      $msp_simulation_tool = self
       # Start simulation
       begin
         @simulation.do_on_start
       rescue Exception => e
         abort(e)
-        #abort("#{e}\n#{e.backtrace.join("\n")}")
         return
       end
       model.selection.clear
@@ -197,26 +220,33 @@ module MSPhysics
     end
 
     def deactivate(view)
+      view = Sketchup.active_model.active_view unless view.is_a?(Sketchup::View)
       view.animation = nil
       # End simulation
       begin
         @simulation.do_on_end
       rescue Exception => e
-        abort(e) unless @error
+        @error = e unless @error
       end
-      # Reset Data
-      CommonContext.reset_data
-      Body.reset_data
-      Collision.reset_data
-      Joint.destroy_all # Clear the joints queue
+      # Clear global variables
+      $msp_simulation = nil
+      $msp_simulation_tool = nil
       # Remove observers and deselect tools
+      Sketchup.active_model.remove_observer(self)
       AMS::Sketchup.remove_observer(self)
       AMS::InputProc.deselect_tool(self)
-      # Use abort operation rather than commit operation.
-      # The abort operation command sets bodies to original transformation.
+      # Use abort_operation rather than commit_operation.
+      # Abort operation undoes most model changes made during simulation.
       Sketchup.active_model.abort_operation
-      # Set camera to original placements
+      # Reset entity transformations.
+      begin
+        @simulation.do_on_end_post_operation
+      rescue Exception => e
+        puts "An error occurred while resetting post operation data:\n#{e}\n#{e.backtrace[0..2].join("\n")}"
+      end
+      # Set camera to original placement.
       view.camera.set(*@camera[:orig])
+      # Add original selection.
       sel = Sketchup.active_model.selection
       sel.clear
       to_select = []
@@ -225,10 +255,15 @@ module MSPhysics
         to_select << e if e
       }
       sel.add(to_select)
+      # Clear instance
+      @@instance = nil
+      # Refresh view
       view.invalidate
+      # Show info
       if @error
-        puts 'MSPhysics Simulation was aborted due to an error!'
-        UI.messagebox("MSPhysics Simulation was aborted due to an error!\n\n#{@error}")
+        msg = "MSPhysics Simulation was aborted due to an error!\n#{@error}"
+        puts msg
+        UI.messagebox(msg)
         data = MSPhysics::BodyContext._error_reference
         Dialog.lead_to_error(data)
         MSPhysics::BodyContext._error_reference = nil
@@ -241,8 +276,12 @@ module MSPhysics
         printf("  frames          : %d\n", @frame)
         printf("  average FPS     : %d\n", average_fps)
         printf("  simulation time : %.2f seconds\n", @time[:sim])
-        printf("  total time      : %.2f seconds\n", @time[:total])
+        printf("  total time      : %.2f seconds\n\n", @time[:total])
       end
+      # Clear some variables
+      @picked.clear
+      @clicked = nil
+      @selection.clear
     end
 
     def onCancel(reason, view)
@@ -285,7 +324,7 @@ module MSPhysics
       @ip1.copy! @ip
       # view.tooltip = @ip1.tooltip
       return if @mode == 1 or @picked.empty?
-      if @picked[0].invalid?
+      unless @picked[0].valid?
         @picked.clear
         return
       end
@@ -318,27 +357,32 @@ module MSPhysics
       ent = ph.best_picked
       return unless VALID_TYPES.include?(ent.class)
       body = @simulation.get_body_by_entity(ent)
-      return if body.nil?
+      return unless body
       begin
-        body.call_event(:onClick)
         @clicked = body
+        @clicked.call_event(:onClick, pos.clone)
       rescue Exception => e
         abort(e)
         return
-      end
+      end unless @paused
       return if body.static? or @mode == 1
       pick_pt = pos.transform(ent.transformation.inverse)
-      @picked = [body, pick_pt, pos]
+      cc = body.get_continuous_collision_mode
+      body.set_continuous_collision_mode(true)
+      @picked = [body, pick_pt, pos, cc]
       view.lock_inference
     end
 
     def onLButtonUp(flags, x, y, view)
-      @picked.clear
+      unless @picked.empty?
+        @picked[0].set_continuous_collision_mode(@picked[3]) if @picked[0].valid?
+        @picked.clear
+      end
       begin
         @clicked.call_event(:onUnclick)
       rescue Exception => e
         abort(e)
-      end if @clicked
+      end if @clicked and @clicked.valid?
       @clicked = nil
     end
 
@@ -355,7 +399,7 @@ module MSPhysics
           rescue Exception => e
             abort(e)
             return
-          end if @clicked
+          end if @clicked and @clicked.valid?
           @clicked = nil
         end
         view.show_frame
@@ -370,7 +414,11 @@ module MSPhysics
       # Update newton world.
       begin
         @simulation.do_on_update(@frame)
-        @clicked.call_event(:onClicked) if @clicked
+        if @clicked and @clicked.valid?
+          @clicked.call_event(:onDrag)
+        else
+          @clicked = nil
+        end
       rescue Exception => e
         abort(e)
         return
@@ -398,9 +446,8 @@ module MSPhysics
       end
       # Process dragged body
       unless @picked.empty?
-        body = @picked[0]
-        if body.valid?
-          Body.apply_pick_force(body, @picked[1], @picked[2], 100, 10)
+        if @picked[0].valid?
+          Body.apply_pick_force(@picked[0], @picked[1], @picked[2], 100, 10)
         else
           @picked.clear
         end
@@ -485,13 +532,21 @@ module MSPhysics
     end
 
     def onSetCursor
-      UI.set_cursor(MSPhysics::CURSORS[:target])
+      UI.set_cursor(@cursor_id)
     end
 
     def getInstructorContentDirectory
     end
 
     def getMenu(menu)
+      menu.add_item(self.paused? ? 'Play' : 'Pause'){
+        self.toggle_play
+      }
+      menu.add_item('Reset'){
+        self.class.reset
+      }
+      menu.add_separator
+
       model = Sketchup.active_model
       view = model.active_view
       sel = model.selection
@@ -504,6 +559,7 @@ module MSPhysics
       @menu_enter = true
       sel.add ent
       item = menu.add_item('Camera Follow'){
+        next unless body.valid?
         if @camera[:follow] == ent
           @camera[:follow] = nil
         else
@@ -515,6 +571,7 @@ module MSPhysics
         @camera[:follow] == ent ? MF_CHECKED : MF_UNCHECKED
       }
       item = menu.add_item('Camera Target'){
+        next unless body.valid?
         if @camera[:target] == ent
           @camera[:target] = nil
         else
@@ -531,9 +588,11 @@ module MSPhysics
         }
       end
       menu.add_item('Freeze Body'){
+        next unless body.valid?
         body.frozen = true
       }
       menu.add_item('Destroy Body'){
+        next unless body.valid?
         body.destroy(true)
       }
     end
@@ -599,6 +658,15 @@ module MSPhysics
 
     def hk_onRButtonDown(x,y)
       call_event(:onRButtonDown, x, y)
+      # Prevent the menu from showing up if user selects anything, other than
+      # simulation bodies.
+      if @mode == 0 and !@suspended
+        view = Sketchup.active_model.active_view
+        ph = view.pick_helper
+        ph.do_pick x,y
+        ent = ph.best_picked
+        return @simulation.get_body_by_entity(ent) ? 0 : 1
+      end
       @mode
     end
 
@@ -609,6 +677,15 @@ module MSPhysics
 
     def hk_onRButtonDoubleClick(x,y)
       call_event(:onRButtonDoubleClick, x, y)
+      # Prevent the menu from showing up if user selects anything, other than
+      # simulation bodies.
+      if @mode == 0 and !@suspended
+        view = Sketchup.active_model.active_view
+        ph = view.pick_helper
+        ph.do_pick x,y
+        ent = ph.best_picked
+        return @simulation.get_body_by_entity(ent) ? 0 : 1
+      end
       @mode
     end
 
@@ -673,10 +750,24 @@ module MSPhysics
       @deactivated = true unless AMS::Sketchup.active?
     end
 
+
+    # SketchUp Model Observers
+
+    def onPreSaveModel(model)
+      SimulationTool.reset
+    end
+
+    def onTransactionUndo(model)
+      SimulationTool.reset
+    end
+
+    def onTransactionRedo(model)
+      SimulationTool.reset
+    end
+
+
     # @!visibility private
     @@instance = nil
-    # @!visibility private
-    @@reset_called = false
 
     class << self
 
@@ -684,7 +775,6 @@ module MSPhysics
       # @return [Boolean] +true+ (if successful).
       def start
         return false if @@instance
-        @@reset_called = false
         @@instance = SimulationTool.new
         Sketchup.active_model.select_tool(@@instance)
         true
@@ -693,8 +783,7 @@ module MSPhysics
       # Reset simulation.
       # @return [Boolean] +true+ (if successful).
       def reset
-        return false if @@reset_called
-        @@reset_called = true
+        return false unless @@instance
         Sketchup.active_model.select_tool(nil)
         @@instance = nil
         # GC.start

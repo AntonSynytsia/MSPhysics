@@ -19,18 +19,18 @@ will lack some features of the Windows version.
 
 
 ## How it works?
-MSPhysics, as well as SketchyPhysics use NewtonDynamics physics engine developed
-by Juleo Jerez. Newton is responsible for calculating collisions and all the
-physics operations.
+MSPhysics, as well as SketchyPhysics use NewtonDynamics physics engine by Juleo
+Jerez. Newton is responsible for calculating collisions, and all the physics
+operations. Newton is known for its accuracy and stability.
 
 
 ## Is MSPhysics compatible with SketchyPhysics?
 MSPhysics is not compatible with SketchyPhysics. Both plugins may be installed
-alongside, but each will act as a separate tool. All attribute differ. To have
+alongside, but each will act as a separate tool; all attribute differ. To have
 one model working on both MSPhysics and SketchyPhysics simply assign similar
 scripts and properties to both MSPhysics and SketchyPhysics UI.
 
 
 ## Is MSPhysics written to compete with SketchyPhysics?
-No, MSPhysics is the unofficial SketchyPhysics. It was written to bring
-SketchyPhysics community back to life.
+No, MSPhysics is not written to compete with SketchyPhysics. MSPhysics is
+written to bring SketchyPhysics community back to life.

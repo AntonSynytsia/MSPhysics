@@ -12,8 +12,10 @@ module MSPhysics
     #   rebound ratio. A basketball has a rebound ratio of 0.83. This means the
     #   new height of a basketball is 83% of original height within each bounce.
     #   This value is clamped between +0.01+ and +2.00+.
-    # @param [Numeric] softness The softness coefficient. Typical value is 0.15.
-    #   This value is clamped between +0.01+ and +1.00+.
+    # @param [Numeric] softness The softness coefficient. Decreasing softness
+    #   yields adaptable collision. Increasing softness yields resistible
+    #   collision. This value is clamped between +0.01+ and +1.00+. Typical
+    #   value is 0.15.
     def initialize(name, density, static_friction, kinetic_friction, elasticity, softness)
       @name = name.to_s
       @density = MSPhysics.clamp(density, 0.01, nil)

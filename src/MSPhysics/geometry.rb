@@ -165,15 +165,11 @@ module MSPhysics
     # @return [Array<Numeric>] An array of three numeric values containing the
     #   scale of the x_axis, y_axis, and z_axis.
     def get_scale(tra)
-      m = Geom::Transformation.new(tra.to_a).to_a
-      scale = []
-      #sign = m[2] < 0 ? -1 : 1
-      scale[0] = Geom::Vector3d.new(m[0,3]).length# * sign
-      #sign = m[6] < 0 ? -1 : 1
-      scale[1] = Geom::Vector3d.new(m[4,3]).length# * sign
-      #sign = m[10] < 0 ? -1 : 1
-      scale[2] = Geom::Vector3d.new(m[8,3]).length# * sign
-      scale
+      mat = Geom::Transformation.new(tra.to_a).to_a
+      sx = Geom::Vector3d.new(mat[0,3]).length
+      sy = Geom::Vector3d.new(mat[4,3]).length
+      sz = Geom::Vector3d.new(mat[8,3]).length
+      [sx,sy,sz]
     end
 
     # Set the scale ratios of a transformation matrix.
@@ -182,32 +178,16 @@ module MSPhysics
     #   the scale ratios of the x_axis, y_axis, and z_axis.
     # @return [Geom::Transformation]
     def set_scale(tra, scale)
-      tra = Geom::Transformation.new(tra)
-      matrix = [1,0,0, 0, 0,0,1, 0, 0,0,1, 0, 0,0,0, 1]
-      xaxis = tra.xaxis
-      xaxis.length = scale[0]
-      yaxis = tra.yaxis
-      yaxis.length = scale[1]
-      zaxis = tra.zaxis
-      zaxis.length = scale[2]
-      origin = tra.origin
-      matrix[0,3] = xaxis.to_a
-      matrix[4,3] = yaxis.to_a
-      matrix[8,3] = zaxis.to_a
-      matrix[12,3] = origin.to_a
-      Geom::Transformation.new(matrix)
+      s = Geom::Transformation.scaling(scale[0], scale[1], scale[2])
+      extract_scale(tra)*s
     end
 
-    # Normalize the scale of a transformation matrix.
+    # Normalize scale of a transformation matrix.
     # @param [Array<Numeric>, Geom::Transformation] tra
     # @return [Geom::Transformation]
     def extract_scale(tra)
       tra = Geom::Transformation.new(tra.to_a)
-      xaxis = tra.xaxis.normalize
-      yaxis = tra.yaxis.normalize
-      zaxis = tra.zaxis.normalize
-      origin = tra.origin
-      Geom::Transformation.new(xaxis, yaxis, zaxis, origin)
+      Geom::Transformation.new(tra.xaxis, tra.yaxis, tra.zaxis, tra.origin)
     end
 
   end # module Geometry

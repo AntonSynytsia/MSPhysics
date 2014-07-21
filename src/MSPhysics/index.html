@@ -1,178 +1,336 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="en">
-	<head>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
-		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-		<meta http-equiv="MSThemeCompatible" content="Yes" />
-		<meta http-equiv="X-UA-Compatible" content="IE=10" />
-		<title>MSPhysics UI</title>
-		<meta name="author" content="Anton Synytsia" />
-		<link href="css/main.css" rel="stylesheet" type="text/css" />
-		<link href="css/tabs.css" rel="stylesheet" type="text/css" />
-		<style type="text/css" media="screen">
-			#editor {
-				position: relative !important;
-				border: 1px solid lightgray;
-				margin: 4px auto;
-				height: auto;
-			}
-			#status-bar {
-				margin: 0 10px;
-				position: relative;
-				color: gray;
-				font-size: 11px;
-			}
-			.ace_status-indicator {
-				position: absolute;
-				right: 0;
-			}
-		</style>
-		<script type="text/javascript" src="js/jquery.js"></script>
-		<script type="text/javascript" src="js/main.js"></script>
-		<script type="text/javascript" src="js/ace/ace.js"> charset="utf-8"></script>
-		<script type="text/javascript" src="js/ace/ext-statusbar.js"></script>
-	</head>
-	<body scroll="no">
-		<div class="tabs">
-			<ul class="tab-links">
-				<li class="active"><a href="#tab1">Simulation</a></li>
-				<li><a href="#tab2">Body Properties</a></li>
-				<li><a href="#tab3">Body Script</a></li>
-				<li><a href="#tab4">Joint</a></li>
-			</ul>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="MSThemeCompatible" content="Yes" />
+    <meta http-equiv="X-UA-Compatible" content="IE=10" />
+    <title>MSPhysics UI</title>
+    <meta name="author" content="Anton Synytsia" />
+    <link href="css/main.css" rel="stylesheet" type="text/css" />
+    <link href="css/tabs.css" rel="stylesheet" type="text/css" />
+    <style type="text/css" media="screen">
+      #editor {
+        position: relative !important;
+        border: 1px solid lightgray;
+        margin: 4px auto;
+        height: auto;
+      }
+      #status-bar {
+        margin: 0 10px;
+        position: relative;
+        color: gray;
+        font-size: 11px;
+      }
+      .ace_status-indicator {
+        position: absolute;
+        right: 0;
+      }
+    </style>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/main.js"></script>
+    <script type="text/javascript" src="js/ace/ace.js"> charset="utf-8"></script>
+    <script type="text/javascript" src="js/ace/ext-statusbar.js"></script>
+  </head>
+  <body scroll="no">
+    <div class="tabs">
+      <ul class="tab-links">
+        <li class="active"><a href="#tab1">Simulation</a></li>
+        <li><a href="#tab2">Body Properties</a></li>
+        <li><a href="#tab3">Body Script</a></li>
+        <li><a href="#tab4">Joint</a></li>
+      </ul>
 
-			<div class="tab-content">
-				<div id="tab1" class="tab active">
-					<p>Simulation content goes here!</p>
-				</div>
+      <div class="tab-content">
+        <div id="tab1" class="tab active">
+          <p>Simulation content goes here!</p>
+        </div>
+        <div id="tab2" class="tab">
+          <div id="tab2-none">
+            <p>Select an entity of the body type to edit body properties.</p>
+          </div>
+          <div class="main-wrap" id="tab2-content1" style="display: none;">
+            <div id="column1">
+              <h3>Collision Shape</h3>
+              <table class="body-table">
+                <tr>
+                  <td><label for="body-box">Box</label></td>
+                  <td><input id="body-box" type="radio" name="shape"></input></td>
+                </tr>
+                <tr>
+                  <td><label for="body-sphere">Sphere</label></td>
+                  <td><input id="body-sphere" type="radio" name="shape"></input></td>
+                </tr>
+                <tr>
+                  <td><label for="body-cone">Cone</label></td>
+                  <td><input id="body-cone" type="radio" name="shape"></input></td>
+                </tr>
+                <tr>
+                  <td><label for="body-cylinder">Cylinder</label></td>
+                  <td><input id="body-cylinder" type="radio" name="shape"></input></td>
+                </tr>
+                <tr>
+                  <td><label for="body-chamfer_cylinder">Chamfer Cylinder</label></td>
+                  <td><input id="body-chamfer_cylinder" type="radio" name="shape"></input></td>
+                </tr>
+                <tr>
+                  <td><label for="body-capsule">Capsule</label></td>
+                  <td><input id="body-capsule" type="radio" name="shape"></input></td>
+                </tr>
+                <tr>
+                  <td><label for="body-convex_hull">Convex Hull</label></td>
+                  <td><input id="body-convex_hull" type="radio" name="shape"></input></td>
+                </tr>
+                <tr>
+                  <td><label for="body-null">Null</label></td>
+                  <td><input id="body-null" type="radio" name="shape"></input></td>
+                </tr>
+                <tr>
+                  <td><label for="body-compound">Compound</label></td>
+                  <td><input id="body-compound" type="radio" name="shape"></input></td>
+                </tr>
+                <tr>
+                  <td><label for="body-compound_from_mesh">Compound From Mesh</label></td>
+                  <td><input id="body-compound_from_mesh" type="radio" name="shape"></input></td>
+                </tr>
+                <tr>
+                  <td><label for="body-static_mesh">Static Mesh</label></td>
+                  <td><input id="body-static_mesh" type="radio" name="shape"></input></td>
+                </tr>
+              </table>
+              <br />
+              <h3>State</h3>
+              <table class="body-table">
+                <tr>
+                  <td><label for="body-ignore">Ignore</label></td>
+                  <td><input id="body-ignore" type="checkbox"></input></td>
+                </tr>
+                <tr>
+                  <td><label for="body-not_collidable">Not Collidable</label></td>
+                  <td><input id="body-not_collidable" type="checkbox"></input></td>
+                </tr>
+                <tr>
+                  <td><label for="body-static">Static</label></td>
+                  <td><input id="body-static" type="checkbox"></input></td>
+                </tr>
+                <tr>
+                  <td><label for="body-frozen">Frozen</label></td>
+                  <td><input id="body-frozen" type="checkbox"></input></td>
+                </tr>
+              </table>
+            </div>
+            <div id="column2">
+              <h3>Properties</h3>
+              <table class="joint-table">
+                <tr title="Set body density in kilograms per cubic meter.">
+                  <td><label for="body-density">Density</label></td>
+                  <td><input id="body-density" class="numeric-input" type="text"></input></td>
+                </tr>
+                <tr height="12px"></tr>
+                <tr title="Set body static friction coefficient. This value is clamped between 0.01 and 2.00.">
+                  <td><label for="body-static_friction">Static Friction</label></td>
+                  <td><input id="body-static_friction" class="numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="Set body dynamic friction coefficient. This value is clamped between 0.01 and 2.00.">
+                  <td><label for="body-dynamic_friction">Dynamic Friction</label></td>
+                  <td><input id="body-dynamic_friction" class="numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="Enable/Disable friction.">
+                  <td><label for="body-enable_friction">Enable Friction</label></td>
+                  <td><input id="body-enable_friction" type="checkbox"></input></td>
+                </tr>
+                <tr height="12px"></tr>
+                <tr title="Set body coefficient of restitution. This is the rebound ratio. A basketball has a rebound ratio of 0.83. This means that within each bounce the new height of a basketball is 83% of original height. This value is clamped between 0.01 and 2.00.">
+                  <td><label for="body-elasticity">Elasticity</label></td>
+                  <td><input id="body-elasticity" class="numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="Set body softness coefficient. Decreasing softness yields adaptable collision. Increasing softness yields resistible collision. This value is clamped between 0.01 and 1.00. Typical value is 0.15.">
+                  <td><label for="body-softness">Softness</label></td>
+                  <td><input id="body-softness" class="numeric-input" type="text"></input></td>
+                </tr>
+                <tr height="12px"></tr>
+                <tr title="Set body magnet force in Newtons, the force with which to attract surrounding bodies. This force will be altered depending on the distance between both bodies.">
+                  <td><label for="body-magnet_force">Magnet Force</label></td>
+                  <td><input id="body-magnet_force" class="numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="Set body magnet range in meters.">
+                  <td><label for="body-magnet_range">Magnet Range</label></td>
+                  <td><input id="body-magnet_range" class="numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="Set body magnetic. Magnetic bodies will be attracted to the bodies with a magnet force.">
+                  <td><label for="body-magnetic">Enable Friction</label></td>
+                  <td><input id="body-magnetic" type="checkbox"></input></td>
+                </tr>
+                <tr height="12px"></tr>
+                <tr title="Enable/Disable body script.">
+                  <td><label for="body-enable_script">Enable Script</label></td>
+                  <td><input id="body-enable_script" type="checkbox"></input></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+          <div id="tab2-content2" style="display: none;">
+            <h3>Collision Shape</h3>
+            <table class="body-table">
+              <tr>
+                <td><label for="body-box">Box</label></td>
+                <td><input id="body-box" type="radio" name="shape"></input></td>
+              </tr>
+              <tr>
+                <td><label for="body-sphere">Sphere</label></td>
+                <td><input id="body-sphere" type="radio" name="shape"></input></td>
+              </tr>
+              <tr>
+                <td><label for="body-cone">Cone</label></td>
+                <td><input id="body-cone" type="radio" name="shape"></input></td>
+              </tr>
+              <tr>
+                <td><label for="body-cylinder">Cylinder</label></td>
+                <td><input id="body-cylinder" type="radio" name="shape"></input></td>
+              </tr>
+              <tr>
+                <td><label for="body-chamfer_cylinder">Chamfer Cylinder</label></td>
+                <td><input id="body-chamfer_cylinder" type="radio" name="shape"></input></td>
+              </tr>
+              <tr>
+                <td><label for="body-capsule">Capsule</label></td>
+                <td><input id="body-capsule" type="radio" name="shape"></input></td>
+              </tr>
+              <tr>
+                <td><label for="body-convex_hull">Convex Hull</label></td>
+                <td><input id="body-convex_hull" type="radio" name="shape"></input></td>
+              </tr>
+            </table>
+            <br />
+            <h3>State</h3>
+            <table class="body-table">
+              <tr>
+                <td><label for="body-ignore">Ignore</label></td>
+                <td><input id="body-ignore" type="checkbox"></input></td>
+              </tr>
+              <tr>
+                <td><label for="body-not_collidable">Not Collidable</label></td>
+                <td><input id="body-not_collidable" type="checkbox"></input></td>
+              </tr>
+            </table>
+          </div>
+        </div>
 
-				<div id="tab2" class="tab">
-					<div id="tab2-none">
-						<p>Select an entity of the body type to edit body properties.</p>
-					</div>
-					<div id="tab2-content1" style="display: none;">
-						<p>Body properties go here!</p>
-					</div>
-					<div id="tab2-content2" style="display: none;">
-						<p>Child body properties go here!</p>
-					</div>
-				</div>
+        <div id="tab3" class="tab">
+          <div id="tab3-none">
+            <p>Select a top level entity of the body type to edit body script.</p>
+          </div>
+          <div id='tab3-content' style="display: none;">
+            <pre class="center" style="font-size:11px;"><a href="https://googledrive.com/host/0B3qg8f4WrNdHektnbjZEV0N0STg/_index.html" target="_blank">MSPhysics Ref.</a> | <a href="https://googledrive.com/host/0B3qg8f4WrNdHbGVack9rak16LWc/_index.html" target="_blank">AMS Library Ref.</a> | <a href="http://www.sketchup.com/intl/en/developer/" target="_blank">SketchUp API</a> | <a href="ruby_core" target="_blank">Ruby Core</a></pre>
+            <textarea id="temp-area" rows="1" cols="20" style="display: none;"></textarea>
+            <div id="editor"></div>
+            <div id="status-bar">Powered by <a id="ace-url" href="http://ace.c9.io/#nav=about" target="_blank">Ace</a></div>
+          </div>
+        </div>
 
-				<div id="tab3" class="tab">
-					<div id="tab3-none">
-						<p>Select a top level entity of the body type to edit body script.</p>
-					</div>
-					<div id='tab3-content' style="display: none;">
-						<pre class="center" style="font-size:11px;"><a href="https://googledrive.com/host/0B3qg8f4WrNdHektnbjZEV0N0STg/_index.html" target="_blank">MSPhysics Ref.</a> | <a href="https://googledrive.com/host/0B3qg8f4WrNdHbGVack9rak16LWc/_index.html" target="_blank">AMS Library Ref.</a> | <a href="http://www.sketchup.com/intl/en/developer/" target="_blank">SketchUp Ruby API</a></pre>
-						<textarea id="temp-area" rows="1" cols="20" style="display: none;"></textarea>
-						<div id="editor"></div>
-						<div id="status-bar">Powered by <a id="ace-url" href="http://ace.c9.io/#nav=about" target="_blank">Ace</a></div>
-					</div>
-				</div>
+        <div id="tab4" class="tab">
+          <div id="tab4-none">
+            <p>Select an entity of the joint type to edit joint settings.</p>
+          </div>
+          <div id="tab4-hinge" style="display: none;">
+            <h1>Hinge</h1>
+            <table class="joint-table">
+              <tr title="Set minimum angle in degrees.">
+                <td><label for="hinge-min">Min</label></td>
+                <td><input id="hinge-min" class="numeric-input" type="text"></input></td>
+              </tr>
+              <tr title="Set maximum angle in degrees.">
+                <td><label for="hinge-max">Max</label></td>
+                <td><input id="hinge-max" class="numeric-input" type="text"></input></td>
+              </tr>
+              <tr title="Set rotational friction in Newtons.">
+                <td><label for="hinge-friction">Friction</label></td>
+                <td><input id="hinge-friction" class="numeric-input" type="text"></input></td>
+              </tr>
+              <tr title="Enable/Disable minimum and maximum angle limits.">
+                <td><label for="hinge-enable_limits">Enable Limits</label></td>
+                <td><input id="hinge-enable_limits" type="checkbox"></input></td>
+              </tr>
+            </table>
+          </div>
+          <div id="tab4-motor" style="display: none;">
+            <h1>Motor</h1>
+            <table class="joint-table">
+              <tr title="Set maximum angular rate in degrees per second.">
+                <td><label for="motor-angular-rate">Angular Rate</label></td>
+                <td><input id="motor-angular-rate" class="numeric-input" type="text"></input></td>
+              </tr>
+              <tr title="Set maximum acceleration in degrees per second per second.">
+                <td><label for="motor-max-accel">Max Acceleration</label></td>
+                <td><input id="motor-max-accel" class="numeric-input" type="text"></input></td>
+              </tr>
+              <tr title="Set rotational force power in Watts (Joules / second).">
+                <td><label for="motor-power">Power</label></td>
+                <td><input id="motor-power" class="numeric-input" type="text"></input></td>
+              </tr>
+              <tr title="Enable/Disable free rotate. Enabling free spin will disable all angular friction when the motor is off.">
+                <td><label for="motor-free-spin">Free Spin</label></td>
+                <td><input id="motor-free-spin" type="checkbox"></input></td>
+              </tr>
+              <tr title="Set rotation direction and magnitude.">
+                <td><label for="motor-controller">Controller</label></td>
+                <td><input id="motor-controller" class="controller-input" type="text"></input></td>
+              </tr>
+            </table>
+          </div>
+          <div id="tab4-servo" style="display: none;">
+            <h1>Servo</h1>
+            <table class="joint-table">
+              <tr title="Set minimum angle in degrees.">
+                <td><label for="servo-min">Min</label></td>
+                <td><input id="servo-min" class="numeric-input" type="text"></input></td>
+              </tr>
+              <tr title="Set maximum angle in degrees.">
+                <td><label for="servo-max">Max</label></td>
+                <td><input id="servo-max" class="numeric-input" type="text"></input></td>
+              </tr>
+              <tr title="Set angular rate in degrees per second.">
+                <td><label for="servo-angular-rate">Angular Rate</label></td>
+                <td><input id="servo-angular-rate" class="numeric-input" type="text"></input></td>
+              </tr>
+              <tr title="Set rotational force power in Watts (Joules / second).">
+                <td><label for="servo-power">Power</label></td>
+                <td><input id="servo-power" class="numeric-input" type="text"></input></td>
+              </tr>
+              <tr title="Enable/Disable minimum and maximum angle limits.">
+                <td><label for="servo-enable_limits">Enable Limits</label></td>
+                <td><input id="servo-enable_limits" type="checkbox"></input></td>
+              </tr>
+              <tr title="Set rotation target angle in degrees.">
+                <td><label for="servo-controller">Controller</label></td>
+                <td><input id="servo-controller" class="controller-input" type="text"></input></td>
+              </tr>
+            </table>
+          </div>
+          <div id="tab4-slider" style="display: none;">
+            <h1>Slider</h1>
+            <table class="joint-table">
+              <tr title="Set minimum position along the ping axis in inches.">
+                <td><label for="slider-min">Min</label></td>
+                <td><input id="slider-min" class="numeric-input" type="text"></input></td>
+              </tr>
+              <tr title="Set maximum position along the pin axis in inches.">
+                <td><label for="slider-max">Max</label></td>
+                <td><input id="slider-max" class="numeric-input" type="text"></input></td>
+              </tr>
+              <tr title="Set movement friction in Newtons.">
+                <td><label for="slider-friction">Friction</label></td>
+                <td><input id="slider-friction" class="numeric-input" type="text"></input></td>
+              </tr>
+              <tr title="Enable/Disable minimum and maximum limits.">
+                <td><label for="slider-enable_limits">Enable Limits</label></td>
+                <td><input id="slider-enable_limits" type="checkbox"></input></td>
+              </tr>
+            </table>
+          </div>
+        </div>
 
-				<div id="tab4" class="tab">
-					<div id="tab4-none">
-						<p>Select an entity of the joint type to edit joint settings.</p>
-					</div>
-					<div id="tab4-hinge" style="display: none;">
-						<h1>Hinge</h1>
-						<table class="my-table">
-							<tr title="Set minimum angle in degrees.">
-								<td><label for="hinge-min">Min</label></td>
-								<td><input id="hinge-min" class="numeric-input" type="text"></input></td>
-							</tr>
-							<tr title="Set maximum angle in degrees.">
-								<td><label for="hinge-max">Max</label></td>
-								<td><input id="hinge-max" class="numeric-input" type="text"></input></td>
-							</tr>
-							<tr title="Set rotational friction in Newtons.">
-								<td><label for="hinge-friction">Friction</label></td>
-								<td><input id="hinge-friction" class="numeric-input" type="text"></input></td>
-							</tr>
-							<tr title="Enable/Disable minimum and maximum angle limits.">
-								<td><label for="hinge-enable_limits">Enable Limits</label></td>
-								<td><input id="hinge-enable_limits" type="checkbox"></input></td>
-							</tr>
-						</table>
-					</div>
-					<div id="tab4-motor" style="display: none;">
-						<h1>Motor</h1>
-						<table class="my-table">
-							<tr title="Set maximum angular rate in degrees per second.">
-								<td><label for="motor-angular-rate">Angular Rate</label></td>
-								<td><input id="motor-angular-rate" class="numeric-input" type="text"></input></td>
-							</tr>
-							<tr title="Set maximum acceleration in degrees per second per second.">
-								<td><label for="motor-max-accel">Max Acceleration</label></td>
-								<td><input id="motor-max-accel" class="numeric-input" type="text"></input></td>
-							</tr>
-							<tr title="Set rotational force power in Watts (Joules / second).">
-								<td><label for="motor-power">Power</label></td>
-								<td><input id="motor-power" class="numeric-input" type="text"></input></td>
-							</tr>
-							<tr title="Enable/Disable free rotate. Enabling free spin will disable all angular friction when the motor is off.">
-								<td><label for="motor-free-spin">Free Spin</label></td>
-								<td><input id="motor-free-spin" type="checkbox"></input></td>
-							</tr>
-							<tr title="Set rotation direction and magnitude.">
-								<td><label for="motor-controller">Controller</label></td>
-								<td><input id="motor-controller" class="controller-input" type="text"></input></td>
-							</tr>
-						</table>
-					</div>
-					<div id="tab4-servo" style="display: none;">
-						<h1>Servo</h1>
-						<table class="my-table">
-							<tr title="Set minimum angle in degrees.">
-								<td><label for="servo-min">Min</label></td>
-								<td><input id="servo-min" class="numeric-input" type="text"></input></td>
-							</tr>
-							<tr title="Set maximum angle in degrees.">
-								<td><label for="servo-max">Max</label></td>
-								<td><input id="servo-max" class="numeric-input" type="text"></input></td>
-							</tr>
-							<tr title="Set angular rate in degrees per second.">
-								<td><label for="servo-angular-rate">Angular Rate</label></td>
-								<td><input id="servo-angular-rate" class="numeric-input" type="text"></input></td>
-							</tr>
-							<tr title="Set rotational force power in Watts (Joules / second).">
-								<td><label for="servo-power">Power</label></td>
-								<td><input id="servo-power" class="numeric-input" type="text"></input></td>
-							</tr>
-							<tr title="Enable/Disable minimum and maximum angle limits.">
-								<td><label for="servo-enable_limits">Enable Limits</label></td>
-								<td><input id="servo-enable_limits" type="checkbox"></input></td>
-							</tr>
-							<tr title="Set rotation target angle in degrees.">
-								<td><label for="servo-controller">Controller</label></td>
-								<td><input id="servo-controller" class="controller-input" type="text"></input></td>
-							</tr>
-						</table>
-					</div>
-					<div id="tab4-slider" style="display: none;">
-						<h1>Slider</h1>
-						<table class="my-table">
-							<tr title="Set minimum position along the ping axis in inches.">
-								<td><label for="slider-min">Min</label></td>
-								<td><input id="slider-min" class="numeric-input" type="text"></input></td>
-							</tr>
-							<tr title="Set maximum position along the pin axis in inches.">
-								<td><label for="slider-max">Max</label></td>
-								<td><input id="slider-max" class="numeric-input" type="text"></input></td>
-							</tr>
-							<tr title="Set movement friction in Newtons.">
-								<td><label for="slider-friction">Friction</label></td>
-								<td><input id="slider-friction" class="numeric-input" type="text"></input></td>
-							</tr>
-							<tr title="Enable/Disable minimum and maximum limits.">
-								<td><label for="slider-enable_limits">Enable Limits</label></td>
-								<td><input id="slider-enable_limits" type="checkbox"></input></td>
-							</tr>
-						</table>
-					</div>
-				</div>
-
-			</div>
-		</div>
-	</body>
+      </div>
+    </div>
+  </body>
 </html>

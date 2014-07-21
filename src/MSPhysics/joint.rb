@@ -4,7 +4,7 @@ module MSPhysics
     # @!visibility private
     @@joints = []
     # @!visibility private
-    PIN_LENGTH = 1
+    PIN_LENGTH = 100
     # @!visibility private
     TYPES = [
       :hinge,
@@ -97,7 +97,7 @@ module MSPhysics
         on_disconnect
       }
       @submit_constraints = Proc.new { |joint_ptr, timestep, thread_index|
-        @child.set_sleep_state(false)
+        @child.set_sleep_mode(false)
         submit_constraints(timestep)
       }
       @get_info = Proc.new { |joint_ptr, info_ptr|
@@ -115,7 +115,7 @@ module MSPhysics
       @collidable = true
       @solver = 0
       @max_contact_joints = 100
-      @stiffness = 0.9
+      @stiffness = 1.0
       connect(child) if create
     end
 
@@ -149,8 +149,8 @@ module MSPhysics
     end
 
     def check_validity
-      @parent = nil if @parent and @parent.invalid?
-      @child = nil if @child and @child.invalid?
+      @parent = nil if @parent and !@parent.valid?
+      @child = nil if @child and !@child.valid?
     end
 
     def update_pos
@@ -198,7 +198,7 @@ module MSPhysics
       unless body.is_a?(Body)
         raise ArgumentError, "Expected Body, but got #{body.class}."
       end
-      raise 'The body is invalid!' if body.invalid?
+      raise 'The body is invalid!' unless body.valid?
       disconnect
       @child = body
       # Update position
