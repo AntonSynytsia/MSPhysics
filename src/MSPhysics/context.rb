@@ -17,16 +17,11 @@ module MSPhysics
 
     # Get key state.
     # @see http://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx Virtual Key Codes
-    # @note You may either pass key value in Fixnum form, or key name in String/Symbol form.
-    #   This function is not case sensitive.
+    # @note You may either pass key value in Fixnum form, or key name in
+    #   String/Symbol form. This function is not case sensitive.
     # @param [String, Symbol, Fixnum] vk Virtual key name or value.
     # @return [Fixnum] +1+ if down, +0+ if up.
     def key(vk)
-      if vk.is_a?(String)
-        vk.strip!
-        vk = 'space' if vk.empty?
-        vk = vk[3...vk.size] if vk[0..2].downcase == 'vk_'
-      end
       AMS::Keyboard.key(vk)
     end
 

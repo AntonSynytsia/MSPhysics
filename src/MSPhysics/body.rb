@@ -200,7 +200,8 @@ module MSPhysics
     #   Create a body from scratch.
     #   @param [AMS::FFI:::Pointer] world A pointer to the newton world.
     #   @param [Sketchup::Group, Sketchup::ComponentInstance] ent
-    #   @param [Symbol, String] type Body type. See {TYPES}.
+    #   @param [Symbol, String] type Body type. See {TYPES}. Use dynamic type as
+    #     other types are not done yet.
     #   @param [Symbol, String] shape Collision shape. See {Collision::SHAPES}.
     #   @param [Material] material
     # @overload initialize(body, tra)
@@ -225,7 +226,7 @@ module MSPhysics
         shape               = body.get_shape
         _density            = body.get_density
         _static_friction    = body.get_static_friction
-        _kinetic_friction   = body.get_kinetic_friction
+        _dynamic_friction   = body.get_dynamic_friction
         _elasticity         = body.get_elasticity
         _softness           = body.get_softness
         _friction_enabled   = body.friction_enabled?
@@ -244,7 +245,7 @@ module MSPhysics
         col                 = Collision.create(world, ent, shape)
         _density            = material.density
         _static_friction    = material.static_friction
-        _kinetic_friction   = material.kinetic_friction
+        _dynamic_friction   = material.dynamic_friction
         _elasticity         = material.elasticity
         _softness           = material.softness
         _friction_enabled   = true
@@ -289,11 +290,12 @@ module MSPhysics
       @_magnetic          = _magnetic
       @_magnet_force      = _magnet_force
       @_magnet_range      = _magnet_range
+      @_collidable        = _collidable
       @_mass              = mass
       @_volume            = volume
       @_density           = _density
       @_static_friction   = _static_friction
-      @_kinetic_friction  = _kinetic_friction
+      @_dynamic_friction  = _dynamic_friction
       @_friction_enabled  = _friction_enabled
       @_elasticity        = _elasticity
       @_softness          = _softness
@@ -301,7 +303,6 @@ module MSPhysics
       @_applied_forces    = {}
       @_up_vector         = nil
       @_enabled           = true
-      @_collidable        = _collidable
       @_contact_mode      = _contact_mode
       @_contact_bodies    = _contact_bodies
       @_faces             = []
@@ -426,7 +427,7 @@ module MSPhysics
     def set_material(mat)
       set_density(mat.density)
       set_static_friction(mat.static_friction)
-      set_kinetic_friction(mat.kinetic_friction)
+      set_dynamic_friction(mat.dynamic_friction)
       set_elasticity(mat.elasticity)
       set_softness(mat.softness)
     end
@@ -448,17 +449,17 @@ module MSPhysics
 
     # Get dynamic friction coefficient of the body.
     # @return [Numeric]
-    def get_kinetic_friction
+    def get_dynamic_friction
       check_validity
-      @_kinetic_friction
+      @_dynamic_friction
     end
 
     # Set dynamic friction coefficient of the body.
     # @return [Numeric] coefficient
     #   This value is clamped between +0.01+ and +2.00+.
-    def set_kinetic_friction(coefficient)
+    def set_dynamic_friction(coefficient)
       check_validity
-      @_kinetic_friction = MSPhysics.clamp(coefficient, 0.01, 2.00)
+      @_dynamic_friction = MSPhysics.clamp(coefficient, 0.01, 2.00)
     end
 
     # Enable/Disable contact friction of the body.
@@ -849,6 +850,7 @@ module MSPhysics
     # @return [Boolean]
     def collidable?
       check_validity
+      #Newton.bodyGetCollidable(@_body_ptr) == 1
       @_collidable
     end
 
@@ -857,7 +859,8 @@ module MSPhysics
     def collidable=(state)
       check_validity
       @_collidable = state ? true : false
-      Newton.collisionSetCollisionMode(@_collision_ptr, @_collidable ? 1 : 0)
+      #Newton.bodySetCollidable(@_body_ptr, state ? 1 : 0)
+      Newton.collisionSetCollisionMode(@_collision_ptr, state ? 1 : 0)
     end
 
     # Get the static state of the body.
@@ -1239,8 +1242,10 @@ module MSPhysics
     # @param [Geom::Vector3d, Array] plane
     # @param [Numeric] density Fluid density in cubic meters per kilogram.
     # @param [Numeric] viscosity Fluid viscosity.
+    # @return [Boolean] success
     def add_buoyancy(gravity = [0,0,-9.8], plane = [0,0,1], density = 997.04, viscosity = 0.894)
       check_validity
+      return false if @_static
       matrix = 0.chr*64
       Newton.bodyGetMatrix(@_body_ptr, matrix)
       tra = Geom::Transformation.new(matrix.unpack('F*'))
@@ -1254,11 +1259,12 @@ module MSPhysics
       dens = 1.0/(0.9*@_volume)
       accel_per_unit_mass = 0.chr*12
       torque_per_unit_mass = 0.chr*12
-      Newton.convexCollisionCalculateBuoyancyAcceleration(@_collision_ptr, matrix, cog, grav, norm, dens, viscosity, accel_per_unit_mass, torque_per_unit_mass)
+      Newton.convexCollisionCalculateBuoyancyAcceleration(@_collision_ptr, matrix, cog, grav, norm, dens, 0.1, accel_per_unit_mass, torque_per_unit_mass)
       accel = MSPhysics.scale_vector(accel_per_unit_mass.unpack('F*'), @_mass)
       torque = MSPhysics.scale_vector(torque_per_unit_mass.unpack('F*'), @_mass)
       add_force(accel)
       add_torque(torque)
+      true
     end
 
     # Destroy the body.

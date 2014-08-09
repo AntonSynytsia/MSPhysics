@@ -15,6 +15,7 @@ module MSPhysics
       @note = 'Click and drag to move. Hold SHIFT while dragging to lift.'
       @note << '    PAUSE - toggle play.    ESC - quit.'
       @frame = 0
+      @change = 0
       @paused = false
       @suspended = false
       @deactivated = false
@@ -51,6 +52,7 @@ module MSPhysics
         :opacity        => 0,
         :rate           => 15
       }
+      @deferred_tasks = []
     end
 
     # @!attribute [r] simulation
@@ -134,8 +136,12 @@ module MSPhysics
     end
 
     # Set cursor id.
-    # @see {MSPhysics::CURSORS}
     # @param [Fixnum] id
+    # @see MSPhysics::CURSORS
+    # @example
+    #   onStart {
+    #     simulation_tool.cursor_id = MSPhysics::CURSORS[:target]
+    #   }
     def cursor_id=(id)
       @cursor_id = id.to_i
     end
@@ -143,7 +149,8 @@ module MSPhysics
     private
 
     def update_status_text
-      Sketchup.status_text = "Frame : #{@frame}    FPS : #{@fps[:val]}    #{@note}" if @mouse_enter
+      @change = @simulation.change if @frame % 10 == 0
+      Sketchup.status_text = "Frame : #{@frame}    FPS : #{@fps[:val]}    Change : #{@change} ms    #{@note}" if @mouse_enter
     end
 
     def call_event(evt, *args)
@@ -163,6 +170,10 @@ module MSPhysics
       end
     end
 
+    def defer_task(&block)
+      @deferred_tasks << block
+    end
+
     def abort(e)
       @error = e
       self.class.reset
@@ -178,22 +189,21 @@ module MSPhysics
       model = Sketchup.active_model
       view = model.active_view
       cam = view.camera
-      # Wrap operations
-      if Sketchup.version.to_i > 6
-        model.start_operation('MSPhysics', true, false, false)
-      else
-        model.start_operation('MSPhysics')
-      end
       # Close active path
       state = true
       while state
         state = model.close_active
       end
+      # Wrap operations
+      if Sketchup.version.to_i > 6
+        model.start_operation('MSPhysics', true)
+      else
+        model.start_operation('MSPhysics')
+      end
       # Save camera orientation
       @camera[:orig] = [cam.eye, cam.target, cam.up]
       # Activate tools
       AMS::InputProc.select_tool(self, true, false, false)
-      Sketchup.active_model.add_observer(self)
       AMS::Sketchup.add_observer(self)
       # Save original selection
       model.selection.to_a.each{ |e|
@@ -203,13 +213,7 @@ module MSPhysics
       # Create global variables for easy access
       $msp_simulation = @simulation
       $msp_simulation_tool = self
-      # Start simulation
-      begin
-        @simulation.do_on_start
-      rescue Exception => e
-        abort(e)
-        return
-      end
+      # Clear selection
       model.selection.clear
       # Initialize timers
       t = Time.now
@@ -217,10 +221,16 @@ module MSPhysics
       @time[:last] = t
       @fps[:last] = t
       view.animation = self
+      # Start simulation
+      begin
+        @simulation.do_on_start
+      rescue Exception => e
+        abort(e)
+        return
+      end
     end
 
     def deactivate(view)
-      view = Sketchup.active_model.active_view unless view.is_a?(Sketchup::View)
       view.animation = nil
       # End simulation
       begin
@@ -232,12 +242,15 @@ module MSPhysics
       $msp_simulation = nil
       $msp_simulation_tool = nil
       # Remove observers and deselect tools
-      Sketchup.active_model.remove_observer(self)
       AMS::Sketchup.remove_observer(self)
       AMS::InputProc.deselect_tool(self)
       # Use abort_operation rather than commit_operation.
       # Abort operation undoes most model changes made during simulation.
-      Sketchup.active_model.abort_operation
+      begin
+        Sketchup.active_model.abort_operation
+      rescue Exception => e
+        puts "Abort failed!\n #{e}"
+      end
       # Reset entity transformations.
       begin
         @simulation.do_on_end_post_operation
@@ -261,8 +274,8 @@ module MSPhysics
       view.invalidate
       # Show info
       if @error
-        msg = "MSPhysics Simulation was aborted due to an error!\n#{@error}"
-        puts msg
+        msg = "MSPhysics Simulation was aborted due to an error!\n\n#{@error}"
+        puts msg + "\n\n"
         UI.messagebox(msg)
         data = MSPhysics::BodyContext._error_reference
         Dialog.lead_to_error(data)
@@ -318,13 +331,22 @@ module MSPhysics
     def onMouseMove(flags, x, y, view)
       @cursor_pos = [x,y]
       call_event(:onMouseMove, x, y)
-      return if @error
+      return unless self.class.active?
       @ip.pick view, x, y
       return if @ip == @ip1
       @ip1.copy! @ip
       # view.tooltip = @ip1.tooltip
       return if @mode == 1 or @picked.empty?
-      unless @picked[0].valid?
+      if @picked[0].valid?
+        begin
+          @picked[0].call_event(:onDrag) if @picked[4] != @frame
+        rescue Exception => e
+          abort(e)
+          return
+        end
+        return unless self.class.active?
+        @picked[4] = @frame
+      else
         @picked.clear
         return
       end
@@ -352,12 +374,46 @@ module MSPhysics
       @ip1.pick view, x, y
       return unless @ip1.valid?
       pos = @ip1.position
+      # Use raytest as it determines positions more accurate than inputpoint.
+      res = view.model.raytest( view.pickray(x,y) )
+      pos = res[0] if res
       ph = view.pick_helper
-      ph.do_pick x, y
+      ph.do_pick x,y
       ent = ph.best_picked
       return unless VALID_TYPES.include?(ent.class)
       body = @simulation.get_body_by_entity(ent)
       return unless body
+=begin
+      # Correct input point position if is not located on the picked entity.
+      # 1. Transform input point position relative to the deepest element
+      # coordinate system.
+      path = ph.path_at(0)[0..-2]
+      path.each { |e|
+        pos.transform!(e.transformation.inverse)
+      }
+      deepest = ph.leaf_at(0)
+      # 2. Verify that input point is located on the picked entity. If point
+      # is not on the entity, then use deepest element position as the new
+      # reference to the point.
+      case deepest
+      when Sketchup::ConstructionPoint
+        pos = deepest.position
+      when Sketchup::Edge
+        unless MSPhysics::Geometry.is_point_on_edge?(pos, deepest)
+          pos = MSPhysics::Geometry.calc_edge_centre(deepest)
+        end
+      when Sketchup::Face
+        unless MSPhysics::Geometry.is_point_on_face?(pos, deepest)
+          pos = MSPhysics::Geometry.calc_face_centre(deepest)
+        end
+      end
+      # 3. Transform input point back into global coordinate system for
+      # implementation.
+      path.reverse.each { |e|
+        pos.transform!(e.transformation)
+      }
+=end
+      # Call the onClick event.
       begin
         @clicked = body
         @clicked.call_event(:onClick, pos.clone)
@@ -365,6 +421,8 @@ module MSPhysics
         abort(e)
         return
       end unless @paused
+      return unless self.class.active?
+      # Pick body if the body is not static.
       return if body.static? or @mode == 1
       pick_pt = pos.transform(ent.transformation.inverse)
       cc = body.get_continuous_collision_mode
@@ -387,6 +445,10 @@ module MSPhysics
     end
 
     def nextFrame(view)
+      # Call all deferred tasks.
+      @deferred_tasks.each { |task| task.call }
+      @deferred_tasks.clear
+      return false unless self.class.active?
       # Handle simulation play/pause events.
       if @paused or @suspended or @deactivated
         unless @pause_updated
@@ -401,6 +463,7 @@ module MSPhysics
             return
           end if @clicked and @clicked.valid?
           @clicked = nil
+          return false unless self.class.active?
         end
         view.show_frame
         return true
@@ -414,15 +477,11 @@ module MSPhysics
       # Update newton world.
       begin
         @simulation.do_on_update(@frame)
-        if @clicked and @clicked.valid?
-          @clicked.call_event(:onDrag)
-        else
-          @clicked = nil
-        end
       rescue Exception => e
         abort(e)
         return
       end if @frame > 0
+      return false unless self.class.active?
       # Update camera
       cam = view.camera
       ent = @camera[:follow]
@@ -613,51 +672,53 @@ module MSPhysics
     end
 
     def hk_deactivate
-      self.class.reset
+      defer_task { self.class.reset }
     end
 
 
-    def hk_onKeyDown(key, val)
-      case key
-      when 'escape'
-        self.class.reset
-        return 1
-      when 'pause'
-        toggle_play
-      end
-      call_event(:onKeyDown, key, val)
+    def hk_onKeyDown(key, val, char)
+      defer_task {
+        case key
+        when 'escape'
+          self.class.reset
+          next
+        when 'pause'
+          toggle_play
+        end
+        call_event(:onKeyDown, key, val, char)
+      }
       1
     end
 
-    def hk_onKeyExtended(key, val)
-      call_event(:onKeyExtended, key, val)
+    def hk_onKeyExtended(key, val, char)
+      defer_task { call_event(:onKeyExtended, key, val, char) }
       1
     end
 
-    def hk_onKeyUp(key, val)
-      call_event(:onKeyUp, key, val)
+    def hk_onKeyUp(key, val, char)
+      defer_task { call_event(:onKeyUp, key, val, char) }
       1
     end
 
 
     def hk_onLButtonDown(x,y)
-      call_event(:onLButtonDown, x, y)
+      defer_task { call_event(:onLButtonDown, x, y) }
       0
     end
 
     def hk_onLButtonUp(x,y)
-      call_event(:onLButtonUp, x, y)
+      defer_task { call_event(:onLButtonUp, x, y) }
       0
     end
 
     def hk_onLButtonDoubleClick(x,y)
-      call_event(:onLButtonDoubleClick, x, y)
+      defer_task { call_event(:onLButtonDoubleClick, x, y) }
       0
     end
 
 
     def hk_onRButtonDown(x,y)
-      call_event(:onRButtonDown, x, y)
+      defer_task { call_event(:onRButtonDown, x, y) }
       # Prevent the menu from showing up if user selects anything, other than
       # simulation bodies.
       if @mode == 0 and !@suspended
@@ -671,12 +732,12 @@ module MSPhysics
     end
 
     def hk_onRButtonUp(x,y)
-      call_event(:onRButtonUp, x, y)
+      defer_task { call_event(:onRButtonUp, x, y) }
       @mode
     end
 
     def hk_onRButtonDoubleClick(x,y)
-      call_event(:onRButtonDoubleClick, x, y)
+      defer_task { call_event(:onRButtonDoubleClick, x, y) }
       # Prevent the menu from showing up if user selects anything, other than
       # simulation bodies.
       if @mode == 0 and !@suspended
@@ -691,44 +752,44 @@ module MSPhysics
 
 
     def hk_onMButtonDown(x,y)
-      call_event(:onMButtonDown, x, y)
+      defer_task { call_event(:onMButtonDown, x, y) }
       @mode
     end
 
     def hk_onMButtonUp(x,y)
-      call_event(:onMButtonUp, x, y)
+      defer_task { call_event(:onMButtonUp, x, y) }
       @mode
     end
 
     def hk_onMButtonDoubleClick(x,y)
-      call_event(:onMButtonDoubleClick, x, y)
+      defer_task { call_event(:onMButtonDoubleClick, x, y) }
       @mode
     end
 
 
     def hk_onXButtonDown(x,y)
-      call_event(:onXButtonDown, x, y)
+      defer_task { call_event(:onXButtonDown, x, y) }
       0
     end
 
     def hk_onXButtonUp(x,y)
-      call_event(:onXButtonUp, x, y)
+      defer_task { call_event(:onXButtonUp, x, y) }
       0
     end
 
     def hk_onXButtonDoubleClick(x,y)
-      call_event(:onXButtonDoubleClick, x, y)
+      defer_task { call_event(:onXButtonDoubleClick, x, y) }
       0
     end
 
 
     def hk_onMouseWheelRotate(x,y, dir)
-      call_event(:onMouseWheelRotate, x, y, dir)
+      defer_task { call_event(:onMouseWheelRotate, x, y, dir) }
       @mode
     end
 
     def hk_onMouseWheelTilt(x,y, dir)
-      call_event(:onMouseWheelTilt, x, y, dir)
+      defer_task { call_event(:onMouseWheelTilt, x, y, dir) }
       0
     end
 
@@ -739,7 +800,7 @@ module MSPhysics
     end
 
     def swo_deactivate
-      self.class.reset
+      defer_task { self.class.reset }
     end
 
     def swo_mw_onActivate
@@ -748,21 +809,6 @@ module MSPhysics
 
     def swo_mw_onDeactivate
       @deactivated = true unless AMS::Sketchup.active?
-    end
-
-
-    # SketchUp Model Observers
-
-    def onPreSaveModel(model)
-      SimulationTool.reset
-    end
-
-    def onTransactionUndo(model)
-      SimulationTool.reset
-    end
-
-    def onTransactionRedo(model)
-      SimulationTool.reset
     end
 
 
@@ -810,4 +856,5 @@ module MSPhysics
 
     end # proxy class
   end # class SimulationTool
+
 end # module MSPhysics

@@ -2,17 +2,17 @@ module MSPhysics
   class Simulation
 
     def initialize
+      default = MSPhysics::DEFAULT_SIMULATION_SETTINGS
       @frame = 0
       @draw_queue = []
       @points_queue = []
       @points_queue2 = []
       @world_ptr = nil
-      @solver_model = 1
-      @friction_model = 0
-      @gravity = -9.8
+      @solver_model = default[:solver_model]
+      @friction_model = default[:friction_model]
+      @gravity = default[:gravity]
       @mat_id = 0
-      @material = Material.new('Default', 700, 0.60, 0.40, 0.40, 0.15)
-      @thickness = 0.00
+      @thickness = default[:material_thickness]
       @bb = Geom::BoundingBox.new
       @mlt = nil
       @bodies = {}
@@ -81,7 +81,9 @@ module MSPhysics
       }
       # The smaller the time step, the more accurate the simulation is!
       # Min: 1/1200.0; Max: 1/30.0; Normal: 1/60.
-      @update_step = 1/60.0
+      @update_step = default[:update_timestep]
+      @last_update_time = Time.now
+      @change = 0
       # Update bodies' transformation every n frames.
       @update_rate = 1
       # Callbacks
@@ -93,7 +95,7 @@ module MSPhysics
           izz  = 0.chr*4
           Newton.bodyGetMassMatrix(body_ptr, mass, ixx, iyy, izz)
           mass = mass.unpack('F')[0]
-          force = [0,0, @gravity*mass]
+          force = [0, 0, @gravity*mass]
           Newton.bodySetForce(body_ptr, force.pack('F*'))
         end
       }
@@ -142,7 +144,7 @@ module MSPhysics
           mat = Newton.contactGetMaterial(contact)
           if body0.friction_enabled? and body1.friction_enabled?
             sfc = (body0.get_static_friction + body1.get_static_friction)/2.0
-            kfc = (body0.get_kinetic_friction + body1.get_kinetic_friction)/2.0
+            kfc = (body0.get_dynamic_friction + body1.get_dynamic_friction)/2.0
             Newton.materialSetContactFrictionCoef(mat, sfc, kfc, 0)
             Newton.materialSetContactFrictionCoef(mat, sfc, kfc, 1)
           else
@@ -190,8 +192,12 @@ module MSPhysics
     # @!attribute [r] frame
     #   @return [Fixnum]
 
+    # @!attribute [r] change
+    #   Get simulation nextFrame update change in milliseconds.
+    #   @return [Fixnum]
 
-    attr_reader :world_ptr, :animation, :bb, :gravity_callback, :frame
+
+    attr_reader :world_ptr, :animation, :bb, :gravity_callback, :frame, :change
 
     # @!visibility private
     def on_body_added(body)
@@ -442,11 +448,16 @@ module MSPhysics
       return if get_body_by_entity(entity)
       handle = 'MSPhysics Body'
       return if entity.get_attribute(handle, 'Ignore')
+      default = MSPhysics::DEFAULT_BODY_SETTINGS
       type = :dynamic
-      shape = entity.get_attribute(handle, 'Shape', 'Convex Hull')
-      mat_name = entity.get_attribute(handle, 'Material', 'Default')
-      mat = Materials.get_by_name(mat_name)
-      mat = @material unless mat
+      shape = entity.get_attribute(handle, 'Shape', default[:shape])
+      name = entity.get_attribute(handle, 'Material', default[:material_name])
+      density = entity.get_attribute(handle, 'Density', default[:density])
+      static_friction = entity.get_attribute(handle, 'Static Friction', default[:static_friction])
+      dynamic_friction = entity.get_attribute(handle, 'Dynamic Friction', default[:dynamic_friction])
+      elasticity = entity.get_attribute(handle, 'Elasticity', default[:elasticity])
+      softness = entity.get_attribute(handle, 'Softness', default[:softness])
+      mat = Material.new(name, density, static_friction, dynamic_friction, elasticity, softness)
       begin
         body = BodyContext.new(@world_ptr, entity, type, shape, mat)
       rescue Exception => e
@@ -454,6 +465,9 @@ module MSPhysics
         puts "Entity at index [#{index}] has an invalid collision shape! It was not added to simulation."
         return
       end
+      body.friction_enabled = entity.get_attribute(handle, 'Enable Friction', default[:enable_friction])
+      body.set_magnet_force( entity.get_attribute(handle, 'Magnet Force', default[:magnet_force]) )
+      body.set_magnet_range( entity.get_attribute(handle, 'Magnet Range', default[:magnet_range]) )
       if body.get_shape == :static_mesh
         Newton.staticCollisionSetDebugCallback(body._collision_ptr, @tree_collision_callback)
       end
@@ -463,14 +477,16 @@ module MSPhysics
       if entity.get_attribute(handle, 'Frozen')
         body.frozen = true
       end
-      if entity.get_attribute(handle, 'Magnetic')
+      if entity.get_attribute(handle, 'Magnetic', default[:magnetic])
         body.magnetic = true
       end
       if entity.get_attribute(handle, 'Not Collidable')
         body.collidable = false
       end
-      script = entity.get_attribute('MSPhysics Script', 'Value', '')
-      body.set_script(script)
+      if entity.get_attribute(handle, 'Enable Script', true)
+        script = entity.get_attribute('MSPhysics Script', 'Value', '')
+        body.set_script(script)
+      end
       return unless body.valid?
       @added_entities[entity.entityID] = entity.transformation
       body
@@ -507,12 +523,13 @@ module MSPhysics
       Newton.setSolverModel(@world_ptr, @solver_model)
       Newton.setFrictionModel(@world_ptr, @friction_model)
       # Set default material
+      default = MSPhysics::DEFAULT_BODY_SETTINGS
       @mat_id = Newton.materialGetDefaultGroupID(@world_ptr)
       Newton.materialSetCollisionCallback(@world_ptr, @mat_id, @mat_id, nil, @aabb_overlap_callback, @contacts_callback)
       Newton.materialSetSurfaceThickness(@world_ptr, @mat_id, @mat_id, @thickness)
-      Newton.materialSetDefaultFriction(@world_ptr, @mat_id, @mat_id, @material.static_friction, @material.kinetic_friction)
-      Newton.materialSetDefaultElasticity(@world_ptr, @mat_id, @mat_id, @material.elasticity)
-      Newton.materialSetDefaultSoftness(@world_ptr, @mat_id, @mat_id, @material.softness)
+      Newton.materialSetDefaultFriction(@world_ptr, @mat_id, @mat_id, default[:static_friction], default[:dynamic_friction])
+      Newton.materialSetDefaultElasticity(@world_ptr, @mat_id, @mat_id, default[:elasticity])
+      Newton.materialSetDefaultSoftness(@world_ptr, @mat_id, @mat_id, default[:softness])
       # Create Bodies
       ents = []
       #~ Create from selection (if any)
@@ -527,7 +544,9 @@ module MSPhysics
         rescue Exception => e
           raise "An error occurred while starting simulation!\n#{e}"
         end
+        return false if @reset_called
       }
+      MSPhysics::Settings.apply_settings
       call_event(:onStart)
       true
     end
@@ -594,8 +613,16 @@ module MSPhysics
       clear_drawing_queues
       # Trigger onPreUpdate event.
       call_event(:onPreUpdate)
+      return if @reset_called
       # Update Newton world.
       Newton.update(@world_ptr, @update_step)
+      @change = ((Time.now - @last_update_time)*1000).round
+      #if @update_step > 1/120.0 and @change < 20
+      #  2.times { Newton.update(@world_ptr, @update_step*0.5) }
+      #else
+      #  Newton.update(@world_ptr, @update_step)
+      #end
+      @last_update_time = Time.now
       # Update particular joints
       Fixed::TO_DISCONNECT.each { |joint|
         joint.disconnect
@@ -615,7 +642,7 @@ module MSPhysics
       }
       # Process magnets.
       @bodies.values.each { |body|
-        if body.get_magnet_force != 0 and body.get_magnet_range != 0
+        if body.get_magnet_force != 0 and body.get_magnet_range > 0
           pos = body.get_position(1)
           @bodies.values.each { |other_body|
             next unless other_body.magnetic?
@@ -725,7 +752,9 @@ module MSPhysics
       }
       # Trigger onUpdate and onPostUpdate events.
       call_event(:onUpdate)
+      return if @reset_called
       call_event(:onPostUpdate)
+      return if @reset_called
       # Record collision wire-frame.
       get_collisions
     end
@@ -956,7 +985,7 @@ module MSPhysics
       count
     end
 
-    # Show/hide bodies' collision.
+    # Show/hide body collision wireframe.
     # @param [Boolean] state
     def collision_visible=(state)
       state = state ? true : false
@@ -977,19 +1006,19 @@ module MSPhysics
       end
     end
 
-    # Determine whether the bodies' collision is visible.
+    # Determine whether body collision wireframe is visible.
     # @return [Boolean]
     def collision_visible?
       @collision[:show]
     end
 
-    # Show/hide bodies' centre of mass.
+    # Show/hide body centre of mass axis.
     # @param [Boolean] state
     def axis_visible=(state)
       @axis[:show] = state ? true : false
     end
 
-    # Determine whether the bodies' centre of mass axis is visible.
+    # Determine whether body centre of mass axis is visible.
     # @return [Boolean]
     def axis_visible?
       @axis[:show]
@@ -1001,7 +1030,7 @@ module MSPhysics
       @contacts[:show] = state ? true : false
     end
 
-    # Determine whether the body contact points are visible.
+    # Determine whether body contact points are visible.
     # @return [Boolean]
     def contact_points_visible?
       @contacts[:show]
@@ -1013,19 +1042,19 @@ module MSPhysics
       @forces[:show] = state ? true : false
     end
 
-    # Determine whether the body contact forces are visible.
+    # Determine whether body contact forces are visible.
     # @return [Boolean]
     def contact_forces_visible?
       @forces[:show]
     end
 
-    # Show/hide bodies' bounding box (AABB).
+    # Show/hide body bounding box (AABB).
     # @param [Boolean] state
     def bounding_box_visible=(state)
       @aabb[:show] = state ? true : false
     end
 
-    # Determine whether the bodies' bonding box (AABB) is visible.
+    # Determine whether body bonding box (AABB) is visible.
     # @return [Boolean]
     def bounding_box_visible?
       @aabb[:show]
@@ -1041,7 +1070,7 @@ module MSPhysics
       @show_bodies = state
     end
 
-    # Determine whether all bodies are set visible.
+    # Determine whether bodies are set visible.
     # @return [Boolean]
     def bodies_visible?
       @show_bodies
@@ -1099,7 +1128,7 @@ module MSPhysics
     # Set gravity.
     # @param [Numeric] accel in m/s/s.
     def gravity=(accel)
-      @gravity = gravity.to_f
+      @gravity = accel.to_f
     end
 
     # Get material thickness in meters.

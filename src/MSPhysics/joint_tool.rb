@@ -60,7 +60,7 @@ module MSPhysics
         cd = model.definitions.load(@path)
         tra = Geom::Transformation.new(pt1, pt1.vector_to(pt2))
         layer = model.layers.add('MSPhysics Joints')
-        layer.color = [0,80,255] if Sketchup.version.to_i >= 14
+        layer.color = [44,44,164] if Sketchup.version.to_i >= 14
         ent = ents.add_instance(cd, tra)
         ent.layer = layer
         assign_attributes(ent)

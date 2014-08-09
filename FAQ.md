@@ -8,7 +8,8 @@ user access to all mouse and keyboard events, plus prevent these events from
 reaching SketchUp window procedure. With the feature in hand we can get input
 of all mouse and keyboard messages without SketchUp interfering. We can use the
 mouse wheel without the camera zoom in/out tool activating, and use any keyboard
-keys without SU keyboard shortcuts interfering.
+keys without SU keyboard shortcuts interfering. As well, MSPhysics is enchanted
+with a stable scripting API and huge documentation.
 
 
 ## Does it work on Mac OS X?
@@ -26,7 +27,7 @@ operations. Newton is known for its accuracy and stability.
 
 ## Is MSPhysics compatible with SketchyPhysics?
 MSPhysics is not compatible with SketchyPhysics. Both plugins may be installed
-alongside, but each will act as a separate tool; all attribute differ. To have
+alongside, but each will act as a separate tool; all attributes differ. To have
 one model working on both MSPhysics and SketchyPhysics simply assign similar
 scripts and properties to both MSPhysics and SketchyPhysics UI.
 

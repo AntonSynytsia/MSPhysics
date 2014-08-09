@@ -1,8 +1,8 @@
 module MSPhysics
 
-  # CustomCloth is not a real cloth from Newton, but it still behaves like a
-  # a real cloth. Custom cloth is made of grid spaced spheres connected with a
-  # ball joint. Sketchup faces play role in making the grid look like cloth.
+  # CustomCloth is not a real cloth from Newton, but it still behaves quite
+  # similar. Custom cloth is made of grid spaced spheres connected with the ball
+  # joints. Sketchup faces play role in making the grid look like cloth.
   class CustomCloth
 
     # @!visibility private
@@ -260,7 +260,7 @@ module MSPhysics
           return
         end
         next if e.faces.size != 2
-        e.soft = true
+        #e.soft = true
         e.smooth = true
       }
       position_texture

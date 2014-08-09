@@ -4,7 +4,7 @@ module MSPhysics
     # @!visibility private
     @@joints = []
     # @!visibility private
-    PIN_LENGTH = 100
+    PIN_LENGTH = 1
     # @!visibility private
     TYPES = [
       :hinge,
@@ -115,7 +115,7 @@ module MSPhysics
       @collidable = true
       @solver = 0
       @max_contact_joints = 100
-      @stiffness = 1.0
+      @stiffness = 0.9
       connect(child) if create
     end
 

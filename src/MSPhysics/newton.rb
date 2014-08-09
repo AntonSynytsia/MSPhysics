@@ -57,7 +57,7 @@ module MSPhysics
         :faceVertexIndex, :pointer
     end
 
-    class NewtonJointRecord < AMS::FFI::Struct
+    class JointRecord < AMS::FFI::Struct
       layout :attachmentMatrix0, :pointer,
         :attachmentMatrix1, :pointer,
         :minLinearDof, :pointer,
@@ -69,6 +69,11 @@ module MSPhysics
         :extraParameters, :pointer,
         :bodiesCollisionOn, :int,
         :descriptionType, :pointer
+    end
+
+    class ClothPatchMaterial < AMS::FFI::Struct
+      layout :damper, :float,
+        :stiffness, :float
     end
 
     # --------------------------------------------------------------------------
@@ -465,8 +470,8 @@ module MSPhysics
     attach_function :bodyDisableSimulation, :NewtonBodyDisableSimulation, [:pointer], :void
 
     attach_function :bodyGetType, :NewtonBodyGetType, [:pointer], :int
-    attach_function :kinematicBodyGetCollidable, :NewtonKinematicBodyGetCollidable, [:pointer], :int
-    attach_function :kinematicBodySetCollidable, :NewtonKinematicBodySetCollidable, [:pointer, :int], :void
+    attach_function :bodyGetCollidable, :NewtonBodyGetCollidable, [:pointer], :int
+    attach_function :bodySetCollidable, :NewtonBodySetCollidable, [:pointer, :int], :void
 
     attach_function :bodyAddForce, :NewtonBodyAddForce, [:pointer, :pointer], :void
     attach_function :bodyAddTorque, :NewtonBodyAddTorque, [:pointer, :pointer], :void
@@ -612,7 +617,7 @@ module MSPhysics
 
     attach_function :deformableMeshUpdateRenderNormals, :NewtonDeformableMeshUpdateRenderNormals, [:pointer], :void
     attach_function :deformableMeshGetVertexCount, :NewtonDeformableMeshGetVertexCount, [:pointer], :int
-    attach_function :deformableMeshGetVertexStreams, :NewtonDeformableMeshGetVertexStreams, [:pointer, :int, :pointer, :int, :pointer, :int, :pointer, :int, :pointer], :void
+    attach_function :deformableMeshGetVertexStreams, :NewtonDeformableMeshGetVertexStreams, [:pointer, :int, :pointer, :int, :pointer, :int, :pointer], :void
     attach_function :deformableMeshGetFirstSegment, :NewtonDeformableMeshGetFirstSegment, [:pointer], :pointer
     attach_function :deformableMeshGetNextSegment, :NewtonDeformableMeshGetNextSegment, [:pointer, :pointer], :pointer
 

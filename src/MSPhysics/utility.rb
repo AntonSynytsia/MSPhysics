@@ -1,5 +1,28 @@
 module MSPhysics
 
+  DEFAULT_SIMULATION_SETTINGS = {
+    :solver_model       => 1,
+    :friction_model     => 0,
+    :update_timestep    => 1/60.0,
+    :gravity            => -9.8,
+    :material_thickness => 0.0
+  }
+
+  DEFAULT_BODY_SETTINGS = {
+    :shape              => 'Convex Hull',
+    :material_name      => 'Default (Wood)',
+    :density            => 700,
+    :static_friction    => 0.50,
+    :dynamic_friction   => 0.25,
+    :enable_friction    => true,
+    :elasticity         => 0.40,
+    :softness           => 0.15,
+    :magnet_force       => 0.00,
+    :magnet_range       => 0.00,
+    :magnetic           => false,
+    :enable_script      => true
+  }
+
   CURSORS = {
     :select             => 0,
     :select_plus        => 0,
@@ -65,6 +88,19 @@ module MSPhysics
       }
     end
 
+    # Delete attribute value from the collection of given entities.
+    # @param [Sketchup::Entity, Array<Sketchup::Entity>] ents A collection of entities.
+    # @param [String] handle Dictionary name.
+    # @param [String] name Attribute name.
+    def delete_attribute(ents, handle, name)
+      unless ents.is_a?(Array)
+        ents = ents.respond_to?(:to_a) ? ents.to_a : [ents]
+      end
+      ents.each { |e|
+        e.delete_attribute(handle, name)
+      }
+    end
+
     # Delete MSPhysics attributes from a collection of entities.
     # @param [Sketchup::Entity, Array<Sketchup::Entity>] ents A collection of entities.
     def delete_attributes(ents)
@@ -72,7 +108,7 @@ module MSPhysics
         ents = ents.respond_to?(:to_a) ? ents.to_a : [ents]
       end
       ents.each { |e|
-        #e.delete_attribute('MSPhysics')
+        e.delete_attribute('MSPhysics') if e.get_attribute('MSPhysics', 'Type') != 'Joint'
         e.delete_attribute('MSPhysics Body')
         e.delete_attribute('MSPhysics Joint')
         e.delete_attribute('MSPhysics Script')
@@ -81,9 +117,11 @@ module MSPhysics
 
     # Delete MSPhysics attributes from all entities.
     def delete_all_attributes
-      Sketchup.active_model.definitions.each { |definition|
+      model = Sketchup.active_model
+      model.definitions.each { |definition|
         delete_attributes(definition.instances)
       }
+      model.attribute_dictionaries.delete('MSPhysics')
     end
 
     # Get newton physics engine version number.

@@ -29,9 +29,11 @@ require File.join(dir, 'simulation.rb')
 require File.join(dir, 'simulation_tool.rb')
 require File.join(dir, 'joint_tool.rb')
 require File.join(dir, 'joint_connection_tool.rb')
+require File.join(dir, 'cloth.rb')
 require File.join(dir, 'custom_cloth.rb')
 require File.join(dir, 'particle_effects.rb')
 require File.join(dir, 'dialog.rb')
+require File.join(dir, 'settings.rb')
 
 unless file_loaded?(__FILE__)
 
@@ -76,6 +78,7 @@ unless file_loaded?(__FILE__)
   # Create tool bars and menus.
 
   sim_tool = MSPhysics::SimulationTool
+  settings = MSPhysics::Settings
   plugin_menu = UI.menu('Plugins').add_submenu('MSPhysics')
   toolbar = UI::Toolbar.new 'MSPhysics Simulation'
   joints_toolbar = UI::Toolbar.new 'MSPhysics Joints'
@@ -110,31 +113,8 @@ unless file_loaded?(__FILE__)
   plugin_menu.add_item(cmd)
 
 
+  toolbar.add_separator
   sim_menu = plugin_menu.add_submenu('Simulation')
-
-
-  record = false
-  cmd = UI::Command.new('cmd'){
-    if sim_tool.active?
-      sim = sim_tool.instance.simulation
-      sim.record_animation = !sim.animation_recording?
-    else
-      record = !record
-    end
-  }
-  cmd.menu_text = cmd.tooltip = 'Record'
-  cmd.status_bar_text = 'Toggle record simulation.'
-  cmd.set_validation_proc {
-    if sim_tool.active?
-      sim_tool.instance.simulation.animation_recording? ? MF_CHECKED : MF_UNCHECKED
-    else
-      record ? MF_CHECKED : MF_UNCHECKED
-    end
-  }
-  cmd.small_icon = 'images/small/record.png'
-  cmd.large_icon = 'images/large/record.png'
-  toolbar.add_item(cmd)
-  sim_menu.add_item(cmd)
 
 
   cmd = UI::Command.new('cmd'){
@@ -142,10 +122,6 @@ unless file_loaded?(__FILE__)
       sim_tool.instance.toggle_play
     else
       sim_tool.start
-      if sim_tool.active?
-        sim = sim_tool.instance.simulation
-        sim.record_animation = record
-      end
     end
   }
   cmd.menu_text = cmd.tooltip = 'Toggle Play'
@@ -175,30 +151,59 @@ unless file_loaded?(__FILE__)
   sim_menu.add_item(cmd)
 
 
+  cmd = UI::Command.new('cmd'){
+    settings.record_animation_enabled = !settings.record_animation_enabled?
+  }
+  cmd.menu_text = cmd.tooltip = 'Record'
+  cmd.status_bar_text = 'Toggle record simulation.'
+  cmd.set_validation_proc {
+    settings.record_animation_enabled? ? MF_CHECKED : MF_UNCHECKED
+  }
+  cmd.small_icon = 'images/small/record.png'
+  cmd.large_icon = 'images/large/record.png'
+  toolbar.add_item(cmd)
+  sim_menu.add_item(cmd)
+
+
+  toolbar.add_separator
+  sim_menu.add_separator
+
+
+  cmd = UI::Command.new('cmd'){
+    settings.continuous_collision_mode_enabled = !settings.continuous_collision_mode_enabled?
+  }
+  cmd.menu_text = cmd.tooltip = 'Continuous Collision Mode'
+  cmd.status_bar_text = "Enable/Disable continuous collision check. This prevents bodies from passing each other at high speeds."
+  cmd.set_validation_proc {
+    settings.continuous_collision_mode_enabled? ? MF_CHECKED : MF_UNCHECKED
+  }
+  cmd.small_icon = 'images/small/continuous collision.png'
+  cmd.large_icon = 'images/large/continuous collision.png'
+  toolbar.add_item(cmd)
+  sim_menu.add_item(cmd)
+
+
   toolbar.add_separator
   sim_menu.add_separator
 
 
   solver_menu = sim_menu.add_submenu('Solver Model')
   solver_models = [
-    ['Exact', 'Use exact solver model when precision is more important than speed.', 0],
-    ['Ineractive: 1 Pass', 'Use ineractive when speed is more important than precision.', 1],
-    ['Ineractive: 2 Passes', 'Use ineractive when speed is more important than precision.', 2],
-    ['Ineractive: 4 Passes', 'Use ineractive when speed is more important than precision.', 4],
-    ['Ineractive: 8 Passes', 'Use ineractive when speed is more important than precision.', 8]
+    ['Exact', 'Use exact solver model when precision is more important than performance.', 0],
+    ['Ineractive 1 Pass', 'Use ineractive when performance is more important than precision.', 1],
+    ['Ineractive 2 Passes', 'Use ineractive when performance is more important than precision.', 2],
+    ['Ineractive 4 Passes', 'Use ineractive when performance is more important than precision.', 4],
+    ['Ineractive 8 Passes', 'Use ineractive when performance is more important than precision.', 8],
+    ['Ineractive 16 Passes', 'Use ineractive when performance is more important than precision.', 16]
   ]
   solver_models.each { |name, description, model|
     cmd = UI::Command.new('cmd'){
-      next unless sim_tool.active?
-      sim = sim_tool.instance.simulation
-      sim.solver_model = model
+      settings.solver_model = model
     }
     cmd.menu_text = cmd.tooltip = name
     cmd.status_bar_text = description
     cmd.set_validation_proc {
-      next MF_GRAYED if sim_tool.inactive?
-      sim = sim_tool.instance.simulation
-      sim.solver_model == model ? MF_CHECKED : MF_UNCHECKED
+      settings.solver_model == model ? MF_CHECKED : MF_UNCHECKED
     }
     solver_menu.add_item(cmd)
   }
@@ -215,160 +220,129 @@ unless file_loaded?(__FILE__)
     update_rates << [name, rate]
   end
   update_rates.each { |name, step|
-    item = speed_menu.add_item(name){
-      next unless sim_tool.active?
-      sim = sim_tool.instance.simulation
-      sim.update_timestep = step
+    cmd = UI::Command.new('cmd'){
+      settings.update_timestep = step
     }
-    speed_menu.set_validation_proc(item){
-      next MF_GRAYED if sim_tool.inactive?
-      sim = sim_tool.instance.simulation
-      sim.update_timestep == step ? MF_CHECKED : MF_UNCHECKED
+    cmd.menu_text = cmd.tooltip = name
+    cmd.status_bar_text = "Update step - 1/#{(1/step).round} seconds. Smaller update step yields better accuracy."
+    cmd.set_validation_proc {
+      settings.update_timestep == step ? MF_CHECKED : MF_UNCHECKED
     }
+    speed_menu.add_item(cmd)
   }
 
 
   sim_menu.add_separator
 
-
-  cmd = UI::Command.new('cmd'){
-    next unless sim_tool.active?
-    sim = sim_tool.instance.simulation
-    sim.continuous_collision_mode_enabled = !sim.continuous_collision_mode_enabled?
-  }
-  cmd.menu_text = cmd.tooltip = 'Continuous Collision Mode'
-  cmd.status_bar_text = "Enable/Disable continuous collision check. Continuous collision check prevents bodies from penetrating into each other and passing other bodies at high speeds."
-  cmd.set_validation_proc {
-    next MF_GRAYED if sim_tool.inactive?
-    sim = sim_tool.instance.simulation
-    sim.continuous_collision_mode_enabled? ? MF_CHECKED : MF_UNCHECKED
-  }
-  cmd.small_icon = 'images/small/continuous collision.png'
-  cmd.large_icon = 'images/large/continuous collision.png'
-  toolbar.add_item(cmd)
-  sim_menu.add_item(cmd)
+  debug_menu = sim_menu.add_submenu('Debug')
 
 
   cmd = UI::Command.new('cmd'){
-    next unless sim_tool.active?
-    sim = sim_tool.instance.simulation
-    sim.collision_visible = !sim.collision_visible?
+    settings.collision_visible = !settings.collision_visible?
   }
   cmd.menu_text = cmd.tooltip = 'Collision Wireframe'
-  cmd.status_bar_text = "Show/Hide bodies' collision wireframe."
+  cmd.status_bar_text = "Show/Hide body collision wireframe."
   cmd.set_validation_proc {
-    next MF_GRAYED if sim_tool.inactive?
-    sim = sim_tool.instance.simulation
-    sim.collision_visible? ? MF_CHECKED : MF_UNCHECKED
+    settings.collision_visible? ? MF_CHECKED : MF_UNCHECKED
   }
   cmd.small_icon = 'images/small/collision wireframe.png'
   cmd.large_icon = 'images/large/collision wireframe.png'
   toolbar.add_item(cmd)
-  sim_menu.add_item(cmd)
+  debug_menu.add_item(cmd)
 
 
   cmd = UI::Command.new('cmd'){
-    next if sim_tool.inactive?
-    sim = sim_tool.instance.simulation
-    sim.axis_visible = !sim.axis_visible?
+    settings.axis_visible = !settings.axis_visible?
   }
   cmd.menu_text = cmd.tooltip = 'Centre of Mass'
-  cmd.status_bar_text = "Show/Hide bodies' centre of mass axis."
+  cmd.status_bar_text = "Show/Hide body centre of mass axis."
   cmd.set_validation_proc {
-    next MF_GRAYED if sim_tool.inactive?
-    sim = sim_tool.instance.simulation
-    sim.axis_visible? ? MF_CHECKED : MF_UNCHECKED
+    settings.axis_visible? ? MF_CHECKED : MF_UNCHECKED
   }
   cmd.small_icon = 'images/small/centre of mass.png'
   cmd.large_icon = 'images/large/centre of mass.png'
   toolbar.add_item(cmd)
-  sim_menu.add_item(cmd)
+  debug_menu.add_item(cmd)
 
 
   cmd = UI::Command.new('cmd'){
-    next if sim_tool.inactive?
-    sim = sim_tool.instance.simulation
-    sim.bounding_box_visible = !sim.bounding_box_visible?
+    settings.bounding_box_visible = !settings.bounding_box_visible?
   }
   cmd.menu_text = cmd.tooltip = 'Bounding Box'
-  cmd.status_bar_text = "Show/Hide bodies' world axis aligned bounding box (AABB)."
+  cmd.status_bar_text = "Show/Hide body world axis aligned bounding box (AABB)."
   cmd.set_validation_proc {
-    next MF_GRAYED if sim_tool.inactive?
-    sim = sim_tool.instance.simulation
-    sim.bounding_box_visible? ? MF_CHECKED : MF_UNCHECKED
+    settings.bounding_box_visible? ? MF_CHECKED : MF_UNCHECKED
   }
   cmd.small_icon = 'images/small/bounding box.png'
   cmd.large_icon = 'images/large/bounding box.png'
   toolbar.add_item(cmd)
-  sim_menu.add_item(cmd)
+  debug_menu.add_item(cmd)
 
 
   cmd = UI::Command.new('cmd'){
-    next if sim_tool.inactive?
-    sim = sim_tool.instance.simulation
-    sim.contact_points_visible = !sim.contact_points_visible?
+    settings.contact_points_visible = !settings.contact_points_visible?
   }
   cmd.menu_text = cmd.tooltip = 'Contact Points'
   cmd.status_bar_text = 'Show/Hide body contact points.'
   cmd.set_validation_proc {
-    next MF_GRAYED if sim_tool.inactive?
-    sim = sim_tool.instance.simulation
-    sim.contact_points_visible? ? MF_CHECKED : MF_UNCHECKED
+    settings.contact_points_visible? ? MF_CHECKED : MF_UNCHECKED
   }
   cmd.small_icon = 'images/small/contact points.png'
   cmd.large_icon = 'images/large/contact points.png'
   toolbar.add_item(cmd)
-  sim_menu.add_item(cmd)
+  debug_menu.add_item(cmd)
 
 
   cmd = UI::Command.new('cmd'){
-    next if sim_tool.inactive?
-    sim = sim_tool.instance.simulation
-    sim.contact_forces_visible = !sim.contact_forces_visible?
+    settings.contact_forces_visible = !settings.contact_forces_visible?
   }
   cmd.menu_text = cmd.tooltip = 'Contact Forces'
   cmd.status_bar_text = 'Show/Hide body contact forces.'
   cmd.set_validation_proc {
-    next MF_GRAYED if sim_tool.inactive?
-    sim = sim_tool.instance.simulation
-    sim.contact_forces_visible? ? MF_CHECKED : MF_UNCHECKED
+    settings.contact_forces_visible? ? MF_CHECKED : MF_UNCHECKED
   }
   cmd.small_icon = 'images/small/contact force.png'
   cmd.large_icon = 'images/large/contact force.png'
   toolbar.add_item(cmd)
-  sim_menu.add_item(cmd)
+  debug_menu.add_item(cmd)
 
 
   cmd = UI::Command.new('cmd'){
-    next if sim_tool.inactive?
-    sim = sim_tool.instance.simulation
-    sim.bodies_visible = !sim.bodies_visible?
+    settings.bodies_visible = !settings.bodies_visible?
   }
   cmd.menu_text = cmd.tooltip = 'Bodies'
   cmd.status_bar_text = 'Show/Hide all bodies.'
   cmd.set_validation_proc {
-    next MF_GRAYED if sim_tool.inactive?
-    sim = sim_tool.instance.simulation
-    sim.bodies_visible? ? MF_CHECKED : MF_UNCHECKED
+    settings.bodies_visible? ? MF_CHECKED : MF_UNCHECKED
   }
   cmd.small_icon = 'images/small/bodies.png'
   cmd.large_icon = 'images/large/bodies.png'
   toolbar.add_item(cmd)
-  sim_menu.add_item(cmd)
+  debug_menu.add_item(cmd)
 
 
   cmd = UI::Command.new('cmd'){
     msg = "This option removes all MSPhysics assigned properties and scripts.\n"
-    msg << 'Are you sure you want to proceed?'
+    msg << 'Do you want to proceed?'
     choice = UI.messagebox(msg, MB_YESNO)
     MSPhysics.delete_all_attributes if choice == IDYES
   }
   cmd.menu_text = cmd.tooltip = 'Delete All Attributes'
-  cmd.status_bar_text = 'Removes MSPhysics assigned properties and scripts from all entities.'
+  cmd.status_bar_text = 'Remove MSPhysics assigned properties and scripts from all entities.'
   plugin_menu.add_item(cmd)
 
 
   toolbar.show
+
+
+  plugin_menu.add_separator
+
+  about_msg = "MSPhysics #{MSPhysics::VERSION}, #{MSPhysics::RELEASE_DATE}\n"
+  about_msg << "Powered by the Newton Dynamics #{MSPhysics.get_newton_version} physics SDK.\n"
+  about_msg << "Copyright MIT © 2014, Anton Synytsia\n"
+  about_msg << "Use SketchUcation PluginStore to check for updates."
+
+  plugin_menu.add_item('About'){ UI.messagebox(about_msg) }
 
 
   MSPhysics::Joint::TYPES.each { |type|
@@ -432,12 +406,14 @@ unless file_loaded?(__FILE__)
         item = state_menu.add_item(option){
           state = MSPhysics.get_attribute(bodies, 'MSPhysics Body', option) ? true : false
           MSPhysics.set_attribute(bodies, 'MSPhysics Body', option, !state)
+          MSPhysics::Dialog.update_state
         }
         state_menu.set_validation_proc(item){
           MSPhysics.get_attribute(bodies, 'MSPhysics Body', option) ? MF_CHECKED : MF_UNCHECKED
         }
       }
 
+      default_shape = MSPhysics::DEFAULT_BODY_SETTINGS[:shape]
       MSPhysics::Collision::SHAPES.each { |shape|
         words = shape.to_s.split('_')
         for i in 0...words.size
@@ -449,23 +425,43 @@ unless file_loaded?(__FILE__)
         end
         item = shape_menu.add_item(option){
           MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Shape', option)
+          MSPhysics::Dialog.update_state
         }
         shape_menu.set_validation_proc(item){
-          MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Shape', 'Convex Hull') == option ? MF_CHECKED : MF_UNCHECKED
+          MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Shape', default_shape) == option ? MF_CHECKED : MF_UNCHECKED
         }
       }
 
       unless parent
-        names = ['Default'] + MSPhysics::Materials.get_names
+        default_mat = MSPhysics::DEFAULT_BODY_SETTINGS[:material_name]
+        names = [default_mat, 'Custom'] + MSPhysics::Materials.get_names
         count = 0
         names.each { |name|
           item = mat_menu.add_item(name){
-            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Material', name)
+            if name == default_mat
+              ['Material', 'Density', 'Static Friction', 'Dynamic Friction', 'Enable Friction', 'Elasticity', 'Softness'].each { |option|
+                MSPhysics.delete_attribute(bodies, 'MSPhysics Body', option)
+              }
+            elsif name == 'Custom'
+              MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Material', 'Custom')
+            else
+              MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Material', name)
+              mat = MSPhysics::Materials.get_by_name(name)
+              if mat
+                MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Density', mat.density)
+                MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Static Friction', mat.static_friction)
+                MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Dynamic Friction', mat.dynamic_friction)
+                MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Enable Friction', true)
+                MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Elasticity', mat.elasticity)
+                MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Softness', mat.softness)
+              end
+            end
+            MSPhysics::Dialog.update_state
           }
           mat_menu.set_validation_proc(item){
-            MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Material', 'Default') == name ? MF_CHECKED : MF_UNCHECKED
+            MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Material', default_mat) == name ? MF_CHECKED : MF_UNCHECKED
           }
-          mat_menu.add_separator if count == 0
+          mat_menu.add_separator if count == 1
           count += 1
         }
       end

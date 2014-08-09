@@ -30,8 +30,8 @@ module MSPhysics
     PROGRESS_REPORT = Proc.new { |progress|
       percent = (progress*100).to_i
       next true if @percent == percent
-      printf("%d\%#{@percent == 100 ? "\n" : "\s"}", percent)
       @percent = percent
+      #~ printf("%d#{@percent == 100 ? "\n" : "\s"}", percent)
       true
     }
 
@@ -143,15 +143,17 @@ module MSPhysics
             ignore = e.get_attribute(handle, 'Ignore', false)
             next if ignore
             shape = e.get_attribute(handle, 'Shape', 'Convex Hull')
-            no_collision = e.get_attribute(handle, 'No Collision', false)
+            not_collidable = e.get_attribute(handle, 'Not Collidable', false)
             if shape != 'Convex Hull'
               if ['Null', 'Compound', 'Compound From Mesh', 'Static Mesh'].include?(shape)
                 shape = 'Convex Hull'
               end
               scale = Geometry.get_scale(e.transformation)
+              # Scaled spheres, cylinders and other convex collisions other than
+              # convex hull work improperly inside compounds.
               shape = 'Convex Hull' if scale != [1,1,1]
             end
-            child_data[e] = [shape, no_collision]
+            child_data[e] = [shape, not_collidable]
           }
           create_compound(world, ent, child_data)
         when :compound_from_mesh
@@ -312,16 +314,16 @@ module MSPhysics
     # Create compound.
     # @param [AMS::FFI::Pointer] world A pointer to the newton world.
     # @param [Sketchup::Group, Sketchup::ComponentInstance] ent
-    # @param [Hash{entity => [shape, no_collision]}] child_data
+    # @param [Hash{entity => [shape, not_collidable]}] child_data
     # @return [AMS::FFI::Pointer]
     def create_compound(world, ent, child_data = {})
       col_data = []
       child_data.each { |e, data|
         shape = data[0]
-        no_collision = data[1]
+        not_collidable = data[1]
         begin
           c = create(world, e, shape, true)
-          Newton.collisionSetCollisionMode(c, 0) if no_collision
+          Newton.collisionSetCollisionMode(c, 0) if not_collidable
           col_data << c
         rescue Exception => error
           # puts "#{error}\n#{error.backtrace.first}"
@@ -425,6 +427,7 @@ module MSPhysics
         vertex_remap_array = 0.chr*4*faces.flatten.size
         Newton.removeUnusedVertices(mesh, vertex_remap_array)
       end
+      @percent = nil
       Newton.meshSimplify(mesh, faces.flatten.size, PROGRESS_REPORT, nil)
       if optimize == 1
         Newton.meshTriangulate(mesh)

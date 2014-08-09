@@ -15,14 +15,14 @@ To get reference to {MSPhysics::SimulationTool} instance you may use the
 following:
 
 * <tt>this.simulation_tool</tt> if you code inside the Body scope only.
-* <tt>MSPhysics::SimulationTool.instance</tt>.
+* <tt>MSPhysics::SimulationTool.instance</tt>
 * <tt>$msp_simulation_tool</tt>
 
 To get reference to {MSPhysics::Simulation} instance you may use the following:
 
 * <tt>this.simulation</tt> if you code inside the Body scope only.
-* <tt>MSPhysics::SimulationTool.instance.simulation</tt>.
-* <tt>$msp_simulation</tt>.
+* <tt>MSPhysics::SimulationTool.instance.simulation</tt>
+* <tt>$msp_simulation</tt>
 
 
 ## Script Errors
@@ -55,16 +55,15 @@ further processing. Don't be afraid to use <code>Body.#destroy</code> or
 * Make sure to have all back faces inside and all front faces outside, as Newton
   calculates collision intersections for the front faces only.
 * Use entity's x-axis as the up vector for shapes like cone, and cylinder.
-* You may assign null collision to the bodies with the main script. Null
-  collision makes the body act like a static, non-collidable body.
-* For some reason bricks stacks from the box collision work improperly, use
+* Use null collision for bodies that don't need collision.
+* For some reason body stacks made from box collision collide improperly, use
   convex collision instead.
 
 
 ## Rules
 * Minimize the use of the <b>Compound From Mesh</b> shape, as it takes time to
-  generate collision, and as the collisions are generated improperly for some
-  complex shapes.
+  generate collision, and as the collisions are generated improperly for many
+  shapes.
 * Avoid the use of high poly models as they cause lag, and are known to crash
   SketchUp while generating collisions.
 * Apply clean-up before uploading your model to 3D Warehouse, as it decreases
@@ -82,18 +81,18 @@ Switch simulation to the <i>game mode</i> when creating FPS type games:
     }
 
 <i>Game mode</i> disables the drag tool, and gives you full control over user
-input. A mouse wheel could be used to switch weapons, rather than having the
-zoom tool activating, for instance.
+input. Mouse wheel could be used to switch weapons, rather than having the zoom
+tool activating, for instance.
 
 
 ## Scaled Bodies
 To scale body, simply call <tt>Body.#set_matrix(new_tra)</tt> with the scale
 factors inscribed within the new transformation matrix. Not all bodies can be
 scaled though. You cannot scale compound and staticmesh bodies as Newton doesn't
-support that feature.
+support such feature, yet.
 
 
-# Flipped Entities
+## Flipped Entities
 Flipped entities will force the body to unflip when simulation starts. This is
 the bug that could be fixed in the next version.
 

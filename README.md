@@ -17,14 +17,13 @@ SketchyPhysics back to life.
 ## Compatibility and Requirements
 
 * Microsoft Windows XP, Vista, 7, or 8.
-  This plugin will not work for Macs as many of the techniques and features are
-  achieved via the Windows API, which is not available on the other operating
-  systems.
-* SketchUp 6 +.
-  SU 2014 is highly recommended!
-* Ruby core 1.8.7 for SU2013 and below.
+  This plugin will not work on Mac OS X as many of the techniques and features
+  are achieved via the mighty Windows API. Other platforms might be incompatible
+  with Windows.
+* SketchUp 8 +. SU2014 is recommended!
+  To get it working on SU6 or SU7 you must upgrade SU Ruby core to 1.8.6 or 1.8.7.
   See plugin homepage for ruby upgrade instructions.
-* [AMS_Library 1.0.9 +](http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835)
+* [AMS_Library 1.1.0 +](http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835)
 
 
 ## Installation
@@ -42,20 +41,21 @@ Place the files within the _src_ folder into the SketchUp's _Plugins_ folder. Ma
 ## Version
 
 * 1.0.0
-* NewtonDynamics 3.12
+* NewtonDynamics 3.13
 
 
 ## Release Date
 
-July 26, 2014
+September 01, 2014
 
 
 ## Change Log
 
-* **July 26, 2014**: 1.0.0
+* **September 01, 2014**: 1.0.0
     - Added dialog.
     - Added joints.
-    - Fixed a lot of stuff.
+    - Optimized a lot of stuff.
+    - Enchanted the API.
 * **April 26, 2014**: 0.1.0
     - Alpha release 1.
 
@@ -68,4 +68,4 @@ July 26, 2014
 ## Credits
 
 * **Juleo Jerez** for the NewtonDynamics physics engine.
-* **Chris Phillips** for SketchyPhysics.
+* **Chris Phillips** for ideas from SketchyPhysics.

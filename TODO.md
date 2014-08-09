@@ -1,19 +1,16 @@
 # Newton Issues
 
-- Scene/Tree collisions may cause bodies to penetrate into them if the solver
-  model is set to exact. This may be seen as a dynamic object bouncing on a
-  static mesh.
 - Compound scaled sub-collisions cause improper collision intersections.
 - Compounds don't collide into scaled tree collisions, while other convex bodies
   do.
-- Convex bodies jump on scaled tree collisions, and sometimes fall through them.
 ~ NewtonMeshSimplify not working.
 
 
 # Fix/Optimize/To Do
 
 ## Version 1.0.0
-- Make sure animation tool is similar to SketchyPhysics, so that Twilight is compatible.
+- Make sure animation tool is similar to SketchyPhysics, so that Twilight is
+  compatible. En-clause simulation tool between start and commit operation.
 - Modify Body.#look_at method, add accel, damp
 - Fix the jumping of bodies and improper behaviours!
 - Slider on interactive solver works improperly
@@ -34,23 +31,24 @@
     http://newtondynamics.com/forum/viewtopic.php?f=9&t=7710&p=52972&hilit=set+body+sleeping#p52972
 - Spline Joint
     http://newtondynamics.com/forum/viewtopic.php?f=9&t=4716&p=33835#p33835
+    http://newtondynamics.com/forum/viewtopic.php?f=9&t=8668
 
 - Body.#add_buoyancy doesn't work properly.
 - Update links when posting
 - Add script version
 - Check which functions to add from the LazyScript.
-- Particle effects
+- Finish particle effects
 - Joints dialog
 - Joints: Hinge, Servo, Motor, Spring, Up, Slider, Piston, Fixed, Ball,
   Universal, CorkScrew.
 - Test the access of get/set_var vs body class variables and methods under
   controllers.
-- Default settings
-- Simulation dialog
-- Finish body dialog
-- Reset simulation when new model is opened.
-- Replace tree collision with user mesh collision
-- Record version
+- Add user mesh collision
+- Bodies connected with joints disappear when excessive force is applied.
+- Add body angular and linear damping properties.
+- Draw all collisions in one time to improve performance. Use lines for such
+  purpose.
+- Crash occurs when another model is opened while simulation is running.
 
 
 ## Next Versions
@@ -82,14 +80,16 @@
 - Geared and Rack&Pinion joints.
 - Differential joint if possible.
 - Hinge2 - which has servo and motor in one.
-- Make material and body interconnected. Body.#material returns Material instance
-- Add functions like make compound, explode compound, add to compound, remove from compound.
+~ Make material and body interconnected. Body.#material returns Material
+  instance.
+- Add functions like make compound, explode compound, add to compound, remove
+  from compound.
 - Each body inside a compound have its own class.
 - Change get_function_name, set_fucntion_name to function_name, function_name=
 - Run simulation of selected bodies.
 - Add Body.#set_collidable_bodies - By default all bodies are collidable.
-~ Recompile Newton to static library (.so). Make sure it's under the proper name-space and
-  compatible with Ruby.
+~ Recompile Newton to static library (.so). Make sure it's under the proper
+  name-space and compatible with Ruby.
 - Joystick input
 - Custom compound from mesh groups.
 - Reset simulation with saved body positions.
@@ -107,6 +107,9 @@
   pack('F*') -> pack('D*')
   Change all buffers size from 4 bytes per var to 8 bytes per var.
 - Handle flipped bodies.
+- Set body mass. Have temporary world that would calculate initial volume of the
+  body.
+- Have an easy way to create railroad pathfollow joint.
 
 
 ## Other

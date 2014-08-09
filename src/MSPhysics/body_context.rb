@@ -93,9 +93,9 @@ module MSPhysics
         if found
           line = ref.split(':')[1].to_i
           @@_error_reference << line
-          raise "Exception in entity [#{index}], line #{line}!\n\n#{e}\n"
+          raise "Exception in entity [#{index}], line #{line}!\n#{e}"
         else
-          raise "Exception in entity [#{index}]!\n\n#{e}\n"
+          raise "Exception in entity [#{index}]!\n#{e}"
         end
       end
       @_script += "\n" + code.to_s
@@ -122,9 +122,9 @@ module MSPhysics
         if found
           line = ref.split(':')[1].to_i
           @@_error_reference << line
-          raise "Exception in entity [#{index}], line #{line}!\n\n#{e}\n\n"
+          raise "Exception in entity [#{index}], line #{line}!\n#{e}"
         else
-          raise "Exception in entity [#{index}]!\n\n#{e}\n\n"
+          raise "Exception in entity [#{index}]!\n#{e}"
         end
       end
     end
@@ -143,7 +143,7 @@ module MSPhysics
     # @yield A block of code.
     # @return [Fixnum] The number of events assigned.
     # @example
-    #   on(:keyDown, :keyUp, :keyExtended){ |key, value|
+    #   on(:keyDown, :keyUp, :keyExtended){ |key, value, char|
     #     simulation.log_line(key)
     #   }
     def on(*events, &block)
@@ -233,9 +233,9 @@ module MSPhysics
         if found
           line = ref.split(':')[1].to_i
           @@_error_reference << line
-          raise "Exception in entity [#{index}], line #{line}!\n#{event} error:\n\n#{e}\n\n"
+          raise "Exception in entity [#{index}], line #{line}!\n#{event} error:\n#{e}"
         else
-          raise "Exception in entity [#{index}]!\n#{event} error:\n\n#{e}\n\n"
+          raise "Exception in entity [#{index}]!\n#{event} error:\n#{e}"
         end
       end
       true
@@ -251,7 +251,7 @@ module MSPhysics
 
     # Determine whether body script is enabled.
     # @return [Boolean]
-    def script_enabled=(state)
+    def script_enabled?
       check_validity
       @_script_enabled
     end
@@ -371,8 +371,7 @@ module MSPhysics
     end
 
     # Assign a block of code to the onDrag event.
-    # @yield This event is triggered every frame after the body is clicked,
-    #   and is called until the body is unclicked.
+    # @yield This event is triggered whenever the body is dragged by a mouse.
     def onDrag(&block)
       assign_proc(__method__, block)
     end
@@ -390,6 +389,7 @@ module MSPhysics
     # @yield This event is called when the key is pressed.
     # @yieldparam [String] key Virtual key name.
     # @yieldparam [Fixnum] val Virtual key constant value.
+    # @yieldparam [String] char Actual key character.
     def onKeyDown(&block)
       assign_proc(__method__, block)
     end
@@ -398,6 +398,7 @@ module MSPhysics
     # @yield This event is called when the key is released.
     # @yieldparam [String] key Virtual key name.
     # @yieldparam [Fixnum] val Virtual key constant value.
+    # @yieldparam [String] char Actual key character.
     def onKeyUp(&block)
       assign_proc(__method__, block)
     end
@@ -405,6 +406,7 @@ module MSPhysics
     # @yield This event is called when the key is held down.
     # @yieldparam [String] key Virtual key name.
     # @yieldparam [Fixnum] val Virtual key constant value.
+    # @yieldparam [String] char Actual key character.
     def onKeyExtended(&block)
       assign_proc(__method__, block)
     end

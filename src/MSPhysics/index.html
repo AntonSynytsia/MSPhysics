@@ -42,8 +42,142 @@
       </ul>
 
       <div class="tab-content">
-        <div id="tab1" class="tab active">
-          <p>Simulation content goes here!</p>
+        <div class="main-wrap" id="tab1" class="tab active">
+          <div id="column1">
+            <h3>Mode</h3>
+            <table class="body-table">
+              <tr title="Enable/Disable continuous collision mode. This prevents bodies from passing each other at high speeds.">
+                <td><label for="simulation-continuous_collision">Continuous Collision</label></td>
+                <td><input id="simulation-continuous_collision" type="checkbox"></input></td>
+              </tr>
+              <tr title="Toggle recording.">
+                <td><label for="simulation-record">Record</label></td>
+                <td><input id="simulation-record" type="checkbox"></input></td>
+              </tr>
+            </table>
+            <br />
+            <h3>Draw</h3>
+            <table class="body-table">
+              <tr title="Show/Hide body collision wireframe.">
+                <td><label for="simulation-collision">Collision Wireframe</label></td>
+                <td><input id="simulation-collision" type="checkbox"></input></td>
+              </tr>
+              <tr title="Show/Hide body centre of mass axis.">
+                <td><label for="simulation-axis">Centre of Mass</label></td>
+                <td><input id="simulation-axis" type="checkbox"></input></td>
+              </tr>
+              <tr title="Show/Hide body world axis aligned bounding box (AABB).">
+                <td><label for="simulation-bounding_box">Bounding Box</label></td>
+                <td><input id="simulation-bounding_box" type="checkbox"></input></td>
+              </tr>
+              <tr title="Show/Hide body contact points.">
+                <td><label for="simulation-contact_points">Contact Points</label></td>
+                <td><input id="simulation-contact_points" type="checkbox"></input></td>
+              </tr>
+              <tr title="Show/Hide body contact forces.">
+                <td><label for="simulation-contact_forces">Contact Forces</label></td>
+                <td><input id="simulation-contact_forces" type="checkbox"></input></td>
+              </tr>
+              <tr title="Show/Hide all bodies.">
+                <td><label for="simulation-bodies">Bodies</label></td>
+                <td><input id="simulation-bodies" type="checkbox"></input></td>
+              </tr>
+            </table>
+            <br />
+            <h3>Solver Model</h3>
+            <table class="body-table">
+              <tr title="Use exact solver model when accuracy is more important than performance.">
+                <td><label for="simulation-solver_model-0">Exact</label></td>
+                <td><input id="simulation-solver_model-0" type="radio" name="solver_model"></input></td>
+              </tr>
+              <tr title="Use interactive solver model when performance is more important than accuracy.">
+                <td><label for="simulation-solver_model-1">Interactive 1 Pass</label></td>
+                <td><input id="simulation-solver_model-1" type="radio" name="solver_model"></input></td>
+              </tr>
+              <tr title="Use interactive solver model when performance is more important than accuracy.">
+                <td><label for="simulation-solver_model-2">Interactive 2 Passes</label></td>
+                <td><input id="simulation-solver_model-2" type="radio" name="solver_model"></input></td>
+              </tr>
+              <tr title="Use interactive solver model when performance is more important than accuracy.">
+                <td><label for="simulation-solver_model-4">Interactive 4 Passes</label></td>
+                <td><input id="simulation-solver_model-4" type="radio" name="solver_model"></input></td>
+              </tr>
+              <tr title="Use interactive solver model when performance is more important than accuracy.">
+                <td><label for="simulation-solver_model-8">Interactive 8 Passes</label></td>
+                <td><input id="simulation-solver_model-8" type="radio" name="solver_model"></input></td>
+              </tr>
+              <tr title="Use interactive solver model when performance is more important than accuracy.">
+                <td><label for="simulation-solver_model-16">Interactive 16 Passes</label></td>
+                <td><input id="simulation-solver_model-16" type="radio" name="solver_model"></input></td>
+              </tr>
+            </table>
+          </div>
+          <div id="column2">
+            <h3>Properties</h3>
+            <table class="joint-table">
+              <tr title="Set simulation gravity in meters/second/second.">
+                <td><label for="simulation-gravity">Gravity</label></td>
+                <td><input id="simulation-gravity" class="numeric-input" type="text"></input></td>
+              </tr>
+              <tr title="Set body material thickness in meters. This value is clamped between 0.0 and 1/32.0 meters.">
+                <td><label for="simulation-material_thickness">Material Thickness</label></td>
+                <td><input id="simulation-material_thickness" class="numeric-input" type="text"></input></td>
+              </tr>
+            </table>
+            <br />
+            <h3>Speed</h3>
+            <table class="body-table">
+              <tr title="Update step - 1/30 seconds. Smaller update step yields better accuracy.">
+                <td><label for="simulation-speed-30">Double</label></td>
+                <td><input id="simulation-speed-30" type="radio" name="update_timestep"></input></td>
+              </tr>
+              <tr title="Update step - 1/60 seconds. Smaller update step yields better accuracy.">
+                <td><label for="simulation-speed-60">Normal</label></td>
+                <td><input id="simulation-speed-60" type="radio" name="update_timestep"></input></td>
+              </tr>
+              <tr title="Update step - 1/120 seconds. Smaller update step yields better accuracy.">
+                <td><label for="simulation-speed-120">x 1/2</label></td>
+                <td><input id="simulation-speed-120" type="radio" name="update_timestep"></input></td>
+              </tr>
+              <tr title="Update step - 1/240 seconds. Smaller update step yields better accuracy.">
+                <td><label for="simulation-speed-240">x 1/4</label></td>
+                <td><input id="simulation-speed-240" type="radio" name="update_timestep"></input></td>
+              </tr>
+              <tr title="Update step - 1/360 seconds. Smaller update step yields better accuracy.">
+                <td><label for="simulation-speed-360">x 1/6</label></td>
+                <td><input id="simulation-speed-360" type="radio" name="update_timestep"></input></td>
+              </tr>
+              <tr title="Update step - 1/480 seconds. Smaller update step yields better accuracy.">
+                <td><label for="simulation-speed-480">x 1/8</label></td>
+                <td><input id="simulation-speed-480" type="radio" name="update_timestep"></input></td>
+              </tr>
+              <tr title="Update step - 1/600 seconds. Smaller update step yields better accuracy.">
+                <td><label for="simulation-speed-600">x 1/10</label></td>
+                <td><input id="simulation-speed-600" type="radio" name="update_timestep"></input></td>
+              </tr>
+              <tr title="Update step - 1/720 seconds. Smaller update step yields better accuracy.">
+                <td><label for="simulation-speed-720">x 1/12</label></td>
+                <td><input id="simulation-speed-720" type="radio" name="update_timestep"></input></td>
+              </tr>
+              <tr title="Update step - 1/840 seconds. Smaller update step yields better accuracy.">
+                <td><label for="simulation-speed-840">x 1/14</label></td>
+                <td><input id="simulation-speed-840" type="radio" name="update_timestep"></input></td>
+              </tr>
+              <tr title="Update step - 1/960 seconds. Smaller update step yields better accuracy.">
+                <td><label for="simulation-speed-960">x 1/16</label></td>
+                <td><input id="simulation-speed-960" type="radio" name="update_timestep"></input></td>
+              </tr>
+              <tr title="Update step - 1/1080 seconds. Smaller update step yields better accuracy.">
+                <td><label for="simulation-speed-1080">x 1/18</label></td>
+                <td><input id="simulation-speed-1080" type="radio" name="update_timestep"></input></td>
+              </tr>
+              <tr title="Update step - 1/1200 seconds. Smaller update step yields better accuracy.">
+                <td><label for="simulation-speed-1200">x 1/20</label></td>
+                <td><input id="simulation-speed-1200" type="radio" name="update_timestep"></input></td>
+              </tr>
+            </table>
+          </div>
+          <div id="credit">Powered by <a id="ace-url" href="https://github.com/MADEAPPS/newton-dynamics" target="_blank">Newton Dynamics</a></div>
         </div>
         <div id="tab2" class="tab">
           <div id="tab2-none">
@@ -54,48 +188,48 @@
               <h3>Collision Shape</h3>
               <table class="body-table">
                 <tr>
-                  <td><label for="body-box">Box</label></td>
-                  <td><input id="body-box" type="radio" name="shape"></input></td>
+                  <td><label for="body-shape-box">Box</label></td>
+                  <td><input id="body-shape-box" type="radio" name="shape"></input></td>
                 </tr>
                 <tr>
-                  <td><label for="body-sphere">Sphere</label></td>
-                  <td><input id="body-sphere" type="radio" name="shape"></input></td>
+                  <td><label for="body-shape-sphere">Sphere</label></td>
+                  <td><input id="body-shape-sphere" type="radio" name="shape"></input></td>
                 </tr>
                 <tr>
-                  <td><label for="body-cone">Cone</label></td>
-                  <td><input id="body-cone" type="radio" name="shape"></input></td>
+                  <td><label for="body-shape-cone">Cone</label></td>
+                  <td><input id="body-shape-cone" type="radio" name="shape"></input></td>
                 </tr>
                 <tr>
-                  <td><label for="body-cylinder">Cylinder</label></td>
-                  <td><input id="body-cylinder" type="radio" name="shape"></input></td>
+                  <td><label for="body-shape-cylinder">Cylinder</label></td>
+                  <td><input id="body-shape-cylinder" type="radio" name="shape"></input></td>
                 </tr>
                 <tr>
-                  <td><label for="body-chamfer_cylinder">Chamfer Cylinder</label></td>
-                  <td><input id="body-chamfer_cylinder" type="radio" name="shape"></input></td>
+                  <td><label for="body-shape-chamfer_cylinder">Chamfer Cylinder</label></td>
+                  <td><input id="body-shape-chamfer_cylinder" type="radio" name="shape"></input></td>
                 </tr>
                 <tr>
-                  <td><label for="body-capsule">Capsule</label></td>
-                  <td><input id="body-capsule" type="radio" name="shape"></input></td>
+                  <td><label for="body-shape-capsule">Capsule</label></td>
+                  <td><input id="body-shape-capsule" type="radio" name="shape"></input></td>
                 </tr>
                 <tr>
-                  <td><label for="body-convex_hull">Convex Hull</label></td>
-                  <td><input id="body-convex_hull" type="radio" name="shape"></input></td>
+                  <td><label for="body-shape-convex_hull">Convex Hull</label></td>
+                  <td><input id="body-shape-convex_hull" type="radio" name="shape"></input></td>
                 </tr>
                 <tr>
-                  <td><label for="body-null">Null</label></td>
-                  <td><input id="body-null" type="radio" name="shape"></input></td>
+                  <td><label for="body-shape-null">Null</label></td>
+                  <td><input id="body-shape-null" type="radio" name="shape"></input></td>
                 </tr>
                 <tr>
-                  <td><label for="body-compound">Compound</label></td>
-                  <td><input id="body-compound" type="radio" name="shape"></input></td>
+                  <td><label for="body-shape-compound">Compound</label></td>
+                  <td><input id="body-shape-compound" type="radio" name="shape"></input></td>
                 </tr>
                 <tr>
-                  <td><label for="body-compound_from_mesh">Compound From Mesh</label></td>
-                  <td><input id="body-compound_from_mesh" type="radio" name="shape"></input></td>
+                  <td><label for="body-shape-compound_from_mesh">Compound From Mesh</label></td>
+                  <td><input id="body-shape-compound_from_mesh" type="radio" name="shape"></input></td>
                 </tr>
                 <tr>
-                  <td><label for="body-static_mesh">Static Mesh</label></td>
-                  <td><input id="body-static_mesh" type="radio" name="shape"></input></td>
+                  <td><label for="body-shape-static_mesh">Static Mesh</label></td>
+                  <td><input id="body-shape-static_mesh" type="radio" name="shape"></input></td>
                 </tr>
               </table>
               <br />
@@ -153,12 +287,12 @@
                   <td><label for="body-magnet_force">Magnet Force</label></td>
                   <td><input id="body-magnet_force" class="numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="Set body magnet range in meters.">
+                <tr title="Set body maximum magnet range in meters.">
                   <td><label for="body-magnet_range">Magnet Range</label></td>
                   <td><input id="body-magnet_range" class="numeric-input" type="text"></input></td>
                 </tr>
                 <tr title="Set body magnetic. Magnetic bodies will be attracted to the bodies with a magnet force.">
-                  <td><label for="body-magnetic">Enable Friction</label></td>
+                  <td><label for="body-magnetic">Magnetic</label></td>
                   <td><input id="body-magnetic" type="checkbox"></input></td>
                 </tr>
                 <tr height="12px"></tr>
@@ -173,44 +307,44 @@
             <h3>Collision Shape</h3>
             <table class="body-table">
               <tr>
-                <td><label for="body-box">Box</label></td>
-                <td><input id="body-box" type="radio" name="shape"></input></td>
+                <td><label for="internal-body-shape-box">Box</label></td>
+                <td><input id="internal-body-shape-box" type="radio" name="shape2"></input></td>
               </tr>
               <tr>
-                <td><label for="body-sphere">Sphere</label></td>
-                <td><input id="body-sphere" type="radio" name="shape"></input></td>
+                <td><label for="internal-body-shape-sphere">Sphere</label></td>
+                <td><input id="internal-body-shape-sphere" type="radio" name="shape2"></input></td>
               </tr>
               <tr>
-                <td><label for="body-cone">Cone</label></td>
-                <td><input id="body-cone" type="radio" name="shape"></input></td>
+                <td><label for="internal-body-shape-cone">Cone</label></td>
+                <td><input id="internal-body-shape-cone" type="radio" name="shape2"></input></td>
               </tr>
               <tr>
-                <td><label for="body-cylinder">Cylinder</label></td>
-                <td><input id="body-cylinder" type="radio" name="shape"></input></td>
+                <td><label for="internal-body-shape-cylinder">Cylinder</label></td>
+                <td><input id="internal-body-shape-cylinder" type="radio" name="shape2"></input></td>
               </tr>
               <tr>
-                <td><label for="body-chamfer_cylinder">Chamfer Cylinder</label></td>
-                <td><input id="body-chamfer_cylinder" type="radio" name="shape"></input></td>
+                <td><label for="internal-body-shape-chamfer_cylinder">Chamfer Cylinder</label></td>
+                <td><input id="internal-body-shape-chamfer_cylinder" type="radio" name="shape2"></input></td>
               </tr>
               <tr>
-                <td><label for="body-capsule">Capsule</label></td>
-                <td><input id="body-capsule" type="radio" name="shape"></input></td>
+                <td><label for="internal-body-shape-capsule">Capsule</label></td>
+                <td><input id="internal-body-shape-capsule" type="radio" name="shape2"></input></td>
               </tr>
               <tr>
-                <td><label for="body-convex_hull">Convex Hull</label></td>
-                <td><input id="body-convex_hull" type="radio" name="shape"></input></td>
+                <td><label for="internal-body-shape-convex_hull">Convex Hull</label></td>
+                <td><input id="internal-body-shape-convex_hull" type="radio" name="shape2"></input></td>
               </tr>
             </table>
             <br />
             <h3>State</h3>
             <table class="body-table">
               <tr>
-                <td><label for="body-ignore">Ignore</label></td>
-                <td><input id="body-ignore" type="checkbox"></input></td>
+                <td><label for="internal-body-ignore">Ignore</label></td>
+                <td><input id="internal-body-ignore" type="checkbox"></input></td>
               </tr>
               <tr>
-                <td><label for="body-not_collidable">Not Collidable</label></td>
-                <td><input id="body-not_collidable" type="checkbox"></input></td>
+                <td><label for="internal-body-not_collidable">Not Collidable</label></td>
+                <td><input id="internal-body-not_collidable" type="checkbox"></input></td>
               </tr>
             </table>
           </div>

@@ -173,7 +173,7 @@ module MSPhysics
     #   components.
     # @param [Boolean] transform Whether to give points in global coordinates.
     # @return [Array<Array<Geom::Point3d>>] An array of polygons. Each polygon
-    #   represents an array of points.
+    #   represents an array of three points (a triplex).
     def get_polygons_from_faces(ent, recursive = true, transform = true)
       unless VALID_TYPES.include?(ent.class)
         raise INVALID_TYPE
@@ -189,13 +189,44 @@ module MSPhysics
           faces << e.mesh.polygon_points_at(i+1)
         }
       }
-        if transform
+      if transform
         tra = ent.transformation
         faces.each { |face|
           face.each { |pt| pt.transform!(tra) }
         }
       end
       faces
+    end
+
+    # Get centre of mass of group/component relative to its coordinate system.
+    # This method doesn't work properly in some cases though.
+    # @param [Sketchup::Group, Sketchup::ComponentInstance] ent
+    # @param [Boolean] recursive Whether to include all the child groups and
+    #   components.
+    # @return [Geom::Point3d]
+    def calc_centre_of_mass(ent, recursive = true)
+      tx = 0
+      ty = 0
+      tz = 0
+      total_area = 0
+      get_polygons_from_faces(ent, recursive, false).each { |triplet|
+        # Use Heron's formula to calculate the area of the triangle.
+        a = triplet[0].distance(triplet[1])
+        b = triplet[0].distance(triplet[2])
+        c = triplet[1].distance(triplet[2])
+        s = (a + b + c)*0.5
+        area = Math.sqrt(s * (s-a) * (s-b) * (s-c))
+        total_area += area
+        # Identify triangle centroid.
+        cx = (triplet[0].x + triplet[1].x + triplet[2].x) / 3.0
+        cy = (triplet[0].y + triplet[1].y + triplet[2].y) / 3.0
+        cz = (triplet[0].z + triplet[1].z + triplet[2].z) / 3.0
+        # Add point to centre.
+        tx += cx * area
+        ty += cy * area
+        tz += cz * area
+      }
+      Geom::Point3d.new(tx.to_f/total_area, ty.to_f/total_area, tz.to_f/total_area)
     end
 
     # Get normal of the face with the biggest area.
