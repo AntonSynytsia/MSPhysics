@@ -1,0 +1,422 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="debug|Win32">
+      <Configuration>debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="debug|x64">
+      <Configuration>debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="debug (1.8)|Win32">
+      <Configuration>debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="debug (1.8)|x64">
+      <Configuration>debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="debug (2.0)|Win32">
+      <Configuration>debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="debug (2.0)|x64">
+      <Configuration>debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="release|Win32">
+      <Configuration>release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="release|x64">
+      <Configuration>release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="release (1.8)|Win32">
+      <Configuration>release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="release (1.8)|x64">
+      <Configuration>release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="release (2.0)|Win32">
+      <Configuration>release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="release (2.0)|x64">
+      <Configuration>release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{39737A8F-6151-4259-8E39-25530345D4B4}</ProjectGuid>
+    <RootNamespace>physics</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v100</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v100</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v100</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v100</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">$(Platform)/$(ProjectName)/$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='debug|x64'">$(Platform)/$(ProjectName)/$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">$(Platform)/$(ProjectName)/$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='debug|x64'">$(Platform)/$(ProjectName)/$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='release|Win32'">$(Platform)/$(ProjectName)/$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='release|x64'">$(Platform)/$(ProjectName)/$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='release|Win32'">$(Platform)/$(ProjectName)/$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='release|x64'">$(Platform)/$(ProjectName)/$(Configuration)\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">$(ProjectName)_d</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='debug|x64'">$(ProjectName)_d</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <OmitFramePointers>false</OmitFramePointers>
+      <AdditionalIncludeDirectories>$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\pthreads.2;%(AdditionalLibraryDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;PTW32_STATIC_LIB;_WIN_32_VER</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <OpenMPSupport>false</OpenMPSupport>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>dgPhysicsStdafx.h</PrecompiledHeaderFile>
+      <AssemblerOutput>
+      </AssemblerOutput>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+      <AdditionalOptions>
+      </AdditionalOptions>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <SuppressStartupBanner>false</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='debug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <OmitFramePointers>false</OmitFramePointers>
+      <AdditionalIncludeDirectories>$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\pthreads.2;%(AdditionalLibraryDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;PTW32_STATIC_LIB;_WIN_64_VER</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <OpenMPSupport>false</OpenMPSupport>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>dgPhysicsStdafx.h</PrecompiledHeaderFile>
+      <AssemblerOutput>
+      </AssemblerOutput>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+      <AdditionalOptions>
+      </AdditionalOptions>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <SuppressStartupBanner>false</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalIncludeDirectories>$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\pthreads.2;%(AdditionalLibraryDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;PTW32_STATIC_LIB;_WIN_32_VER</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <OpenMPSupport>false</OpenMPSupport>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>dgPhysicsStdafx.h</PrecompiledHeaderFile>
+      <AssemblerOutput>
+      </AssemblerOutput>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <BrowseInformation>
+      </BrowseInformation>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalOptions>
+      </AdditionalOptions>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <SuppressStartupBanner>false</SuppressStartupBanner>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release|x64'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalIncludeDirectories>$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\pthreads.2;%(AdditionalLibraryDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;PTW32_STATIC_LIB;_WIN_64_VER</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <OpenMPSupport>false</OpenMPSupport>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>dgPhysicsStdafx.h</PrecompiledHeaderFile>
+      <AssemblerOutput>
+      </AssemblerOutput>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <BrowseInformation>
+      </BrowseInformation>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalOptions>
+      </AdditionalOptions>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <SuppressStartupBanner>false</SuppressStartupBanner>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="NewtonDynamics\meshUtil\dgMeshEffect5.cpp" />
+    <ClCompile Include="NewtonDynamics\meshUtil\dgMeshEffect6.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgBallConstraint.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgBilateralConstraint.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgBroadPhase.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionDeformableClothPatch.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionDeformableSolidMesh.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionInstance.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionTaperedCapsule.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionTaperedCylinder.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgConstraint.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgContact.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCorkscrewConstraint.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgDeformableBodiesUpdate.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgDeformableContact.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgDynamicBody.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgHingeConstraint.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgKinematicBody.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgSlidingConstraint.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgUniversalConstraint.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgUpVectorConstraint.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgUserConstraint.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollision.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionBox.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionBVH.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionCapsule.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionChamferCylinder.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionCompound.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionCompoundFractured.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionCone.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionConvex.cpp">
+      <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='release|Win32'">NoListing</AssemblerOutput>
+      <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='release|x64'">NoListing</AssemblerOutput>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionConvexHull.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionConvexPolygon.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionCylinder.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionDeformableMesh.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionHeightField.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionMesh.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionNull.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionScene.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionSphere.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionUserMesh.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgBody.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgBodyMasterList.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgDeformableBody.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgNarrowPhaseCollision.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgWorld.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgWorldDynamicsParallelSolver.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgWorldDynamicsSimpleSolver.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgWorldDynamicUpdate.cpp" />
+    <ClCompile Include="NewtonDynamics\meshUtil\dgMeshEffect1.cpp" />
+    <ClCompile Include="NewtonDynamics\meshUtil\dgMeshEffect2.cpp" />
+    <ClCompile Include="NewtonDynamics\meshUtil\dgMeshEffect3.cpp" />
+    <ClCompile Include="NewtonDynamics\meshUtil\dgMeshEffect4.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="NewtonDynamics\physics\dgBallConstraint.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgBilateralConstraint.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgBroadPhase.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionDeformableClothPatch.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionDeformableSolidMesh.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionInstance.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionTaperedCapsule.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionTaperedCylinder.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgConstraint.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgContact.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCorkscrewConstraint.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgDeformableBodiesUpdate.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgDeformableContact.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgDynamicBody.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgHingeConstraint.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgKinematicBody.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgSlidingConstraint.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgUniversalConstraint.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgUpVectorConstraint.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgUserConstraint.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollision.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionBox.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionBVH.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionCapsule.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionChamferCylinder.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionCompound.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionCompoundFractured.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionCone.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionConvex.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionConvexHull.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionConvexPolygon.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionCylinder.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionDeformableMesh.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionHeightField.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionMesh.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionNull.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionScene.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionSphere.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionUserMesh.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgBody.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgBodyMasterList.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgDeformableBody.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgPhysics.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgPhysicsStdafx.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgWorld.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgWorldDynamicUpdate.h" />
+    <ClInclude Include="NewtonDynamics\meshUtil\dgMeshEffect.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="core.vcxproj">
+      <Project>{57ac4f2d-b115-4931-8f6e-af8ad616b6aa}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

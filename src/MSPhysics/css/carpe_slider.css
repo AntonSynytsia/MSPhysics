@@ -1,0 +1,161 @@
+/*  Default stylesheet for the Carpe Slider
+    2012-03-15 version 2.0.6
+    Copyright Tom Hermansson Snickars, CARPE Design                     
+    carpe.ambiprospect.com/slider/
+*/
+.carpe-slider-panel, .carpe-slider-panel[disabled]:hover {
+    background-color: #aaa;
+    background: -moz-linear-gradient(top, #bbbbbb 0%, #888888 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#bbbbbb), color-stop(100%,#888888));
+    background: -webkit-linear-gradient(top, #bbbbbb 0%,#888888 100%);
+    background: -o-linear-gradient(top, #bbbbbb 0%,#888888 100%);
+    background: -ms-linear-gradient(top, #bbbbbb 0%,#888888 100%);
+    background: linear-gradient(top, #bbbbbb 0%,#888888 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#bbbbbb', endColorstr='#888888',GradientType=0 );
+    box-sizing: content-box;
+    color: #333;
+    margin: 1px;
+    display: block;
+    line-height: 0;
+    height: 14px;
+    font-size: 0;
+    text-align: left;
+    float: none;
+    border: 1px solid;
+    border-color: #ccc #666 #666 #ccc;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 2px; 
+    border-radius: 2px;
+    position: relative;
+    top: 0;
+    overflow: hidden;
+    opacity: 1;
+    cursor: default;
+}
+.carpe-slider-panel:hover {
+    background: #bbb;
+    background: -moz-linear-gradient(top, #cccccc 0%, #999999 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#cccccc), color-stop(100%,#999999));
+    background: -webkit-linear-gradient(top, #cccccc 0%,#999999 100%);
+    background: -o-linear-gradient(top, #cccccc 0%,#999999 100%);
+    background: -ms-linear-gradient(top, #cccccc 0%,#999999 100%);
+    background: linear-gradient(top, #cccccc 0%,#999999 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cccccc', endColorstr='#999999',GradientType=0 );
+}
+.carpe-slider-panel:focus {
+    background-color: #bbb;
+}
+.orientation-horizontal {
+    width: 120px;
+    padding: 3px 4px 4px 3px;
+}
+.orientation-vertical {
+    padding: 2px 4px 5px 4px;
+    width: 14px;
+    height: 110px;
+    background: -moz-linear-gradient(left , #bbbbbb 0%, #888888 100%);
+    background: -webkit-linear-gradient(left , #bbbbbb 0%, #888888 100%);
+    background: -webkit-gradient(linear, left top, right top, color-stop(0, #bbbbbb), color-stop(1, #888888));
+    background: -o-linear-gradient(left , #bbbbbb 0%, #888888 100%);
+    background: -ms-linear-gradient(left , #bbbbbb 0%, #888888 100%);
+    background: linear-gradient(left , #bbbbbb 0%, #888888 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#bbbbbb', endColorstr='#888888',GradientType=1 );
+    -webkit-border-radius: 1px; 
+}
+.orientation-vertical:hover {
+    background: -moz-linear-gradient(left, #cccccc 0%, #999999 100%);
+    background: -webkit-linear-gradient(left, #cccccc 0%,#999999 100%);
+    background: -webkit-gradient(linear, left top, right top, color-stop(0, #cccccc), color-stop(1, #999999));
+    background: -o-linear-gradient(left, #cccccc 0%,#999999 100%);
+    background: -ms-linear-gradient(left, #cccccc 0%,#999999 100%);
+    background: linear-gradient(left, #cccccc 0%,#999999 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cccccc', endColorstr='#999999',GradientType=1 );
+}
+/* The Slider Slit */
+.carpe-slider-slit , .carpe-slider-panel[disabled] .carpe-slider-slit:hover {
+    background-color: #333;
+    position: relative;
+    line-height: 0;
+    border: 1px solid;
+    border-color: #888 #bbb #bbb #888;
+    font-size: 0;
+    cursor: default;
+}
+.carpe-slider-panel[disabled] .carpe-slider-slit {
+    background-color: #999;
+}
+.carpe-slider-panel:focus .carpe-slider-slit {
+    border-color: #999 #bbb #bbb #999;
+    background-color: #24d; /* Blue color of slit in focused slider. */
+}
+.carpe-slider-panel[disabled]:focus .carpe-slider-slit {
+    background-color: #999; /* Blue color of slit in disabled sliders stay grey. */
+}
+.carpe-slider-panel:hover .carpe-slider-slit {
+    background-color: #1838a8; /* Blue color of slit in 'hovered' slider. */
+}
+.carpe-slider-panel[disabled]:hover .carpe-slider-slit {
+    background-color: #999; /* Blue color of slit in disabled sliders stay grey. */
+}
+.carpe-slider-panel:focus:hover .carpe-slider-slit {
+    border-color: #99b #cce #cce #99b;
+    background-color: #35e; /* Blue color of slit in focused and 'hovered' slider. */
+}
+.carpe-slider-panel[disabled]:focus:hover .carpe-slider-slit {
+    background-color: #999; /* Color of slit in disabled sliders stay grey. */
+}
+.orientation-horizontal .carpe-slider-slit {
+    height: 2px;
+    margin: 4px 2px 2px 2px;
+    top: -12px;
+}
+.orientation-vertical .carpe-slider-slit {
+    width: 2px;
+    margin: 2px 5px 2px 5px;
+    top: -22px;
+}
+/* The Slider Knob */
+.carpe-slider-knob  {
+    background-color: #666;
+    background: -moz-linear-gradient(right, #999999 0%, #444444 100%);
+    background: -webkit-gradient(linear, right top, left top, color-stop(0%,#888888), color-stop(100%,#555555));
+    background: -webkit-linear-gradient(right, #888888 0%,#555555 100%);
+    background: -o-linear-gradient(right, #888888 0%,#555555 100%);
+    background: -ms-linear-gradient(right, #888888 0%,#555555 100%);
+    background: linear-gradient(right, #888888 0%,#555555 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#444444', endColorstr='#999999',GradientType=1 );
+    -webkit-box-shadow: 1px 1px 3px 0px #444444;
+    -moz-box-shadow: 1px 1px 3px 0px #444444;
+    box-shadow: 1px 1px 3px 0px #444444;
+    position: relative;
+    z-index: 2;
+    line-height: 0;
+    font-size: 0;
+    border: 1px solid;
+    border-color: #888 #444 #444 #888;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+    -webkit-border-radius: 1px;
+}
+.orientation-horizontal .carpe-slider-knob {
+    width: 20px;
+    margin: 0;
+    height: 12px;
+    cursor: e-resize;
+}
+.orientation-vertical .carpe-slider-knob {
+    background: -moz-linear-gradient(bottom, #999999 1%, #444444 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(1%,#888888), color-stop(100%,#555555));
+    background: -webkit-linear-gradient(bottom, #888888 1%,#555555 100%);
+    background: -o-linear-gradient(bottom, #888888 1%,#555555 100%);
+    background: -ms-linear-gradient(bottom, #888888 1%,#555555 100%);
+    background: linear-gradient(bottom, #888888 1%,#555555 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#444444', endColorstr='#999999',GradientType=0 );
+    width: 12px;
+    margin: 1px 0 0 0;
+    height: 20px;
+    cursor: n-resize;
+}
+.carpe-slider-panel[disabled] .carpe-slider-knob {
+    cursor: default;
+}

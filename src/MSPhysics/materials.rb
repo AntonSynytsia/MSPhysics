@@ -1,61 +1,62 @@
 module MSPhysics
+
+  # @since 1.0.0
   module Materials
 
-    # @!visibility private
-    @instances = []
+    @instances ||= {}
 
     class << self
 
+      include Enumerable
+
+      # @!visibility private
+      def each(&block)
+        @instances.values.each(&block)
+      end
+
       # Add/Overwrite material to/in the materials list.
-      # @param [Material] mat
-      # @return [Boolean] +true+ (if successful).
-      def add(mat)
-        return false unless mat.is_a?(MSPhysics::Material)
-        return false if @instances.include?(mat)
-        remove_by_name(mat.name)
-        @instances << mat
+      # @param [Material] material
+      # @return [Boolean] success
+      def add(material)
+        AMS.validate_type(material, MSPhysics::Material)
+        @instances[material.get_name] = material
+        true
       end
 
       # Remove material from the materials list.
-      # @param [Material] mat
-      # @return [Boolean] +true+ (if successful).
-      def remove(mat)
-        @instances.delete(mat)
+      # @param [Material] material
+      # @return [Boolean] success
+      def remove(material)
+        AMS.validate_type(material, MSPhysics::Material)
+        @instances.delete(material)
       end
 
       # Remove material from the materials list by name.
+      # @note Case sensitive.
       # @param [String] name
-      # @return [Boolean] +true+ (if successful).
+      # @return [Boolean] success
       def remove_by_name(name)
-        name = name.to_s.downcase
-        found_mat = nil
-        @instances.each { |mat|
-          next if mat.name != name
-          found_mat = mat
-          break
-        }
-        @instances.delete(found_mat) ? true : false
+        @instances.delete(name) ? true : false
       end
 
       # Get material by name.
       # @note Case sensitive.
       # @param [String] name
-      # @return [Material, NilClass]
+      # @return [Material, nil]
       def get_by_name(name)
-        @instances.each { |mat|
-          return mat if mat.name == name
-        }
-        nil
+        @instances[name]
       end
 
-      # Get a list of all existing material names.
+      # Get all material names.
       # @return [Array<String>]
       def get_names
-        names = []
-        @instances.each { |mat|
-          names << mat.name
-        }
-        names
+        @instances.keys
+      end
+
+      # Get all Material objects.
+      # @return [Array<Material>]
+      def get_materials
+        @instances.values
       end
 
     end # proxy class

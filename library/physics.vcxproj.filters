@@ -1,0 +1,324 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="NewtonDynamics\physics\dgBallConstraint.cpp">
+      <Filter>constraints</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgBilateralConstraint.cpp">
+      <Filter>constraints</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgBodyMasterList.cpp">
+      <Filter>systems</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollision.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionCompound.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionBox.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionBVH.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionCapsule.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionChamferCylinder.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionCone.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionConvex.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionConvexHull.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionConvexPolygon.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionCylinder.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionDeformableMesh.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionHeightField.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionMesh.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionNull.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionScene.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionSphere.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionUserMesh.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgConstraint.cpp">
+      <Filter>constraints</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgContact.cpp">
+      <Filter>constraints</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCorkscrewConstraint.cpp">
+      <Filter>constraints</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgDeformableContact.cpp">
+      <Filter>constraints</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgHingeConstraint.cpp">
+      <Filter>constraints</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\meshUtil\dgMeshEffect1.cpp">
+      <Filter>meshUtil</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\meshUtil\dgMeshEffect2.cpp">
+      <Filter>meshUtil</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\meshUtil\dgMeshEffect3.cpp">
+      <Filter>meshUtil</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\meshUtil\dgMeshEffect4.cpp">
+      <Filter>meshUtil</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgNarrowPhaseCollision.cpp">
+      <Filter>systems</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgSlidingConstraint.cpp">
+      <Filter>constraints</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgUniversalConstraint.cpp">
+      <Filter>constraints</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgUpVectorConstraint.cpp">
+      <Filter>constraints</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgUserConstraint.cpp">
+      <Filter>constraints</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgWorldDynamicsParallelSolver.cpp">
+      <Filter>systems</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgWorldDynamicsSimpleSolver.cpp">
+      <Filter>systems</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgWorldDynamicUpdate.cpp">
+      <Filter>systems</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgWorld.cpp">
+      <Filter>systems</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionInstance.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionTaperedCylinder.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionTaperedCapsule.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\meshUtil\dgMeshEffect5.cpp">
+      <Filter>meshUtil</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgBody.cpp">
+      <Filter>bodies</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgDeformableBody.cpp">
+      <Filter>bodies</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgDynamicBody.cpp">
+      <Filter>bodies</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgKinematicBody.cpp">
+      <Filter>bodies</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgBroadPhase.cpp">
+      <Filter>systems</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionDeformableClothPatch.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionDeformableSolidMesh.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgDeformableBodiesUpdate.cpp">
+      <Filter>systems</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\physics\dgCollisionCompoundFractured.cpp">
+      <Filter>collision</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\meshUtil\dgMeshEffect6.cpp">
+      <Filter>meshUtil</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="NewtonDynamics\physics\dgBilateralConstraint.h">
+      <Filter>constraints</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgBallConstraint.h">
+      <Filter>constraints</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgBodyMasterList.h">
+      <Filter>systems</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollision.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionBox.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionBVH.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionCapsule.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionChamferCylinder.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionCompound.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionCone.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionConvex.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionConvexHull.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionSphere.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionConvexPolygon.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionCylinder.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionDeformableMesh.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionHeightField.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionMesh.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionNull.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionScene.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionUserMesh.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgConstraint.h">
+      <Filter>constraints</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgContact.h">
+      <Filter>constraints</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCorkscrewConstraint.h">
+      <Filter>constraints</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgDeformableContact.h">
+      <Filter>constraints</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgHingeConstraint.h">
+      <Filter>constraints</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\meshUtil\dgMeshEffect.h">
+      <Filter>meshUtil</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgPhysics.h">
+      <Filter>systems</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgPhysicsStdafx.h">
+      <Filter>systems</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgSlidingConstraint.h">
+      <Filter>constraints</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgUniversalConstraint.h">
+      <Filter>constraints</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgUpVectorConstraint.h">
+      <Filter>constraints</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgUserConstraint.h">
+      <Filter>constraints</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgWorldDynamicUpdate.h">
+      <Filter>systems</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgWorld.h">
+      <Filter>systems</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionInstance.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionTaperedCylinder.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionTaperedCapsule.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgBody.h">
+      <Filter>bodies</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgDeformableBody.h">
+      <Filter>bodies</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgDynamicBody.h">
+      <Filter>bodies</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgKinematicBody.h">
+      <Filter>bodies</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgBroadPhase.h">
+      <Filter>systems</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionDeformableClothPatch.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionDeformableSolidMesh.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgDeformableBodiesUpdate.h">
+      <Filter>systems</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\physics\dgCollisionCompoundFractured.h">
+      <Filter>collision</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="collision">
+      <UniqueIdentifier>{5bdb95af-51b5-4f6d-85b6-94e32c2c4be1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="meshUtil">
+      <UniqueIdentifier>{6a7ba71c-a72b-42e2-9667-744c5111dc42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="systems">
+      <UniqueIdentifier>{d7da6f33-ecaf-4958-a909-f7a4bf6721c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="constraints">
+      <UniqueIdentifier>{891f06ab-be3f-4f7c-93c9-ff9fc4c40f9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bodies">
+      <UniqueIdentifier>{3cdd88ed-a6e4-4a96-b20c-ed07d31aaf6f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

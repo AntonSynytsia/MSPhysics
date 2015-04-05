@@ -1,491 +1,526 @@
 module MSPhysics
+
+  # @since 1.0.0
   module Collision
 
-    # @!visibility private
-    VALID_TYPES = [Sketchup::Group, Sketchup::ComponentInstance]
-    # @!visibility private
-    INVALID_OBJECT = 'The specified object is not a group or a component.'
-    # @!visibility private
-    INVALID_SHAPE = 'The specified entity has an invalid shape.'
-
-    SHAPES = [
-      :box,
-      :sphere,
-      :cone,
-      :cylinder,
-      :chamfer_cylinder,
-      :capsule,
-      :convex_hull,
-      :null,
-      :compound,
-      :compound_from_mesh,
-      :static_mesh
-    ]
-
-    # @!visibility private
-    @percent = nil
-    @data ||= {}
-
-    # @!visibility private
-    PROGRESS_REPORT = Proc.new { |progress|
-      percent = (progress*100).to_i
-      next true if @percent == percent
-      @percent = percent
-      #~ printf("%d#{@percent == 100 ? "\n" : "\s"}", percent)
-      true
+    # @see http://kmamou.blogspot.com/2014/12/v-hacd-20-parameters-description.html V-HACD 2.0 Parameters Description
+    GENERATION_PARAMS = {
+      :resolution                   => 100000, # The higher the resolution the longer time it takes to generate, but the results are more accurate.
+      :depth                        => 20,
+      :concavity                    => 0.0,
+      :plane_downsampling           => 4,
+      :convex_hull_downsampling     => 4,
+      :alpha                        => 0.05,
+      :beta                         => 0.05,
+      :gamma                        => 0.005,
+      :delta                        => 0.05,
+      :pca                          => 0,
+      :mode                         => 0,
+      :max_num_vertices_per_ch      => 64,
+      :min_volume_per_ch            => 0.0001
     }
 
-    module_function
+    class << self
 
-    # @!visibility private
-    def get_collision_instance(world, ent, shape)
-      return unless ent.is_a?(Sketchup::ComponentInstance)
-      return unless @data[ent.definition].is_a?(Array)
-      col = nil
-      @data[ent.definition].each { |data|
-        next if data[0] != world.address
-        next if data[1] != shape
-        col = data[2]
-        break
-      }
-      return unless col
-      c = Newton.collisionCreateInstance(col)
-      scale = Geometry.get_scale(ent.transformation)
-      if Newton.collisionGetType(c).between?(0,7)
-        orig_scale = Array.new(3){ 0.chr*4 }
-        Newton.collisionGetScale(c, *orig_scale)
-        buffer = 0.chr*64
-        Newton.collisionGetMatrix(c, buffer)
-        offset_matrix = buffer.unpack('F*')
-        for i in 0..2
-          offset_matrix[12+i] *= scale[i]/orig_scale[i].unpack('F')[0]
+      # Get collision type.
+      # * Collision types 12-17 are not implemented.
+      # * Collisions of type 8 and below are all convex collisions.
+      # @param [Fixnum] address Reference to a valid collision.
+      # @return [Fixnum] Collision type:
+      #   * 0 - sphere
+      #   * 1 - capsule
+      #   * 2 - chamfer cylinder
+      #   * 3 - tapered capsule
+      #   * 4 - cylinder
+      #   * 5 - tapered cylinder
+      #   * 6 - box
+      #   * 7 - cone
+      #   * 8 - convex hull
+      #   * 9 - null
+      #   * 10 - compound
+      #   * 11 - tree (static mesh)
+      #   * 12 - height field
+      #   * 13 - cloth patch
+      #   * 14 - deformable solid
+      #   * 15 - user mesh
+      #   * 16 - scene
+      #   * 17 - fractured compound
+      # @example Determining if collision is convex.
+      #   onStart {
+      #     address = this.get_collision_address
+      #     type = MSPhysics::Collision.get_type(address)
+      #     convex = (type < 9)
+      #   }
+      def get_Type(address)
+        MSPhysics::Newton::Collision.get_type(address)
+      end
+
+      # Determine if collision is convex.
+      # @param [Fixnum] address Reference to a valid collision.
+      # @return [Boolean]
+      def is_convex?(address)
+        MSPhysics::Newton::Collision.get_type(address) < 9
+      end
+
+      # Verify that entity is valid for collision generation.
+      # @api private
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+      # @raise [TypeError] if entity is deleted.
+      # @raise [TypeError] if entity has a transformation matrix with
+      #   non-perpendicular axis.
+      # @raise [TypeError] if entity has at least one of the axis scaled to
+      #   zero.
+      # @return [void]
+      def validate_entity(entity)
+        AMS.validate_type(entity, Sketchup::Group, Sketchup::ComponentInstance)
+        raise(TypeError, "Entity #{entity} is deleted!", caller) unless entity.valid?
+        unless MSPhysics::Geometry.is_matrix_uniform?(entity.transformation)
+          raise(TypeError, "Entity #{entity} has a non-uniform transformation matrix. Some or all matrix axis are not perpendicular to each other.", caller)
         end
-        Newton.collisionSetMatrix(c, offset_matrix.pack('F*'))
+        s = MSPhysics::Geometry.get_matrix_scale(entity.transformation)
+        if s.x.zero? || s.y.zero? || s.z.zero?
+          raise(TypeError, "Entity #{entity} has one of the axis scaled to zero. Zero scaled shapes are not acceptable!", caller)
+        end
       end
-      Newton.collisionSetScale(c, *scale)
-      c
-    end
 
-    # @!visibility private
-    def save_collision(world, ent, shape, col)
-      return false unless ent.is_a?(Sketchup::ComponentInstance)
-      return false if Newton.collisionGetType(col) == 11
-      ent = ent.definition
-      @data[ent] ||= []
-      @data[ent].each { |data|
-        next if data[0] != world.address
-        next if data[1] != shape
-        return false
-      }
-      c = Newton.collisionCreateInstance(col)
-      @data[ent] << [world.address, shape, c]
-      true
-    end
-
-    # Clear all saved collisions.
-    # @api private
-    def reset_data
-      @data.clear
-    end
-
-    # Optimize shape name.
-    # @param [String, Symbol] name
-    # @return [Symbol, NilClass] Proper name if successful.
-    def optimize_shape_name(name)
-      name = name.to_s.downcase.gsub(/\s|_/, '')
-      SHAPES.each { |shape|
-        return shape if shape.to_s.gsub(/_/, '') == name
-      }
-      nil
-    end
-
-    # Create collision.
-    # @param [AMS::FFI::Pointer] world A pointer to the newton world.
-    # @param [Sketchup::Group, Sketchup::ComponentInstance] ent
-    # @param [Symbol, String] shape Collision shape. See {SHAPES}.
-    # @param [Boolean] transform
-    # @return [AMS::FFI::Pointer] Pointer to the newton collision.
-    def create(world, ent, shape = :convex_hull, transform = false)
-      unless VALID_TYPES.include?(ent.class)
-        raise ArgumentError, INVALID_OBJECT
-      end
-      shape = optimize_shape_name(shape)
-      unless shape
-        raise ArgumentError, 'The specified shape is invalid.'
-      end
-      unless transform
-        col = get_collision_instance(world, ent, shape)
-        return col if col
-      end
-      col = case shape
-        when :box
-          create_box(world, ent, transform)
-        when :sphere
-          create_sphere(world, ent, transform)
-        when :cone
-          create_cone(world, ent, transform)
-        when :cylinder
-          create_cylinder(world, ent, transform)
-        when :chamfer_cylinder
-          create_chamfer_cylinder(world, ent, transform)
-        when :capsule
-          create_capsule(world, ent, transform)
-        when :convex_hull
-          create_convex_hull(world, ent, transform)
-        when :null
-          create_null(world)
-        when :compound
-          child_data = {}
-          handle = 'MSPhysics Body'
-          definition = ent.respond_to?(:definition) ? ent.definition : ent
-          definition.entities.each{ |e|
-            next unless VALID_TYPES.include?(e.class)
-            ignore = e.get_attribute(handle, 'Ignore', false)
-            next if ignore
-            shape = e.get_attribute(handle, 'Shape', 'Convex Hull')
-            not_collidable = e.get_attribute(handle, 'Not Collidable', false)
-            if shape != 'Convex Hull'
-              if ['Null', 'Compound', 'Compound From Mesh', 'Static Mesh'].include?(shape)
-                shape = 'Convex Hull'
-              end
-              scale = Geometry.get_scale(e.transformation)
-              # Scaled spheres, cylinders and other convex collisions other than
-              # convex hull work improperly inside compounds.
-              shape = 'Convex Hull' if scale != [1,1,1]
-            end
-            child_data[e] = [shape, not_collidable]
-          }
-          create_compound(world, ent, child_data)
-        when :compound_from_mesh
-          create_compound_from_mesh(world, ent, true, 2)
-        when :static_mesh
-          create_static_mesh(world, ent, true, 2)
-        when :deformable
-          create_deformable(world, ent, true, 2)
+      # Create a physics collision.
+      # @param [World] world
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+      # @param [Symbol, String] shape Use one of the provided shapes:
+      #   * box
+      #   * sphere
+      #   * cone
+      #   * cylinder
+      #   * chamfer_cylinder
+      #   * capsule
+      #   * convex_hull
+      #   * null
+      #   * compound
+      #   * compound_from_cd
+      #   * static_mesh
+      # @param [Boolean] transform Whether to offset the collision. Usually this
+      #   parameter is set true if the entity is a sub-collision of some parent
+      #   collision.
+      # @return [Fixnum] Collision address
+      def create(world, entity, shape = :convex_hull, transform = false)
+        MSPhysics::World.validate(world)
+        validate_entity(entity)
+        shape = shape.to_s.downcase.gsub(' ', '_').to_sym
+        case shape
+          when :box
+            create_box(world, entity, transform)
+          when :sphere
+            create_sphere(world, entity, transform)
+          when :cone
+            create_cone(world, entity, transform)
+          when :cylinder
+            create_cylinder(world, entity, transform)
+          when :chamfer_cylinder
+            create_chamfer_cylinder(world, entity, transform)
+          when :capsule
+            create_capsule(world, entity, transform)
+          when :convex_hull
+            create_convex_hull(world, entity, transform)
+          when :null
+            create_null(world)
+          when :compound
+            create_compound(world, entity)
+          when :compound_from_cd
+            create_compound_from_cd1(world, entity)
+          when :static_mesh
+            create_static_mesh(world, entity)
         else
-          raise 'Failed to create collision!'
-      end
-      save_collision(world, ent, shape, col)
-      col
-    end
-
-    # @!visibility private
-    def init_collision(world, ent, transform = false)
-      unless VALID_TYPES.include?(ent.class)
-        raise ArgumentError, INVALID_OBJECT
-      end
-      bb = MSPhysics::Group.get_bounding_box_from_faces(ent, true, false)
-      if bb.depth.zero? or bb.height.zero? or bb.width.zero?
-        raise TypeError, INVALID_SHAPE
-      end
-      scale = Geometry.get_scale(ent.transformation)
-      pt = bb.center
-      w = bb.width.to_m
-      h = bb.height.to_m
-      d = bb.depth.to_m
-      if transform
-        pt.transform!(ent.transformation)
-        w *= scale[0]
-        h *= scale[1]
-        d *= scale[2]
-      else
-        pt.x *= scale[0]
-        pt.y *= scale[1]
-        pt.z *= scale[2]
-      end
-      c = Conversion.convert_point(pt, :in, :m)
-      if transform
-        tra = Geometry.extract_scale(ent.transformation)
-        offset_matrix = Geom::Transformation.new(tra.xaxis, tra.yaxis, tra.zaxis, c)
-      else
-        offset_matrix = Geom::Transformation.new(c)
-      end
-      binding
-    end
-
-    # Create box.
-    # @param [AMS::FFI::Pointer] world A pointer to the newton world.
-    # @param [Sketchup::Group, Sketchup::ComponentInstance] ent
-    # @param [Boolean] transform
-    # @return [AMS::FFI::Pointer]
-    def create_box(world, ent, transform = false)
-      binding = init_collision(world, ent, transform)
-      code = "col = Newton.createBox(world, w, h, d, 0, offset_matrix.to_a.pack('F*'));"
-      code << "Newton.collisionSetScale(col, *scale) unless transform; col"
-      eval(code, binding)
-    end
-
-    # Create sphere.
-    # @param [AMS::FFI::Pointer] world A pointer to the newton world.
-    # @param [Sketchup::Group, Sketchup::ComponentInstance] ent
-    # @param [Boolean] transform
-    # @return [AMS::FFI::Pointer]
-    def create_sphere(world, ent, transform = false)
-      binding = init_collision(world, ent, transform)
-      code = "diam = w; diam = h if h > diam; diam = d if d > diam;"
-      code << "col = Newton.createSphere(world, diam*0.5, 0, offset_matrix.to_a.pack('F*'));"
-      code << "Newton.collisionSetScale(col, *scale) unless transform; col"
-      eval(code, binding)
-    end
-
-    # Create cone.
-    # @param [AMS::FFI::Pointer] world A pointer to the newton world.
-    # @param [Sketchup::Group, Sketchup::ComponentInstance] ent
-    # @param [Boolean] transform
-    # @return [AMS::FFI::Pointer]
-    def create_cone(world, ent, transform = false)
-      binding = init_collision(world, ent, transform)
-      code = "diam = h; diam = d if d > diam;"
-      code << "col = Newton.createCone(world, diam*0.5, w, 0, offset_matrix.to_a.pack('F*'));"
-      code << "Newton.collisionSetScale(col, *scale) unless transform; col"
-      eval(code, binding)
-    end
-
-    # Create cylinder.
-    # @param [AMS::FFI::Pointer] world A pointer to the newton world.
-    # @param [Sketchup::Group, Sketchup::ComponentInstance] ent
-    # @param [Boolean] transform
-    # @return [AMS::FFI::Pointer]
-    def create_cylinder(world, ent, transform = false)
-      binding = init_collision(world, ent, transform)
-      code = "diam = h; diam = d if d > diam;"
-      code << "col = Newton.createCylinder(world, diam*0.5, w, 0, offset_matrix.to_a.pack('F*'));"
-      code << "Newton.collisionSetScale(col, *scale) unless transform; col"
-      eval(code, binding)
-    end
-
-    # Create chamfer cylinder.
-    # @param [AMS::FFI::Pointer] world A pointer to the newton world.
-    # @param [Sketchup::Group, Sketchup::ComponentInstance] ent
-    # @param [Boolean] transform
-    # @return [AMS::FFI::Pointer]
-    def create_chamfer_cylinder(world, ent, transform = false)
-      binding = init_collision(world, ent, transform)
-      code = "diam = h; diam = d if d > diam;"
-      code << "col = Newton.createChamferCylinder(world, (diam-w)*0.5, w, 0, offset_matrix.to_a.pack('F*'));"
-      code << "Newton.collisionSetScale(col, *scale) unless transform; col"
-      eval(code, binding)
-    end
-
-    # Create capsule.
-    # @param [AMS::FFI::Pointer] world A pointer to the newton world.
-    # @param [Sketchup::Group, Sketchup::ComponentInstance] ent
-    # @param [Boolean] transform
-    # @return [AMS::FFI::Pointer]
-    def create_capsule(world, ent, transform = false)
-      binding = init_collision(world, ent, transform)
-      code = "diam = h; diam = d if d > diam;"
-      code << "col = Newton.createCapsule(world, diam*0.5, w-diam, 0, offset_matrix.to_a.pack('F*'));"
-      code << "Newton.collisionSetScale(col, *scale) unless transform; col"
-      eval(code, binding)
-    end
-
-    # Create convex hull.
-    # @param [AMS::FFI::Pointer] world A pointer to the newton world.
-    # @param [Sketchup::Group, Sketchup::ComponentInstance] ent
-    # @param [Boolean] transform
-    # @return [AMS::FFI::Pointer]
-    def create_convex_hull(world, ent, transform = false)
-      unless VALID_TYPES.include?(ent.class)
-        raise ArgumentError, INVALID_OBJECT
-      end
-      pts = MSPhysics::Group.get_vertices_from_faces(ent, true, transform)
-      if Geometry.points_coplanar?(pts)
-        raise TypeError, INVALID_SHAPE
-      end
-      for i in 0...pts.size
-        pts[i] = Conversion.convert_point(pts[i], :in, :m).to_a
-      end
-      col = Newton.createConvexHull(world, pts.size, pts.flatten.pack('F*'), 12, 0.0, 0, nil)
-      unless transform
-        scale = Geometry.get_scale(ent.transformation)
-        Newton.collisionSetScale(col, *scale)
-      end
-      col
-    end
-
-    # Create null.
-    # @param [AMS::FFI::Pointer] world A pointer to the newton world.
-    # @return [AMS::FFI::Pointer]
-    def create_null(world)
-      Newton.createNull(world)
-    end
-
-    # Create compound.
-    # @param [AMS::FFI::Pointer] world A pointer to the newton world.
-    # @param [Sketchup::Group, Sketchup::ComponentInstance] ent
-    # @param [Hash{entity => [shape, not_collidable]}] child_data
-    # @return [AMS::FFI::Pointer]
-    def create_compound(world, ent, child_data = {})
-      col_data = []
-      child_data.each { |e, data|
-        shape = data[0]
-        not_collidable = data[1]
-        begin
-          c = create(world, e, shape, true)
-          Newton.collisionSetCollisionMode(c, 0) if not_collidable
-          col_data << c
-        rescue Exception => error
-          # puts "#{error}\n#{error.backtrace.first}"
+          raise(TypeError, "The specified collision shape, \"#{shape}\", does not exist!", caller)
         end
-      }
-      if col_data.empty?
-        raise TypeError, INVALID_SHAPE
       end
-      col = Newton.createCompoundCollision(world, 0)
-      Newton.compoundCollisionBeginAddRemove(col)
-      col_data.each { |c|
-        Newton.compoundCollisionAddSubCollision(col, c)
-        Newton.destroyCollision(c)
-      }
-      Newton.compoundCollisionEndAddRemove(col)
-      scale = Geometry.get_scale(ent.transformation)
-      Newton.collisionSetScale(col, *scale)
-      col
-    end
 
-    # Create compound from mesh.
-    # @param [AMS::FFI::Pointer] world A pointer to the newton world.
-    # @param [Sketchup::Group, Sketchup::ComponentInstance] ent
-    # @param [Boolean] simplify Whether to remove unused edges.
-    # @param [Fixnum] optimize Optimization mode:
-    #   +0+ - none,
-    #   +1+ - triangulate,
-    #   +2+ - polygonize.
-    # @return [AMS::FFI::Pointer]
-    def create_compound_from_mesh(world, ent, simplify = true, optimize = 0)
-      unless VALID_TYPES.include?(ent.class)
-        raise ArgumentError, INVALID_OBJECT
+      # Create a null collision.
+      # @param [World] world
+      # @return [Fixnum] Collision address
+      def create_null(world)
+        MSPhysics::World.validate(world)
+        MSPhysics::Newton::Collision.create_null(world.get_address)
       end
-      faces = MSPhysics::Group.get_polygons_from_faces(ent, true, false)
-      if Geometry.points_coplanar?(faces.flatten(1))
-        raise TypeError, INVALID_SHAPE
-      end
-      mesh = Newton.meshCreate(world)
-      Newton.meshBeginFace(mesh)
-      faces.each { |face|
-        pts = []
-        face.each { |pt|
-          pts << Conversion.convert_point(pt, :in, :m).to_a
+
+      # Create a box collision.
+      # @param [World] world
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+      # @param [Boolean] transform Whether to offset the collision. Usually this
+      #   parameter is set true if the entity is a sub-collision of some parent
+      #   collision.
+      # @return [Fixnum] Collision address
+      # @raise [TypeError] if calculated bounding box turns out flat.
+      def create_box(world, entity, transform = false)
+        MSPhysics::World.validate(world)
+        validate_entity(entity)
+        bb = MSPhysics::Group.get_bounding_box_from_faces(entity, true){ |e|
+          e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
         }
-        Newton.meshAddFace(mesh, pts.size, pts.flatten.pack('F*'), 12, 0)
-      }
-      Newton.meshEndFace(mesh)
-      if simplify
-        vertex_remap_array = 0.chr*4*faces.flatten.size
-        Newton.removeUnusedVertices(mesh, vertex_remap_array)
+        if bb.width.zero? || bb.height.zero? || bb.depth.zero?
+          raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
+        end
+        tra = entity.transformation
+        s = MSPhysics::Geometry.get_matrix_scale(tra)
+        center = bb.center
+        if transform
+          center.transform!(tra)
+          offset_matrix = Geom::Transformation.new(tra.xaxis, tra.yaxis, tra.zaxis, center)
+        else
+          center.x *= MSPhysics::Geometry.is_matrix_flipped?(tra) ? -s.x : s.x
+          center.y *= s.y
+          center.z *= s.z
+          offset_matrix = Geom::Transformation.new(center)
+        end
+        MSPhysics::Newton::Collision.create_box(world.get_address, bb.width*s.x, bb.height*s.y, bb.depth*s.z, 0, offset_matrix)
       end
-      if optimize == 1
-        Newton.meshTriangulate(mesh)
-      elsif optimize == 2
-        Newton.meshPolygonize(mesh)
-      end
-      Newton.meshFixTJoints(mesh)
-      index = Sketchup.active_model.entities.to_a.index(ent)
-      puts "Generating convex approximation for entities[#{index}]..."
-      # mesh, max_concavity, back_face_distance_factor, max_count, max_vertex_per_hull, progress_report_callback, report_data
-      convex_approximation = Newton.meshApproximateConvexDecomposition(mesh, 0.01, 0.2, 32, 100, PROGRESS_REPORT, nil)
-      col = Newton.createCompoundCollisionFromMesh(world, convex_approximation, 0.001, 0, 0)
-      Newton.meshDestroy(mesh)
-      Newton.meshDestroy(convex_approximation)
-      save_collision(world, ent, :compound_from_mesh, col)
-      scale = Geometry.get_scale(ent.transformation)
-      Newton.collisionSetScale(col, *scale)
-      col
-    end
 
-    # Create static mesh.
-    # @param [AMS::FFI::Pointer] world A pointer to the newton world.
-    # @param [Sketchup::Group, Sketchup::ComponentInstance] ent
-    # @param [Boolean] simplify Whether to remove unused edges.
-    # @param [Fixnum] optimize Optimization mode:
-    #   +0+ - none,
-    #   +1+ - triangulate,
-    #   +2+ - polygonize.
-    # @return [AMS::FFI::Pointer]
-    def create_static_mesh(world, ent, simplify = true, optimize = 0)
-      unless VALID_TYPES.include?(ent.class)
-        raise ArgumentError, INVALID_OBJECT
-      end
-      faces = MSPhysics::Group.get_polygons_from_faces(ent, true, true)
-      if faces.size.zero?
-        raise TypeError, INVALID_SHAPE
-      end
-      tra = Geometry.extract_scale(ent.transformation).inverse
-      mesh = Newton.meshCreate(world)
-      Newton.meshBeginFace(mesh)
-      faces.each { |face|
-        pts = []
-        face.each { |pt|
-          pt.transform!(tra)
-          pts << Conversion.convert_point(pt, :in, :m).to_a
+      # Create a sphere collision.
+      # @param [World] world
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+      # @param [Boolean] transform Whether to offset the collision. Usually this
+      #   parameter is set true if the entity is a sub-collision of some parent
+      #   collision.
+      # @return [Fixnum] Collision address
+      # @raise [TypeError] if calculated bounding box turns out flat.
+      def create_sphere(world, entity, transform = false)
+        MSPhysics::World.validate(world)
+        validate_entity(entity)
+        bb = MSPhysics::Group.get_bounding_box_from_faces(entity, true){ |e|
+          e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
         }
-        Newton.meshAddFace(mesh, pts.size, pts.flatten.pack('F*'), 12, 0)
-      }
-      Newton.meshEndFace(mesh)
-      if simplify
-        vertex_remap_array = 0.chr*4*faces.flatten.size
-        Newton.removeUnusedVertices(mesh, vertex_remap_array)
+        if bb.width.zero? || bb.height.zero? || bb.depth.zero?
+          raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
+        end
+        tra = entity.transformation
+        s = MSPhysics::Geometry.get_matrix_scale(tra)
+        center = bb.center
+        if transform
+          center.transform!(tra)
+          offset_matrix = Geom::Transformation.new(tra.xaxis, tra.yaxis, tra.zaxis, center)
+        else
+          center.x *= MSPhysics::Geometry.is_matrix_flipped?(tra) ? -s.x : s.x
+          center.y *= s.y
+          center.z *= s.z
+          offset_matrix = Geom::Transformation.new(center)
+        end
+        d = bb.width*s.x
+        d = bb.height*s.y if bb.height*s.y > d
+        d = bb.height*s.z if bb.height*s.z > d
+        MSPhysics::Newton::Collision.create_sphere(world.get_address, d*0.5, 0, offset_matrix)
       end
-      @percent = nil
-      Newton.meshSimplify(mesh, faces.flatten.size, PROGRESS_REPORT, nil)
-      if optimize == 1
-        Newton.meshTriangulate(mesh)
-      elsif optimize == 2
-        Newton.meshPolygonize(mesh)
-      end
-      Newton.meshFixTJoints(mesh)
-      col = Newton.createTreeCollisionFromMesh(world, mesh, 0)
-      Newton.meshDestroy(mesh)
-      col
-    end
 
-    # Create soft collision.
-    # @param [AMS::FFI::Pointer] world A pointer to the newton world.
-    # @param [Sketchup::Group, Sketchup::ComponentInstance] ent
-    # @param [Boolean] simplify Whether to remove unused edges.
-    # @param [Fixnum] optimize Optimization mode:
-    #   +0+ - none,
-    #   +1+ - triangulate,
-    #   +2+ - polygonize.
-    # @return [AMS::FFI::Pointer]
-    def create_deformable(world, ent, simplify = true, optimize = 0)
-      unless VALID_TYPES.include?(ent.class)
-        raise ArgumentError, INVALID_OBJECT
-      end
-      faces = MSPhysics::Group.get_polygons_from_faces(ent, true, true)
-      if faces.size.zero?
-        raise TypeError, INVALID_SHAPE
-      end
-      tra = Geometry.extract_scale(ent.transformation).inverse
-      mesh = Newton.meshCreate(world)
-      Newton.meshBeginFace(mesh)
-      faces.each { |face|
-        pts = []
-        face.each { |pt|
-          pt.transform!(tra)
-          pts.push Conversion.convert_point(pt, :in, :m).to_a
+      # Create a cone collision.
+      # @param [World] world
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+      # @param [Boolean] transform Whether to offset the collision. Usually this
+      #   parameter is set true if the entity is a sub-collision of some parent
+      #   collision.
+      # @return [Fixnum] Collision address
+      # @raise [TypeError] if calculated bounding box turns out flat.
+      def create_cone(world, entity, transform = false)
+        MSPhysics::World.validate(world)
+        validate_entity(entity)
+        bb = MSPhysics::Group.get_bounding_box_from_faces(entity, true){ |e|
+          e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
         }
-        Newton.meshAddFace(mesh, pts.size, pts.flatten.pack('F*'), 12, 0)
-      }
-      Newton.meshEndFace(mesh)
-      if simplify
-        vertex_remap_array = 0.chr*4*faces.flatten.size
-        Newton.removeUnusedVertices(mesh, vertex_remap_array)
+        if bb.width.zero? || bb.height.zero? || bb.depth.zero?
+          raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
+        end
+        tra = entity.transformation
+        s = MSPhysics::Geometry.get_matrix_scale(tra)
+        center = bb.center
+        if transform
+          center.transform!(tra)
+          offset_matrix = Geom::Transformation.new(tra.xaxis, tra.yaxis, tra.zaxis, center)
+        else
+          center.x *= MSPhysics::Geometry.is_matrix_flipped?(tra) ? -s.x : s.x
+          center.y *= s.y
+          center.z *= s.z
+          offset_matrix = Geom::Transformation.new(center)
+        end
+        d = bb.depth*s.z
+        d = bb.height*s.y if bb.height*s.y > d
+        MSPhysics::Newton::Collision.create_cone(world.get_address, d*0.5, bb.width*s.x, 0, offset_matrix)
       end
-      Newton.meshSimplify(mesh, faces.flatten.size, PROGRESS_REPORT, nil)
-      if optimize == 1
-        Newton.meshTriangulate(mesh)
-      elsif optimize == 2
-        Newton.meshPolygonize(mesh)
-      end
-      Newton.meshFixTJoints(mesh)
-      col = Newton.createDeformableMesh(world, mesh, 0)
-      Newton.meshDestroy(mesh)
-      Newton.deformableMeshSetSkinThickness(col, 0.05)
-      Newton.deformableMeshCreateClusters(col, 8, 0.15)
-      col
-    end
 
+      # Create a cylinder collision.
+      # @param [World] world
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+      # @param [Boolean] transform Whether to offset the collision. Usually this
+      #   parameter is set true if the entity is a sub-collision of some parent
+      #   collision.
+      # @return [Fixnum] Collision address
+      # @raise [TypeError] if calculated bounding box turns out flat.
+      def create_cylinder(world, entity, transform = false)
+        MSPhysics::World.validate(world)
+        validate_entity(entity)
+        bb = MSPhysics::Group.get_bounding_box_from_faces(entity, true){ |e|
+          e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
+        }
+        if bb.width.zero? || bb.height.zero? || bb.depth.zero?
+          raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
+        end
+        tra = entity.transformation
+        s = MSPhysics::Geometry.get_matrix_scale(tra)
+        center = bb.center
+        if transform
+          center.transform!(tra)
+          offset_matrix = Geom::Transformation.new(tra.xaxis, tra.yaxis, tra.zaxis, center)
+        else
+          center.x *= MSPhysics::Geometry.is_matrix_flipped?(tra) ? -s.x : s.x
+          center.y *= s.y
+          center.z *= s.z
+          offset_matrix = Geom::Transformation.new(center)
+        end
+        d = bb.depth*s.z
+        d = bb.height*s.y if bb.height*s.y > d
+        MSPhysics::Newton::Collision.create_cylinder(world.get_address, d*0.5, bb.width*s.x, 0, offset_matrix)
+      end
+
+      # Create a capsule collision.
+      # @param [World] world
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+      # @param [Boolean] transform Whether to offset the collision. Usually this
+      #   parameter is set true if the entity is a sub-collision of some parent
+      #   collision.
+      # @return [Fixnum] Collision address
+      # @raise [TypeError] if calculated bounding box turns out flat.
+      def create_capsule(world, entity, transform = false)
+        MSPhysics::World.validate(world)
+        validate_entity(entity)
+        bb = MSPhysics::Group.get_bounding_box_from_faces(entity, true){ |e|
+          e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
+        }
+        if bb.width.zero? || bb.height.zero? || bb.depth.zero?
+          raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
+        end
+        tra = entity.transformation
+        s = MSPhysics::Geometry.get_matrix_scale(tra)
+        center = bb.center
+        if transform
+          center.transform!(tra)
+          offset_matrix = Geom::Transformation.new(tra.xaxis, tra.yaxis, tra.zaxis, center)
+        else
+          center.x *= MSPhysics::Geometry.is_matrix_flipped?(tra) ? -s.x : s.x
+          center.y *= s.y
+          center.z *= s.z
+          offset_matrix = Geom::Transformation.new(center)
+        end
+        d = bb.depth*s.z
+        d = bb.height*s.y if bb.height*s.y > d
+        l = bb.width*s.x-d
+        l = 0 if l < 0
+        MSPhysics::Newton::Collision.create_capsule(world.get_address, d*0.5, l, 0, offset_matrix)
+      end
+
+      # Create a chamfer cylinder collision.
+      # @param [World] world
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+      # @param [Boolean] transform Whether to offset the collision. Usually this
+      #   parameter is set true if the entity is a sub-collision of some parent
+      #   collision.
+      # @return [Fixnum] Collision address
+      # @raise [TypeError] if calculated bounding box turns out flat.
+      def create_chamfer_cylinder(world, entity, transform = false)
+        MSPhysics::World.validate(world)
+        validate_entity(entity)
+        bb = MSPhysics::Group.get_bounding_box_from_faces(entity, true){ |e|
+          e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
+        }
+        if bb.width.zero? || bb.height.zero? || bb.depth.zero?
+          raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
+        end
+        tra = entity.transformation
+        s = MSPhysics::Geometry.get_matrix_scale(tra)
+        center = bb.center
+        if transform
+          center.transform!(tra)
+          offset_matrix = Geom::Transformation.new(tra.xaxis, tra.yaxis, tra.zaxis, center)
+        else
+          center.x *= MSPhysics::Geometry.is_matrix_flipped?(tra) ? -s.x : s.x
+          center.y *= s.y
+          center.z *= s.z
+          offset_matrix = Geom::Transformation.new(center)
+        end
+        l = bb.width*s.x
+        d = bb.depth*s.z
+        d = bb.height*s.y if bb.height*s.y > d
+        d -= l*2
+        d = 0 if d < 0
+        MSPhysics::Newton::Collision.create_chamfer_cylinder(world.get_address, d*0.5, l, 0, offset_matrix)
+      end
+
+      # Create a convex hull collision.
+      # @param [World] world
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+      # @param [Boolean] transform Whether to offset the collision. Usually this
+      #   parameter is set true if the entity is a sub-collision of some parent
+      #   collision.
+      # @return [Fixnum] Collision address
+      # @raise [TypeError] if entity has too few vertices.
+      # @raise [TypeError] if entity has all vertices coplanar.
+      def create_convex_hull(world, entity, transform = false)
+        MSPhysics::World.validate(world)
+        validate_entity(entity)
+        vertices = MSPhysics::Group.get_vertices_from_faces(entity, true, false){ |e|
+          e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
+        }
+        if vertices.size < 4
+          raise(TypeError, "Entity #{entity} has too few vertices. At least four non-coplanar vertices are expected!", caller)
+        end
+        if MSPhysics::Geometry.points_coplanar?(vertices)
+          raise(TypeError, "Entity #{entity} has all vertices coplanar. Flat collisions are invalid!", caller)
+        end
+        tra = entity.transformation
+        s = MSPhysics::Geometry.get_matrix_scale(tra)
+        s.x *= -1 if MSPhysics::Geometry.is_matrix_flipped?(tra)
+        vertices.each { |v|
+          v.x *= s.x
+          v.y *= s.y
+          v.z *= s.z
+        }
+        offset_matrix = transform ? MSPhysics::Geometry.extract_matrix_scale(tra) : nil
+        MSPhysics::Newton::Collision.create_convex_hull(world.get_address, vertices, 0.0, 0, offset_matrix)
+      end
+
+      # Create a compound collision. In a compound collision every sub-group
+      # is considered a convex collision.
+      # @param [World] world
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+      # @return [Fixnum] Collision address
+      # @raise [TypeError] if entity doesn't have any valid sub-collisions.
+      def create_compound(world, entity)
+        MSPhysics::World.validate(world)
+        validate_entity(entity)
+        point_collections = MSPhysics::Group.get_vertices_from_faces2(entity, true, false){ |e|
+          e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
+        }
+        tra = entity.transformation
+        s = MSPhysics::Geometry.get_matrix_scale(tra)
+        s.x *= -1 if MSPhysics::Geometry.is_matrix_flipped?(tra)
+        convex_collisions = []
+        point_collections.each { |vertices|
+          next if vertices.size < 4
+          next if MSPhysics::Geometry.points_coplanar?(vertices)
+          vertices.each { |v|
+            v.x *= s.x
+            v.y *= s.y
+            v.z *= s.z
+          }
+          convex_collisions << MSPhysics::Newton::Collision.create_convex_hull(world.get_address, vertices, 0.0, 0, nil)
+        }
+        if convex_collisions.empty?
+          raise(TypeError, "Entity #{entity} doesn't have any valid sub-collisions, making it an invalid compound collision!", caller)
+        end
+        collision = MSPhysics::Newton::Collision.create_compound(world.get_address, convex_collisions)
+        convex_collisions.each { |col|
+          MSPhysics::Newton::Collision.destroy(col)
+        }
+        collision
+      end
+
+      # Create a static tree/scene collision.
+      # @param [World] world
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+      # @return [Fixnum] Collision address
+      # @raise [TypeError] if entity has no faces.
+      def create_static_mesh(world, entity)
+        MSPhysics::World.validate(world)
+        validate_entity(entity)
+        triplets = MSPhysics::Group.get_polygons_from_faces(entity, true, false){ |e|
+          e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
+        }
+        if triplets.empty?
+          raise(TypeError, "Entity #{entity} doesn't have any faces. At least one face is required for an entity to be a valid tree collision!", caller)
+        end
+        tra = entity.transformation
+        s = MSPhysics::Geometry.get_matrix_scale(tra)
+        flipped = MSPhysics::Geometry.is_matrix_flipped?(tra)
+        s.x *= -1 if flipped
+        for i in 0...triplets.size
+          triplets[i].each { |point|
+            point.x *= s.x
+            point.y *= s.y
+            point.z *= s.z
+          }
+          triplets[i].reverse! if flipped
+        end
+        MSPhysics::Newton::Collision.create_static_mesh(world.get_address, triplets, true, 2)
+      end
+
+      # Create a compound collision from convex decomposition using convex
+      # approximation algorithm by Juleo Jerez.
+      # @param [World] world
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+      # @return [Fixnum] Collision address
+      # @raise [TypeError] if entity has too few vertices.
+      # @raise [TypeError] if entity is flat.
+      def create_compound_from_cd1(world, entity)
+        MSPhysics::World.validate(world)
+        validate_entity(entity)
+        triplets = MSPhysics::Group.get_polygons_from_faces(entity, true, false){ |e|
+          e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
+        }
+        if triplets.empty?
+          raise(TypeError, "Entity #{entity} doesn't have any faces. At least one face is required for an entity to be a valid tree collision!", caller)
+        end
+        tra = entity.transformation
+        s = MSPhysics::Geometry.get_matrix_scale(tra)
+        flipped = MSPhysics::Geometry.is_matrix_flipped?(tra)
+        s.x *= -1 if flipped
+        for i in 0...triplets.size
+          triplets[i].each { |point|
+            point.x *= s.x
+            point.y *= s.y
+            point.z *= s.z
+          }
+          triplets[i].reverse! if flipped
+        end
+        MSPhysics::Newton::Collision.create_compound_from_cd1(world.get_address, triplets, 0.0001, 0.2, 512, 1024)
+      end
+
+      # Create a compound collision from convex decomposition using VHACD 2.2 by
+      # Khaled Mamuo.
+      # @param [World] world
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+      # @return [Fixnum] Collision address
+      # @raise [TypeError] if entity has too few vertices.
+      # @raise [TypeError] if entity is flat.
+      def create_compound_from_cd2(world, entity)
+        MSPhysics::World.validate(world)
+        validate_entity(entity)
+        mesh = MSPhysics::Group.get_triangular_mesh(entity, true, false){ |e|
+          e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
+        }
+        tra = entity.transformation
+        s = MSPhysics::Geometry.get_matrix_scale(tra)
+        s.x *= -1 if MSPhysics::Geometry.is_matrix_flipped?(tra)
+        mesh.transform!( Geom::Transformation.scaling(s.x, s.y, s.z) )
+        indices = mesh.polygons.map { |pl| [pl.x.abs-1, pl.y.abs-1, pl.z.abs-1] }
+        MSPhysics::Newton::Collision.create_compound_from_cd2(world.get_address, mesh.points, indices, GENERATION_PARAMS)
+      end
+
+      # Create a compound collision from convex decomposition using an exact
+      # convex decomposition algorithm by Fredo6.
+      # @param [World] world
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+      # @return [Fixnum] Collision address
+      # @raise [TypeError] if entity has too few vertices.
+      # @raise [TypeError] if entity is flat.
+      def create_compound_from_cd3(world, entity)
+        MSPhysics::World.validate(world)
+        validate_entity(entity)
+        mesh = MSPhysics::Group.get_triangular_mesh(entity, true, false){ |e|
+          e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
+        }
+        tra = entity.transformation
+        s = MSPhysics::Geometry.get_matrix_scale(tra)
+        s.x *= -1 if MSPhysics::Geometry.is_matrix_flipped?(tra)
+        mesh.transform!( Geom::Transformation.scaling(s.x, s.y, s.z) )
+        indices = mesh.polygons.map { |pl| [pl.x.abs-1, pl.y.abs-1, pl.z.abs-1] }
+        MSPhysics::Newton::Collision.create_compound_from_cd3(world.get_address, mesh.points, indices, 0.01)
+      end
+
+    end # class << self
   end # module Collision
 end # module MSPhysics

@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Source\RubyUtils\RubyUtils.cpp">
+      <Filter>RubyUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\newton\Newton.cpp">
+      <Filter>newton</Filter>
+    </ClCompile>
+    <ClCompile Include="NewtonDynamics\newton\NewtonClass.cpp">
+      <Filter>newton</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\msp_lib.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\RubyUtils\RubyLib.h">
+      <Filter>RubyUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\RubyUtils\RubyUtils.h">
+      <Filter>RubyUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\newton\NewtonStdAfx.h">
+      <Filter>newton</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\newton\Newton.h">
+      <Filter>newton</Filter>
+    </ClInclude>
+    <ClInclude Include="NewtonDynamics\newton\NewtonClass.h">
+      <Filter>newton</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Source\RubyExtension.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="RubyUtils">
+      <UniqueIdentifier>{437371a7-b7af-429e-b7ad-c3f34e860de4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="newton">
+      <UniqueIdentifier>{6d328226-b017-422b-b0bb-c5d141448e38}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
