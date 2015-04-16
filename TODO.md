@@ -13,7 +13,7 @@
     * Convert compound into group of bodies.
 - Add path follow joints.
 - Add geared joints.
-- Add feature to joints that connects then to bodies in particular range.
+- Add feature to joints that connects them to bodies in particular range.
 - Add differential joint.
 - Add hinge2 joint, a joint with motor and servo in one.
 - Add spline joint
@@ -32,4 +32,4 @@
 - Add animation tool
 - Add JoyStick to controller, serial port, and sliders dialog.
 - Add joints, joint_tool, joint_connection_tool
-- Add music, sound, and midi API
+- Add music, sound, and midi API.

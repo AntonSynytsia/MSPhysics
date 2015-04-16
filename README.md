@@ -54,7 +54,7 @@ sure to download AMS Library as well!
 
 ## Version
 
-* MSPhysics 0.2.0
+* MSPhysics 0.2.1
 * NewtonDynamics 3.13
 * SDL 2.0.3
 * SDL_Mixer 2.0.0
@@ -62,11 +62,13 @@ sure to download AMS Library as well!
 
 ## Release Date
 
-June 01, 2015
+April 16, 2015
 
 
 ## Change Log
 
+* **April 16, 2015**: 0.2.1
+    - Fixed a bug which prevented MSPhysics from working in 32bit SU versions.
 * **April 05, 2015**: 0.2.0
     - Alpha release 2.
 * **April 26, 2014**: 0.1.0
@@ -80,5 +82,5 @@ June 01, 2015
 
 ## Credits
 
-* **Juleo Jerez** for the NewtonDynamics physics engine.
-* **Chris Phillips** for ideas from SketchyPhysics.
+* **Juleo Jerez** for the [NewtonDynamics](http://newtondynamics.com/forum/index.php) physics engine.
+* **Chris Phillips** for ideas from [SketchyPhysics](https://code.google.com/p/sketchyphysics/).
