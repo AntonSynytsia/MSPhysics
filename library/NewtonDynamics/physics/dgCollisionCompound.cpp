@@ -33,10 +33,10 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-#define DG_MAX_MIN_VOLUME dgFloat32 (1.0e-8f)
+#define DG_MAX_MIN_VOLUME				dgFloat32 (1.0e-8f)
 
 
-dgVector dgCollisionCompound::m_padding(dgFloat32 (1.0e-8f));
+dgVector dgCollisionCompound::m_padding (dgFloat32 (1.0e-3f)); 
 
 class dgCollisionCompound::dgHeapNodePair
 {
@@ -543,8 +543,8 @@ dgCollisionCompound::dgCollisionCompound (const dgCollisionCompound& source, con
 	}
 }
 
-dgCollisionCompound::dgCollisionCompound (dgWorld* const world, dgDeserialize deserialization, void* const userData, const dgCollisionInstance* const myInstance)
-	:dgCollision (world, deserialization, userData)
+dgCollisionCompound::dgCollisionCompound (dgWorld* const world, dgDeserialize deserialization, void* const userData, const dgCollisionInstance* const myInstance, dgInt32 revisionNumber)
+	:dgCollision (world, deserialization, userData, revisionNumber)
 	,m_boxMinRadius (dgFloat32 (0.0f))
 	,m_boxMaxRadius (dgFloat32 (0.0f))
 	,m_treeEntropy (dgFloat32 (0.0f))
@@ -561,7 +561,7 @@ dgCollisionCompound::dgCollisionCompound (dgWorld* const world, dgDeserialize de
 	deserialization (userData, &count, sizeof (count));
 	BeginAddRemove ();
 	for (dgInt32 i = 0; i < count; i ++) {
-		dgCollisionInstance* const collision = new  (world->GetAllocator()) dgCollisionInstance (world, deserialization, userData);
+		dgCollisionInstance* const collision = new  (world->GetAllocator()) dgCollisionInstance (world, deserialization, userData, revisionNumber);
 		AddCollision (collision); 
 		collision->Release();
 	}
@@ -902,6 +902,66 @@ dgCollisionCompound::dgNodeBase* dgCollisionCompound::BuildTopDown (dgNodeBase**
 	}
 }
 
+dgCollisionCompound::dgNodeBase* dgCollisionCompound::BuildTopDownBig (dgNodeBase** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgList<dgNodeBase*>::dgListNode** const nextNode)
+{
+	if (lastBox == firstBox) {
+		return BuildTopDown (leafArray, firstBox, lastBox, nextNode);
+	}
+
+	dgInt32 midPoint = -1;
+	const dgFloat32 scale = dgFloat32 (10.0f);
+	const dgFloat32 scale2 = dgFloat32 (3.0f) * scale * scale;
+	const dgInt32 count = lastBox - firstBox;
+	for (dgInt32 i = 0; i < count; i ++) {
+		const dgNodeBase* const node0 = leafArray[firstBox + i];
+		const dgNodeBase* const node1 = leafArray[firstBox + i + 1];
+		if (node1->m_area > (scale2 * node0->m_area)) {
+			midPoint = i;
+			break;
+		}
+	}
+
+	if (midPoint == -1) {
+		return BuildTopDown (leafArray, firstBox, lastBox, nextNode);
+	} else {
+		dgNodeBase* const parent = (*nextNode)->GetInfo();
+
+		parent->m_parent = NULL;
+		*nextNode = (*nextNode)->GetNext();
+
+		dgVector minP ( dgFloat32 (1.0e15f)); 
+		dgVector maxP (-dgFloat32 (1.0e15f)); 
+		for (dgInt32 i = 0; i <= count; i ++) {
+			const dgNodeBase* const node = leafArray[firstBox + i];
+			dgAssert (node->m_shape);
+			minP = minP.GetMin (node->m_p0); 
+			maxP = maxP.GetMax (node->m_p1); 
+		}
+
+		parent->SetBox (minP, maxP);
+		parent->m_left = BuildTopDown (leafArray, firstBox, firstBox + midPoint, nextNode);
+		parent->m_left->m_parent = parent;
+
+		parent->m_right = BuildTopDownBig (leafArray, firstBox + midPoint + 1, lastBox, nextNode);
+		parent->m_right->m_parent = parent;
+		return parent;
+	}
+}
+
+dgInt32 dgCollisionCompound::CompareNodes (const dgNodeBase* const nodeA, const dgNodeBase* const nodeB, void* )
+{
+	dgFloat32 areaA = nodeA->m_area;
+	dgFloat32 areaB = nodeB->m_area;
+	if (areaA < areaB) {
+		return -1;
+	}
+	if (areaA > areaB) {
+		return 1;
+	}
+	return 0;
+}
+
+
 dgFloat64 dgCollisionCompound::CalculateEntropy (dgList<dgNodeBase*>& list)
 {
 	dgFloat64 cost0 = dgFloat32 (1.0e20f);
@@ -926,7 +986,7 @@ void dgCollisionCompound::EndAddRemove (bool flushCache)
 {
 	if (m_root) {
 		dgWorld* const world = m_world;
-		dgThreadHiveScopeLock lock (world, &m_criticalSectionLock);
+		dgThreadHiveScopeLock lock (world, &m_criticalSectionLock, true);
 
 		dgTreeArray::Iterator iter (m_array);
 		for (iter.Begin(); iter; iter ++) {
@@ -972,7 +1032,10 @@ void dgCollisionCompound::EndAddRemove (bool flushCache)
 				}
 
 				dgList<dgNodeBase*>::dgListNode* nodePtr = list.GetFirst();
-				m_root = BuildTopDown (&leafArray[0], 0, leafNodesCount - 1, &nodePtr);
+				
+				dgSortIndirect (&leafArray[0], leafNodesCount, CompareNodes); 
+				
+				m_root = BuildTopDownBig (&leafArray[0], 0, leafNodesCount - 1, &nodePtr);
 				m_treeEntropy = CalculateEntropy (list);
 			}
 			while (m_root->m_parent) {
@@ -1082,7 +1145,7 @@ void dgCollisionCompound::SetCollisionMatrix (dgTreeArray::dgTreeNode* const nod
 		dgVector p1;
 		instance->CalcAABB(instance->GetLocalMatrix (), p0, p1);
 		{
-			dgThreadHiveScopeLock lock (world, &m_criticalSectionLock);
+			dgThreadHiveScopeLock lock (world, &m_criticalSectionLock, false);
 			baseNode->SetBox (p0, p1);
 		}
 
@@ -1094,7 +1157,7 @@ void dgCollisionCompound::SetCollisionMatrix (dgTreeArray::dgTreeNode* const nod
 				break;
 			}
 			
-			dgThreadHiveScopeLock lock (world, &m_criticalSectionLock);
+			dgThreadHiveScopeLock lock (world, &m_criticalSectionLock, false);
 			parent->SetBox (minBox, maxBox);
 		}
 	}

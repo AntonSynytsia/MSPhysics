@@ -61,7 +61,7 @@ function activate_tab(number) {
 
 function update_size() {
   //var id = '#tab' + active_tab_id;
-  var w = 558;//486;
+  var w = 576;
   var h = $( '.tabs' ).height() + 18;
   var data = '['+w+','+h+']';
   callback('update_size', data);

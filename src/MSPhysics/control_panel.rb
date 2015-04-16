@@ -64,7 +64,7 @@ module MSPhysics
       # Create a range slider.
       # @note All sliders are removed once the dialog is closed.
       # @param [String] name Slider name.
-      # @param [Numeric] default_value Starting value.
+      # @param [Numeric] starting_value Starting value.
       # @param [Numeric] min Minimum value.
       # @param [Numeric] max Maximum value.
       # @param [Numeric] step Snap step.

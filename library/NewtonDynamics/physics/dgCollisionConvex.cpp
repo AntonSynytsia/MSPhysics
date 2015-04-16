@@ -38,7 +38,7 @@
 #define DG_SEPARATION_PLANES_ITERATIONS	8
 #define DG_MAX_MIN_VOLUME				dgFloat32 (1.0e-8f)
 
-#define DG_MINK_VERTEX_ERR				dgFloat32 (1.0e-8f)
+#define DG_MINK_VERTEX_ERR				(dgFloat32 (1.0e-8f))
 #define DG_MINK_VERTEX_ERR2				(DG_MINK_VERTEX_ERR * DG_MINK_VERTEX_ERR)
 
 #define DG_ROBUST_PLANE_CLIP			dgFloat32 (1.0f / 256.0f)
@@ -1483,8 +1483,8 @@ dgCollisionConvex::dgCollisionConvex (dgMemoryAllocator* const allocator, dgUnsi
 }
 
 
-dgCollisionConvex::dgCollisionConvex (dgWorld* const world, dgDeserialize deserialization, void* const userData)
-	:dgCollision (world, deserialization, userData)
+dgCollisionConvex::dgCollisionConvex (dgWorld* const world, dgDeserialize deserialization, void* const userData, dgInt32 revisionNumber)
+	:dgCollision (world, deserialization, userData, revisionNumber)
 	,m_userData (userData)
 	,m_vertex (NULL)
 	,m_simplex (NULL)
@@ -3021,7 +3021,8 @@ dgFloat32 dgCollisionConvex::ConvexConicConvexRayCast (const dgCollisionInstance
 		contactOut.m_point = matrix.TransformVector(scale.CompProduct4(lastContact.m_point));
 	}
 
-	shapeInstance.SetUserData (NULL);
+	shapeInstance.SetUserData0 (NULL);
+	shapeInstance.SetUserData1 (NULL);
 	return param;
 }
 

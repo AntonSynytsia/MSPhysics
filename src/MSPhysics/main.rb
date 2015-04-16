@@ -431,11 +431,11 @@ unless file_loaded?(__FILE__)
     if buoyancy_planes.size > 0
       msp_menu.add_item("Edit Buoyancy Plane Properties"){
         default = MSPhysics::DEFAULT_BUOYANCY_PLANE_SETTINGS
-        prompts = ['Density', 'Viscosity']
+        prompts = ['Density (kg/m³)', 'Viscosity (0-1)']
         default_density = MSPhysics.get_attribute(buoyancy_planes, 'MSPhysics Buoyancy Plane', 'Density', default[:density])
         default_viscosity = MSPhysics.get_attribute(buoyancy_planes, 'MSPhysics Buoyancy Plane', 'Viscosity', default[:viscosity])
         defaults = [default_density, default_viscosity]
-        input = Dialog.inputbox(prompts, defaults, 'Buoyancy Plane Properties')
+        input = UI.inputbox(prompts, defaults, 'Buoyancy Plane Properties')
         next unless input
         if Sketchup.version.to_i > 6
           model.start_operation('MSPhysics Edit Buoyancy Plane Properties', true)
@@ -453,7 +453,7 @@ unless file_loaded?(__FILE__)
   plugin_menu = UI.menu('Plugins').add_submenu('MSPhysics')
   plugin_menu.add_item('Add Buoyancy Plane'){
     default = MSPhysics::DEFAULT_BUOYANCY_PLANE_SETTINGS
-    prompts = ['Density', 'Viscosity']
+    prompts = ['Density (kg/m³)', 'Viscosity (0-1)']
     defaults = [default[:density], default[:viscosity]]
     input = UI.inputbox(prompts, defaults, 'Buoyancy Plane Properties')
     next unless input

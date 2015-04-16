@@ -1,8 +1,8 @@
 /*
 The C++ version of MSPhysics implements the following:
-  - Newton Dynamics Physics SDK by Juleo Jereze and Alain Suero.
+  - Newton Dynamics Physics SDK by Juleo Jerez and Alain Suero.
   - V-HACD 2.2 by Khaled Mamou.
-  - Exact Convex Decomposition by Fredo6.
+  - Exact Convex Decomposition by Fredo6. Not implemented yet.
 
 Implementation by Anton Synytsia
 
@@ -166,15 +166,15 @@ const dFloat DEFAULT_MATERIAL_THICKNESS = 1.0f / 256.0f;
 const dFloat DEFAULT_CONTACT_MERGE_TOLERANCE = 1.0e-4f;
 const dFloat MIN_TOUCH_DISTANCE = 0.001f;
 
-const dFloat MIN_MASS = 1.0e-8f;
-const dFloat MAX_MASS = 1.0e14f;
-const dFloat MIN_VOLUME = 1.0e-8f;
-const dFloat MIN_DENSITY = 1.0e-8f;
+const dFloat MIN_MASS		= 1.0e-8f;
+const dFloat MAX_MASS		= 1.0e14f;
+const dFloat MIN_VOLUME		= 1.0e-8f;
+const dFloat MIN_DENSITY	= 1.0e-8f;
 
 std::map<long, bool> valid_worlds;
 std::map<long, bool> valid_bodies;
 std::map<long, bool> valid_collisions;
-std::map<long, int> valid_joints;
+std::map<long, bool> valid_joints;
 
 const int ID_HINGE				= 0;
 const int ID_MOTOR				= 1;
@@ -665,7 +665,7 @@ void collision_destructor_callback(const NewtonWorld* const world, const NewtonC
 
 void joint_destructor_callback(const NewtonJoint* const joint)
 {
-	UserJointData* data = (UserJointData*)NewtonJointGetUserData(joint);
+	JointData* data = (JointData*)NewtonJointGetUserData(joint);
 	valid_joints.erase((long)joint);
 	if( RARRAY_LEN(data->destructor_proc) == 1 )
 		rb_rescue2(RUBY_METHOD_FUNC(call_proc), rb_ary_entry(data->destructor_proc, 0), RUBY_METHOD_FUNC(rescue_proc), Qnil, rb_eException, (VALUE)0);
@@ -3075,6 +3075,83 @@ VALUE joint_is_valid(VALUE self, VALUE v_joint)
 	return c_is_joint_valid(NUM2LONG(v_joint)) ? Qtrue : Qfalse;
 }
 
+/*
+VALUE joint_create(VALUE self, VALUE v_world)
+{
+}
+
+VALUE joint_destroy(VALUE self, VALUE v_joint)
+{
+}
+
+VALUE joint_get_parent(VALUE self, VALUE v_joint)
+{
+}
+
+VALUE joint_get_child(VALUE self, VALUE v_joint)
+{
+}
+
+VALUE joint_connect(VALUE self, VALUE v_joint, VALUE v_child_body)
+{
+}
+
+VALUE joint_disconnect(VALUE self, VALUE v_joint)
+{
+}
+
+VALUE joint_is_connected(VALUE self, VALUE v_joint)
+{
+}
+
+VALUE joint_get_position(VALUE self, VALUE v_joint)
+{
+}
+
+VALUE joint_set_position(VALUE self, VALUE v_joint, VALUE v_position)
+{
+}
+
+VALUE joint_get_direction(VALUE self, VALUE v_joint)
+{
+}
+
+VALUE joint_set_direction(VALUE self, VALUE v_joint, VALUE v_direction)
+{
+}
+
+VALUE joint_is_collidable(VALUE self, VALUE v_joint)
+{
+}
+
+VALUE joint_set_collidable(VALUE self, VALUE v_joint)
+{
+}
+
+VALUE joint_get_solver(VALUE self, VALUE v_joint)
+{
+}
+
+VALUE joint_set_solver(VALUE self, VALUE v_joint, VALUE v_model)
+{
+}
+
+VALUE joint_get_max_contact_joints(VALUE self, VALUE v_joint)
+{
+}
+
+VALUE joint_set_max_contact_joints(VALUE self, VALUE v_joint, VALUE v_max)
+{
+}
+
+VALUE joint_get_stiffness(VALUE self, VALUE v_stiff)
+{
+}
+
+VALUE joint_set_stiffness(VALUE self, VALUE v_joint, VALUE v_stiffness)
+{
+}
+
 
 // *********************************************************************************************************************
 //
@@ -3082,9 +3159,51 @@ VALUE joint_is_valid(VALUE self, VALUE v_joint)
 //
 // *********************************************************************************************************************
 
-VALUE hinge_create(VALUE self, VALUE v)
+VALUE hinge_create(VALUE self, VALUE v_joint)
 {
 }
+
+VALUE hinge_get_min(VALUE self, VALUE v_joint)
+{
+}
+
+VALUE hinge_set_min(VALUE self, VALUE v_joint, VALUE v_min)
+{
+}
+
+VALUE hinge_get_max(VALUE self, VALUE v_joint)
+{
+}
+
+VALUE hinge_set_max(VALUE self, VALUE v_joint, VALUE v_max)
+{
+}
+
+VALUE hinge_get_limits_state(VALUE self, VALUE v_joint)
+{
+
+}
+
+VALUE hinge_set_limits_state(VALUE self, VALUE v_joint, VALUE v_state)
+{
+}
+
+VALUE hinge_get_friction(VALUE self, VALUE v_joint)
+{
+}
+
+VALUE hinge_set_friction(VALUE self, VALUE v_joint, VALUE v_friction)
+{
+}
+
+VALUE hinge_get_angle(VALUE self, VALUE v_joint)
+{
+}
+
+VALUE hinge_get_omega(VALUE self, VALUE v_joint)
+{
+}
+*/
 
 // *********************************************************************************************************************
 //
@@ -3107,7 +3226,7 @@ void Init_msp_lib( void )
 	VALUE mBodies = rb_define_module_under( mNewton, "Bodies" );
 	VALUE mBody = rb_define_module_under( mNewton, "Body" );
 	VALUE mJoint = rb_define_module_under( mNewton, "Joint" );
-	VALUE mHinge = rb_define_module_under( mNewton, "Hinge" );
+	//VALUE mHinge = rb_define_module_under( mNewton, "Hinge" );
 
 	// Newton Interface
 	rb_define_module_function( mNewton, "get_version", VALUEFUNC(get_version), 0 );

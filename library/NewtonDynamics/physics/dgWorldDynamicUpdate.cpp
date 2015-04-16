@@ -37,8 +37,9 @@
 #endif
 
 
-#define DG_PARALLEL_JOINT_COUNT_CUT_OFF		(4 * DG_MAX_THREADS_HIVE_COUNT)
+
 #define DG_CCD_EXTRA_CONTACT_COUNT			(8 * 3)
+#define DG_PARALLEL_JOINT_COUNT_CUT_OFF		(256)
 
 
 dgVector dgWorldDynamicUpdate::m_velocTol (dgFloat32 (1.0e-18f));
@@ -170,10 +171,6 @@ void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 		dgInt32 index = 0;
 		if (world->m_useParallelSolver && (threadCount > 1)) {
 			for ( ; (index < m_islands) && (islandsArray[index].m_jointCount >= DG_PARALLEL_JOINT_COUNT_CUT_OFF); index ++) {
-				int i = index + 1;
-				if ((i < m_islands) && (islandsArray[index].m_jointCount < (2 * islandsArray[i].m_jointCount))) { 
-					break;
-				}
 				CalculateReactionForcesParallel (&islandsArray[index], timestep);
 			}
 		}
@@ -949,8 +946,7 @@ void dgWorldDynamicUpdate::IntegrateArray (const dgIsland* const island, dgFloat
 }
 
 
-
-dgInt32 dgWorldDynamicUpdate::SortJointInfoByColor (const dgParallelJointMap* const indirectIndexA, const dgParallelJointMap* const indirectIndexB, void* const context)
+dgInt32 dgWorldDynamicUpdate::SortJointInfoByBatchIndex (const dgParallelJointMap* const indirectIndexA, const dgParallelJointMap* const indirectIndexB, void* const context)
 {
 	if (indirectIndexA->m_bashIndex < indirectIndexB->m_bashIndex) {
 		return -1;

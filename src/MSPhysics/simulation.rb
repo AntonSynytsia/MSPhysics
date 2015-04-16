@@ -427,6 +427,18 @@ module MSPhysics
       nil
     end
 
+    # Reference body by entity name.
+    # @param [String] name Body name.
+    # @return [Body, nil] A body object or nil if not found.
+    def get_body_by_name(name)
+      body_address = MSPhysics::Newton::World.get_first_body(@world.get_address)
+      while body_address
+        data = MSPhysics::Newton::Body.get_user_data(body_address)
+        return data if (data.is_a?(MSPhysics::Body) && data.get_entity.name == name)
+        body_address = MSPhysics::Newton::World.get_next_body(@world.get_address, body_address)
+      end
+    end
+
     # Add a group/component to simulation.
     # @raise [TypeError] if the specified entity is already part of simulation.
     # @raise [TypeError] if the entity doesn't meet demands for being a valid

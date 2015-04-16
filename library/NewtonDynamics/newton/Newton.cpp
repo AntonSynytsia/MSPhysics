@@ -343,7 +343,7 @@ void NewtonWorldCriticalSectionLock (const NewtonWorld* const newtonWorld, int t
 	TRACE_FUNCTION(__FUNCTION__);
 
 	Newton* const world = (Newton *)newtonWorld;
-	world->GlobalLock();
+	world->GlobalLock(true);
 }
 
 
@@ -4092,15 +4092,30 @@ void NewtonCollisionSetUserData (const NewtonCollision* const collision, void* c
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgCollisionInstance* const instance = (dgCollisionInstance*) collision;
-	instance->SetUserData(userData);
+	instance->SetUserData0(userData);
 }
 
 void* NewtonCollisionGetUserData (const NewtonCollision* const collision)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgCollisionInstance* const instance = (dgCollisionInstance*) collision;
-	return instance->GetUserData();
+	return instance->GetUserData0();
 }
+
+void NewtonCollisionSetUserData1 (const NewtonCollision* const collision, void* const userData)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	dgCollisionInstance* const instance = (dgCollisionInstance*) collision;
+	instance->SetUserData1(userData);
+}
+
+void* NewtonCollisionGetUserData1 (const NewtonCollision* const collision)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	dgCollisionInstance* const instance = (dgCollisionInstance*) collision;
+	return instance->GetUserData1();
+}
+
 
 void* NewtonCollisionGetSubCollisionHandle (const NewtonCollision* const collision)
 {

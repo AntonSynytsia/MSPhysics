@@ -119,6 +119,7 @@ class dgBroadPhase
 	static void UpdateContactsKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
 //	static void UpdateSoftBodyForcesKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
 	static void AddGeneratedBodyesContactsKernel (void* const descriptor, void* const worldContext, dgInt32 threadID);
+	static dgInt32 CompareNodes (const dgNode* const nodeA, const dgNode* const nodeB, void* notUsed);
 	
 	void UpdateContactsBroadPhaseEnd ();
 	void ApplyForceAndtorque (dgBroadphaseSyncDescriptor* const desctiptor, dgInt32 threadID);
@@ -127,6 +128,7 @@ class dgBroadPhase
 //	void UpdateSoftBodyForcesKernel (dgBroadphaseSyncDescriptor* const descriptor, dgInt32 threadID);
 	
 	dgNode* BuildTopDown (dgNode** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgFitnessList::dgListNode** const nextNode);
+	dgNode* BuildTopDownBig (dgNode** const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgFitnessList::dgListNode** const nextNode);
 
 	void FindCollidingPairsGeneric (dgBroadphaseSyncDescriptor* const desctiptor, dgInt32 threadID);
 	void FindCollidingPairsPersistent (dgBroadphaseSyncDescriptor* const desctiptor, dgInt32 threadID);
@@ -137,7 +139,8 @@ class dgBroadPhase
 	void KinematicBodyActivation (dgContact* const contatJoint) const;
 
 	bool TestOverlaping (const dgBody* const body0, const dgBody* const body1) const;
-	dgFloat64 CalculateEmptropy ();
+	dgFloat64 CalculateEntropy ();
+			  
 
 	dgWorld* m_world;
 	dgNode* m_rootNode;
@@ -150,6 +153,7 @@ class dgBroadPhase
 	dgThread::dgCriticalSection m_criticalSectionLock;
 	bool m_recursiveChunks;
 
+	static dgVector m_obbTolerance;
 	static dgVector m_conservativeRotAngle;
 	friend class dgBody;
 	friend class dgWorld;

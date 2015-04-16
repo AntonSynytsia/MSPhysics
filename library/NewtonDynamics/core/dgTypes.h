@@ -23,16 +23,13 @@
 #define __DGTYPES_H__
 
 
-#ifdef DG_SSE4_INSTRUCTIONS_SET
-	#undef DG_SCALAR_VECTOR_CLASS
-#endif
+#define DG_SSE4_INSTRUCTIONS_SET
 
 
 #if defined (_NEWTON_USE_DOUBLE) || defined (__ppc__) || defined (ANDROID) || defined (IOS)
-	#undef DG_SSE4_INSTRUCTIONS_SET
 	#ifndef DG_SCALAR_VECTOR_CLASS
 		#define DG_SCALAR_VECTOR_CLASS
-	#endif		
+	#endif
 #endif
 
 
@@ -551,7 +548,7 @@ void dgSortIndirect (T** const array, dgInt32 elements, dgInt32 (*compare) (cons
 		stride = elements;
 	}
 	for (dgInt32 i = 1; i < stride; i ++) {
-		if (compare (&array[0], &array[i], context) > 0) {
+		if (compare (array[0], array[i], context) > 0) {
 			dgSwap(array[0], array[i]);
 		}
 	}
@@ -559,7 +556,7 @@ void dgSortIndirect (T** const array, dgInt32 elements, dgInt32 (*compare) (cons
 	for (dgInt32 i = 1; i < elements; i ++) {
 		dgInt32 j = i;
 		T* tmp (array[i]);
-		for (; compare (&array[j - 1], &tmp, context) > 0; j --) {
+		for (; compare (array[j - 1], tmp, context) > 0; j --) {
 			dgAssert (j > 0);
 			array[j] = array[j - 1];
 		}
@@ -701,8 +698,16 @@ DG_INLINE dgFloat32 dgRsqrt(dgFloat32 x)
 #define dgControlFP(x,y)	_controlfp(x,y)
 
 
+enum dgSerializeRevisionNumber
+{
+	m_firstRevision = 99,
+	// add new serialization revision number here
+	m_currentRevision 
+};
+
+
 void dgSerializeMarker(dgSerialize serializeCallback, void* const userData);
-void dgDeserializeMarker(dgDeserialize serializeCallback, void* const userData);
+dgInt32 dgDeserializeMarker(dgDeserialize serializeCallback, void* const userData);
 
 
 typedef dgUnsigned32 (dgApi *OnGetPerformanceCountCallback) ();
@@ -818,6 +823,20 @@ DG_INLINE void dgThreadYield()
 #else
 	sched_yield();
 #endif
+}
+
+DG_INLINE void dgSpinLock (dgInt32* const ptr, bool yield)
+{
+	while (dgInterlockedExchange(ptr, 1)) {
+		if (yield) {
+			dgThreadYield();
+		}
+	}
+}
+
+DG_INLINE void dgSpinUnlock (dgInt32* const ptr)
+{
+	dgInterlockedExchange(ptr, 0);
 }
 
 DG_INLINE void dgPrefetchMem(const void* const mem)
