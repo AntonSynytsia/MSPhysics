@@ -1,0 +1,338 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+button,
+input,
+select,
+textarea {
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+html {
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  min-width: 48em;
+}
+
+body {
+  padding: 0.75em;
+  /*background: #112e87;
+  background: -moz-linear-gradient(top,  #112e87 0%, #4272d1 100%);
+  background: -webkit-linear-gradient(top,  #112e87 0%,#4272d1 100%);
+  background: linear-gradient(to bottom,  #112e87 0%,#4272d1 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#112e87', endColorstr='#4272d1',GradientType=0 );*/
+  background: #05298c;
+  background: -moz-linear-gradient(top,  #05298c 1%, #9ebee2 100%);
+  background: -webkit-linear-gradient(top,  #05298c 1%,#9ebee2 100%);
+  background: linear-gradient(to bottom,  #05298c 1%,#9ebee2 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#05298c', endColorstr='#9ebee2',GradientType=0 );
+  color: WindowText;
+  cursor: default;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -ms-high-contrast-adjust: none;
+}
+
+h3 {
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+figure {
+  margin: 0;
+}
+
+form {
+  margin: 0;
+}
+
+input, label {
+  outline: none;
+  position: relative;
+  display: inline;
+  vertical-align: middle !important;
+  margin: 0 auto;
+  cursor: pointer;
+  padding: 0;
+  font-size: 100% !important;
+}
+
+input[type=checkbox], input[type=radio] {
+  box-sizing: border-box;
+  padding: 0;
+  *width: 13px;
+  *height: 13px;
+  margin: 3.5px 0 !important;
+}
+
+fieldset {
+  position: relative;
+  text-indent: 0 !important;
+  text-align: left;
+  margin: 0 !important;
+  margin-bottom: 0.5em !important;
+  padding: 0 1em 1em;
+  border-color: rgba(0, 0, 0, 0.2);
+  border-image: none;
+  border-radius: 5px !important;
+  border-style: solid;
+  border-width: 1px;
+}
+
+fieldset legend {
+  display: inline;
+  padding: 0;
+  margin: 0.25em 0;
+  font-weight: bold;
+  white-space: normal;
+}
+
+.left {
+  float: left;
+}
+
+.right {
+  float: right;
+}
+
+.clear {
+  clear: both;
+}
+
+.center {
+  margin: 0 auto;
+  text-align: center;
+}
+
+.center2 {
+  margin: 0 auto;
+}
+
+button {
+  display: inline-block;
+  *display: inline; /*IE 6/7*/
+  outline: none;
+  zoom: 1;
+  line-height: normal;
+  white-space: nowrap;
+  vertical-align: middle;
+  text-align: center;
+  cursor: pointer;
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  *font-size: 90%; /*IE 6/7 - To reduce IE's oversized button text*/
+  *overflow: visible; /*IE 6/7 - Because of IE's overly large left/right padding on buttons */
+  padding: 0.5em 1.25em;
+  background-color: rgb(28, 184, 65);
+  color: #fff;
+  border: none rgba(0, 0, 0, 0);  /*IE9 + everything else*/
+  text-decoration: none;
+  text-transform: none;
+  border-radius: 3px;
+  /* Transitions */
+  -webkit-transition: 0.25s linear -webkit-box-shadow;
+  -moz-transition: 0.25s linear -moz-box-shadow;
+  -ms-transition: 0.25s linear box-shadow;
+  -o-transition: 0.25s linear box-shadow;
+  transition: 0.25s linear box-shadow;
+}
+
+button:hover {
+  outline: 0;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00000000', endColorstr='#1a000000',GradientType=0);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(transparent), color-stop(40%, rgba(0,0,0, 0.05)), to(rgba(0,0,0, 0.10)));
+  background-image: -webkit-linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
+  background-image: -moz-linear-gradient(top, rgba(0,0,0, 0.05) 0%, rgba(0,0,0, 0.10));
+  background-image: -ms-linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
+  background-image: -o-linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
+  background-image: linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
+}
+
+button:active {
+  /*box-shadow: 0 0 0 2px rgba(0,0,0, 0.15) inset, 0 0 6px rgba(0,0,0, 0.20) inset;*/
+  outline: 0;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00000000', endColorstr='#1a000000',GradientType=0);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(transparent), color-stop(40%, rgba(0,0,0, 0.05)), to(rgba(0,0,0, 0.30)));
+  background-image: -webkit-linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.30));
+  background-image: -moz-linear-gradient(top, rgba(0,0,0, 0.05) 0%, rgba(0,0,0, 0.30));
+  background-image: -ms-linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.30));
+  background-image: -o-linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.30));
+  background-image: linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.30));
+}
+
+table {
+  table-layout: fixed;
+}
+
+.custom-text {
+  background-color: #FFF;
+  color: #0A0A0A;
+  cursor: auto;
+  padding: 0.25em;
+  text-indent: 0.25em;
+  vertical-align: middle;
+  outline: none;
+  transition: all 0.1s ease-in-out;
+  -webkit-transition: all 0.1s ease-in-out;
+  -moz-transition: all 0.1s ease-in-out;
+  border-radius: 3px;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border: 1px solid rgba(0,0,0, 0.25);
+}
+
+.custom-text:focus {
+  box-shadow: 0 0 8px rgba(0, 40, 100, 0.3);
+  -webkit-box-shadow: 0 0 8px rgba(0, 40, 255, 0.3);
+  -moz-box-shadow: 0 0 8px rgba(0, 40, 255, 0.3);
+  border: 1px solid rgba(0, 40, 255, 0.9);
+  transition: 0.15s linear box-shadow;
+}
+
+.fixnum-input {
+  font-size: 11px !important;
+  width: 7.5em;
+}
+
+.numeric-input {
+  font-size: 11px !important;
+  width: 7.5em;
+}
+
+.controller-input {
+  font-size: 11px !important;
+  width: 24em;
+}
+
+.command-input {
+  font-style: italic;
+  background-color: #2E2E2E;
+  color: #CFCFCF;
+  width: 20em;
+}
+
+.short-table {
+  width: 26em;
+  padding-left: 1em;
+}
+
+.long-table {
+  width: 34em;
+  padding-left: 1em;
+}
+
+.main-wrap {
+  /* overflow to handle inner floating block */
+  overflow: hidden;
+}
+
+div.column1 {
+  float: left;
+  width: 22.25em;
+}
+
+div.column2 {
+  float: left;
+  width: 22.25em;
+}
+
+.credit {
+  clear: both;
+  text-align: right;
+  padding-right: 1em;
+  position: relative;
+  color: gray;
+  font-size: 11px;
+}
+
+#editor {
+  position: relative !important;
+  border: 1px solid lightgray;
+  margin: 4px auto;
+  height: auto;
+}
+
+#status-bar {
+  margin: 0 10px;
+  position: relative;
+  color: gray;
+  font-size: 11px;
+}
+
+.ace_status-indicator {
+  position: absolute;
+  right: 0;
+}
+
+.chosen-container .chosen-results {
+  max-height: 10em !important;
+}
+
+.drop-down {
+  width: 20em;
+}
+
+.vertical_spacing {
+  clear: both;
+  height: 0.5em;
+}
+
+.vertical_spacing2 {
+  clear: both;
+  height: 0.25em;
+}
+
+.table-list {
+  background-color: #2E2E2E;
+  color: #CFCFCF;
+  border-radius: 3px;
+  border: none;
+  position: relative !important;
+  margin: auto 0;
+  padding: 0.25em;
+  width: 30em;
+}
+
+p.title {
+  font-size: 1.25em;
+}
+
+p.description {
+  font-size: 0.9em;
+  color: #4F4F4F;
+}
+
+p.important {
+  font-size: 0.9em;
+  color: #F02B2B;
+}
+
+p.formula {
+  font-size: 0.9em;
+  color: #000DFF;
+}
+
+p.bold {
+  font-weight: bold;
+}
+
+p.italic {
+  font-style: italic;
+}

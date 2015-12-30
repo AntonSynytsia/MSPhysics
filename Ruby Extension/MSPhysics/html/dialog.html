@@ -1,0 +1,666 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+  <head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<meta http-equiv="MSThemeCompatible" content="Yes" />
+	<meta http-equiv="X-UA-Compatible" content="IE=10" />
+	<title>MSPhysics UI</title>
+	<meta name="author" content="Anton Synytsia" />
+	<link href="../css/chosen.css" rel="stylesheet" type="text/css" />
+	<link href="../css/tabs.css" rel="stylesheet" type="text/css" />
+	<link href="../css/dialog.css" rel="stylesheet" type="text/css" />
+	<script type="text/javascript" src="../js/jquery.js"></script>
+	<script type="text/javascript" src="../js/chosen.js"></script>
+	<script type="text/javascript" src="../js/ace/ace.js">charset="utf-8"></script>
+	<script type="text/javascript" src="../js/ace/ext-statusbar.js"></script>
+	<script type="text/javascript" src="../js/dialog.js"></script>
+  </head>
+  <body scroll="no">
+	<div class="tabs">
+	  <ul class="tab-links">
+		<li class="active"><a href="#tab1">Simulation</a></li>
+		<li><a href="#tab2">Body Properties</a></li>
+		<li><a href="#tab3">Body Script</a></li>
+		<li><a href="#tab4">Joint</a></li>
+		<li><a href="#tab5">Sound</a></li>
+	  </ul>
+
+	  <div class="tab-content main-wrap">
+		<div id="tab1" class="tab active">
+		  <div align="center"><img src="../images/msphysics-logo.png" /></div>
+		  <div class="column1">
+			<h3>Mode</h3>
+			<table class="long-table">
+			  <tr title="Enable/Disable continuous collision mode for all bodies. This prevents bodies from passing each other at high speeds.">
+				<td><label for="simulation-continuous_collision">Continuous Collision</label></td>
+				<td><input id="simulation-continuous_collision" type="checkbox"></input></td>
+			  </tr>
+			</table>
+			<div class="vertical_spacing"></div>
+			<h3>Debug Draw</h3>
+			<table class="long-table">
+			  <tr title="Show/Hide body collision wireframe.">
+				<td><label for="simulation-collision_wireframe">Collision Wireframe</label></td>
+				<td><input id="simulation-collision_wireframe" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Show/Hide body centre of mass axis.">
+				<td><label for="simulation-axis">Centre of Mass</label></td>
+				<td><input id="simulation-axis" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Show/Hide body world axis aligned bounding box (AABB).">
+				<td><label for="simulation-aabb">Bounding Box</label></td>
+				<td><input id="simulation-aabb" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Show/Hide body contact points.">
+				<td><label for="simulation-contact_points">Contact Points</label></td>
+				<td><input id="simulation-contact_points" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Show/Hide body contact forces.">
+				<td><label for="simulation-contact_forces">Contact Forces</label></td>
+				<td><input id="simulation-contact_forces" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Show/Hide all bodies.">
+				<td><label for="simulation-bodies">Bodies</label></td>
+				<td><input id="simulation-bodies" type="checkbox"></input></td>
+			  </tr>
+			</table>
+		  </div>
+		  <div class="column2">
+			<h3>Speed</h3>
+			<select id="simulation-update_timestep" data-placeholder="Speed" class="chosen-select-no-single drop-down">
+			  <option value="30">Double</option>
+			  <option value="60">Normal</option>
+			  <option value="120">x 1/2</option>
+			  <option value="180">x 1/3</option>
+			  <option value="240">x 1/4</option>
+			  <option value="300">x 1/5</option>
+			  <option value="360">x 1/6</option>
+			  <option value="420">x 1/7</option>
+			  <option value="480">x 1/8</option>
+			  <option value="540">x 1/9</option>
+			  <option value="600">x 1/10</option>
+			  <option value="720">x 1/12</option>
+			  <option value="840">x 1/14</option>
+			  <option value="960">x 1/16</option>
+			  <option value="1080">x 1/18</option>
+			  <option value="1200">x 1/20</option>
+			</select>
+			<div class="vertical_spacing"></div>
+			<h3>Solver Model</h3>
+			<select id="simulation-solver_model" data-placeholder="Solver Model" class="chosen-select-no-single drop-down">
+			  <option value="0">Exact</option>
+			  <option value="1">Iterative 1 Pass</option>
+			  <option value="2">Iterative 2 Passes</option>
+			  <option value="3">Iterative 3 Passes</option>
+			  <option value="4">Iterative 4 Passes</option>
+			  <option value="5">Iterative 5 Passes</option>
+			  <option value="6">Iterative 6 Passes</option>
+			  <option value="7">Iterative 7 Passes</option>
+			  <option value="8">Iterative 8 Passes</option>
+			  <option value="9">Iterative 9 Passes</option>
+			  <option value="9">Iterative 10 Passes</option>
+			  <option value="12">Iterative 12 Passes</option>
+			  <option value="16">Iterative 16 Passes</option>
+			  <option value="32">Iterative 32 Passes</option>
+			  <option value="64">Iterative 64 Passes</option>
+			</select>
+			<div class="vertical_spacing"></div>
+			<h3>Friction Model</h3>
+			<select id="simulation-friction_model" data-placeholder="Friction Model" class="chosen-select-no-single drop-down">
+			  <option value="0">Exact Coulomb</option>
+			  <option value="1">Adaptive Coulomb</option>
+			</select>
+			<div class="vertical_spacing"></div>
+			<h3>Properties</h3>
+			<table class="short-table">
+			  <tr title="Set gravitational acceleration along Z_AXIS in meters per second squared (m/s²).">
+				<td><label for="simulation-gravity">Gravity</label></td>
+				<td><input id="simulation-gravity" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set material thickness ratio, a value between 0.00 and 1.00. Actual material thickness is the ratio multiplied by 1/32 meters.">
+				<td><label for="simulation-material_thickness">Material Thickness</label></td>
+				<td><input id="simulation-material_thickness" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set update rate. Body transforamtions and viewport are updated every n frames.">
+				<td><label for="simulation-update_rate">Update Rate</label></td>
+				<td><input id="simulation-update_rate" class="custom-text fixnum-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set world scale, a value between 0.1 and 100. If you're dealing with small objects, set world scale to a large value, like 10. Note: This will have an effect only when simulation is restarted.">
+				<td><label for="simulation-world_scale">World Scale</label></td>
+				<td><input id="simulation-world_scale" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			</table>
+		  </div>
+		  <div class="vertical_spacing"></div>
+		  <div class="credit">Powered by <a href="http://newtondynamics.com/forum/newton.php" target="_blank">Newton Dynamics</a> by Juleo Jerez</div>
+		</div>
+		<div id="tab2" class="tab">
+		  <div id="tab2-none">
+			<p>Select a group/component of body type to edit body properties.</p>
+			<p>Body properties cannot be edited while simulation is running.</p>
+		  </div>
+		  <div id="tab2-content1" style="display: none;">
+			<div class="column1">
+			  <h3>Collision Shape</h3>
+			  <select id="body-shape" data-placeholder="Collision Shape" class="chosen-select-no-single drop-down">
+				<option value="Null">Null</option>
+				<option value="Box">Box</option>
+				<option value="Sphere">Sphere</option>
+				<option value="Cone">Cone</option>
+				<option value="Cylinder">Cylinder</option>
+				<option value="Chamfer Cylinder">Chamfer Cylinder</option>
+				<option value="Capsule">Capsule</option>
+				<option value="Convex Hull">Convex Hull</option>
+				<option value="Compound">Compound</option>
+				<option value="Compound from CD">Compound from CD</option>
+				<option value="Static Mesh">Static Mesh</option>
+			  </select>
+			  <div class="vertical_spacing"></div>
+			  <h3>Material</h3>
+			  <select id="body-material" data-placeholder="Material" class="chosen-select-no-single drop-down"></select>
+			  <!--<div class="vertical_spacing"></div>
+			  <div class="center">
+				<button id="material-add" title="Add material.">Add</button>
+				<button id="material-remove" title="Remove material.">Remove</button>
+			  </div>-->
+			  <h3>State</h3>
+			  <table class="long-table">
+				<tr>
+				  <td><label for="body-ignore">Ignore</label></td>
+				  <td><input id="body-ignore" type="checkbox"></input></td>
+				</tr>
+				<tr>
+				  <td><label for="body-collidable">Collidable</label></td>
+				  <td><input id="body-collidable" type="checkbox"></input></td>
+				</tr>
+				<tr>
+				  <td><label for="body-static">Static</label></td>
+				  <td><input id="body-static" type="checkbox"></input></td>
+				</tr>
+				<tr>
+				  <td><label for="body-frozen">Frozen</label></td>
+				  <td><input id="body-frozen" type="checkbox"></input></td>
+				</tr>
+				<tr title="Auto sleep sets body sleeping when it reaches equilibrium.">
+				  <td><label for="body-auto_sleep">Auto Sleep</label></td>
+				  <td><input id="body-auto_sleep" type="checkbox"></input></td>
+				</tr>
+				<tr title="Continuous collision check prevents this body from passing through other bodies at high speeds.">
+				  <td><label for="body-continuous_collision">Continuous Collision</label></td>
+				  <td><input id="body-continuous_collision" type="checkbox"></input></td>
+				</tr>
+				<tr title="Enable/Disable body script.">
+				  <td><label for="body-enable_script">Enable Script</label></td>
+				  <td><input id="body-enable_script" type="checkbox"></input></td>
+				</tr>
+				<tr title="Enable/Disable gravitational pull on the body.">
+				  <td><label for="body-enable_gravity">Enable Gravity</label></td>
+				  <td><input id="body-enable_gravity" type="checkbox"></input></td>
+				</tr>
+			  </table>
+			</div>
+			<div class="column2">
+			  <h3>Properties</h3>
+			  <table class="short-table">
+				<tr title="Set body density in kilograms per cubic meter (kg/m³).">
+				  <td><label for="body-density">Density</label></td>
+				  <td><input id="body-density" class="custom-text numeric-input" type="text"></input></td>
+				</tr>
+				<tr class="vertical_spacing"></tr>
+				<tr title="Set body static friction coefficient, a value between 0.01 and 2.00.">
+				  <td><label for="body-static_friction">Static Friction</label></td>
+				  <td><input id="body-static_friction" class="custom-text numeric-input" type="text"></input></td>
+				</tr>
+				<tr title="Set body dynamic friction coefficient, a value between 0.01 and 2.00.">
+				  <td><label for="body-dynamic_friction">Dynamic Friction</label></td>
+				  <td><input id="body-dynamic_friction" class="custom-text numeric-input" type="text"></input></td>
+				</tr>
+				<tr title="Enable/Disable body friction.">
+				  <td><label for="body-enable_friction">Enable Friction</label></td>
+				  <td><input id="body-enable_friction" type="checkbox"></input></td>
+				</tr>
+				<tr class="vertical_spacing"></tr>
+				<tr title="Set body coefficient of restitution - bounciness, a value between 0.01 and 2.00.">
+				  <td><label for="body-elasticity">Elasticity</label></td>
+				  <td><input id="body-elasticity" class="custom-text numeric-input" type="text"></input></td>
+				</tr>
+				<tr title="Set body softness coefficient, a value between 0.01 and 1.00. Decreasing softness yields adaptable collision. Increasing softness yields resistible collision.">
+				  <td><label for="body-softness">Softness</label></td>
+				  <td><input id="body-softness" class="custom-text numeric-input" type="text"></input></td>
+				</tr>
+				<tr class="vertical_spacing"></tr>
+				<tr title="Set the maximum magnet force in Newton.">
+				  <td><label for="body-magnet_force">Magnet Force</label></td>
+				  <td><input id="body-magnet_force" class="custom-text numeric-input" type="text"></input></td>
+				</tr>
+				<tr title="Set the maximum magnet range in meters.">
+				  <td><label for="body-magnet_range">Magnet Range</label></td>
+				  <td><input id="body-magnet_range" class="custom-text numeric-input" type="text"></input></td>
+				</tr>
+				<tr title="Set body magnetic. Magnetic bodies are affected by the bodies with a magnet force.">
+				  <td><label for="body-magnetic">Magnetic</label></td>
+				  <td><input id="body-magnetic" type="checkbox"></input></td>
+				</tr>
+				<tr class="vertical_spacing"></tr>
+				<tr title="Set linear damping coefficient, a value between 0.00 and 1.00.">
+				  <td><label for="body-linear_damping">Linear Damping</label></td>
+				  <td><input id="body-linear_damping" class="custom-text numeric-input" type="text"></input></td>
+				</tr>
+				<tr title="Set angular damping coefficient, a value between 0.00 and 1.00.">
+				  <td><label for="body-angular_damping">Angular Damping</label></td>
+				  <td><input id="body-angular_damping" class="custom-text numeric-input" type="text"></input></td>
+				</tr>
+			  </table>
+			</div>
+			<div class="clear">
+			  <h3>Thruster</h3>
+			  <table class="long-table">
+				<tr title="A numeric or directional impulse in Newton-seconds. Passing a numeric value will apply force along Z_AXIS. Passing a Vector3d or an Array object will apply force along the direction of a vector.">
+				  <td><label for="body-thruster_controller">Controller</label></td>
+				  <td><input id="body-thruster_controller" class="custom-text controller-input" type="text"></input></td>
+				</tr>
+				<tr title="Whether to assume impulse with respect to body axis.">
+				  <td><label for="body-thruster_lock_axis">Lock to Body Axis</label></td>
+				  <td><input id="body-thruster_lock_axis" type="checkbox"></input></td>
+				</tr>
+			  </table>
+			  <div class="vertical_spacing"></div>
+			  <h3>Emitter</h3>
+			  <table class="long-table">
+				<tr title="A numeric or directional impulse in Newton-seconds. Passing a numeric value will apply force along Z_AXIS. Passing a Vector3d or an Array object will apply force along the direction of a vector. A value of zero or a vector with a magnitude of zero will cease emitting the body.">
+				  <td><label for="body-emitter_controller">Controller</label></td>
+				  <td><input id="body-emitter_controller" class="custom-text controller-input" type="text"></input></td>
+				</tr>
+				<tr title="Whether to assume impulse with respect to body axis.">
+				  <td><label for="body-emitter_lock_axis">Lock to Body Axis</label></td>
+				  <td><input id="body-emitter_lock_axis" type="checkbox"></input></td>
+				</tr>
+				<tr title="Set emit rate. Copy body every n frames.">
+				  <td><label for="body-emitter_rate">Rate</label></td>
+				  <td><input id="body-emitter_rate" class="custom-text fixnum-input" type="text"></input></td>
+				</tr>
+				<tr title="Set emitted body lifetime in frames. A lifetime of zero will keep emitted body alive throughout simulation.">
+				  <td><label for="body-emitter_lifetime">Lifetime</label></td>
+				  <td><input id="body-emitter_lifetime" class="custom-text fixnum-input" type="text"></input></td>
+				</tr>
+			  </table>
+			</div>
+		  </div>
+		  <div id="tab2-content2" style="display: none;">
+			<h3>State</h3>
+			<table class="long-table">
+			  <tr>
+				<td><label for="internal_body-ignore">Ignore</label></td>
+				<td><input id="internal_body-ignore" type="checkbox"></input></td>
+			  </tr>
+			</table>
+			<div class="vertical_spacing"></div>
+			<p>Only top level groups/components have full body properties.</p>
+			<p>Child groups/components don't have full body properties.</p>
+		  </div>
+		</div>
+
+		<div id="tab3" class="tab">
+		  <div id="tab3-none">
+			<p>Select a top level group/component of body type to edit body script.</p>
+			<p>Body script cannot be edited while simulation is running.</p>
+		  </div>
+		  <div id="tab3-content" style="display: none;">
+			<pre class="center"><a href="http://www.rubydoc.info/github/AntonSynytsia/MSPhysics/master" target="_blank">MSPhysics</a> | <a href="http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master" target="_blank">AMS Library</a> | <a href="http://www.sketchup.com/intl/en/developer/" target="_blank">SketchUp API</a> | <a href="ruby_core" target="_blank">Ruby Core</a></pre>
+			<textarea id="temp_script_area" rows="1" cols="20" style="display: none;"></textarea>
+			<div id="editor"></div>
+			<div id="status-bar">Powered by <a href="http://ace.c9.io/#nav=about" target="_blank">Ace</a></div>
+		  </div>
+		</div>
+
+		<div id="tab4" class="tab">
+		  <div id="tab4-none">
+			<p>Select a component of joint type to edit joint properties.</p>
+			<p>Joint properties cannot be edited while simulation is running.</p>
+		  </div>
+		  <div id="tab4-general">
+			<h1>General Properties</h1>
+			<p class="description">Note: Joints behave the best when solver model is exact.</p>
+			<table class="long-table">
+			  <tr>
+				<td><h3>Constraint Type</h3>
+				  <table class="short-table">
+					<tr title="Standard constrains are somewhat stable and somewhat stiff.">
+					  <td><label for="joint_constraint-standard">Standard</label></td>
+					  <td><input id="joint_constraint-standard" type="radio" name="constraint_type"></input></td>
+					</tr>
+					<tr title="Flexible constraints are soft and stable.">
+					  <td><label for="joint_constraint-flexible">Flexible</label></td>
+					  <td><input id="joint_constraint-flexible" type="radio" name="constraint_type"></input></td>
+					</tr>
+					<tr title="Robust constraints are stiff and may be unstable.">
+					  <td><label for="joint_constraint-robust">Robust</label></td>
+					  <td><input id="joint_constraint-robust" type="radio" name="constraint_type"></input></td>
+					</tr>
+				  </table>
+				</td>
+			  </tr>
+			  <tr><td><div class="vertical_spacing"></div></td></tr>
+			  <tr title="Set joint stiffness, a value between 0.00 and 1.00. Low stiffness makes joint loose. High stiffness makes joint strong.">
+				<td><label for="joint-stiffness">Stiffness</label></td>
+				<td><input id="joint-stiffness" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set breaking force in Newtons. Pass zero to disable breaking force.">
+				<td><label for="joint-breaking_force">Breaking Force</label></td>
+				<td><input id="joint-breaking_force" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Enable/Disable collision between parent and child connected bodies.">
+				<td><label for="joint-bodies_collidable">Connected Collide</label></td>
+				<td><input id="joint-bodies_collidable" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Enable/Disable support constraints. Support constraints are additional joints created on either side, along Z-AXIS, of a main joint.">
+				<td><label for="joint-enable_support_constraints">Enable Support Constraints</label></td>
+				<td><input id="joint-enable_support_constraints" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Set distance in meters, along Z-AXIS of main joint, from main joint to one of the support constraints.">
+				<td><label for="joint-support_constraint_distance">Support Constraint Distance</label></td>
+				<td><input id="joint-support_constraint_distance" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			</table>
+		  </div>
+		  <div id="tab4-fixed">
+			<h1>Fixed</h1>
+			<table class="long-table">
+			</table>
+		  </div>
+		  <div id="tab4-hinge">
+			<h1>Hinge</h1>
+			<p class="description">The start angle can be modified by a controller. The actual starting angle, in degrees, is:</p>
+			<p class="formula">actual_start_angle = start_angle • controller</p>
+			<table class="long-table">
+			  <tr title="Set minimum angle in degrees with respect to the starting angle.">
+				<td><label for="hinge-min">Min</label></td>
+				<td><input id="hinge-min" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set maximum angle in degrees with respect to the starting angle.">
+				<td><label for="hinge-max">Max</label></td>
+				<td><input id="hinge-max" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Enable/Disable minimum and maximum angle limits.">
+				<td><label for="hinge-enable_limits">Enable Limits</label></td>
+				<td><input id="hinge-enable_limits" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Set rotational stiffness, a value greater than or equal to zero. Higher stiffness makes rotation stronger.">
+				<td><label for="hinge-stiff">Stiff</label></td>
+				<td><input id="hinge-stiff" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set rotational damper, a value greater than or equal to zero. Higher damper makes rotation slower.">
+				<td><label for="hinge-damp">Damp</label></td>
+				<td><input id="hinge-damp" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Enable/Disable rotational stiffness and damper.">
+				<td><label for="hinge-enable_damper">Enable Damper</label></td>
+				<td><input id="hinge-enable_damper" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Enable/Disable a feature to rotate back to a starting angle.">
+				<td><label for="hinge-enable_rotate_back">Enable Rotate Back</label></td>
+				<td><input id="hinge-enable_rotate_back" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Set starting angle in degrees. Note: Actual starting angle is start_angle • controller.">
+				<td><label for="hinge-start_angle">Start Angle</label></td>
+				<td><input id="hinge-start_angle" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set hinge controller, magnitude and direction of the starting angle. Note: Actual starting angle is start_angle • controller.">
+				<td><label for="hinge-controller">Controller</label></td>
+				<td><input id="hinge-controller" class="custom-text controller-input" type="text"></input></td>
+			  </tr>
+			</table>
+		  </div>
+		  <div id="tab4-motor">
+			<h1>Motor</h1>
+			<p class="description">Maximum angular rate, in degrees per second, can be determined with this formula:</p>
+			<p class="formula">max_angular_rate = accel • controller / damp</p>
+			<table class="long-table">
+			  <tr title="Set angular acceleration in degrees per second per second. Note: Actual acceleration is accel • controller.">
+				<td><label for="motor-accel">Accel</label></td>
+				<td><input id="motor-accel" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set angular damper.">
+				<td><label for="motor-damp">Damp</label></td>
+				<td><input id="motor-damp" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Enable/Disable free rotate. This feature disables angular deceleration when acceleration or magnitude of angular acceleration is set to zero.">
+				<td><label for="motor-enable_free_rotate">Free Rotate</label></td>
+				<td><input id="motor-enable_free_rotate" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Set motor controller, magnitude and direction of the desired acceleration. Note: Actual acceleration is accel • controller.">
+				<td><label for="motor-controller">Controller</label></td>
+				<td><input id="motor-controller" class="custom-text controller-input" type="text"></input></td>
+			  </tr>
+			</table>
+		  </div>
+		  <div id="tab4-servo">
+			<h1>Servo</h1>
+			<table class="long-table">
+			  <tr title="Set minimum angle in degrees.">
+				<td><label for="servo-min">Min</label></td>
+				<td><input id="servo-min" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set maximum angle in degrees.">
+				<td><label for="servo-max">Max</label></td>
+				<td><input id="servo-max" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Enable/Disable minimum and maximum angle limits.">
+				<td><label for="servo-enable_limits">Enable Limits</label></td>
+				<td><input id="servo-enable_limits" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Set maximum angular rate in degrees per second, a value greater than or equal to zero.">
+				<td><label for="servo-angular_rate">Angular Rate</label></td>
+				<td><input id="servo-angular_rate" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set maximum angular acceleration in degrees per second per second, a value greater than or equal to zero.">
+				<td><label for="servo-max_accel">Max Accel</label></td>
+				<td><input id="servo-max_accel" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set servo controller, desired angle in degrees. Pass nil to 'turn off' the servo.">
+				<td><label for="servo-controller">Controller</label></td>
+				<td><input id="servo-controller" class="custom-text controller-input" type="text"></input></td>
+			  </tr>
+			</table>
+		  </div>
+		  <div id="tab4-slider">
+			<h1>Slider</h1>
+			<table class="long-table">
+			  <tr title="Set minimum position in meters.">
+				<td><label for="slider-min">Min</label></td>
+				<td><input id="slider-min" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set maximum position in meters.">
+				<td><label for="slider-max">Max</label></td>
+				<td><input id="slider-max" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Enable/Disable minimum and maximum position limits.">
+				<td><label for="slider-enable_limits">Enable Limits</label></td>
+				<td><input id="slider-enable_limits" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Set movement stiffness, a value greater than or equal to zero. Higher stiffness makes movement stronger.">
+				<td><label for="slider-stiff">Stiff</label></td>
+				<td><input id="slider-stiff" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set movement damper, a value greater than or equal to zero. Higher damper makes movement slower.">
+				<td><label for="slider-damp">Damp</label></td>
+				<td><input id="slider-damp" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Enable/Disable movement stiffness and damper.">
+				<td><label for="slider-enable_damper">Enable Damper</label></td>
+				<td><input id="slider-enable_damper" type="checkbox"></input></td>
+			  </tr>
+			</table>
+		  </div>
+		  <div id="tab4-piston">
+			<h1>Piston</h1>
+			<table class="long-table">
+			  <tr title="Set minimum position in meters.">
+				<td><label for="piston-min">Min</label></td>
+				<td><input id="piston-min" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set maximum position in meters.">
+				<td><label for="piston-max">Max</label></td>
+				<td><input id="piston-max" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Enable/Disable minimum and maximum position limits.">
+				<td><label for="piston-enable_limits">Enable Limits</label></td>
+				<td><input id="piston-enable_limits" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Set maximum linear rate in meters per second, a value greater than or equal to zero.">
+				<td><label for="piston-linear_rate">Linear Rate</label></td>
+				<td><input id="piston-linear_rate" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set maximum linear acceleration in meters per second per second, a value greater than or equal to zero.">
+				<td><label for="piston-max_accel">Max Accel</label></td>
+				<td><input id="piston-max_accel" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set piston controller, desired position in meters. Pass nil to 'turn off' the servo.">
+				<td><label for="piston-controller">Controller</label></td>
+				<td><input id="piston-controller" class="custom-text controller-input" type="text"></input></td>
+			  </tr>
+			</table>
+		  </div>
+		  <div id="tab4-spring">
+			<h1>Spring</h1>
+			<p class="description">The start position can be modified by a controller. The actual starting position, in meters, is:</p>
+			<p class="formula">actual_start_position = start_position • controller</p>
+			<table class="long-table">
+			  <tr title="Set minimum position in meters with respect to the starting position.">
+				<td><label for="spring-min">Min</label></td>
+				<td><input id="spring-min" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set maximum position in meters with respect to the starting position.">
+				<td><label for="spring-max">Max</label></td>
+				<td><input id="spring-max" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Enable/Disable minimum and maximum position limits.">
+				<td><label for="spring-enable_limits">Enable Limits</label></td>
+				<td><input id="spring-enable_limits" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Set movement stiffness, a value greater than or equal to zero. Higher stiffness makes movement stronger.">
+				<td><label for="spring-stiff">Stiff</label></td>
+				<td><input id="spring-stiff" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set movement damper, a value greater than or equal to zero. Higher damper makes movement slower.">
+				<td><label for="spring-damp">Damp</label></td>
+				<td><input id="spring-damp" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set starting position along joint ZAXIS in meters. Note: Actual starting position is start_position • controller.">
+				<td><label for="spring-start_position">Start Position</label></td>
+				<td><input id="spring-start_position" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set spring controller, magnitude and direction of the starting position. Note: Actual starting position is start_position • controller.">
+				<td><label for="spring-controller">Controller</label></td>
+				<td><input id="spring-controller" class="custom-text controller-input" type="text"></input></td>
+			  </tr>
+			</table>
+		  </div>
+		  <div id="tab4-up_vector">
+			<h1>Up Vector</h1>
+			<table class="long-table">
+			  <tr title="Set rotation stiffness, a value greater than or equal to zero. Higher stiffness makes rotation stronger.">
+				<td><label for="up_vector-stiff">Stiff</label></td>
+				<td><input id="up_vector-stiff" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set rotation damper, a value greater than or equal to zero. Higher damper makes rotation slower.">
+				<td><label for="up_vector-damp">Damp</label></td>
+				<td><input id="up_vector-damp" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Enable/Disable rotation stiffness and damper.">
+				<td><label for="up_vector-enable_damper">Enable Damper</label></td>
+				<td><input id="up_vector-enable_damper" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Set up vector controller, vector direction with respect to joint orientation. Pass an Array or a Geom::Vector3d object.">
+				<td><label for="up_vector-controller">Controller</label></td>
+				<td><input id="up_vector-controller" class="custom-text controller-input" type="text"></input></td>
+			  </tr>
+			</table>
+		  </div>
+		  <div id="tab4-ball_and_socket">
+			<h1>Ball And Socket</h1>
+			<table class="long-table">
+			  <tr title="Set rotation stiffness, a value greater than or equal to zero. Higher stiffness makes rotation stronger.">
+				<td><label for="ball_and_socket-stiff">Stiff</label></td>
+				<td><input id="ball_and_socket-stiff" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set rotation damper, a value greater than or equal to zero. Higher damper makes rotation slower.">
+				<td><label for="ball_and_socket-damp">Damp</label></td>
+				<td><input id="ball_and_socket-damp" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Enable/Disable rotation stiffness and damper.">
+				<td><label for="ball_and_socket-enable_damper">Enable Damper</label></td>
+				<td><input id="ball_and_socket-enable_damper" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Set maximum cone angle in degrees.">
+				<td><label for="ball_and_socket-max_cone_angle">Max Cone Angle</label></td>
+				<td><input id="ball_and_socket-max_cone_angle" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Enable/Disable cone angle limits.">
+				<td><label for="ball_and_socket-enable_cone_limits">Enable Cone Limits</label></td>
+				<td><input id="ball_and_socket-enable_cone_limits" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Set minimum twist angle in degrees.">
+				<td><label for="ball_and_socket-min_twist_angle">Min Twist Angle</label></td>
+				<td><input id="ball_and_socket-min_twist_angle" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set maximum twist angle in degrees.">
+				<td><label for="ball_and_socket-max_twist_angle">Max Twist Angle</label></td>
+				<td><input id="ball_and_socket-max_twist_angle" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Enable/Disable twist angle limits.">
+				<td><label for="ball_and_socket-enable_twist_limits">Enable Twist Limits</label></td>
+				<td><input id="ball_and_socket-enable_twist_limits" type="checkbox"></input></td>
+			  </tr>
+			</table>
+		  </div>
+		</div>
+
+		<div id="tab5" class="tab">
+		  <p class="description bold">Supported music formats:</p>
+		  <p class="description">Microsoft WAVE (.wav), AIFF (.aiff), RIFF (.riff), Ogg Vorbis (.ogg), Creative Labs VOC (.voc), MikMod (.mod .s3m .it .xm), and FLAC (.flac).</p>
+		  <p class="description bold">Supported sound formats:</p>
+		  <p class="description">Microsoft WAVE (.wav), AIFF (.aiff), RIFF (.riff), Ogg Vorbis (.ogg), and Creative Labs VOC (.voc).</p>
+		  <table class="center">
+			<tr>
+			  <td><p class="title">Embedded Sounds List</p></td>
+			</tr>
+			<tr>
+			  <td><select id="sound-list" class="table-list" size="12"></select></td>
+			</tr>
+			<tr>
+			  <td>
+				<p class="important">Caution!</p>
+				<p class="description clear">Be sure to save before using these buttons as there is potential for a crash.</p>
+			  </td>
+			</tr>
+			<tr>
+			  <td>
+				<button id="sound-add" title="Add sound.">Add</button>
+				<button id="sound-remove" title="Remove selected sound.">Remove</button>
+				<button id="sound-remove_all" title="Remove all sounds.">Remove All</button>
+				<button id="sound-play" title="Test-play selected sound.">Play</button>
+				<button id="sound-toggle_pause" title="Pause/Resume sound.">Pause/Resume</button>
+				<button id="sound-stop" title="Stop playing sound.">Stop</button>
+			  </td>
+			</tr>
+		  </table>
+		  <p class="title">Commands</p>
+		  <table class="short-table">
+			<tr>
+			  <td><label>Playing Music:</label></td>
+			  <td><input id="sound-command_music" class="custom-text command-input" type="text" readonly="readonly"></input></td>
+			</tr>
+			<tr>
+			  <td><label>Playing Sound:</label></td>
+			  <td><input id="sound-command_sound" class="custom-text command-input" type="text" readonly="readonly"></input></td>
+			</tr>
+		  </table>
+		  <div class="credit">Powered by <a href="https://www.libsdl.org/" target="_blank">SDL</a></div>
+		</div>
+
+	  </div>
+	</div>
+  </body>
+</html>

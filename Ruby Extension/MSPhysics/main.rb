@@ -1,0 +1,886 @@
+require 'MSPhysics.rb'
+
+unless defined?(MSPhysics)
+  msg = 'You cannot load MSPhysics extension until SketchUp meets all the plugin compatibility demands!'
+  raise(LoadError, msg, caller)
+end
+
+dir = File.dirname(__FILE__)
+ops = (RUBY_PLATFORM =~ /mswin|mingw/i) ? 'win' : 'mac'
+bit = (Sketchup.respond_to?('is_64bit?') && Sketchup.is_64bit?) ? '64' : '32'
+ver = (RUBY_VERSION =~ /1.8/) ? '1.8' : '2.0'
+
+# Load SDL and SDL Mixer DLLs
+#libraries = %w(SDL2 SDL2_mixer libmikmod-2 libmodplug-1 libogg-0 libvorbis-0 libvorbisfile-3 smpeg2 libFLAC-8)
+libraries = %w(SDL SDL_mixer libmikmod-2 libogg-0 libvorbis-0 libvorbisfile-3 libFLAC-8 smpeg)
+libraries.each { |name|
+  path = File.join(dir, ops+bit, name + '.dll')
+  res = AMS::DLL.load_library(path)
+  #UI.messagebox "#{path}\n#{name} - #{res}"
+}
+
+# Load MSPhysics Library
+require File.join(dir, ops+bit, ver, 'msp_lib')
+
+require File.join(dir, 'geometry.rb')
+require File.join(dir, 'group.rb')
+require File.join(dir, 'collision.rb')
+require File.join(dir, 'contact.rb')
+require File.join(dir, 'hit.rb')
+require File.join(dir, 'script_exception.rb')
+require File.join(dir, 'slider_controller.rb')
+require File.join(dir, 'common.rb')
+require File.join(dir, 'controller.rb')
+require File.join(dir, 'body.rb')
+require File.join(dir, 'world.rb')
+require File.join(dir, 'material.rb')
+require File.join(dir, 'materials.rb')
+require File.join(dir, 'joint.rb')
+require File.join(dir, 'joint_hinge.rb')
+require File.join(dir, 'joint_motor.rb')
+require File.join(dir, 'joint_servo.rb')
+require File.join(dir, 'joint_corkscrew.rb')
+require File.join(dir, 'joint_ball_and_socket.rb')
+require File.join(dir, 'joint_universal.rb')
+require File.join(dir, 'joint_slider.rb')
+require File.join(dir, 'joint_piston.rb')
+require File.join(dir, 'joint_spring.rb')
+require File.join(dir, 'joint_up_vector.rb')
+require File.join(dir, 'joint_fixed.rb')
+require File.join(dir, 'simulation.rb')
+require File.join(dir, 'settings.rb')
+require File.join(dir, 'dialog.rb')
+require File.join(dir, 'control_panel.rb')
+require File.join(dir, 'joint_tool.rb')
+require File.join(dir, 'joint_connection_tool.rb')
+require File.join(dir, 'replay.rb')
+
+# @since 1.0.0
+module MSPhysics
+
+  DEFAULT_SIMULATION_SETTINGS = {
+    :solver_model           => 4,
+    :friction_model         => 0,
+    :update_rate            => 1,
+    :update_timestep        => 1/60.0,
+    :gravity                => [0.0, 0.0, -9.8],
+    :material_thickness     => 0.001,
+    :contact_merge_tolerance=> 0.001,
+    :world_scale            => 10
+  }
+
+  DEFAULT_BODY_SETTINGS = {
+    :shape                  => 'Compound',
+    :material_name          => 'Default',
+    :density                => 700,
+    :static_friction        => 0.90,
+    :dynamic_friction       => 0.50,
+    :enable_friction        => true,
+    :elasticity             => 0.40,
+    :softness               => 0.10,
+    :linear_damping         => 0.10,
+    :angular_damping        => 0.10,
+    :magnet_force           => 0.00,
+    :magnet_range           => 0.00,
+    :magnetic               => false,
+    :enable_script          => true,
+    :static                 => false,
+    :frozen                 => false,
+    :collidable             => true,
+    :auto_sleep             => true,
+    :continuous_collision   => false,
+    :thruster_lock_axis     => true,
+    :emitter_lock_axis      => true,
+    :emitter_rate           => 10,
+    :emitter_lifetime       => 100,
+    :enable_gravity         => true
+  }
+
+  DEFAULT_BUOYANCY_PLANE_SETTINGS = {
+    :density                => 997.04,
+    :viscosity              => 0.005,
+    :plane_size             => 10000,
+    :color                  => Sketchup::Color.new(0,140,255),
+    :alpha                  => 0.7,
+    :material_name          => 'MSPhysics Buoyancy'
+  }
+
+  SCRIPT_NAME = 'MSPhysics Script'.freeze
+  CONTROLLER_NAME = 'MSPhysics Controller'.freeze
+
+  CURSORS = {
+    :select                 => 0,
+    :select_plus            => 0,
+    :select_minus           => 0,
+    :select_plus_minus      => 0,
+    :hand                   => 0,
+    :grab                   => 0,
+    :target                 => 0
+  }
+
+  CURSOR_ORIGINS = {
+    :select                 => [3,6],
+    :select_plus            => [3,6],
+    :select_minus           => [3,6],
+    :select_plus_minus      => [3,6],
+    :hand                   => [3,6],
+    :grab                   => [3,6],
+    :target                 => [15,15]
+  }
+
+  EMBEDDED_MUSIC_FORMATS = %w(wav aiff riff ogg voc flac mod it xm s3m).freeze
+  EMBEDDED_SOUND_FORMATS = %w(wav aiff riff ogg voc).freeze
+
+  JOINT_TYPES = {
+    #:none               => 0,
+    :hinge              => 1,
+    :motor              => 2,
+    :servo              => 3,
+    :slider             => 4,
+    :piston             => 5,
+    :up_vector          => 6,
+    :spring             => 7,
+    :corkscrew          => 8,
+    :ball_and_socket    => 9,
+    :universal          => 10,
+    :fixed              => 11
+  }.freeze
+
+  JOINT_NAMES = %w(hinge motor servo slider piston up_vector spring corkscrew ball_and_socket universal fixed).freeze
+
+  DEFAULT_JOINT_SCALE = 1.0
+
+  class << self
+
+    # Get common attribute value from a collection of entities.
+    # @param [Array<Sketchup::Entity>] ents A collection of entities.
+    # @param [String] handle Dictionary name.
+    # @param [String] name Attribute name.
+    # @param [Object] default_value The value to return if the attribute value
+    #   is not found.
+    # @return [Object] A common attribute value or nil if one of the entity
+    #   attributes is different from another.
+    def get_attribute(ents, handle, name, default_value = nil)
+      vset = false
+      value = nil
+      ents.each { |e|
+        v = e.get_attribute(handle, name, default_value)
+        if vset
+          return nil if v != value
+        else
+          value = v
+          vset = true
+        end
+      }
+      return value
+    end
+
+    # Assign attribute value to a collection of entities.
+    # @param [Array<Sketchup::Entity>] ents A collection of entities.
+    # @param [String] handle Dictionary name.
+    # @param [String] name Attribute name.
+    # @param [Object] value Attribute value.
+    # @return [void]
+    def set_attribute(ents, handle, name, value)
+      ents.each { |e|
+        e.set_attribute(handle, name, value)
+      }
+    end
+
+    # Delete attribute value from a collection of entities.
+    # @param [Array<Sketchup::Entity>] ents A collection of entities.
+    # @param [String] handle Dictionary name.
+    # @param [String] name Attribute name.
+    # @return [void]
+    def delete_attribute(ents, handle, name = nil)
+      ents.each { |e|
+        name ? e.delete_attribute(handle, name) : e.delete_attribute(handle)
+      }
+    end
+
+    # Delete MSPhysics attributes from a collection of entities.
+    # @param [Array<Sketchup::Entity>] ents A collection of entities.
+    # @return [void]
+    def delete_attributes(ents)
+      ents.each { |e|
+        e.delete_attribute('MSPhysics') if e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body'
+        e.delete_attribute('MSPhysics Body')
+        e.delete_attribute('MSPhysics Joint')
+        e.delete_attribute('MSPhysics Script')
+        e.delete_attribute('MSPhysics Buoyancy Plane')
+      }
+    end
+
+    # Delete MSPhysics attributes from all entities.
+    # @return [void]
+    def delete_all_attributes
+      model = Sketchup.active_model
+      model.definitions.each { |definition|
+        delete_attributes(definition.instances)
+      }
+      model.attribute_dictionaries.delete('MSPhysics')
+      model.attribute_dictionaries.delete('MSPhysics Sounds')
+    end
+
+    # Get version of the Newton Dynamics physics SDK.
+    # @return [String]
+    def get_newton_version
+      MSPhysics::Newton.get_version
+    end
+
+    # Get float size of the Newton Dynamics physics SDK.
+    # @return [Fixnum]
+    def get_newton_float_size
+      MSPhysics::Newton.get_float_size
+    end
+
+    # Get memory used by the Newton Dynamics physics SDK at the current time.
+    # @return [Fixnum]
+    def get_newton_memory_used
+      MSPhysics::Newton.get_memory_used
+    end
+
+    # Get entity type.
+    # @param [Sketchup::Entity] e
+    # @return [String, nil]
+    def get_entity_type(e)
+      type = e.get_attribute('MSPhysics', 'Type', nil)
+      if type.nil? && (e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance))
+        type = 'Body'
+      end
+      type
+    end
+
+    # Set entity type.
+    # @param [Sketchup::Entity] e
+    # @param [String, nil] type
+    # @return [String, nil] The new type.
+    def set_entity_type(e, type)
+      if e.is_a?(String)
+        e.set_attribute('MSPhysics', 'Type', type)
+        type
+      else
+        e.delete_attribute('MSPhysics', 'Type')
+        nil
+      end
+    end
+
+    # Get physical joint scale.
+    # @return [Numeric]
+    def get_joint_scale
+      Sketchup.active_model.get_attribute('MSPhysics', 'Joint Scale', DEFAULT_JOINT_SCALE).to_f
+    end
+
+    # Set physical joint scale.
+    # @param [Numeric] scale A value between 0.01 and 100.00
+    # @return [Numeric]
+    def set_joint_scale(scale)
+      scale = AMS.clamp(scale.to_f, 0.01, 100.00)
+      model = Sketchup.active_model
+      op = 'MSPhysics - Scale Joints'
+      Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+      model.set_attribute('MSPhysics', 'Joint Scale', scale)
+      count = scale_joints(scale)
+      model.commit_operation
+      count
+    end
+
+    private
+
+    def scale_joints(scale, entities = Sketchup.active_model.entities)
+      model = Sketchup.active_model
+      st = Geom::Transformation.scaling(scale)
+      count = 0
+      entities.each { |e|
+        next if !e.is_a?(Sketchup::Group) && !e.is_a?(Sketchup::ComponentInstance)
+        if e.get_attribute('MSPhysics', 'Type', nil) == 'Joint'
+          tra = e.transformation
+          t = Geom::Transformation.new(tra.xaxis, tra.yaxis, tra.zaxis, tra.origin)
+          e.transformation = t * st
+          count += 1
+        else
+          ents = e.is_a?(Sketchup::ComponentInstance) ? e.definition.entities : e.entities
+          count += scale_joints(scale, ents)
+        end
+      }
+      count
+    end
+
+  end # class << self
+end # module MSPhysics
+
+unless file_loaded?(__FILE__)
+  # Setup audio
+  sdl = MSPhysics::SDL
+  mix = MSPhysics::Mixer
+  sdl.init(sdl::INIT_AUDIO)
+  mix.init(mix::INIT_SUPPORTED)
+  mix.open_audio(22050, mix::DEFAULT_FORMAT, 2, 1024)
+  mix.allocate_channels(16)
+  Kernel.at_exit {
+    MSPhysics::Music.destroy_all
+    MSPhysics::Sound.destroy_all
+    mix.close_audio
+    mix.quit
+    sdl.quit
+  }
+  # Create cursors
+  path = File.join(dir, 'images/cursors')
+  MSPhysics::CURSORS.keys.each { |name|
+    pt = MSPhysics::CURSOR_ORIGINS[name]
+    MSPhysics::CURSORS[name] = UI.create_cursor(File.join(path, name.to_s + '.png'), pt[0], pt[1])
+  }
+
+  # Create some materials
+  # Coefficients are defined from material to material contacts. Material to
+  # another material coefficients are automatically calculated by averaging out
+  # the coefficients of both.
+  # [ name, density (kg/m^3), static friction, kinetic friction, elasticity, softness ]
+  # Many coefficient values are estimated, averaged up, made up, and not accurate.
+  mats = [
+    ['Aluminium', 2700, 0.42, 0.34, 0.30, 0.01],
+    ['Brass', 8730, 0.35, 0.24, 0.40, 0.01],
+    ['Brick', 1920, 0.60, 0.55, 0.20, 0.01],
+    ['Bronze', 8200, 0.36, 0.27, 0.60, 0.01],
+    ['Cadnium', 8640, 0.79, 0.46, 0.60, 0.01],
+    ['Cast Iron', 7300, 0.51, 0.40, 0.60, 0.01],
+    ['Chromium', 7190, 0.46, 0.30, 0.60, 0.01],
+    ['Cobalt', 8746, 0.56, 0.40, 0.60, 0.01],
+    ['Concrete', 2400, 0.62, 0.56, 0.20, 0.01],
+    ['Glass', 2800, 0.90, 0.72, 0.4, 0.01],
+    ['Copper', 8940, 0.55, 0.40, 0.60, 0.01],
+    ['Gold', 19320, 0.49, 0.39, 0.60, 0.01],
+    ['Graphite', 2230, 0.18, 0.14, 0.10, 0.01],
+    ['Ice', 916, 0.01, 0.01, 0.10, 0.01],
+    ['Nickel', 8900, 0.53, 0.44, 0.60, 0.01],
+    ['Plastic', 1000, 0.35, 0.30, 0.69, 0.01],
+    ['Rubber', 1100, 1.16, 1.16, 0.90, 0.01],
+    ['Silver', 10500, 0.50, 0.40, 0.60, 0.01],
+    ['Steel', 8050, 0.31, 0.23, 0.60, 0.01],
+    ['Teflon', 2170, 0.04, 0.03, 0.10, 0.01],
+    ['Titanium', 4500, 0.36, 0.30, 0.40, 0.01],
+    ['Tungsten Carbide', 19600, 0.22, 0.15, 0.40, 0.01],
+    ['Wood', 700, 0.50, 0.25, 0.40, 0.01],
+    ['Zinc', 7000, 0.60, 0.50, 0.60, 0.01]
+  ]
+  mats.each { |args|
+    mat = MSPhysics::Material.new(*args)
+    MSPhysics::Materials.add(mat)
+  }
+
+  # Create MSPhysics Simulation Toolbar
+  sim = MSPhysics::Simulation
+  sim_toolbar = UI::Toolbar.new 'MSPhysics'
+
+  cmd = UI::Command.new('Toggle UI'){
+    MSPhysics::Dialog.show( !MSPhysics::Dialog.is_visible? )
+  }
+  cmd.set_validation_proc {
+    MSPhysics::Dialog.is_visible? ? MF_CHECKED : MF_UNCHECKED
+  }
+  cmd.menu_text = cmd.tooltip = 'Toggle UI'
+  cmd.status_bar_text = 'Show/Hide MSPhysics UI.'
+  cmd.small_icon = 'images/small/ui.png'
+  cmd.large_icon = 'images/large/ui.png'
+  sim_toolbar.add_item(cmd)
+
+  cmd = UI::Command.new('Toggle Play'){
+    sim.is_active? ? sim.instance.toggle_play : sim.start
+  }
+  cmd.set_validation_proc {
+    if sim.is_active?
+      sim.instance.is_playing? ? MF_CHECKED : MF_UNCHECKED
+    else
+      MF_ENABLED
+    end
+  }
+  cmd.menu_text = cmd.tooltip = 'Toggle Play'
+  cmd.status_bar_text = 'Play/Pause simulation.'
+  cmd.small_icon = 'images/small/toggle_play.png'
+  cmd.large_icon = 'images/large/toggle_play.png'
+  sim_toolbar.add_item(cmd)
+
+  cmd = UI::Command.new('Reset'){
+    sim.reset
+  }
+  cmd.set_validation_proc {
+    sim.is_active? ? MF_ENABLED : MF_GRAYED
+  }
+  cmd.menu_text = cmd.tooltip = 'Reset'
+  cmd.status_bar_text = 'Reset simulation.'
+  cmd.small_icon = 'images/small/reset.png'
+  cmd.large_icon = 'images/large/reset.png'
+  sim_toolbar.add_item(cmd)
+
+  sim_toolbar.show
+
+
+  # Create MSPhysics Joints Toolbar
+  joints_toolbar = UI::Toolbar.new 'MSPhysics Joints'
+
+  cmd = UI::Command.new('cmd'){
+    tool = MSPhysics::JointConnectionTool
+    tool.is_active? ? tool.deactivate : tool.activate
+  }
+  cmd.menu_text = cmd.tooltip = 'Joint Connection Tool'
+  cmd.status_bar_text = 'Activate/Deactivate joint connection tool.'
+  cmd.set_validation_proc {
+    MSPhysics::JointConnectionTool.is_active? ? MF_CHECKED : MF_UNCHECKED
+  }
+  cmd.small_icon = 'images/small/toggle_connect.png'
+  cmd.large_icon = 'images/large/toggle_connect.png'
+  joints_toolbar.add_item(cmd)
+
+  cmd = UI::Command.new('Scale MSPhysics Joints'){
+    scale = MSPhysics.get_joint_scale
+    prompts = ['Scale']
+    defaults = [sprintf("%0.2f", scale)]
+    list = ['0.05|0.10|0.25|0.50|0.75|1.00|1.25|1.50|1.75|2.00|3.00|4.00|5.00|10.00']
+    input = UI.inputbox(prompts, defaults, list, 'Scale MSPhysics Joints')
+    next unless input
+    scale = input[0].to_f
+    count = MSPhysics.set_joint_scale(scale)
+    UI.messagebox("Edited scale of #{count} MSPhysics joint(s).")
+  }
+  cmd.menu_text = cmd.tooltip = 'Edit Joints Scale'
+  cmd.status_bar_text = 'Change scale of MSPhysics joints.'
+  cmd.small_icon = 'images/small/scale_joints.png'
+  cmd.large_icon = 'images/large/scale_joints.png'
+  joints_toolbar.add_item(cmd)
+
+  joints_toolbar.add_separator
+
+  MSPhysics::JOINT_TYPES.keys.each { |type|
+    name = type.to_s
+    words = name.split('_')
+    for i in 0...words.size
+      words[i].capitalize!
+    end
+    ename = words.join(' ')
+    cmd = UI::Command.new('cmd'){
+      MSPhysics::JointTool.new(type)
+    }
+    cmd.menu_text = cmd.tooltip = ename
+    cmd.status_bar_text = "Add #{ename} joint."
+    cmd.small_icon = "images/small/#{name}.png"
+    cmd.large_icon = "images/large/#{name}.png"
+    joints_toolbar.add_item(cmd)
+  }
+
+  joints_toolbar.show
+
+
+  # Create Replay Toolbar
+  replay_toolbar = UI::Toolbar.new 'MSPhysics Replay'
+
+  cmd = UI::Command.new('Toggle Record'){
+    MSPhysics::Replay.record_enabled = !MSPhysics::Replay.record_enabled?
+  }
+  cmd.set_validation_proc {
+    MSPhysics::Replay.record_enabled? ? MF_CHECKED : MF_UNCHECKED
+  }
+  cmd.menu_text = cmd.tooltip = 'Toggle Record'
+  cmd.status_bar_text = 'Enable/Disable replay animation recording.'
+  cmd.small_icon = 'images/small/replay_record.png'
+  cmd.large_icon = 'images/large/replay_record.png'
+  replay_toolbar.add_item(cmd)
+
+  cmd = UI::Command.new('Toggle Camera Replay'){
+    MSPhysics::Replay.camera_replay_enabled = !MSPhysics::Replay.camera_replay_enabled?
+  }
+  cmd.set_validation_proc {
+    MSPhysics::Replay.camera_replay_enabled? ? MF_CHECKED : MF_UNCHECKED
+  }
+  cmd.menu_text = cmd.tooltip = 'Toggle Camera Replay'
+  cmd.status_bar_text = 'Enable/Disable camera replay.'
+  cmd.small_icon = 'images/small/replay_camera.png'
+  cmd.large_icon = 'images/large/replay_camera.png'
+  replay_toolbar.add_item(cmd)
+
+  cmd = UI::Command.new('Play'){
+    MSPhysics::Replay.reversed = false
+    MSPhysics::Replay.start unless MSPhysics::Replay.active?
+    MSPhysics::Replay.play
+  }
+  cmd.set_validation_proc {
+    next MF_GRAYED unless MSPhysics::Replay.active_data_valid?
+    if MSPhysics::Replay.active?
+      MSPhysics::Replay.playing? && !MSPhysics::Replay.reversed? ? MF_CHECKED : MF_UNCHECKED
+    else
+      MF_ENABLED
+    end
+  }
+  cmd.menu_text = cmd.tooltip = 'Play'
+  cmd.status_bar_text = 'Play replay animation forward.'
+  cmd.small_icon = 'images/small/replay_play.png'
+  cmd.large_icon = 'images/large/replay_play.png'
+  replay_toolbar.add_item(cmd)
+
+  cmd = UI::Command.new('Reverse'){
+    MSPhysics::Replay.reversed = true
+    MSPhysics::Replay.start unless MSPhysics::Replay.active?
+    MSPhysics::Replay.play
+  }
+  cmd.set_validation_proc {
+    next MF_GRAYED unless MSPhysics::Replay.active_data_valid?
+    if MSPhysics::Replay.active?
+      MSPhysics::Replay.playing? && MSPhysics::Replay.reversed? ? MF_CHECKED : MF_UNCHECKED
+    else
+      MF_ENABLED
+    end
+  }
+  cmd.menu_text = cmd.tooltip = 'Reverse'
+  cmd.status_bar_text = 'Play replay animation backward.'
+  cmd.small_icon = 'images/small/replay_reverse.png'
+  cmd.large_icon = 'images/large/replay_reverse.png'
+  replay_toolbar.add_item(cmd)
+
+  cmd = UI::Command.new('Pause'){
+    MSPhysics::Replay.pause
+  }
+  cmd.set_validation_proc {
+    next MF_GRAYED unless MSPhysics::Replay.active_data_valid?
+    if MSPhysics::Replay.active?
+      MSPhysics::Replay.paused? ? MF_CHECKED : MF_UNCHECKED
+    else
+      MF_GRAYED
+    end
+  }
+  cmd.menu_text = cmd.tooltip = 'Pause'
+  cmd.status_bar_text = 'Pause replay animation.'
+  cmd.small_icon = 'images/small/replay_pause.png'
+  cmd.large_icon = 'images/large/replay_pause.png'
+  replay_toolbar.add_item(cmd)
+
+  cmd = UI::Command.new('Reset'){
+    MSPhysics::Replay.reset
+  }
+  cmd.set_validation_proc {
+    MSPhysics::Replay.active? ? MF_ENABLED : MF_GRAYED
+  }
+  cmd.menu_text = cmd.tooltip = 'Reset'
+  cmd.status_bar_text = 'Stop replay animation and reset positions.'
+  cmd.small_icon = 'images/small/replay_reset.png'
+  cmd.large_icon = 'images/large/replay_reset.png'
+  replay_toolbar.add_item(cmd)
+
+  cmd = UI::Command.new('Stop'){
+    MSPhysics::Replay.stop
+  }
+  cmd.set_validation_proc {
+    MSPhysics::Replay.active? ? MF_ENABLED : MF_GRAYED
+  }
+  cmd.menu_text = cmd.tooltip = 'Stop'
+  cmd.status_bar_text = 'Stop replay animation, but avoid resetting positions.'
+  cmd.small_icon = 'images/small/replay_stop.png'
+  cmd.large_icon = 'images/large/replay_stop.png'
+  replay_toolbar.add_item(cmd)
+
+  inc_spd_cmd = UI::Command.new('Increase Speed'){
+    v = MSPhysics::Replay.speed
+    MSPhysics::Replay.speed = v + (v < 10.0 ? (v < 2.0 ? (v < 0.1 ? 0.01 : 0.1) : 1.0) : 10.0)
+  }
+  inc_spd_cmd.set_validation_proc {
+    inc_spd_cmd.status_bar_text = "Increase replay animation speed.    Speed: #{sprintf("%.2f", MSPhysics::Replay.speed)}"
+    MF_ENABLED
+  }
+  inc_spd_cmd.menu_text = inc_spd_cmd.tooltip = 'Increase Speed'
+  inc_spd_cmd.status_bar_text = "Increase replay animation speed.    Speed: #{sprintf("%.2f", MSPhysics::Replay.speed)}"
+  inc_spd_cmd.small_icon = 'images/small/replay_increase_speed.png'
+  inc_spd_cmd.large_icon = 'images/large/replay_increase_speed.png'
+  replay_toolbar.add_item(inc_spd_cmd)
+
+  dec_spd_cmd = UI::Command.new('Decrease Speed'){
+    v = MSPhysics::Replay.speed
+    MSPhysics::Replay.speed = v - (v > 10.0 ? 10.0 : (v > 2.0 ? 1.0 : (v > 0.1 ? 0.1 : 0.01)))
+  }
+  dec_spd_cmd.set_validation_proc {
+    dec_spd_cmd.status_bar_text = "Decrease replay animation speed.    Speed: #{sprintf("%.2f", MSPhysics::Replay.speed)}"
+    MF_ENABLED
+  }
+  dec_spd_cmd.menu_text = dec_spd_cmd.tooltip = 'Decrease Speed'
+  dec_spd_cmd.status_bar_text = "Decrease replay animation speed.    Speed: #{sprintf("%.2f", MSPhysics::Replay.speed)}"
+  dec_spd_cmd.small_icon = 'images/small/replay_decrease_speed.png'
+  dec_spd_cmd.large_icon = 'images/large/replay_decrease_speed.png'
+  replay_toolbar.add_item(dec_spd_cmd)
+
+  cmd = UI::Command.new('Clear Data') {
+    MSPhysics::Replay.clear_active_data
+  }
+  cmd.set_validation_proc {
+    MSPhysics::Replay.active_data_valid? && !MSPhysics::Replay.active? ? MF_ENABLED : MF_GRAYED
+  }
+  cmd.menu_text = cmd.tooltip = 'Clear Data'
+  cmd.status_bar_text = 'Clear recorded data.'
+  cmd.small_icon = 'images/small/replay_destroy.png'
+  cmd.large_icon = 'images/large/replay_destroy.png'
+  replay_toolbar.add_item(cmd)
+
+  replay_toolbar.show
+
+  # Register replay model observer
+  Sketchup.add_observer(MSPhysics::Replay::AppObserver.new)
+
+
+  # Create Edit Menus
+  UI.add_context_menu_handler { |menu|
+    model = Sketchup.active_model
+    bodies = []
+    joints = []
+    buoyancy_planes = []
+    model.selection.each { |e|
+      next unless e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)
+      case e.get_attribute('MSPhysics', 'Type', 'Body')
+      when 'Body'
+        bodies << e
+      when 'Joint'
+        joints << e
+      when 'Buoyancy Plane'
+        buoyancy_planes << e
+      end
+    }
+    next if bodies.empty? && joints.empty? && buoyancy_planes.empty?
+    msp_menu = menu.add_submenu('MSPhysics')
+    if bodies.size > 0
+      text = bodies.size > 1 ? "#{bodies.size} Bodies" : "Body"
+      body_menu = msp_menu.add_submenu(text)
+      state_menu = body_menu.add_submenu('State')
+      state_options = ['Ignore']
+      if model.active_entities == model.entities
+        state_options.concat ['Static', 'Frozen', 'Magnetic', 'Collidable', 'Auto Sleep', 'Continuous Collision', 'Enable Friction', 'Enable Script', 'Enable Gravity']
+
+        shape_menu = body_menu.add_submenu('Shape')
+        default_shape = MSPhysics::DEFAULT_BODY_SETTINGS[:shape]
+        ['Box', 'Sphere', 'Cone', 'Cylinder', 'Chamfer Cylinder', 'Capsule', 'Convex Hull', 'Null', 'Compound', 'Compound from CD', 'Static Mesh'].each { |shape|
+          item = shape_menu.add_item(shape){
+            op = 'MSPhysics Body - Change Shape'
+            Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Shape', shape)
+            model.commit_operation
+            MSPhysics::Dialog.update_state
+          }
+          shape_menu.set_validation_proc(item){
+            MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Shape', default_shape) == shape ? MF_CHECKED : MF_UNCHECKED
+          }
+        }
+
+        mat_menu = body_menu.add_submenu('Material')
+        default_mat = MSPhysics::DEFAULT_BODY_SETTINGS[:material_name]
+        item = mat_menu.add_item(default_mat){
+          op = 'MSPhysics Body - Change Material'
+          Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+          ['Material', 'Density', 'Static Friction', 'Dynamic Friction', 'Enable Friction', 'Elasticity', 'Softness'].each { |option|
+            MSPhysics.delete_attribute(bodies, 'MSPhysics Body', option)
+          }
+          model.commit_operation
+          MSPhysics::Dialog.update_state
+        }
+        mat_menu.set_validation_proc(item){
+          MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Material', default_mat) == default_mat ? MF_CHECKED : MF_UNCHECKED
+        }
+        item = mat_menu.add_item('Custom'){
+          op = 'MSPhysics Body - Change Material'
+          Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+          MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Material', 'Custom')
+          model.commit_operation
+          MSPhysics::Dialog.update_state
+        }
+        mat_menu.set_validation_proc(item){
+          MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Material', default_mat) == 'Custom' ? MF_CHECKED : MF_UNCHECKED
+        }
+        mat_menu.add_separator
+        materials = MSPhysics::Materials.sort { |a, b| a.get_name <=> b.get_name }
+        materials.each { |material|
+          item = mat_menu.add_item(material.get_name){
+            op = 'MSPhysics Body - Change Material'
+            Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Material', material.get_name)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Density', material.get_density)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Static Friction', material.get_static_friction)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Dynamic Friction', material.get_dynamic_friction)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Enable Friction', true)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Elasticity', material.get_elasticity)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Softness', material.get_softness)
+            model.commit_operation
+            MSPhysics::Dialog.update_state
+          }
+          mat_menu.set_validation_proc(item){
+            MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Material', default_mat) == material.get_name ? MF_CHECKED : MF_UNCHECKED
+          }
+        }
+      end
+      state_options.each { |option|
+        default_state = MSPhysics::DEFAULT_BODY_SETTINGS[option.downcase.gsub(' ', '_').to_sym]
+        item = state_menu.add_item(option){
+          op = 'MSPhysics Body - Change State'
+          Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+          state = MSPhysics.get_attribute(bodies, 'MSPhysics Body', option, default_state) ? true : false
+          MSPhysics.set_attribute(bodies, 'MSPhysics Body', option, !state)
+          model.commit_operation
+          MSPhysics::Dialog.update_state
+        }
+        state_menu.set_validation_proc(item){
+          MSPhysics.get_attribute(bodies, 'MSPhysics Body', option, default_state) ? MF_CHECKED : MF_UNCHECKED
+        }
+      }
+      connect_closest = MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Connect Closest Joints', false) ? true : false
+      item = body_menu.add_item('Connect Closest Joints') {
+        op = 'MSPhysics Body - Connect Closest Joints'
+        Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+        MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Connect Closest Joints', !connect_closest)
+        model.commit_operation
+      }
+      body_menu.set_validation_proc(item) {
+        connect_closest ? MF_CHECKED : MF_UNCHECKED
+      }
+      body_menu.add_item('Clear Connected Joints') {
+        op = 'MSPhysics Body - Clear Connected Joints'
+        Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+        MSPhysics.delete_attribute(bodies, 'MSPhysics Body', 'Connected Joints')
+        model.commit_operation
+      }
+      body_menu.add_item('Reset Properties') {
+        op = 'MSPhysics Body - Reset Properties'
+        Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+        MSPhysics.delete_attribute(bodies, 'MSPhysics')
+        MSPhysics.delete_attribute(bodies, 'MSPhysics Body')
+        model.commit_operation
+      }
+    end
+    if joints.size > 0
+      text = joints.size > 1 ? "#{joints.size} Joints" : "Joint"
+      joint_menu = msp_menu.add_submenu(text)
+      joint_menu.add_item('Make Unique ID') {
+        op = 'MSPhysics Joint - Make Unique ID'
+        Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+        MSPhysics.delete_attribute(joints, 'MSPhysics Joint', 'ID')
+        joints.each { |joint|
+          id = MSPhysics::JointTool.generate_uniq_id
+          joint.set_attribute('MSPhysics Joint', 'ID', id)
+        }
+        model.commit_operation
+      }
+      if joints.size > 1
+        joint_menu.add_item('Make Same ID') {
+          op = 'MSPhysics Joint - Make Same ID'
+          Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+          id = MSPhysics::JointTool.generate_uniq_id
+          MSPhysics.set_attribute(joints, 'MSPhysics Joint', 'ID', id)
+          model.commit_operation
+        }
+      end
+      joint_menu.add_item('Reset Properties') {
+        op = 'MSPhysics Joint - Reset Properties'
+        Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+        MSPhysics.delete_attribute(bodies, 'MSPhysics Joint')
+        model.commit_operation
+      }
+    end
+    if buoyancy_planes.size > 0
+      text = buoyancy_planes.size > 1 ? "#{buoyancy_planes.size} Buoyancy Planes" : "Buoyancy Plane"
+      bp_menu = msp_menu.add_submenu(text)
+      bp_menu.add_item("Properties"){
+        default = MSPhysics::DEFAULT_BUOYANCY_PLANE_SETTINGS
+        prompts = ['Density (kg/m³)', 'Viscosity (0.0 - 1.0)']
+        default_density = MSPhysics.get_attribute(buoyancy_planes, 'MSPhysics Buoyancy Plane', 'Density', default[:density])
+        default_viscosity = MSPhysics.get_attribute(buoyancy_planes, 'MSPhysics Buoyancy Plane', 'Viscosity', default[:viscosity])
+        defaults = [default_density, default_viscosity]
+        input = UI.inputbox(prompts, defaults, 'Buoyancy Plane Properties')
+        next unless input
+        op = 'MSPhysics Buoyancy - Edit Plane Properties'
+        Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+        MSPhysics.set_attribute(buoyancy_planes, 'MSPhysics Buoyancy Plane', 'Density', AMS.clamp(input[0].to_f, 0.001, nil))
+        MSPhysics.set_attribute(buoyancy_planes, 'MSPhysics Buoyancy Plane', 'Viscosity', AMS.clamp(input[1].to_f, 0, 1))
+        model.commit_operation
+      }
+    end
+  }
+
+  # Create Plugin Menus
+  plugin_menu = UI.menu('Plugins').add_submenu('MSPhysics')
+
+  item = plugin_menu.add_item('Export Replay to Images') {
+    MSPhysics::Replay.export_to_images
+  }
+  plugin_menu.set_validation_proc(item) {
+    MSPhysics::Replay.active_data_valid? ? MF_ENABLED : MF_GRAYED
+  }
+
+  item = plugin_menu.add_item('Export Replay to SKP') {
+    MSPhysics::Replay.export_to_skp
+  }
+  plugin_menu.set_validation_proc(item) {
+    MSPhysics::Replay.active_data_valid? ? MF_ENABLED : MF_GRAYED
+  }
+
+  item = plugin_menu.add_item('Export Replay to KT') {
+    MSPhysics::Replay.export_to_kt
+  }
+  plugin_menu.set_validation_proc(item) {
+    MSPhysics::Replay.active_data_valid? ? MF_ENABLED : MF_GRAYED
+  }
+
+  plugin_menu.add_separator
+
+  plugin_menu.add_item('Create Buoyancy Plane'){
+    default = MSPhysics::DEFAULT_BUOYANCY_PLANE_SETTINGS
+    prompts = ['Density (kg/m³)', 'Viscosity (0.0 - 1.0)']
+    defaults = [default[:density], default[:viscosity]]
+    input = UI.inputbox(prompts, defaults, 'Buoyancy Plane Properties')
+    next unless input
+    model = Sketchup.active_model
+    op = 'MSPhysics Buoyancy - Create Plane'
+    Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+    mat = model.materials[default[:material_name]]
+    unless mat
+      mat = model.materials.add(default[:material_name])
+      mat.color = default[:color]
+      mat.alpha = default[:alpha]
+    end
+    group = model.entities.add_group
+    s = default[:plane_size] * 0.5
+    group.entities.add_face([-s*0.5, -s*0.5, 0], [s*0.5, -s*0.5, 0], [s*0.5, s*0.5, 0], [-s*0.5, s*0.5, 0])
+    group.material = mat
+    density = AMS.clamp(input[0].to_f, 0.001, nil)
+    viscosity = AMS.clamp(input[1].to_f, 0, 1)
+    group.set_attribute('MSPhysics', 'Type', 'Buoyancy Plane')
+    group.set_attribute('MSPhysics Buoyancy Plane', 'Density', density)
+    group.set_attribute('MSPhysics Buoyancy Plane', 'Viscosity', viscosity)
+    model.commit_operation
+  }
+
+  plugin_menu.add_separator
+
+  plugin_menu.add_item('Delete All Attributes'){
+    msg = "This option removes all MSPhysics assigned properties and scripts.\n"
+    msg << "Do you want to proceed?"
+    choice = UI.messagebox(msg, MB_YESNO)
+    if choice == IDYES
+      model = Sketchup.active_model
+      op = 'MSPhysics - Delete All Attributes'
+      Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+      MSPhysics.delete_all_attributes
+      model.commit_operation
+    end
+  }
+
+  plugin_menu.add_item('Purge Unused'){
+    model = Sketchup.active_model
+    op = 'MSPhysics - Purge Unused'
+    Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+    model.definitions.purge_unused
+    model.materials.purge_unused
+    model.layers.purge_unused
+    model.styles.purge_unused
+    model.commit_operation
+  }
+
+  plugin_menu.add_item('About'){
+    msg = "MSPhysics #{MSPhysics::VERSION} -- #{MSPhysics::RELEASE_DATE}\n"
+    msg << "Powered by the Newton Dynamics #{MSPhysics::Newton.get_version} physics SDK by Juleo Jerez.\n"
+    msg << "Copyright MIT © 2015, Anton Synytsia\n"
+    UI.messagebox(msg)
+  }
+
+  file_loaded(__FILE__)
+end

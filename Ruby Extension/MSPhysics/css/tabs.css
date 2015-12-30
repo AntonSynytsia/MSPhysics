@@ -1,0 +1,61 @@
+/*----- Tabs -----*/
+.tabs {
+  display: relative;
+}
+
+/*----- Tab Links -----*/
+/* Clearfix */
+.tab-links:after {
+  display: block;
+  clear: both;
+  content: '';
+}
+
+.tab-links li {
+  margin: 0em 0.5em;
+  float: left;
+  list-style: none;
+}
+
+.tab-links a {
+  padding: 0.5em 1.0em;
+  display: inline-block;
+  border-radius: 0.5em 0.5em 0em 0em;
+  border: 1px solid #303030;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  background: #303030;
+  font-size: 1.2em;
+  font-weight: normal;
+  color: #FFF;
+  transition: all linear 0.30s;
+  text-decoration: none;
+}
+
+.tab-links a:hover {
+  background: #8923B3;
+  border: 1px solid #8923B3;
+  text-decoration: none;
+}
+
+li.active a, li.active a:hover {
+  background: #8923B3;
+  border: 1px solid #8923B3;
+}
+
+/*----- Content of Tabs -----*/
+.tab-content {
+  padding: 1.0em;
+  border-radius: 0.5em;
+  border: none;
+  background-color: #F5F5F5;
+  color: #0A0A0A;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+.tab {
+  display: none;
+}
+
+.tab.active {
+  display: block;
+}
