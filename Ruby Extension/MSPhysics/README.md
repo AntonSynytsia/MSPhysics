@@ -1,5 +1,10 @@
 [Homepage](http://sketchucation.com/forums/viewtopic.php?f=323&t=56852)
 
+[GitHub](https://github.com/AntonSynytsia/MSPhysics)
+
+[Documentation](http://www.rubydoc.info/github/AntonSynytsia/MSPhysics)
+
+
 ##Overview
 
 MSPhysics is a physics simulation tool similar to SketchyPhysics. Unlike,
