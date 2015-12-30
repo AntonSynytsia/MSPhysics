@@ -2,7 +2,7 @@
 
 [GitHub](https://github.com/AntonSynytsia/MSPhysics)
 
-[Documentation](http://www.rubydoc.info/github/AntonSynytsia/MSPhysics)
+[Documentation](http://www.rubydoc.info/github/AntonSynytsia/MSPhysics/index)
 
 
 ##Overview
