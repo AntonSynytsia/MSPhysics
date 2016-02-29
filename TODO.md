@@ -18,39 +18,43 @@
     * http://newtondynamics.com/forum/viewtopic.php?f=9&t=8668
 - A dialog to set body mass and volume.
 - Check which functions to add from LazyScript.
-- Add body scaling feature.
 - Handle flat and empty collisions for compound from mesh.
 - Add MSPhysics functions to Ace text editor if possible.
 - Add advanced explosion function.
 - Add particle effects
-- Add animation tool
 - Add JoyStick to controller, serial port, and sliders dialog.
-- Add joints
 - Rename functions so they are easy to use.
-- Update joint connection tool icon.
 - Modify joint models and their icons.
-- Add watermark text component.
-- Update pick and drag tool.
-- Allow settings gravity, force, velocity, omega, and other using 3 numeric
-  parameters, rather than requiring an Array.
 - Compound from convex decomposition doesn't generate right when scaled.
-- Repack MSPhysics music and script to reduce size.
-- Make sure invalidate world is enabled.
-- Make threads compatible on Windows 10.
-- Make a Mac OS X compatible project.
+~ Repack MSPhysics music and script to reduce size.
 - Split documentation functions into groups.
 ~ Add JointCollection dialog
 - Camera follow doesn't work when zooming out or orbiting camera using smooth zoom.
-- Body.#get_point_velocity might not be working right.
 - Add feature to create material, assign it to multiple bodies and edit it once.
 - Add GitHub theme to MSPhysics script.
 - Add angle/distance units.
 - Add BodyContext, JointContext. Rename all functions for simpler usage.
-- Improve the add_note function. Use custom watermark.
 - Add collision up vector feature.
-- Check if motor damp is supposed to be in degrees.
-- Make sure camera follow maintains camera perspective.
-- Make sure camera follow body can be deselected by user.
+- Add camera follow in scene.
+- Spring joints lock up when pass the limit.
+- Find entity by name
+- check point velocity.
+- avoid processing static and non-dynamic bodies in add_fluid_resistance.
+- add viscosity parameter to add_fluid_resistance.
+- fix noncollision and continuous collision bug.
+- Make replay compatible with LightUp, Vray, Twilight, and Thea Render
+- Save replay data into model info.
+- Separate simulation and simulation tool into separate classes.
+- Finish all joints.
+- Work on slider controller.
+- Add feature to assign names to joints.
+- Make the joints dialog to display connected joints and bodies.
+- Add curve joint
+- Add plane joint
+- Add joystick controller
+- Update cursors
+- Update joint icons
+- Work on ball & socket, universal, and corkscrew joints.
 
 Newton Joint    MSP Joint
 front           right

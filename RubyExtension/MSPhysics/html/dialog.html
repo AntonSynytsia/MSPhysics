@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!doctype html>
 <html lang="en">
   <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
@@ -14,9 +14,10 @@
 	<script type="text/javascript" src="../js/chosen.js"></script>
 	<script type="text/javascript" src="../js/ace/ace.js">charset="utf-8"></script>
 	<script type="text/javascript" src="../js/ace/ext-statusbar.js"></script>
+	<script type="text/javascript" src="../js/ace/ext-old_ie.js"></script>
 	<script type="text/javascript" src="../js/dialog.js"></script>
   </head>
-  <body scroll="no">
+  <body id="body" scroll="no">
 	<div class="tabs">
 	  <ul class="tab-links">
 		<li class="active"><a href="#tab1">Simulation</a></li>
@@ -67,24 +68,24 @@
 			</table>
 		  </div>
 		  <div class="column2">
-			<h3>Speed</h3>
-			<select id="simulation-update_timestep" data-placeholder="Speed" class="chosen-select-no-single drop-down">
-			  <option value="30">Double</option>
-			  <option value="60">Normal</option>
-			  <option value="120">x 1/2</option>
-			  <option value="180">x 1/3</option>
-			  <option value="240">x 1/4</option>
-			  <option value="300">x 1/5</option>
-			  <option value="360">x 1/6</option>
-			  <option value="420">x 1/7</option>
-			  <option value="480">x 1/8</option>
-			  <option value="540">x 1/9</option>
-			  <option value="600">x 1/10</option>
-			  <option value="720">x 1/12</option>
-			  <option value="840">x 1/14</option>
-			  <option value="960">x 1/16</option>
-			  <option value="1080">x 1/18</option>
-			  <option value="1200">x 1/20</option>
+			<h3>Update Timestep</h3>
+			<select id="simulation-update_timestep" data-placeholder="Update Timestep" class="chosen-select-no-single drop-down">
+			  <option value="30">Double (1/30)</option>
+			  <option value="60">Normal (1/60)</option>
+			  <option value="120">x 1/2 (1/120)</option>
+			  <option value="180">x 1/3 (1/180)</option>
+			  <option value="240">x 1/4 (1/240)</option>
+			  <option value="300">x 1/5 (1/300)</option>
+			  <option value="360">x 1/6 (1/360)</option>
+			  <option value="420">x 1/7 (1/420)</option>
+			  <option value="480">x 1/8 (1/480)</option>
+			  <option value="540">x 1/9 (1/540)</option>
+			  <option value="600">x 1/10 (1/600)</option>
+			  <option value="720">x 1/12 (1/720)</option>
+			  <option value="840">x 1/14 (1/840)</option>
+			  <option value="960">x 1/16 (1/960)</option>
+			  <option value="1080">x 1/18 (1/1080)</option>
+			  <option value="1200">x 1/20 (1/1200)</option>
 			</select>
 			<div class="vertical_spacing"></div>
 			<h3>Solver Model</h3>
@@ -103,6 +104,7 @@
 			  <option value="12">Iterative 12 Passes</option>
 			  <option value="16">Iterative 16 Passes</option>
 			  <option value="32">Iterative 32 Passes</option>
+			  <option value="48">Iterative 48 Passes</option>
 			  <option value="64">Iterative 64 Passes</option>
 			</select>
 			<div class="vertical_spacing"></div>
@@ -122,7 +124,7 @@
 				<td><label for="simulation-material_thickness">Material Thickness</label></td>
 				<td><input id="simulation-material_thickness" class="custom-text numeric-input" type="text"></input></td>
 			  </tr>
-			  <tr title="Set update rate. Body transforamtions and viewport are updated every n frames.">
+			  <tr title="Set the number of times to update newton world per frame, a values between 1 and 100. An update rate of three, for example, will update the world three times every frame, increasing simulation speed by three times.">
 				<td><label for="simulation-update_rate">Update Rate</label></td>
 				<td><input id="simulation-update_rate" class="custom-text fixnum-input" type="text"></input></td>
 			  </tr>
@@ -198,6 +200,14 @@
 				  <td><label for="body-enable_gravity">Enable Gravity</label></td>
 				  <td><input id="body-enable_gravity" type="checkbox"></input></td>
 				</tr>
+				<tr title="Enable/Disable thruster.">
+				  <td><label for="body-enable_thruster">Enable Thruster</label></td>
+				  <td><input id="body-enable_thruster" type="checkbox"></input></td>
+				</tr>
+				<tr title="Enable/Disable emitter.">
+				  <td><label for="body-enable_emitter">Enable Emitter</label></td>
+				  <td><input id="body-enable_emitter" type="checkbox"></input></td>
+				</tr>
 			  </table>
 			</div>
 			<div class="column2">
@@ -257,7 +267,7 @@
 			  <h3>Thruster</h3>
 			  <table class="long-table">
 				<tr title="A numeric or directional impulse in Newton-seconds. Passing a numeric value will apply force along Z_AXIS. Passing a Vector3d or an Array object will apply force along the direction of a vector.">
-				  <td><label for="body-thruster_controller">Controller</label></td>
+				  <td><label for="body-thruster_controller">Controller</label></th>
 				  <td><input id="body-thruster_controller" class="custom-text controller-input" type="text"></input></td>
 				</tr>
 				<tr title="Whether to assume impulse with respect to body axis.">
@@ -307,10 +317,96 @@
 			<p>Body script cannot be edited while simulation is running.</p>
 		  </div>
 		  <div id="tab3-content" style="display: none;">
+			<div align="center">
+			  <table class="opts_table">
+				<tr>
+				  <td><p>Theme</p></td>
+				  <td><select id="editor-theme" data-placeholder="Theme" class="chosen-select-no-single drop-down" style="width: 18em;">
+					<optgroup label="Light">
+					  <option value="chrome">Chrome</option>
+					  <option value="clouds">Clouds</option>
+					  <option value="crimson_editor">Crimson Editor</option>
+					  <option value="dawn">Dawn</option>
+					  <option value="dreamweaver">Dreamweaver</option>
+					  <option value="eclipse">Eclipse</option>
+					  <option value="github">Github</option>
+					  <option value="iplastic">iPlastic</option>
+					  <option value="katzenmilch">KatzenMilch</option>
+					  <option value="kuroir">Kuroir</option>
+					  <option value="msphysics_light">MSPhysics Light</option>
+					  <option value="pastel_on_light">Pastel on Light</option>
+					  <option value="solarized_light">Solarized Light</option>
+					  <option value="sqlserver">SQL Server</option>
+					  <option value="textmate">Textmate</option>
+					  <option value="tomorrow">Tomorrow</option>
+					  <option value="xcode">Xcode</option>
+					</optgroup>
+					<optgroup label="Dark">
+					  <option value="ambiance">Ambiance</option>
+					  <option value="chaos">Chaos</option>
+					  <option value="clouds_midnight">Clouds Midnight</option>
+					  <option value="cobalt">Cobalt</option>
+					  <option value="idle_fingers">Idle Fingers</option>
+					  <option value="kr_theme">KR Theme</option>
+					  <option value="merbivore">Merbivore</option>
+					  <option value="merbivore_soft">Merbivore Soft</option>
+					  <option value="mono_industrial">Mono Industrial</option>
+					  <option value="monokai">Monokai</option>
+					  <option value="msphysics_dark">MSPhysics Dark</option>
+					  <option value="notepad">Notepad</option>
+					  <option value="pastel_on_dark">Pastel on Dark</option>
+					  <option value="solarized_dark">Solarized Dark</option>
+					  <option value="terminal">Terminal</option>
+					  <option value="tomorrow_night">Tomorrow Night</option>
+					  <option value="tomorrow_night_blue">Tomorrow Night Blue</option>
+					  <option value="tomorrow_night_bright">Tomorrow Night Bright</option>
+					  <option value="tomorrow_night_eighties">Tomorrow Night 80s</option>
+					  <option value="twilight">Twilight</option>
+					  <option value="vibrant_ink">Vibrant Ink</option>
+					</optgroup>
+				  </select></td>
+				  <td class="horizontal_spacing" />
+				  <td><p>Soft Wrap</p></td>
+				  <td><select id="editor-wrap" data-placeholder="Wrap" class="chosen-select-no-single drop-down" style="width: 6em;">
+					<option value="off">Off</option>
+					<option value="40">40</option>
+					<option value="80">80</option>
+					<option value="120">120</option>
+					<option value="free">Free</option>
+				  </select></td>
+				  <td class="horizontal_spacing" />
+				  <td><p>Font Size</p></td>
+				  <td><select id="editor-font" data-placeholder="Font" class="chosen-select-no-single drop-down" style="width: 5em;">
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="16">16</option>
+					<option value="18">18</option>
+					<option value="20">20</option>
+					<option value="22">22</option>
+					<option value="24">24</option>
+					<option value="26">26</option>
+					<option value="28">28</option>
+					<option value="36">36</option>
+					<option value="48">48</option>
+					<option value="72">72</option>
+				  </select></td>
+				  <td class="horizontal_spacing" />
+				  <td><label for="editor-read_only">Read Only</label></td>
+				  <td><input id="editor-read_only" type="checkbox"></input></td>
+				</tr>
+			  </table>
+			</div>
 			<pre class="center"><a href="http://www.rubydoc.info/github/AntonSynytsia/MSPhysics/master/index" target="_blank">MSPhysics</a> | <a href="http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/index" target="_blank">AMS Library</a> | <a href="http://www.sketchup.com/intl/en/developer/" target="_blank">SketchUp API</a> | <a href="ruby_core" target="_blank">Ruby Core</a></pre>
 			<textarea id="temp_script_area" rows="1" cols="20" style="display: none;"></textarea>
 			<div id="editor"></div>
-			<div id="status-bar">Powered by <a href="http://ace.c9.io/#nav=about" target="_blank">Ace</a></div>
+			<pre id="status-bar">Powered by <a href="http://ace.c9.io/#nav=about" target="_blank">Ace</a>	 Display Shortcuts: Ctrl+Alt+H</pre>
 		  </div>
 		</div>
 
@@ -321,7 +417,7 @@
 		  </div>
 		  <div id="tab4-general">
 			<h1>General Properties</h1>
-			<p class="description">Note: Joints behave the best when solver model is exact.</p>
+			<p class="description">Joints are the most robust on exact solver or on iterative solver with 64 passes.</p>
 			<table class="long-table">
 			  <tr>
 				<td><h3>Constraint Type</h3>
@@ -354,14 +450,6 @@
 				<td><label for="joint-bodies_collidable">Connected Collide</label></td>
 				<td><input id="joint-bodies_collidable" type="checkbox"></input></td>
 			  </tr>
-			  <tr title="Enable/Disable support constraints. Support constraints are additional joints created on either side, along Z-AXIS, of a main joint.">
-				<td><label for="joint-enable_support_constraints">Enable Support Constraints</label></td>
-				<td><input id="joint-enable_support_constraints" type="checkbox"></input></td>
-			  </tr>
-			  <tr title="Set distance in meters, along Z-AXIS of main joint, from main joint to one of the support constraints.">
-				<td><label for="joint-support_constraint_distance">Support Constraint Distance</label></td>
-				<td><input id="joint-support_constraint_distance" class="custom-text numeric-input" type="text"></input></td>
-			  </tr>
 			</table>
 		  </div>
 		  <div id="tab4-fixed">
@@ -371,8 +459,11 @@
 		  </div>
 		  <div id="tab4-hinge">
 			<h1>Hinge</h1>
-			<p class="description">The start angle can be modified by a controller. The actual starting angle, in degrees, is:</p>
-			<p class="formula">actual_start_angle = start_angle • controller</p>
+			<p>Hinge joint has two modes:</p>
+			<ol style="position:relative;padding-left:2em;" type="1">
+			  <li class="description"><b>Friction mode:</b> Hinge with rotational friction. Use the <em2>Friction</em2> parameter to adjust rotational friction. The <em2>Controller</em2> parameter can be used to amplify/reduce frictional strength. Actual friction is <em1>friction • controller</em1>. Disable the <em2>Rotate Back</em2> feature to use this mode.</li>
+			  <li class="description"><b>Spring mode:</b> Hinge that rotates back to the desired starting angle. Use <em2>Stiff</em2> and <em2>Damp</em2> parameters to control spring acceleration and strength. Use <em2>Start Angle</em2> parameter to preset the desired starting angle. The <em2>Controller</em2> parameter can be used to modify the starting angle. The actual starting angle, in degrees, is <em1>start_angle • controller</em1>. Enable the <em2>Rotate Back</em2> feature to use this mode.</li>
+			</ol>
 			<table class="long-table">
 			  <tr title="Set minimum angle in degrees with respect to the starting angle.">
 				<td><label for="hinge-min">Min</label></td>
@@ -386,27 +477,27 @@
 				<td><label for="hinge-enable_limits">Enable Limits</label></td>
 				<td><input id="hinge-enable_limits" type="checkbox"></input></td>
 			  </tr>
-			  <tr title="Set rotational stiffness, a value greater than or equal to zero. Higher stiffness makes rotation stronger.">
+			  <tr title="Set rotational friction, a value greater than or equal to zero. Note: This feature has an effect only if 'rotate back' is disabled.">
+				<td><label for="hinge-friction">Friction</label></td>
+				<td><input id="hinge-friction" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set rotational stiffness, a value greater than or equal to zero. Higher stiffness makes rotation stronger. Note: This feature has an effect only if 'rotate back' is enabled.">
 				<td><label for="hinge-stiff">Stiff</label></td>
 				<td><input id="hinge-stiff" class="custom-text numeric-input" type="text"></input></td>
 			  </tr>
-			  <tr title="Set rotational damper, a value greater than or equal to zero. Higher damper makes rotation slower.">
+			  <tr title="Set rotational damper, a value greater than or equal to zero. Higher damper makes rotation slower. Note: This feature has an effect only if 'rotate back' is enabled.">
 				<td><label for="hinge-damp">Damp</label></td>
 				<td><input id="hinge-damp" class="custom-text numeric-input" type="text"></input></td>
-			  </tr>
-			  <tr title="Enable/Disable rotational stiffness and damper.">
-				<td><label for="hinge-enable_damper">Enable Damper</label></td>
-				<td><input id="hinge-enable_damper" type="checkbox"></input></td>
-			  </tr>
-			  <tr title="Enable/Disable a feature to rotate back to a starting angle.">
-				<td><label for="hinge-enable_rotate_back">Enable Rotate Back</label></td>
-				<td><input id="hinge-enable_rotate_back" type="checkbox"></input></td>
 			  </tr>
 			  <tr title="Set starting angle in degrees. Note: Actual starting angle is start_angle • controller.">
 				<td><label for="hinge-start_angle">Start Angle</label></td>
 				<td><input id="hinge-start_angle" class="custom-text numeric-input" type="text"></input></td>
 			  </tr>
-			  <tr title="Set hinge controller, magnitude and direction of the starting angle. Note: Actual starting angle is start_angle • controller.">
+			  <tr title="Enable/Disable a feature to rotate back to a starting angle.">
+				<td><label for="hinge-enable_rotate_back">Rotate Back</label></td>
+				<td><input id="hinge-enable_rotate_back" type="checkbox"></input></td>
+			  </tr>
+			  <tr title="Set hinge controller, magnitude of the rotational friction or magnitude and direction of the starting angle.">
 				<td><label for="hinge-controller">Controller</label></td>
 				<td><input id="hinge-controller" class="custom-text controller-input" type="text"></input></td>
 			  </tr>
@@ -414,18 +505,17 @@
 		  </div>
 		  <div id="tab4-motor">
 			<h1>Motor</h1>
-			<p class="description">Maximum angular rate, in degrees per second, can be determined with this formula:</p>
-			<p class="formula">max_angular_rate = accel • controller / damp</p>
+			<p class="description">The maximum angular rate, in radians per second, is <em1>accel • controller / damp<em1>.</p>
 			<table class="long-table">
-			  <tr title="Set angular acceleration in degrees per second per second. Note: Actual acceleration is accel • controller.">
+			  <tr title="Set angular acceleration in radians per second per second, a numeric value greater than or equal to zero. Note: Actual acceleration is accel • controller.">
 				<td><label for="motor-accel">Accel</label></td>
 				<td><input id="motor-accel" class="custom-text numeric-input" type="text"></input></td>
 			  </tr>
-			  <tr title="Set angular damper.">
+			  <tr title="Set angular damper, a numeric value greater than or equal to zero. Higher damper makes rotation slower.">
 				<td><label for="motor-damp">Damp</label></td>
 				<td><input id="motor-damp" class="custom-text numeric-input" type="text"></input></td>
 			  </tr>
-			  <tr title="Enable/Disable free rotate. This feature disables angular deceleration when acceleration or magnitude of angular acceleration is set to zero.">
+			  <tr title="Enable/Disable free rotate. This feature disables angular deceleration when acceleration or magnitude of angular acceleration is set to zero, that is when accel • controller is zero.">
 				<td><label for="motor-enable_free_rotate">Free Rotate</label></td>
 				<td><input id="motor-enable_free_rotate" type="checkbox"></input></td>
 			  </tr>
@@ -437,6 +527,7 @@
 		  </div>
 		  <div id="tab4-servo">
 			<h1>Servo</h1>
+			<p class="description">The maximum angular rate, in radians per second, is <em1>accel / damp<em1>.</p>
 			<table class="long-table">
 			  <tr title="Set minimum angle in degrees.">
 				<td><label for="servo-min">Min</label></td>
@@ -450,13 +541,17 @@
 				<td><label for="servo-enable_limits">Enable Limits</label></td>
 				<td><input id="servo-enable_limits" type="checkbox"></input></td>
 			  </tr>
-			  <tr title="Set maximum angular rate in degrees per second, a value greater than or equal to zero.">
-				<td><label for="servo-angular_rate">Angular Rate</label></td>
-				<td><input id="servo-angular_rate" class="custom-text numeric-input" type="text"></input></td>
+			  <tr title="Set angular acceleration in radians per second per second, a numeric value greater than or equal to zero.">
+				<td><label for="servo-accel">Accel</label></td>
+				<td><input id="servo-accel" class="custom-text numeric-input" type="text"></input></td>
 			  </tr>
-			  <tr title="Set maximum angular acceleration in degrees per second per second, a value greater than or equal to zero.">
-				<td><label for="servo-max_accel">Max Accel</label></td>
-				<td><input id="servo-max_accel" class="custom-text numeric-input" type="text"></input></td>
+			  <tr title="Set angular damper, a numeric value greater than or equal to zero. Higher damper makes rotation slower.">
+				<td><label for="servo-damp">Damp</label></td>
+				<td><input id="servo-damp" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set angular reduction ratio, a numeric value between 0.0 and 1.0. This features reduces angular rate when current angle nears the desired angle in order to achieve a smooth stop. A value of 0.0 will disable angular reduction. A value of greater than zero will enable angular reduction and will act accordingly, based on the ratio. A typical reduction ratio is 0.1.">
+				<td><label for="servo-reduction_ratio">Reduction Ratio</label></td>
+				<td><input id="servo-reduction_ratio" class="custom-text numeric-input" type="text"></input></td>
 			  </tr>
 			  <tr title="Set servo controller, desired angle in degrees. Pass nil to 'turn off' the servo.">
 				<td><label for="servo-controller">Controller</label></td>
@@ -479,17 +574,9 @@
 				<td><label for="slider-enable_limits">Enable Limits</label></td>
 				<td><input id="slider-enable_limits" type="checkbox"></input></td>
 			  </tr>
-			  <tr title="Set movement stiffness, a value greater than or equal to zero. Higher stiffness makes movement stronger.">
-				<td><label for="slider-stiff">Stiff</label></td>
-				<td><input id="slider-stiff" class="custom-text numeric-input" type="text"></input></td>
-			  </tr>
-			  <tr title="Set movement damper, a value greater than or equal to zero. Higher damper makes movement slower.">
-				<td><label for="slider-damp">Damp</label></td>
-				<td><input id="slider-damp" class="custom-text numeric-input" type="text"></input></td>
-			  </tr>
-			  <tr title="Enable/Disable movement stiffness and damper.">
-				<td><label for="slider-enable_damper">Enable Damper</label></td>
-				<td><input id="slider-enable_damper" type="checkbox"></input></td>
+			  <tr title="Set movement friction, a value greater than or equal to zero.">
+				<td><label for="slider-friction">Friction</label></td>
+				<td><input id="slider-friction" class="custom-text numeric-input" type="text"></input></td>
 			  </tr>
 			</table>
 		  </div>
@@ -508,15 +595,19 @@
 				<td><label for="piston-enable_limits">Enable Limits</label></td>
 				<td><input id="piston-enable_limits" type="checkbox"></input></td>
 			  </tr>
-			  <tr title="Set maximum linear rate in meters per second, a value greater than or equal to zero.">
+			  <tr title="Set desired linear rate in meters per second, a value greater than or equal to zero.">
 				<td><label for="piston-linear_rate">Linear Rate</label></td>
 				<td><input id="piston-linear_rate" class="custom-text numeric-input" type="text"></input></td>
 			  </tr>
-			  <tr title="Set maximum linear acceleration in meters per second per second, a value greater than or equal to zero.">
-				<td><label for="piston-max_accel">Max Accel</label></td>
-				<td><input id="piston-max_accel" class="custom-text numeric-input" type="text"></input></td>
+			  <tr title="Set power-to-mass ratio. A strength of 0.0 represents infinite power. The actuals power in Joules per second can be determined by multiplying strength with the mass of a connected body.">
+				<td><label for="piston-strength">Strength</label></td>
+				<td><input id="piston-strength" class="custom-text numeric-input" type="text"></input></td>
 			  </tr>
-			  <tr title="Set piston controller, desired position in meters. Pass nil to 'turn off' the servo.">
+			  <tr title="Set linear reduction ratio, a numeric value between 0.0 and 1.0. This features reduces linear rate when current position nears the desired position in order to achieve a smooth stop. A value of 0.0 will disable linear reduction. A value of greater than zero will enable linear reduction and will act accordingly, based on the ratio. A typical reduction ratio is 0.1.">
+				<td><label for="piston-reduction_ratio">Reduction Ratio</label></td>
+				<td><input id="piston-reduction_ratio" class="custom-text numeric-input" type="text"></input></td>
+			  </tr>
+			  <tr title="Set piston controller, desired position in meters. Pass nil to 'turn off' the piston.">
 				<td><label for="piston-controller">Controller</label></td>
 				<td><input id="piston-controller" class="custom-text controller-input" type="text"></input></td>
 			  </tr>
@@ -524,8 +615,7 @@
 		  </div>
 		  <div id="tab4-spring">
 			<h1>Spring</h1>
-			<p class="description">The start position can be modified by a controller. The actual starting position, in meters, is:</p>
-			<p class="formula">actual_start_position = start_position • controller</p>
+			<p class="description">The starting position can be modified by a controller. The actual starting position, in meters, is <em1>start_position • controller</em1>.</p>
 			<table class="long-table">
 			  <tr title="Set minimum position in meters with respect to the starting position.">
 				<td><label for="spring-min">Min</label></td>
@@ -618,10 +708,11 @@
 		</div>
 
 		<div id="tab5" class="tab">
-		  <p class="description bold">Supported music formats:</p>
-		  <p class="description">Microsoft WAVE (.wav), AIFF (.aiff), RIFF (.riff), Ogg Vorbis (.ogg), Creative Labs VOC (.voc), MikMod (.mod .s3m .it .xm), and FLAC (.flac).</p>
-		  <p class="description bold">Supported sound formats:</p>
-		  <p class="description">Microsoft WAVE (.wav), AIFF (.aiff), RIFF (.riff), Ogg Vorbis (.ogg), and Creative Labs VOC (.voc).</p>
+		  <p class="description"><em1>Frequency: 22050 KHz, 16 bit samples</em1></p>
+		  <p class="description"><b>Supported music formats:</b></p>
+		  <p class="description">Microsoft WAVE (.wav), RIFF (.riff), AIFF (.aiff), Ogg Vorbis (.ogg), Creative Labs VOC (.voc), MikMod (.mod .xm .s3m .it .669 .med), FLAC (.flac), MP3, and MIDI (.mid).</p>
+		  <p class="description"><b>Supported sound formats:</b></p>
+		  <p class="description">Microsoft WAVE (.wav), RIFF (.riff), AIFF (.aiff), Ogg Vorbis (.ogg), Creative Labs VOC (.voc), and MP3.</p>
 		  <table class="center">
 			<tr>
 			  <td><p class="title">Embedded Sounds List</p></td>
@@ -631,8 +722,8 @@
 			</tr>
 			<tr>
 			  <td>
-				<p class="important">Caution!</p>
-				<p class="description clear">Be sure to save before using these buttons as there is potential for a crash.</p>
+				<p class="description"><em3>Caution!<em3></p>
+				<p class="description"><em4>Be sure to save before using these buttons as there is potential for a crash.</em4></p>
 			  </td>
 			</tr>
 			<tr>

@@ -5,7 +5,7 @@
 #   http://sketchucation.com/forums/viewtopic.php?f=323&t=56852
 #
 # Overview
-#   MSPhysics is a physics simulation tool similar to SketchyPhysics. Unlike,
+#   MSPhysics is a physics simulation tool similar to SketchyPhysics. Unlike
 #   SketchyPhysics, MSPhysics has a far more advanced scripting API. When it
 #   came to creating FPS type games in SP, scripters were limited to having
 #   control over user input. Scripters had to add extra work-around code in
@@ -29,23 +29,23 @@
 #   - MSPhysics Toolbars
 #
 # Compatibility and Requirements
-#   - Microsoft Windows XP, Vista, 7, or 8.
+#   - Microsoft Windows XP, Vista, 7, 8, or 10.
 #     This plugin will not work on Mac OS X as many of the techniques and
 #     features are achieved via the Windows API.
-#   - SketchUp 6 or later.
-#   - AMS Library 3.0.0 or later.
+#   - SketchUp 6 or later. SU2016 64bit is recommended!
+#   - AMS Library 3.2.0 or later.
 #
 # Version
-#   - MSPhysics 0.3.0
+#   - MSPhysics 0.4.0
 #   - NewtonDynamics 3.14
-#   - SDL 1.2.15
-#   - SDL_mixer 1.2.12
+#   - SDL 2.0.4
+#   - SDL_mixer 2.0.1
 #
 # Release Date
-#   December 30, 2015
+#   February 28, 2016
 #
 # Licence
-#   MIT © 2015, Anton Synytsia
+#   MIT © 2015 - 2016, Anton Synytsia
 #
 # Credits
 #   - Juleo Jerez for the NewtonDynamics physics engine.
@@ -84,9 +84,9 @@ end
 # Load and verify AMS Library.
 begin
   require 'ams_Lib/main.rb'
-  raise 'Outdated library!' if AMS::Lib::VERSION.to_f < 3.0
+  raise 'Outdated library!' if AMS::Lib::VERSION.to_f < 3.2
 rescue StandardError, LoadError
-  msg = "'MSPhysics' extension requires AMS Library version 3.0.0 or later! "
+  msg = "'MSPhysics' extension requires AMS Library version 3.2.0 or later! "
   msg << "This extension will not work without the library installed. "
   msg << "Would you like to get to the library's download page?"
   load_me = false
@@ -101,8 +101,8 @@ if load_me
   module MSPhysics
 
     NAME         = 'MSPhysics'.freeze
-    VERSION      = '0.3.0'.freeze
-    RELEASE_DATE = 'December 30, 2015'.freeze
+    VERSION      = '0.4.0'.freeze
+    RELEASE_DATE = 'February 28, 2016'.freeze
 
     # Create the extension.
     @extension = SketchupExtension.new NAME, 'MSPhysics/main.rb'
@@ -112,7 +112,7 @@ if load_me
     # Attach some nice info.
     @extension.description = desc
     @extension.version     = VERSION
-    @extension.copyright   = 'Anton Synytsia © 2015'
+    @extension.copyright   = 'Anton Synytsia © 2015 - 2016'
     @extension.creator     = 'Anton Synytsia (anton.synytsia@gmail.com)'
 
     # Register and load the extension on start-up.

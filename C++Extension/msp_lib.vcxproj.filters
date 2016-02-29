@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+	<ClCompile Include="NewtonDynamics\newton\Newton.cpp">
+	  <Filter>Newton</Filter>
+	</ClCompile>
+	<ClCompile Include="NewtonDynamics\newton\NewtonClass.cpp">
+	  <Filter>Newton</Filter>
+	</ClCompile>
+	<ClCompile Include="Source\msp_lib.cpp" />
+	<ClCompile Include="Source\msp_util.cpp" />
+	<ClCompile Include="Source\msp_newton.cpp" />
+	<ClCompile Include="Source\msp_world.cpp" />
+	<ClCompile Include="Source\msp_collision.cpp" />
+	<ClCompile Include="Source\msp_body.cpp" />
+	<ClCompile Include="Source\msp_bodies.cpp" />
+	<ClCompile Include="Source\msp_joint.cpp" />
+	<ClCompile Include="Source\msp_joint_ball_and_socket.cpp"><Filter>Joints</Filter></ClCompile>
+	<ClCompile Include="Source\msp_joint_corkscrew.cpp"><Filter>Joints</Filter></ClCompile>
+	<ClCompile Include="Source\msp_joint_fixed.cpp"><Filter>Joints</Filter></ClCompile>
+	<ClCompile Include="Source\msp_joint_hinge.cpp"><Filter>Joints</Filter></ClCompile>
+	<ClCompile Include="Source\msp_joint_motor.cpp"><Filter>Joints</Filter></ClCompile>
+	<ClCompile Include="Source\msp_joint_piston.cpp"><Filter>Joints</Filter></ClCompile>
+	<ClCompile Include="Source\msp_joint_servo.cpp"><Filter>Joints</Filter></ClCompile>
+	<ClCompile Include="Source\msp_joint_slider.cpp"><Filter>Joints</Filter></ClCompile>
+	<ClCompile Include="Source\msp_joint_spring.cpp"><Filter>Joints</Filter></ClCompile>
+	<ClCompile Include="Source\msp_joint_universal.cpp"><Filter>Joints</Filter></ClCompile>
+	<ClCompile Include="Source\msp_joint_up_vector.cpp"><Filter>Joints</Filter></ClCompile>
+	<ClCompile Include="Source\msp_sdl.cpp" />
+	<ClCompile Include="Source\msp_sdl_mixer.cpp" />
+	<ClCompile Include="Source\msp_sound.cpp" />
+	<ClCompile Include="Source\msp_music.cpp" />
+	<ClCompile Include="Source\angular_integration.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+	<ClInclude Include="NewtonDynamics\newton\NewtonStdAfx.h">
+	  <Filter>Newton</Filter>
+	</ClInclude>
+	<ClInclude Include="NewtonDynamics\newton\Newton.h">
+	  <Filter>Newton</Filter>
+	</ClInclude>
+	<ClInclude Include="NewtonDynamics\newton\NewtonClass.h">
+	  <Filter>Newton</Filter>
+	</ClInclude>
+	<ClInclude Include="Source\ruby_util.h" />
+	<ClInclude Include="Source\msp_util.h" />
+	<ClInclude Include="Source\msp_newton.h" />
+	<ClInclude Include="Source\msp_world.h" />
+	<ClInclude Include="Source\msp_collision.h" />
+	<ClInclude Include="Source\msp_body.h" />
+	<ClInclude Include="Source\msp_bodies.h" />
+	<ClInclude Include="Source\msp_joint.h" />
+	<ClInclude Include="Source\msp_joint_ball_and_socket.h"><Filter>Joints</Filter></ClInclude>
+	<ClInclude Include="Source\msp_joint_corkscrew.h"><Filter>Joints</Filter></ClInclude>
+	<ClInclude Include="Source\msp_joint_fixed.h"><Filter>Joints</Filter></ClInclude>
+	<ClInclude Include="Source\msp_joint_hinge.h"><Filter>Joints</Filter></ClInclude>
+	<ClInclude Include="Source\msp_joint_motor.h"><Filter>Joints</Filter></ClInclude>
+	<ClInclude Include="Source\msp_joint_piston.h"><Filter>Joints</Filter></ClInclude>
+	<ClInclude Include="Source\msp_joint_servo.h"><Filter>Joints</Filter></ClInclude>
+	<ClInclude Include="Source\msp_joint_slider.h"><Filter>Joints</Filter></ClInclude>
+	<ClInclude Include="Source\msp_joint_spring.h"><Filter>Joints</Filter></ClInclude>
+	<ClInclude Include="Source\msp_joint_universal.h"><Filter>Joints</Filter></ClInclude>
+	<ClInclude Include="Source\msp_joint_up_vector.h"><Filter>Joints</Filter></ClInclude>
+	<ClInclude Include="Source\msp_sdl.h" />
+	<ClInclude Include="Source\msp_sdl_mixer.h" />
+	<ClInclude Include="Source\msp_sound.h" />
+	<ClInclude Include="Source\msp_music.h" />
+	<ClInclude Include="Source\angular_integration.h" />
+  </ItemGroup>
+  <ItemGroup>
+	<None Include="Source\RubyExtension.def" />
+  </ItemGroup>
+  <ItemGroup>
+	<Filter Include="Newton"></Filter>
+	<Filter Include="Joints"></Filter>
+  </ItemGroup>
+</Project>

@@ -148,15 +148,15 @@ module MSPhysics
     #   @raise [TypeError] if the specified transformation matrix is not acceptable.
     def initialize(*args)
       if args.size != 3
-        raise(ArgumentError, "Expected 3 parameters, but got #{args.size}.", caller)
+        raise(ArgumentError, "Wrong number of arguments! Expected 3 arguments, but got #{args.size}.", caller)
       end
       if args[0].is_a?(MSPhysics::World)
         MSPhysics::World.validate(args[0])
         MSPhysics::Collision.validate_entity(args[1])
-        @_entity = args[1]
+        @_group = args[1]
         @_collision_shape = args[2].to_s.downcase.gsub(' ', '_')
-        collision = MSPhysics::Collision.create(args[0], @_entity, @_collision_shape)
-        @_address = MSPhysics::Newton::Body.create_dynamic(args[0].get_address, collision, @_entity.transformation)
+        collision = MSPhysics::Collision.create(args[0], @_group, @_collision_shape)
+        @_address = MSPhysics::Newton::Body.create_dynamic(args[0].get_address, collision, @_group.transformation, args[0].get_default_material_id)
         MSPhysics::Newton::Collision.destroy(collision)
       else
         # Create a clone of an existing body.
@@ -167,11 +167,11 @@ module MSPhysics
         @_address = MSPhysics::Newton::Body.copy(args[0].get_address, args[1], args[2])
         @_collision_shape = args[0].get_collision_shape
         definition = MSPhysics::Group.get_definition(args[0].get_group)
-        @_entity = Sketchup.active_model.entities.add_instance(definition, MSPhysics::Newton::Body.get_matrix(@_address))
-        @_entity.material = args[0].get_group.material
+        @_group = Sketchup.active_model.entities.add_instance(definition, MSPhysics::Newton::Body.get_matrix(@_address))
+        @_group.material = args[0].get_group.material
       end
       destructor = Proc.new {
-        @_entity = nil
+        @_group = nil
         @_events.clear
       }
       MSPhysics::Newton::Body.set_destructor_proc(@_address, destructor)
@@ -238,6 +238,21 @@ module MSPhysics
       MSPhysics::Newton::World.get_user_data(world_address)
     end
 
+    # Get contact material id.
+    # @return [Fixnum]
+    def get_material_id
+      Body.validate(self)
+      MSPhysics::Newton::Body.get_material_id(@_address)
+    end
+
+    # Set contact material id.
+    # @param [Fixnum] id
+    # @return [Fixnum]
+    def set_material_id(id)
+      Body.validate(self)
+      MSPhysics::Newton::Body.set_material_id(@_address, id)
+    end
+
     # Get an address of the collision associated with the body.
     # @return [Fixnum]
     def get_collision_address
@@ -256,7 +271,7 @@ module MSPhysics
     # @return [Sketchup::Group, Sketchup::ComponentInstance]
     def get_group
       Body.validate(self)
-      @_entity
+      @_group
     end
 
     # Destroy the body.
@@ -265,7 +280,7 @@ module MSPhysics
     # @return [nil]
     def destroy(erase_entity = false)
       Body.validate(self)
-      @_entity.erase! if @_entity.valid? && erase_entity
+      @_group.erase! if @_group.valid? && erase_entity
       MSPhysics::Newton::Body.destroy(@_address)
     end
 
@@ -335,65 +350,8 @@ module MSPhysics
     def set_matrix(matrix)
       Body.validate(self)
       res = MSPhysics::Newton::Body.set_matrix(@_address, matrix)
-      @_entity.move!(self.get_matrix) if @_entity.valid?
+      @_group.move!(MSPhysics::Newton::Body.get_matrix(@_address)) if @_group.valid?
       res
-    end
-
-    # Get global linear velocity of the body.
-    # @return [Geom::Vector3d] The magnitude is in meters per second.
-    def get_velocity
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_velocity(@_address)
-    end
-
-    # Set global linear velocity of the body.
-    # @param [Geom::Vector3d, Array<Numeric>] velocity The magnitude is assumed
-    #   in meters per second.
-    # @return [Geom::Vector3d] The newly assigned velocity.
-    def set_velocity(velocity)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_velocity(@_address, velocity)
-    end
-
-    # Get global angular velocity of the body.
-    # Each value of omega represents angular velocity in radians per second.
-    # For example, if omega of a body is (0,0,PI) it means that body rotates
-    # along ZAXIS at a speed of 360 degrees every second. One second is equal to
-    # 60 frames at normal simulation speed.
-    # @return [Geom::Vector3d]
-    def get_omega
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_omega(@_address)
-    end
-
-    # Set global angular velocity of the body.
-    # @param [Geom::Vector3d, Array<Numeric>] omega
-    # @return [Geom::Vector3d] The newly assigned omega.
-    def set_omega(omega)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_omega(@_address, omega)
-    end
-
-    # Get centre of mass of the body.
-    # @note Centre of mass is returned in body coordinates. See example below to
-    #   get centre of mass in global space. You can also use {#get_position}
-    #   function.
-    # @example Getting centre of mass in global space.
-    #   centre = body.get_cetre_of_mass.transform( body.get_matrix )
-    #
-    # @return [Geom::Point3d]
-    def get_centre_of_mass
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_centre_of_mass(@_address)
-    end
-
-    # Set centre of mass of the body.
-    # @param [Geom::Point3d, Array<Numeric>] centre New centre of mass in body's
-    #   local coordinates.
-    # @return [Geom::Point3d] The newly assigned centre of mass.
-    def set_centre_of_mass(centre)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_centre_of_mass(@_address, centre)
     end
 
     # Get body position.
@@ -407,16 +365,174 @@ module MSPhysics
     end
 
     # Set body position.
-    # @param [Geom::Point3d, Array<Numeric>] position
-    #   * 0 - set global position of the body's origin.
-    #   * 1 - set global position of the body's centre of mass.
-    # @param [Fixnum] mode
+    # @overload set_position(position, mode = 0)
+    #   @param [Geom::Point3d, Array<Numeric>] position A point in global space.
+    #   @param [Fixnum] mode
+    #     * 0 - reposition body origin to a desired location in global space.
+    #     * 1 - reposition body centre of mass to a desired location in global
+    #       space.
+    # @overload set_position(px, py, pz, mode = 0)
+    #   @param [Numeric] px X position in global space.
+    #   @param [Numeric] py Y position in global space.
+    #   @param [Numeric] pz Z position in global space.
+    #   @param [Fixnum] mode
+    #     * 0 - reposition body origin to a desired location in global space.
+    #     * 1 - reposition body centre of mass to a desired location in global
+    #       space.
     # @return [Geom::Point3d] The newly assigned position.
-    def set_position(position, mode = 0)
+    def set_position(*args)
       Body.validate(self)
-      res = MSPhysics::Newton::Body.set_position(@_address, position, mode.to_i)
-      @_entity.move!(self.get_matrix) if @_entity.valid?
+      mode = 0
+      if args.size == 4
+        point = [args[0], args[1], args[2]]
+        mode = args[3]
+      elsif args.size == 3
+        point = [args[0], args[1], args[2]]
+      elsif args.size == 2
+        point = args[0]
+        mode = args[3]
+      elsif args.size == 1
+        point = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1..4 arguments, but got #{args.size}.", caller)
+      end
+      res = MSPhysics::Newton::Body.set_position(@_address, point, mode)
+      @_group.move!(MSPhysics::Newton::Body.get_matrix(@_address)) if @_group.valid?
       res
+    end
+
+    # Get body orientation in form of the unit quaternion.
+    # @return [Array<Numeric>] An array of four numeric values:
+    #   +[q0, q1, q2, q3]+ - +[x,y,z,w]+.
+    def get_rotation
+      Body.validate(self)
+      MSPhysics::Newton::Body.get_rotation(@_address)
+    end
+
+    # Get body orientation in form of the three Euler angles.
+    # @return [Geom::Vector3d] An vector of three Euler angles expressed in
+    #   radians: +(roll, yaw, pitch)+.
+    def get_euler_angles
+      Body.validate(self)
+      MSPhysics::Newton::Body.get_euler_angles(@_address)
+    end
+
+    # Set body orientation via the three Euler angles.
+    # @note The angles are assumed in radians.
+    # @overload set_euler_angles(angles)
+    #   @param [Geom::Vector3d, Array<Numeric>] angles A vector representing the
+    #     roll, yaw, and pitch Euler angles in radians.
+    # @overload set_euler_angles(roll, yaw, pitch)
+    #   @param [Numeric] roll
+    #   @param [Numeric] yaw
+    #   @param [Numeric] pitch
+    # @return [Geom::Vector3d] The newly assigned Euler angles.
+    def set_euler_angles(*args)
+      Body.validate(self)
+      if args.size == 3
+        data = [args[0], args[1], args[2]]
+      elsif args.size == 1
+        data = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+      end
+      res = MSPhysics::Newton::Body.set_euler_angles(@_address, data)
+      @_group.move!(MSPhysics::Newton::Body.get_matrix(@_address)) if @_group.valid?
+      res
+    end
+
+    # Get global linear velocity of the body.
+    # @return [Geom::Vector3d] The magnitude of the velocity vector is
+    #   represented in meters per second.
+    def get_velocity
+      Body.validate(self)
+      MSPhysics::Newton::Body.get_velocity(@_address)
+    end
+
+    # Set global linear velocity of the body.
+    # @overload set_velocity(velocity)
+    #   @param [Geom::Vector3d, Array<Numeric>] velocity The magnitude of the
+    #     velocity vector is assumed in meters per second.
+    # @overload set_velocity(vx, vy, vz)
+    #   @param [Numeric] vx Velocity in meters per second along xaxis.
+    #   @param [Numeric] vy Velocity in meters per second along yaxis.
+    #   @param [Numeric] vz Velocity in meters per second along zaxis.
+    # @return [Geom::Vector3d] The newly assigned velocity vector.
+    def set_velocity(*args)
+      Body.validate(self)
+      if args.size == 3
+        data = [args[0], args[1], args[2]]
+      elsif args.size == 1
+        data = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+      end
+      MSPhysics::Newton::Body.set_velocity(@_address, data)
+    end
+
+    # Get global angular velocity of the body.
+    # @example
+    #   Each value of the omega vector represents angular velocity in radians
+    #   per second along xaxis, yaxis, or zaxis in global space. For example, if
+    #   omega of a body is (0,0,PI), it means that the body rotates along zaxis
+    #   in global space at an angular velocity of 360 degrees per second.
+    # @return [Geom::Vector3d] The magnitude of the omega vector is represented
+    #   in radians per second.
+    def get_omega
+      Body.validate(self)
+      MSPhysics::Newton::Body.get_omega(@_address)
+    end
+
+    # Set global angular velocity of the body.
+    # @overload set_omega(omega)
+    #   @param [Geom::Vector3d, Array<Numeric>] omega The magnitude of the omega
+    #     vector is assumed in radians per second.
+    # @overload set_omega(vx, vy, vz)
+    #   @param [Numeric] vx Omega in radians per second along xaxis.
+    #   @param [Numeric] vy Omega in radians per second along yaxis.
+    #   @param [Numeric] vz Omega in radians per second along zaxis.
+    # @return [Geom::Vector3d] The newly assigned omega vector.
+    def set_omega(*args)
+      Body.validate(self)
+      if args.size == 3
+        data = [args[0], args[1], args[2]]
+      elsif args.size == 1
+        data = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+      end
+      MSPhysics::Newton::Body.set_omega(@_address, data)
+    end
+
+    # Get centre of mass of the body in local coordinates.
+    # @example Getting centre of mass in global space.
+    #   centre = body.get_cetre_of_mass.transform( body.get_matrix )
+    # @return [Geom::Point3d]
+    # @see {#get_position}
+    def get_centre_of_mass
+      Body.validate(self)
+      MSPhysics::Newton::Body.get_centre_of_mass(@_address)
+    end
+
+    # Set centre of mass of the body in local coordinates.
+    # @overload set_centre_of_mass(centre)
+    #   @param [Geom::Point3d, Array<Numeric>] centre A point is assumed in body
+    #     coordinates.
+    # @overload set_velocity(px, py, pz)
+    #   @param [Numeric] px X position in local space.
+    #   @param [Numeric] py Y position in local space.
+    #   @param [Numeric] pz Z position in local space.
+    # @return [Geom::Point3d] The newly assigned centre of mass.
+    def set_centre_of_mass(*args)
+      Body.validate(self)
+      if args.size == 3
+        data = [args[0], args[1], args[2]]
+      elsif args.size == 1
+        data = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+      end
+      MSPhysics::Newton::Body.set_centre_of_mass(@_address, data)
     end
 
     # Get body mass in kilograms (kg).
@@ -427,28 +543,30 @@ module MSPhysics
     end
 
     # Set body mass in kilograms (kg).
+    # @note Mass and density are correlated. If you change mass the density will
+    #   automatically be recalculated.
     # @param [Numeric] mass
     # @return [Numeric] The newly assigned mass.
     def set_mass(mass)
       Body.validate(self)
-      MSPhysics::Newton::Body.set_mass(@_address, mass.to_f)
+      MSPhysics::Newton::Body.set_mass(@_address, mass)
     end
 
-    # Get body density in kilograms per cubic meter (kg/m^3).
+    # Get body density in kilograms per cubic meter (kg / m^3).
     # @return [Numeric]
     def get_density
       Body.validate(self)
       MSPhysics::Newton::Body.get_density(@_address)
     end
 
-    # Set body density in kilograms per cubic meter (kg/m^3).
-    # @note Density and mass are connected. If you change density the mass will
+    # Set body density in kilograms per cubic meter (kg / m^3).
+    # @note Density and mass are correlated. If you change density the mass will
     #   automatically be recalculated.
     # @param [Numeric] density
     # @return [Numeric] The newly assigned density.
     def set_density(density)
       Body.validate(self)
-      MSPhysics::Newton::Body.set_density(@_address, density.to_f)
+      MSPhysics::Newton::Body.set_density(@_address, density)
     end
 
     # Get body volume in cubic meters (m^3).
@@ -459,7 +577,7 @@ module MSPhysics
     end
 
     # Set body volume in cubic meters (m^3).
-    # @note Volume and mass are connected. If you change volume the mass will
+    # @note Volume and mass are correlated. If you change volume the mass will
     #   automatically be recalculated.
     # @param [Numeric] volume
     # @return [Numeric] The newly assigned volume.
@@ -468,7 +586,15 @@ module MSPhysics
       MSPhysics::Newton::Body.set_volume(@_address, volume.to_f)
     end
 
-    # Determine if body is static.
+    # Reset/recalculate body volume and mass.
+    # @param [Numeric] density
+    # @return [Boolean] success
+    def reset_mass_properties(density)
+      Body.validate(self)
+      MSPhysics::Newton::Body.reset_mass_properties(@_address, density.to_f)
+    end
+
+    # Determine whether body is static.
     # @return [Boolean]
     def is_static?
       Body.validate(self)
@@ -484,7 +610,7 @@ module MSPhysics
       MSPhysics::Newton::Body.set_static(@_address, state)
     end
 
-    # Determine if body is collidable.
+    # Determine whether body is collidable.
     # @return [Boolean]
     def is_collidable?
       Body.validate(self)
@@ -500,7 +626,7 @@ module MSPhysics
       MSPhysics::Newton::Body.set_collidable(@_address, state)
     end
 
-    # Determine if body is frozen.
+    # Determine whether body is frozen.
     # @return [Boolean]
     def is_frozen?
       Body.validate(self)
@@ -516,7 +642,7 @@ module MSPhysics
       MSPhysics::Newton::Body.set_frozen(@_address, state)
     end
 
-    # Determine if body is sleeping. Sleeping bodies are bodies at rest.
+    # Determine whether body is sleeping. Sleeping bodies are bodies at rest.
     # @return [Boolean]
     def is_sleeping?
       Body.validate(self)
@@ -556,7 +682,7 @@ module MSPhysics
       MSPhysics::Newton::Body.set_auto_sleep_state(@_address, state)
     end
 
-    # Determine if this body is non-collidable with a particular body.
+    # Determine whether this body is non-collidable with a particular body.
     # @param [Body] body The body to test.
     # @return [Boolean] +true+ if this body is non-collidable with the given
     #   body, +false+ if this body is collidable with the given body.
@@ -603,25 +729,25 @@ module MSPhysics
       MSPhysics::Newton::Body.get_elasticity(@_address)
     end
 
-    # Set body coefficient of restitution - bounciness - rebound ratio. A
-    # basketball has a rebound ratio of 0.83. This means the new height of a
-    # basketball is 83% of original height within each bounce.
-    # @param [Numeric] coefficient This value is clamped between 0.01 and 2.00.
-    # @return [Numeric] The newly assigned coefficient.
+    # Set body coefficient of restitution - bounciness - rebound ratio.
+    # @example A basketball has a rebound ratio of 0.83. This means the new
+    #   height of a basketball is 83% of original height within each bounce.
+    # @param [Numeric] coefficient A value between 0.01 and 2.00.
+    # @return [Numeric] The newly assigned coefficient ratio.
     def set_elasticity(coefficient)
       Body.validate(self)
       MSPhysics::Newton::Body.set_elasticity(@_address, coefficient.to_f)
     end
 
-    # Get softness coefficient of the body's contact.
-    # @return [Numeric] A value between 0.01 and 2.00.
+    # Get contact softness coefficient of the body.
+    # @return [Numeric] A value between 0.01 and 1.00.
     def get_softness
       Body.validate(self)
       MSPhysics::Newton::Body.get_softness(@_address)
     end
 
-    # Set softness coefficient of the body's contact.
-    # @param [Numeric] coefficient This value is clamped between 0.01 and 2.00.
+    # Set contact softness coefficient of the body.
+    # @param [Numeric] coefficient A value between 0.01 and 1.00.
     # @return [Numeric] The newly assigned coefficient.
     def set_softness(coefficient)
       Body.validate(self)
@@ -636,7 +762,7 @@ module MSPhysics
     end
 
     # Set static friction coefficient of the body.
-    # @param [Numeric] coefficient This value is clamped between 0.01 and 2.00.
+    # @param [Numeric] coefficient A value between 0.01 and 2.00.
     # @return [Numeric] The newly assigned coefficient.
     def set_static_friction(coefficient)
       Body.validate(self)
@@ -651,7 +777,7 @@ module MSPhysics
     end
 
     # Set dynamic friction coefficient of the body.
-    # @param [Numeric] coefficient This value is clamped between 0.01 and 2.00.
+    # @param [Numeric] coefficient A value between 0.01 and 2.00.
     # @return [Numeric] The newly assigned coefficient.
     def set_dynamic_friction(coefficient)
       Body.validate(self)
@@ -711,15 +837,15 @@ module MSPhysics
       MSPhysics::Newton::Body.set_magnet_range(@_address, range.to_f)
     end
 
-    # Determine if body is magnetic.
+    # Determine whether body is magnetic.
     # @return [Boolean]
     def is_magnetic?
       Body.validate(self)
       MSPhysics::Newton::Body.is_magnetic?(@_address)
     end
 
-    # Set body magnetic. Magnetic bodies will be affected by the bodies with a
-    # magnet impulse.
+    # Set body magnetic. Magnetic bodies will be affected by other bodies with
+    # magnetism.
     # @param [Boolean] state +true+ to set body magnetic, +false+ to set body
     #   non-magnetic.
     # @return [Boolean] The newly assigned state.
@@ -733,7 +859,7 @@ module MSPhysics
     def get_bounding_box
       Body.validate(self)
       bb = Geom::BoundingBox.new
-      bb.add( MSPhysics::Newton::Body.get_aabb(@_address) )
+      bb.add MSPhysics::Newton::Body.get_aabb(@_address)
       bb
     end
 
@@ -763,12 +889,24 @@ module MSPhysics
     end
 
     # Set the angular viscous damping coefficient applied to the body.
-    # @param [Geom::Vector3d, Array<Numeric>] damp Each axis is to represent a
-    #   coefficient value between 0.0 and 1.0.
+    # @overload set_angular_damping(damp)
+    #   @param [Geom::Vector3d, Array<Numeric>] damp Each value of the damp
+    #     vector is assumed as an angular coefficient, a value b/w 0.0 and 1.0.
+    # @overload set_angular_damping(dx, dy, dz)
+    #   @param [Numeric] dx Xaxis damping coefficient, a value b/w 0.0 and 1.0.
+    #   @param [Numeric] dy Yaxis damping coefficient, a value b/w 0.0 and 1.0.
+    #   @param [Numeric] dz Zaxis damping coefficient, a value b/w 0.0 and 1.0.
     # @return [Geom::Vector3d] The newly assigned angular damping.
-    def set_angular_damping(damp)
+    def set_angular_damping(*args)
       Body.validate(self)
-      MSPhysics::Newton::Body.set_angular_damping(@_address, damp)
+      if args.size == 3
+        data = [args[0], args[1], args[2]]
+      elsif args.size == 1
+        data = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+      end
+      MSPhysics::Newton::Body.set_angular_damping(@_address, data)
     end
 
     # Get velocity at a specific point on the body.
@@ -803,15 +941,18 @@ module MSPhysics
       MSPhysics::Newton::Body.add_impulse(@_address, center, delta_vel)
     end
 
-    # Get the net force applied to the body.
-    # @return [Geom::Vector3d] The magnitude of force is retrieved in newtons
-    #   (kg*m/s/s).
+    # @!group Force Control Functions
+
+    # Get the net force, in Newtons, applied on the body after the last world
+    # update.
+    # @return [Geom::Vector3d]
     def get_force
       Body.validate(self)
       MSPhysics::Newton::Body.get_force(@_address)
     end
 
-    # Get the force applied to the body.
+    # Get the net force, in Newtons, applied on the body on the last world
+    # update.
     # @return [Geom::Vector3d] The magnitude of force is retrieved in newtons
     #   (kg*m/s/s).
     def get_force_acc
@@ -819,53 +960,256 @@ module MSPhysics
       MSPhysics::Newton::Body.get_force_acc(@_address)
     end
 
-    # Add the net force applied to the body.
-    # @param [Geom::Vector3d, Array<Numeric>] force The magnitude of force is
-    #   assumed in newtons (kg*m/s/s).
+    # Apply force on the body in Newtons (kg * m/s/s).
+    # @note The {#add_force} applies force on an object for one world update.
+    #   For example, if the world update rate is 3, i.e if world updates 3 times
+    #   per frame, the force accumulated by the {#add_force} function will be
+    #   applied on the first update but not on the consequent two updates. Use
+    #   the {#add_force2} function to apply force throughout the whole world
+    #   update rate.
+    # @note Unlike the {#set_force}, this function doesn't overwrites original
+    #   force, but rather adds force to the force accumulator.
+    # @overload add_force(force)
+    #   @param [Geom::Vector3d, Array<Numeric>] force
+    # @overload add_force(fx, fy, fz)
+    #   @param [Numeric] fx
+    #   @param [Numeric] fy
+    #   @param [Numeric] fz
     # @return [Boolean] success
-    def add_force(force)
+    # @see {#add_force2}
+    def add_force(*args)
       Body.validate(self)
-      MSPhysics::Newton::Body.add_force(@_address, force)
+      if args.size == 3
+        data = [args[0], args[1], args[2]]
+      elsif args.size == 1
+        data = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+      end
+      MSPhysics::Newton::Body.add_force(@_address, data)
     end
 
-    # Set the net force applied to the body.
-    # @param [Geom::Vector3d, Array<Numeric>] force The magnitude of force is
-    #   assumed in newtons (kg*m/s/s).
+    # Apply force on the body in Newtons (kg * m/s/s).
+    # @note The {#add_force} applies force on an object for one world update.
+    #   For example, if the world update rate is 3, i.e if world updates 3 times
+    #   per frame, the force accumulated by the {#add_force} function will be
+    #   applied on the first update but not on the consequent two updates. Use
+    #   the {#add_force2} function to apply force throughout the whole world
+    #   update rate.
+    # @note Unlike the {#set_force}, this function doesn't overwrites original
+    #   force, but rather adds force to the force accumulator.
+    # @overload add_force2(force)
+    #   @param [Geom::Vector3d, Array<Numeric>] force
+    # @overload add_force2(fx, fy, fz)
+    #   @param [Numeric] fx
+    #   @param [Numeric] fy
+    #   @param [Numeric] fz
     # @return [Boolean] success
-    def set_force(force)
+    # @see {#add_force}
+    def add_force2(*args)
       Body.validate(self)
-      MSPhysics::Newton::Body.set_force(@_address, force)
+      if args.size == 3
+        data = [args[0], args[1], args[2]]
+      elsif args.size == 1
+        data = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+      end
+      MSPhysics::Newton::Body.add_force2(@_address, data)
     end
 
-    # Get the net torque applied to the body.
+    # Apply force on the body in Newton (kg * m/s/s).
+    # @note The {#set_force} applies force on an object for one world update.
+    #   For example, if the world update rate is 3, i.e if world updates 3 times
+    #   per frame, the force accumulated by the {#set_force} function will be
+    #   applied on the first update but not on the consequent two updates. Use
+    #   the {#set_force2} function to apply force throughout the whole world
+    #   update rate.
+    # @note Unlike the {#add_force}, this function overwrites original force,
+    #   thus discarding the previously applied force.
+    # @overload set_force(force)
+    #   @param [Geom::Vector3d, Array<Numeric>] force
+    # @overload set_force(fx, fy, fz)
+    #   @param [Numeric] fx
+    #   @param [Numeric] fy
+    #   @param [Numeric] fz
+    # @return [Boolean] success
+    # @see {#set_force2}
+    def set_force(*args)
+      Body.validate(self)
+      if args.size == 3
+        data = [args[0], args[1], args[2]]
+      elsif args.size == 1
+        data = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+      end
+      MSPhysics::Newton::Body.set_force(@_address, data)
+    end
+
+    # Apply force on the body in Newton (kg * m/s/s).
+    # @note The {#set_force} applies force on an object for one world update.
+    #   For example, if the world update rate is 3, i.e if world updates 3 times
+    #   per frame, the force accumulated by the {#set_force} function will be
+    #   applied on the first update but not on the consequent two updates. Use
+    #   the {#set_force2} function to apply force throughout the whole world
+    #   update rate.
+    # @note Unlike the {#add_force}, this function overwrites original force,
+    #   thus discarding the previously applied force.
+    # @overload set_force2(force)
+    #   @param [Geom::Vector3d, Array<Numeric>] force
+    # @overload set_force2(fx, fy, fz)
+    #   @param [Numeric] fx
+    #   @param [Numeric] fy
+    #   @param [Numeric] fz
+    # @return [Boolean] success
+    # @see {#set_force}
+    def set_force2(*args)
+      Body.validate(self)
+      if args.size == 3
+        data = [args[0], args[1], args[2]]
+      elsif args.size == 1
+        data = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+      end
+      MSPhysics::Newton::Body.set_force2(@_address, data)
+    end
+
+    # Get the net torque, in Newton-meters, applied on the body after the last
+    # world update.
     # @return [Geom::Vector3d]
     def get_torque
       Body.validate(self)
       MSPhysics::Newton::Body.get_torque(@_address)
     end
 
-    # Get the torque applied to the body.
+    # Get the net torque, in Newton-meters, applied on the body on the last
+    # world update.
     # @return [Geom::Vector3d]
     def get_torque_acc
       Body.validate(self)
       MSPhysics::Newton::Body.get_torque_acc(@_address)
     end
 
-    # Add the net torque applied to the body.
-    # @param [Geom::Vector3d, Array<Numeric>] torque
+    # Apply torque on the body in Newton-meters (kg * m/s/s * m).
+    # @note The {#add_torque} applies torque on an object for one world update.
+    #   For example, if the world update rate is 3, i.e if world updates 3 times
+    #   per frame, the torque accumulated by the {#add_torque} function will be
+    #   applied on the first update but not on the consequent two updates. Use
+    #   the {#add_torque2} function to apply torque throughout the whole world
+    #   update rate.
+    # @note Unlike the {#set_torque}, this function doesn't overwrites original
+    #   torque, but rather adds torque to the torque accumulator.
+    # @overload add_torque(torque)
+    #   @param [Geom::Vector3d, Array<Numeric>] torque
+    # @overload add_torque(tx, ty, tz)
+    #   @param [Numeric] tx
+    #   @param [Numeric] ty
+    #   @param [Numeric] tz
     # @return [Boolean] success
-    def add_torque(torque)
+    # @see {#add_torque2}
+    def add_torque(*args)
       Body.validate(self)
-      MSPhysics::Newton::Body.add_torque(@_address, torque)
+      if args.size == 3
+        data = [args[0], args[1], args[2]]
+      elsif args.size == 1
+        data = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+      end
+      MSPhysics::Newton::Body.add_torque(@_address, data)
     end
 
-    # Set the net torque applied to the body.
-    # @param [Geom::Vector3d, Array<Numeric>] torque
+    # Apply torque on the body in Newton-meters (kg * m/s/s * m).
+    # @note The {#add_torque} applies torque on an object for one world update.
+    #   For example, if the world update rate is 3, i.e if world updates 3 times
+    #   per frame, the torque accumulated by the {#add_torque} function will be
+    #   applied on the first update but not on the consequent two updates. Use
+    #   the {#add_torque2} function to apply torque throughout the whole world
+    #   update rate.
+    # @note Unlike the {#set_torque}, this function doesn't overwrites original
+    #   torque, but rather adds torque to the torque accumulator.
+    # @overload add_torque2(torque)
+    #   @param [Geom::Vector3d, Array<Numeric>] torque
+    # @overload add_torque2(tx, ty, tz)
+    #   @param [Numeric] tx
+    #   @param [Numeric] ty
+    #   @param [Numeric] tz
     # @return [Boolean] success
-    def set_torque(torque)
+    # @see {#add_torque}
+    def add_torque2(*args)
       Body.validate(self)
-      MSPhysics::Newton::Body.set_torque(@_address, torque)
+      if args.size == 3
+        data = [args[0], args[1], args[2]]
+      elsif args.size == 1
+        data = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+      end
+      MSPhysics::Newton::Body.add_torque2(@_address, data)
     end
+
+    # Apply torque on the body in Newton-meters (kg * m/s/s * m).
+    # @note The {#set_torque} applies torque on an object for one world update.
+    #   For example, if the world update rate is 3, i.e if world updates 3 times
+    #   per frame, the torque accumulated by the {#set_torque} function will be
+    #   applied on the first update but not on the consequent two updates. Use
+    #   the {#set_torque2} function to apply torque throughout the whole world
+    #   update rate.
+    # @note Unlike the {#add_torque}, this function overwrites original torque,
+    #   thus discarding the previously applied torque.
+    # @overload set_torque(torque)
+    #   @param [Geom::Vector3d, Array<Numeric>] torque
+    # @overload set_torque(tx, ty, tz)
+    #   @param [Numeric] tx
+    #   @param [Numeric] ty
+    #   @param [Numeric] tz
+    # @return [Boolean] success
+    # @see {#set_torque2}
+    def set_torque(*args)
+      Body.validate(self)
+      if args.size == 3
+        data = [args[0], args[1], args[2]]
+      elsif args.size == 1
+        data = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+      end
+      MSPhysics::Newton::Body.set_torque(@_address, data)
+    end
+
+    # Apply torque on the body in Newton-meters (kg * m/s/s * m).
+    # @note The {#set_torque} applies torque on an object for one world update.
+    #   For example, if the world update rate is 3, i.e if world updates 3 times
+    #   per frame, the torque accumulated by the {#set_torque} function will be
+    #   applied on the first update but not on the consequent two updates. Use
+    #   the {#set_torque2} function to apply torque throughout the whole world
+    #   update rate.
+    # @note Unlike the {#add_torque}, this function overwrites original torque,
+    #   thus discarding the previously applied torque.
+    # @overload set_torque2(torque)
+    #   @param [Geom::Vector3d, Array<Numeric>] torque
+    # @overload set_torque2(tx, ty, tz)
+    #   @param [Numeric] tx
+    #   @param [Numeric] ty
+    #   @param [Numeric] tz
+    # @return [Boolean] success
+    # @see {#set_torque}
+    def set_torque2(*args)
+      Body.validate(self)
+      if args.size == 3
+        data = [args[0], args[1], args[2]]
+      elsif args.size == 1
+        data = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+      end
+      MSPhysics::Newton::Body.set_torque2(@_address, data)
+    end
+
+    # @!endgroup
+    # @!group Contact Related Functions
 
     # Get total force generated from contacts on the body.
     # @return [Geom::Vector3d] Magnitude of the net force is retrieved in
@@ -929,34 +1273,7 @@ module MSPhysics
       MSPhysics::Newton::Body.get_contact_points(@_address, inc_non_collidable)
     end
 
-    # Get body orientation in form of the unit quaternion.
-    # @return [Array<Numeric>] An array of four numeric values:
-    #   +[q0, q1, q2, q3]+ - +[x,y,z,w]+.
-    def get_rotation
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_rotation(@_address)
-    end
-
-    # Get body orientation in form of the three Euler angles.
-    # @return [Geom::Vector3d] An vector of three Euler angles expressed in
-    #   radians: +(roll, yaw, pitch)+.
-    def get_euler_angles
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_euler_angles(@_address)
-    end
-
-    # Set body orientation via the three Euler angles. The angles are assumed in
-    # radians.
-    # @param [Numeric] roll
-    # @param [Numeric] yaw
-    # @param [Numeric] pitch
-    # @return [Geom::Vector3d] The newly assigned Euler angles.
-    def set_euler_angles(roll, yaw, pitch)
-      Body.validate(self)
-      res = MSPhysics::Newton::Body.set_euler_angles(@_address, roll.to_f, yaw.to_f, pitch.to_f)
-      @_entity.move!(self.get_matrix) if @_entity.valid?
-      res
-    end
+    # @!endgroup
 
     # Get collision faces of the body.
     # @return [Array<Array<Geom::Point3d>>] An array of faces. Each face
@@ -966,16 +1283,67 @@ module MSPhysics
       MSPhysics::Newton::Body.get_collision_faces(@_address)
     end
 
-    # Add some buoyancy to the body.
+    # Get collision faces of the body.
+    # @return [Array<Array<(Array<Geom::Point3d>, Geom::Point3d, Geom::Vector3d, Numeric)>>]
+    #  An array of face data. Each face data contains four elements. The first
+    #  element contains the array of face vertices (sorted counterclockwise) in
+    #  global space. The second element represents face centroid in global
+    #  space. The third element represents face normal in global space. And the
+    #  last element represents face area in inches squared.
+    def get_collision_faces2
+      Body.validate(self)
+      MSPhysics::Newton::Body.get_collision_faces2(@_address)
+    end
+
+    # Get collision faces of the body.
+    # @return [Array<Array<(Geom::Point3d, Geom::Vector3d, Numeric)>>] An array
+    #  of face data. Each face data contains three elements. The first element
+    #  represents face centroid in global space. The second element represents
+    #  face normal in global space. And the last element represents face area in
+    #  inches squared.
+    def get_collision_faces3
+      Body.validate(self)
+      MSPhysics::Newton::Body.get_collision_faces3(@_address)
+    end
+
+    # Apply pick and drag on the body.
+    # @param [Geom::Point3d, Array<Numeric>] pick_pt Pick point, usually on the
+    #   surface of the body, in global space.
+    # @param [Geom::Point3d, Array<Numeric>] dest_pt Destination point in global
+    #   space.
+    # @param [Numeric] stiffness Pick and drag stiffness.
+    # @param [Numeric] damp Pick and drag damper.
+    # @return [Boolean] success
+    def apply_pick_and_drag(pick_pt, dest_pt, stiffness, damp)
+      Body.validate(self)
+      MSPhysics::Newton::Body.apply_pick_and_drag(@_address, pick_pt, dest_pt, stiffness, damp)
+    end
+
+    # Apply buoyancy on the body.
+    # @param [Geom::Point3d, Array<Numeric>] origin Plane origin.
     # @param [Geom::Vector3d, Array<Numeric>] normal Plane normal.
-    # @param [Numeric] height Plane position along Z_AXIS in inches.
+    # @param [Geom::Vector3d, Array<Numeric>] current Plane acceleration in
+    #   global space.
     # @param [Numeric] density Fluid density in kilograms per cubic meter
     #   (kg/m^3).
-    # @param [Numeric] viscosity Fluid viscosity, a value between 0.0 and 1.0.
+    # @param [Numeric] linear_viscosity Linear viscosity, a value
+    #   between 0.0 and 1.0.
+    # @param [Numeric] angular_viscosity Angular viscosity, a value
+    #   between 0.0 and 1.0.
     # @return [Boolean] success
-    def add_buoyancy(normal = Z_AXIS, height = 0, density = 997.04, viscosity = 0.01)
+    def apply_buoyancy(plane_origin, plane_normal = Z_AXIS, current = [0,0,0], density = 997.04, linear_viscosity = 0.01, angular_viscosity = 0.01)
       Body.validate(self)
-      MSPhysics::Newton::Body.add_buoyancy(@_address, normal, height.to_f, density.to_f, viscosity.to_f)
+      MSPhysics::Newton::Body.apply_buoyancy(@_address, plane_origin, plane_normal, density, linear_viscosity, angular_viscosity)
+    end
+
+    # Apply fluid resistance on a body. The resistance force and torque is based
+    # upon the body's velocity, omega, and orientation of its collision faces.
+    # @param [Numeric] density Fluid density in kg/m^3.
+    # @return [Array<(Geom::Vector3d, Geom::Vector3d)>, nil] The net force and
+    #   torque applied on the body or nil if body is static or not dynamic.
+    def apply_fluid_resistance(density = 1.225)
+      Body.validate(self)
+      MSPhysics::Newton::Body.apply_fluid_resistance(@_address, density)
     end
 
     # Create a copy of the body.
@@ -995,7 +1363,7 @@ module MSPhysics
       elsif args.size == 2
         Body.new(self, args[0], args[1])
       else
-        raise(ArgumentError, "Expected 1 or 2 parameters, but got #{args.size}.", caller)
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 2 arguments, but got #{args.size}.", caller)
       end
     end
 
@@ -1059,6 +1427,61 @@ module MSPhysics
       bodies
     end
 
+    # Get body collision scale.
+    # @note Does not include group scale.
+    # @return [Geom::Vector3d] A vector representing the xaxis, yaxis, and zaxis
+    #   scale factors of the collision.
+    def get_collision_scale
+      Body.validate(self)
+      MSPhysics::Newton::Body.get_collision_scale(@_address)
+    end
+
+    # Set body collision scale.
+    # @note Does not include group scale.
+    # @overload set_collision_scale(scale)
+    #   @param [Geom::Vector3d, Array<Numeric>] scale A vector representing
+    #     xaxis, yaxis, and zaxis scale factors of the body collision.
+    # @overload set_collision_scale(sx, sy, sz)
+    #   @param [Numeric] sx Scale along the xaxis of the body, a value between
+    #     0.01 and 100.
+    #   @param [Numeric] sy Scale along the yaxis of the body, a value between
+    #     0.01 and 100.
+    #   @param [Numeric] sz Scale along the zaxis of the body, a value between
+    #     0.01 and 100.
+    # @return [Geom::Vector3d] A vector representing the new xaxis, yaxis, and
+    #   zaxis scale factors of the body collision.
+    def set_collision_scale(*args)
+      Body.validate(self)
+      if args.size == 3
+        data = [args[0], args[1], args[2]]
+      elsif args.size == 1
+        data = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+      end
+      res = MSPhysics::Newton::Body.set_collision_scale(@_address, data)
+      @_group.move!(MSPhysics::Newton::Body.get_matrix(@_address)) if @_group.valid?
+      res
+    end
+
+    # Get default scale of the body collision.
+    # @note Does not include group scale.
+    # @return [Geom::Vector3d] A vector representing the default xaxis, yaxis,
+    #   and zaxis scale factors of the collision.
+    def get_default_collision_scale
+      Body.validate(self)
+      MSPhysics::Newton::Body.get_default_collision_scale(@_address)
+    end
+
+    # Get scale of the body matrix that is a product of group scale and
+    # collision scale.
+    # @return [Geom::Vector3d] A vector representing the xaxis, yaxis, and zaxis
+    #   scale factors of the actual body matrix.
+    def get_actual_matrix_scale
+      Body.validate(self)
+      MSPhysics::Newton::Body.get_actual_matrix_scale(@_address)
+    end
+
     # Make the body's Z-AXIS to look in a particular direction.
     # @param [Geom::Vector3d, nil] pin_dir Direction in global space. Pass nil
     #   to disable the look at constraint.
@@ -1084,7 +1507,7 @@ module MSPhysics
       end
       pin_dir = Geom::Vector3d.new(pin_dir) unless pin_dir.is_a?(Geom::Vector3d)
       if @_look_at_constraint.nil? || !@_look_at_constraint.valid?
-        @_look_at_constraint = MSPhysics::UpVector.new(get_world, nil, Geom::Transformation.new(ORIGIN, @_entity.transformation.zaxis))
+        @_look_at_constraint = MSPhysics::UpVector.new(get_world, nil, Geom::Transformation.new(ORIGIN, @_group.transformation.zaxis))
         @_look_at_constraint.connect(self)
       end
       @_look_at_constraint.set_pin_dir(pin_dir.transform(@_look_at_constraint.get_pin_matrix.inverse))
@@ -1181,7 +1604,7 @@ module MSPhysics
         ref = e.message if !ref && e.message.include?(test)
         line = ref ? ref.split(test, 2)[1].split(':', 2)[0].to_i : nil
         msg = "#{e.class.to_s[0] =~ /a|e|i|o|u/i ? 'An' : 'A'} #{e.class} has occurred while calling body #{event} event#{line ? ', line ' + line.to_s : nil}:\n#{e.message}"
-        raise MSPhysics::ScriptException.new(msg, @_entity, line)
+        raise MSPhysics::ScriptException.new(msg, e.backtrace, @_group, line)
       end
       true
     end
@@ -1214,14 +1637,13 @@ module MSPhysics
     # Assign a block of code to the onUpdate event.
     # @yield This event is triggered every frame after the simulation starts,
     #   hence when the frame is greater than zero. Specifically, it is called
-    #   after the newton update takes place.
+    #   after the world update.
     def onUpdate(&block)
       set_proc(:onUpdate, block)
     end
 
     # Assign a block of code to the onPreUpdate event.
-    # @yield This event is triggered every frame before the newton update
-    #   occurs.
+    # @yield This event is triggered every frame prior to the world update.
     def onPreUpdate(&block)
       set_proc(:onPreUpdate, block)
     end

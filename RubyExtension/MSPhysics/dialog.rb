@@ -3,6 +3,10 @@ module MSPhysics
   # @since 1.0.0
   module Dialog
 
+    DEFAULT_THEME = 'tomorrow_night'
+    DEFAULT_FONT = 12
+    DEFAULT_WRAP = 'free'
+
     @dialog = nil
     @handle = nil
     @title = 'MSPhysics UI'
@@ -18,6 +22,9 @@ module MSPhysics
     @precision = 2
     @selected_sound = nil
     @default_sound_path = nil
+    @editor_theme = DEFAULT_THEME
+    @editor_font = DEFAULT_FONT
+    @editor_wrap = DEFAULT_WRAP
 
     class << self
 
@@ -68,11 +75,21 @@ module MSPhysics
             cmd << "editor_set_script(#{script});"
             cursor = ( eval(@selected_body.get_attribute('MSPhysics Script', 'Cursor', '[1,0]')) rescue [1,0] )
             cmd << "editor_set_cursor(#{cursor[0]}, #{cursor[1]});"
+            cmd << "window.aceEditor.setTheme('ace/theme/#{@editor_theme}');"
+            cmd << "document.getElementById('editor').style.fontSize='#{@editor_font}px';"
+            cmd << "window.aceEditor.setOption('wrap', '#{@editor_wrap}');"
+            cmd << "$('#editor-theme').val('#{@editor_theme}');"
+            cmd << "$('#editor-theme').trigger('chosen:updated');"
+            cmd << "$('#editor-font').val('#{@editor_font}');"
+            cmd << "$('#editor-font').trigger('chosen:updated');"
+            cmd << "$('#editor-wrap').val('#{@editor_wrap}');"
+            cmd << "$('#editor-wrap').trigger('chosen:updated');"
             # Display Controllers
             ['Thruster Controller', 'Emitter Controller'].each { |option|
               property = option.downcase.gsub(' ', '_')
-              script = @selected_body.get_attribute('MSPhysics Body', option, '').inspect
-              cmd << "$('#body-#{ property }').val(#{script});"
+              script = @selected_body.get_attribute('MSPhysics Body', option)
+              script = '0.0' if script.nil?
+              cmd << "$('#body-#{ property }').val(#{script.inspect});"
             }
             # Display shape
             shape = @selected_body.get_attribute('MSPhysics Body', 'Shape', default[:shape]).to_s
@@ -90,7 +107,7 @@ module MSPhysics
             cmd << "$('#body-material').val('#{material}');"
             cmd << "$('#body-material').trigger('chosen:updated');"
             # Display state and other check-box properties
-            ['Ignore', 'Collidable', 'Static', 'Frozen', 'Auto Sleep', 'Enable Friction', 'Magnetic', 'Enable Script', 'Continuous Collision', 'Enable Gravity', 'Thruster Lock Axis', 'Emitter Lock Axis'].each { |option|
+            ['Ignore', 'Collidable', 'Static', 'Frozen', 'Auto Sleep', 'Enable Friction', 'Magnetic', 'Enable Script', 'Continuous Collision', 'Enable Gravity', 'Thruster Lock Axis', 'Emitter Lock Axis', 'Enable Thruster', 'Enable Emitter'].each { |option|
               property = option.downcase.gsub(' ', '_')
               default_state = default[property.to_sym]
               state = @selected_body.get_attribute('MSPhysics Body', option, default_state) ? true : false
@@ -156,10 +173,6 @@ module MSPhysics
           cmd << "$('#joint-bodies_collidable').prop('checked', #{attr ? true : false});"
           attr = @selected_joint.get_attribute('MSPhysics Joint', 'Breaking Force', MSPhysics::Joint::DEFAULT_BREAKING_FORCE)
           cmd << "$('#joint-breaking_force').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-          attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Support Constraints', MSPhysics::Joint::DEFAULT_SC_ENABLED)
-          cmd << "$('#joint-enable_support_constraints').prop('checked', #{attr ? true : false});"
-          attr = @selected_joint.get_attribute('MSPhysics Joint', 'Support Constraint Distance', MSPhysics::Joint::DEFAULT_SC_DISTANCE)
-          cmd << "$('#joint-support_constraint_distance').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
 
           joint_type = @selected_joint.get_attribute('MSPhysics Joint', 'Type')
           case joint_type
@@ -173,12 +186,12 @@ module MSPhysics
             cmd << "$('#hinge-max').val('#{ format_value(attr.to_f, @precision) }');"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Limits', MSPhysics::Hinge::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#hinge-enable_limits').prop('checked', #{attr ? true : false});"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Friction', MSPhysics::Hinge::DEFAULT_FRICTION)
+            cmd << "$('#hinge-friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Stiff', MSPhysics::Hinge::DEFAULT_STIFF)
             cmd << "$('#hinge-stiff').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Damp', MSPhysics::Hinge::DEFAULT_DAMP)
             cmd << "$('#hinge-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Damper', MSPhysics::Hinge::DEFAULT_DAMPER_ENABLED)
-            cmd << "$('#hinge-enable_damper').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Rotate Back', MSPhysics::Hinge::DEFAULT_ROTATE_BACK_ENABLED)
             cmd << "$('#hinge-enable_rotate_back').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Start Angle', MSPhysics::Hinge::DEFAULT_START_ANGLE)
@@ -203,10 +216,12 @@ module MSPhysics
             cmd << "$('#servo-max').val('#{ format_value(attr.to_f, @precision) }');"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Limits', MSPhysics::Servo::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#servo-enable_limits').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Angular Rate', MSPhysics::Servo::DEFAULT_ANGULAR_RATE)
-            cmd << "$('#servo-angular_rate').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Max Accel', MSPhysics::Servo::DEFAULT_MAX_ACCEL)
-            cmd << "$('#servo-max_accel').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Accel', MSPhysics::Servo::DEFAULT_ACCEL)
+            cmd << "$('#servo-accel').val('#{ format_value(attr.to_f, @precision) }');"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Damp', MSPhysics::Servo::DEFAULT_DAMP)
+            cmd << "$('#servo-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Reduction Ratio', MSPhysics::Servo::DEFAULT_REDUCTION_RATIO)
+            cmd << "$('#servo-reduction_ratio').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), @precision) }');"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Controller', MSPhysics::Servo::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#servo-controller').val(#{attr.inspect});"
           when 'Slider'
@@ -217,12 +232,8 @@ module MSPhysics
             cmd << "$('#slider-max').val('#{ format_value(attr.to_f, @precision) }');"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Limits', MSPhysics::Slider::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#slider-enable_limits').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Stiff', MSPhysics::Slider::DEFAULT_STIFF)
-            cmd << "$('#slider-stiff').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Damp', MSPhysics::Slider::DEFAULT_DAMP)
-            cmd << "$('#slider-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Damper', MSPhysics::Slider::DEFAULT_DAMPER_ENABLED)
-            cmd << "$('#slider-enable_damper').prop('checked', #{attr ? true : false});"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Friction', MSPhysics::Slider::DEFAULT_FRICTION)
+            cmd << "$('#slider-friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
           when 'Piston'
             cmd << "$('#tab4-piston').css('display', 'block');"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Min', MSPhysics::Piston::DEFAULT_MIN)
@@ -231,10 +242,12 @@ module MSPhysics
             cmd << "$('#piston-max').val('#{ format_value(attr.to_f, @precision) }');"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Limits', MSPhysics::Piston::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#piston-enable_limits').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Angular Rate', MSPhysics::Piston::DEFAULT_LINEAR_RATE)
-            cmd << "$('#piston-linear_rate').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Max Accel', MSPhysics::Piston::DEFAULT_MAX_ACCEL)
-            cmd << "$('#piston-max_accel').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Linear Rate', MSPhysics::Piston::DEFAULT_LINEAR_RATE)
+            cmd << "$('#piston-linear_rate').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Strength', MSPhysics::Piston::DEFAULT_STRENGTH)
+            cmd << "$('#piston-strength').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Reduction Ratio', MSPhysics::Piston::DEFAULT_REDUCTION_RATIO)
+            cmd << "$('#piston-reduction_ratio').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), @precision) }');"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Controller', MSPhysics::Piston::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#piston-controller').val(#{attr.inspect});"
           when 'Spring'
@@ -341,7 +354,8 @@ module MSPhysics
         dict = model.attribute_dictionary('MSPhysics Sounds', false)
         if dict
           dict.each_key { |name|
-            cmd << "$('#sound-list').append('<option value=#{name.inspect}>#{name}</option>');"
+            ext = model.get_attribute('MSPhysics Sound Types', name)
+            cmd << "$('#sound-list').append('<option value=#{name.inspect}>#{name}#{ext.is_a?(String) ? '.' + ext : ''}</option>');"
           }
         end
         if @selected_sound
@@ -536,9 +550,9 @@ module MSPhysics
               end
             when 'joint', *MSPhysics::JOINT_NAMES
               if @selected_joint
-                if %w(stiffness).include?(attr)
+                if %w(stiffness reduction_ratio).include?(attr)
                   value = AMS.clamp(value, 0.0, 1.0)
-                elsif %w(stiff damp breaking_force angular_rate linear_rate max_accel support_constraint_distance).include?(attr)
+                elsif %w(stiff accel damp breaking_force linear_rate strength friction).include?(attr)
                   value = AMS.clamp(value, 0.0, nil)
                 end
                 @selected_joint.set_attribute('MSPhysics Joint', option, value.to_i.is_a?(Bignum) ? value.to_s : value)
@@ -671,6 +685,14 @@ module MSPhysics
                 end
                 model.commit_operation
               end
+            when 'editor'
+              if id == 'editor-theme'
+                @editor_theme = value.to_s
+              elsif id == 'editor-font'
+                @editor_font = value.to_i
+              elsif id == 'editor-wrap'
+                @editor_wrap = value.to_s
+              end
             end
           }
           @dialog.add_action_callback('tab_changed'){ |dlg, params|
@@ -712,6 +734,9 @@ module MSPhysics
               cmd << "$('#sound-command_sound').val('Not Supported');"
             end
             dlg.execute_script(cmd)
+          }
+          @dialog.add_action_callback('debug'){ |dlg, params|
+            puts params
           }
           @dialog.set_on_close(){
             if @active_tab == 3 && @selected_body && @selected_body.parent.is_a?(Sketchup::Model) && AMS::Window.is_restored?(@handle)
@@ -773,15 +798,15 @@ module MSPhysics
       # @param [String] path
       # @return [String] Name of added file.
       # @raise [TypeError] if file path is invalid.
-      # @raise [TypeError] if file is over 16 megabytes.
+      # @raise [TypeError] if file is over 100 megabytes.
       def add_sound(path)
         unless File.exist?(path)
           raise(TypeError, "Invalid path!", caller)
         end
         name = File.basename(path, File.extname(path)).gsub("'", " ")
         size = File.size(path) * 1.0e-6
-        if size > 16
-          raise(TypeError, "Selected file, \"#{name}\", is #{sprintf("%0.2f", size)} megabytes in size. File size must be no more than 16 megabytes!", caller)
+        if size > 100
+          raise(TypeError, "Selected file, \"#{File.basename(path)}\", is #{sprintf("%0.2f", size)} megabytes in size. File size must be no more than 100 megabytes!", caller)
         end
         ext = File.extname(path).downcase[1..-1]
         if MSPhysics::EMBEDDED_MUSIC_FORMATS.include?(ext) || MSPhysics::EMBEDDED_SOUND_FORMATS.include?(ext)
@@ -828,6 +853,23 @@ module MSPhysics
         dict ? dict.length : 0
       end
 
+      # Load editor settings from registry.
+      def load_editor_settings
+        theme = Sketchup.read_default('MSPhysics', 'Editor Theme', DEFAULT_THEME).to_s
+        font = Sketchup.read_default('MSPhysics', 'Editor Font', DEFAULT_FONT).to_i
+        wrap = Sketchup.read_default('MSPhysics', 'Editor Wrap', DEFAULT_WRAP).to_s
+        @editor_theme = theme
+        @editor_font = font
+        @editor_wrap = wrap
+      end
+
+      # Save editor settings into registry.
+      def save_editor_settings
+        Sketchup.write_default('MSPhysics', 'Editor Theme', @editor_theme.to_s)
+        Sketchup.write_default('MSPhysics', 'Editor Font', @editor_font.to_i)
+        Sketchup.write_default('MSPhysics', 'Editor Wrap', @editor_wrap.to_s)
+      end
+
       # SU Selection Observers
       # @!visibility private
 
@@ -863,5 +905,14 @@ module MSPhysics
       end
 
     end # class << self
+
+    # @!visibility private
+    class AppObserver < ::Sketchup::AppObserver
+
+      def onQuit
+        MSPhysics::Dialog.save_editor_settings
+      end
+
+    end # class AppObserver
   end # module Dialog
 end # module MSPhysics

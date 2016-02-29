@@ -265,6 +265,7 @@ div.column2 {
 #editor {
   position: relative !important;
   border: 1px solid lightgray;
+  padding: 0px;
   margin: 4px auto;
   height: auto;
 }
@@ -282,7 +283,7 @@ div.column2 {
 }
 
 .chosen-container .chosen-results {
-  max-height: 10em !important;
+  max-height: 16em !important;
 }
 
 .drop-down {
@@ -299,6 +300,10 @@ div.column2 {
   height: 0.25em;
 }
 
+.horizontal_spacing {
+  width: 0.5em;
+}
+
 .table-list {
   background-color: #2E2E2E;
   color: #CFCFCF;
@@ -310,29 +315,46 @@ div.column2 {
   width: 30em;
 }
 
-p.title {
-  font-size: 1.25em;
+.description {
+  font-style: normal;
+  font-size: 0.9em;
+  color: #2F2F2F;
 }
 
-p.description {
-  font-size: 0.9em;
-  color: #4F4F4F;
-}
-
-p.important {
-  font-size: 0.9em;
-  color: #F02B2B;
-}
-
-p.formula {
-  font-size: 0.9em;
+.description em1 {
+  font-style: normal;
   color: #000DFF;
 }
 
-p.bold {
-  font-weight: bold;
+.description em2 {
+  font-style: normal;
+  color: #00CF00;
 }
 
-p.italic {
-  font-style: italic;
+.description em3 {
+  font-style: normal;
+  color: #F02B2B;
+}
+
+.description em4 {
+  font-style: normal;
+  color: #2F2F2F;
+}
+
+table.opts_table {
+  border: none;
+  padding: 0em 0em 0.5em 0em;
+}
+
+table.opts_table tr, td {
+  border: none;
+}
+
+table.opts_table tr {
+  padding: 0em;
+  margin: 0em;
+}
+
+table.opts_table td {
+  padding: 0em 0.1em;
 }

@@ -1,5 +1,6 @@
 var last_cursor = [1,0];
 var active_tab_id = 1;
+var size_updating = false;
 
 String.prototype.contains = function(it) { return this.indexOf(it) != -1; };
 
@@ -60,13 +61,24 @@ function activate_tab(number) {
 }
 
 function update_size() {
+  size_updating = true;
   //var id = '#tab' + active_tab_id;
   var w = 576;
-  var h = $( '.tabs' ).height() + 18;
+  var h = $('#body').outerHeight(true);
+  var value = $(window).height() - h + $('#editor').innerHeight();
+  if (value < 0) value = 0;
+  document.getElementById('editor').style.height = value + 'px';
   var data = '['+w+','+h+']';
   callback('update_size', data);
-  document.getElementById('editor').style.height = $( window ).height() - 118 + "px";
+  // Repeat because it doesn't always work.
+  var h = $('#body').outerHeight(true);
+  var value = $(window).height() - h + $('#editor').innerHeight();
+  if (value < 0) value = 0;
+  document.getElementById('editor').style.height = value + 'px';
   window.aceEditor.resize();
+  var data = '['+w+','+h+']';
+  callback('update_size', data);
+  size_updating = false;
 }
 
 $(document).ready( function() {
@@ -89,6 +101,7 @@ $(document).ready( function() {
     $( selector ).chosen(config[selector]);
   }
 
+  ace.require('ace/ext/old_ie');
   // Initialize Ace
   var editor = ace.edit('editor');
   window.aceEditor = editor;
@@ -106,16 +119,28 @@ $(document).ready( function() {
   editor.renderer.setShowGutter(true);
   editor.renderer.setShowPrintMargin(true);
   editor.session.setUseSoftTabs(true);
-  editor.session.setTabSize(2);
+  editor.session.setTabSize(4);
   editor.session.setUseWrapMode(true);
   editor.setHighlightSelectedWord(true);
   editor.setBehavioursEnabled(true);
   editor.setFadeFoldWidgets(true);
-  editor.setOption('scrollPastEnd', false);
+  editor.setOption('scrollPastEnd', true);
   container.style.fontSize = '12px';
   editor.getSession().on('change', function(e) {
     script_saved = false;
   });
+
+  editor.commands.addCommand({
+    name: "showKeyboardShortcuts",
+    bindKey: {win: "Ctrl-Alt-h", mac: "Command-Alt-h"},
+    exec: function(editor) {
+      ace.config.loadModule("ace/ext/keybinding_menu", function(module) {
+        module.init(editor);
+        editor.showKeyboardShortcuts()
+      })
+    }
+  })
+  //editor.execCommand("showKeyboardShortcuts")
 
   function editor_changed() {
     if (script_saved) return;
@@ -159,7 +184,7 @@ $(document).ready( function() {
       active_tab_id = tab_id;
       callback('tab_changed', tab_id);
     }
-    update_size();
+    window.setTimeout(function(){ update_size() }, 0);
     e.preventDefault();
   });
 
@@ -169,8 +194,10 @@ $(document).ready( function() {
 
   // Resize editor
   $( window ).resize( function() {
-    if( active_tab_id == 3 ){
-      container.style.height = $( window ).height() - 118 + "px";
+    if (active_tab_id == 3 && size_updating == false) {
+      value = $(window).height() - $('#body').outerHeight(true) + $('#editor').innerHeight();
+      if (value < 0) value = 0;
+      container.style.height = value + 'px';
       editor.resize();
     }
   });
@@ -226,11 +253,21 @@ $(document).ready( function() {
 
   // Process checkbox and radio input triggers.
   $('input[type=checkbox], input[type=radio]').change( function() {
+    if (this.id == 'editor-read_only') editor.setReadOnly(this.checked);
     var data = '["'+this.id+'",'+this.checked+']';
     callback('check_input_changed', data);
   });
 
   $('.drop-down').on('change', function(evt, params) {
+    if (this.id == 'editor-theme') {
+      editor.setTheme('ace/theme/' + params.selected);
+    }
+    else if (this.id == 'editor-font') {
+      container.style.fontSize = params.selected + 'px';
+    }
+    else if (this.id == 'editor-wrap') {
+      editor.setOption('wrap', params.selected);
+    }
     var data = '["'+this.id+'","'+params.selected+'"]';
     callback('select_input_changed', data);
   });

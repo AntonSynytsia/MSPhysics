@@ -5,10 +5,8 @@ module MSPhysics
 
     DEFAULT_CONSTRAINT_TYPE = 0 # Standard - 0; Flexible - 1; Robust - 2.
     DEFAULT_STIFFNESS = 1.00
-    DEFAULT_BODIES_COLLIDABLE = false
+    DEFAULT_BODIES_COLLIDABLE = true
     DEFAULT_BREAKING_FORCE = 0.0
-    DEFAULT_SC_ENABLED = false
-    DEFAULT_SC_DISTANCE = 0.1
 
     class << self
 
@@ -43,8 +41,6 @@ module MSPhysics
       MSPhysics::Newton::Joint.set_stiffness(@address, DEFAULT_STIFFNESS)
       MSPhysics::Newton::Joint.set_bodies_collidable(@address, DEFAULT_BODIES_COLLIDABLE)
       MSPhysics::Newton::Joint.set_breaking_force(@address, DEFAULT_BREAKING_FORCE)
-      MSPhysics::Newton::Joint.enable_support_constraints(@address, DEFAULT_SC_ENABLED)
-      MSPhysics::Newton::Joint.set_support_constraint_distance(@address, DEFAULT_SC_DISTANCE)
     end
 
     # Get joint address.
@@ -192,34 +188,5 @@ module MSPhysics
       MSPhysics::Newton::Joint.set_breaking_force(@address, force)
     end
 
-    # Enable/Disable support constraints. Support constraints are additional
-    # joints that are placed on either side, along Z-AXIS, of a main joint.
-    # @param [Boolean] state
-    def support_constraints_enabled=(state)
-      MSPhysics::Newton::Joint.enable_support_constraints(@address, state)
-    end
-
-    # Determine whether support constraints are enabled. Support constraints are
-    # additional joints that are placed on either side, along Z-AXIS, of a main
-    # joint.
-    # @return [Boolean]
-    def support_constraints_enabled?
-      MSPhysics::Newton::Joint.are_support_constraints_enabled?(@address)
-    end
-
-    # Get distance in meters, along Z-AXIS of main joint, from main joint to one
-    # of the support constraints.
-    # @return [Numeric]
-    def support_constraint_distance
-      MSPhysics::Newton::Joint.get_support_constraint_distance(@address)
-    end
-
-    # Set distance in meters, along Z-AXIS of main joint, from main joint to one
-    # of the support constraints.
-    # @param [Numeric] value A value greater than or equal to zero.
-    def support_constraint_distance=(value)
-      MSPhysics::Newton::Joint.set_support_constraint_distance(@address, value)
-    end
-
-  end # class Joint
+  end # class Joint  
 end # module MSPhysics

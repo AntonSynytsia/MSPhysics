@@ -59,6 +59,13 @@ module MSPhysics
       @address
     end
 
+    # Get world default contact material id.
+    # @return [Fixnum]
+    def get_default_material_id
+      World.validate(self)
+      MSPhysics::Newton::World.get_default_material_id(@address)
+    end
+
     # Destroy the world.
     # @return [void]
     def destroy
@@ -91,11 +98,13 @@ module MSPhysics
 
     # Update world by a time step in seconds.
     # @note The smaller the time step the more accurate the simulation will be.
-    # @param [Numeric] time_step This value is clamped between 1/30.0 and 1/1200.0.
+    # @param [Numeric] timestep This value is clamped between 1/30.0 and 1/1200.0.
+    # @param [Fixnum] update_rate Number of times to update the world, a fixed
+    #   value between 1 and 100.
     # @return [Numeric] Update time step.
-    def update(time_step)
+    def update(timestep, update_rate = 1)
       World.validate(self)
-      MSPhysics::Newton::World.update(@address, time_step.to_f)
+      MSPhysics::Newton::World.update(@address, timestep, update_rate)
     end
 
     # Get all bodies in the world.
@@ -170,21 +179,35 @@ module MSPhysics
       MSPhysics::Newton::World.destroy_all_bodies(@address)
     end
 
-    # Get world gravity. The magnitude of vector is retrieved in meters per
-    # second per second (m/s/s).
-    # @return [Geom::Vector3d]
+    # Get world gravity.
+    # @return [Geom::Vector3d] Gravitational acceleration vector. The magnitude
+    #   of the vector is expressed in meters per second per second (m/s/s).
     def get_gravity
       World.validate(self)
       MSPhysics::Newton::World.get_gravity(@address)
     end
 
-    # Set world gravity. The magnitude of vector is expected in meters per
-    # second per second (m/s/s).
+    # Set world gravity.
     # @param [Geom::Vector3d, Array<Numeric>] acceleration
+    # @overload set_gravity(acceleration)
+    #   @param [Geom::Vector3d, Array<Numeric>] acceleration Gravitational
+    #     acceleration vector. The magnitude of the vector is assumed in meters
+    #     per second per second (m/s/s).
+    # @overload set_gravity(ax, ay, az)
+    #   @param [Numeric] ax Acceleration along xaxis in m/s/s.
+    #   @param [Numeric] ay Acceleration along yaxis in m/s/s.
+    #   @param [Numeric] az Acceleration along zaxis in m/s/s.
     # @return [Geom::Vector3d] The newly assigned gravity.
-    def set_gravity(acceleration)
+    def set_gravity(*args)
       World.validate(self)
-      MSPhysics::Newton::World.set_gravity(@address, acceleration)
+      if args.size == 3
+        data = [args[0], args[1], args[2]]
+      elsif args.size == 1
+        data = args[0]
+      else
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+      end
+      MSPhysics::Newton::World.set_gravity(@address, data)
     end
 
     # Get world solver model.
@@ -350,12 +373,16 @@ module MSPhysics
 
     # Get world axis aligned bounding box, a bounding box in which all the
     # bodies are included.
-    # @return [Array<Geom::Point3d>, nil] An array of two points, containing the
-    #   minimum and maximum points of the bounding box - [min, max]. Nil is
-    #   returned if the world has no bodies.
+    # @return [Geom::BoundingBox, nil] A bounding box object, containing the
+    #   minimum and maximum points of the world bounding box. Nil is returned if
+    #   the world has no bodies.
     def get_aabb
       World.validate(self)
-      MSPhysics::Newton::World.get_aabb(@address)
+      mm = MSPhysics::Newton::World.get_aabb(@address)
+      return unless mm
+      bb = Geom::BoundingBox.new
+      bb.add(mm)
+      bb
     end
 
     # Get world elapsed time in seconds.

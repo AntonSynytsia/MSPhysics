@@ -11,13 +11,14 @@ bit = (Sketchup.respond_to?('is_64bit?') && Sketchup.is_64bit?) ? '64' : '32'
 ver = (RUBY_VERSION =~ /1.8/) ? '1.8' : '2.0'
 
 # Load SDL and SDL Mixer DLLs
-#libraries = %w(SDL2 SDL2_mixer libmikmod-2 libmodplug-1 libogg-0 libvorbis-0 libvorbisfile-3 smpeg2 libFLAC-8)
-libraries = %w(SDL SDL_mixer libmikmod-2 libogg-0 libvorbis-0 libvorbisfile-3 libFLAC-8 smpeg)
+libraries = %w(libogg libvorbis libogg-0 libvorbis-0 libvorbisfile-3 libmikmod-2 libmodplug-1 SDL2 SDL2_mixer smpeg2 libFLAC-8)
+info = ""
 libraries.each { |name|
   path = File.join(dir, ops+bit, name + '.dll')
   res = AMS::DLL.load_library(path)
-  #UI.messagebox "#{path}\n#{name} - #{res}"
+  info << "#{name} - #{res}\n"
 }
+#UI.messagebox info
 
 # Load MSPhysics Library
 require File.join(dir, ops+bit, ver, 'msp_lib')
@@ -54,6 +55,7 @@ require File.join(dir, 'control_panel.rb')
 require File.join(dir, 'joint_tool.rb')
 require File.join(dir, 'joint_connection_tool.rb')
 require File.join(dir, 'replay.rb')
+require File.join(dir, 'scene_data.rb')
 
 # @since 1.0.0
 module MSPhysics
@@ -61,12 +63,12 @@ module MSPhysics
   DEFAULT_SIMULATION_SETTINGS = {
     :solver_model           => 4,
     :friction_model         => 0,
-    :update_rate            => 1,
+    :update_rate            => 2,
     :update_timestep        => 1/60.0,
     :gravity                => [0.0, 0.0, -9.8],
     :material_thickness     => 0.001,
     :contact_merge_tolerance=> 0.001,
-    :world_scale            => 10
+    :world_scale            => 1
   }
 
   DEFAULT_BODY_SETTINGS = {
@@ -90,17 +92,22 @@ module MSPhysics
     :auto_sleep             => true,
     :continuous_collision   => false,
     :thruster_lock_axis     => true,
+    :enable_thruster        => true,
     :emitter_lock_axis      => true,
     :emitter_rate           => 10,
     :emitter_lifetime       => 100,
+    :enable_emitter         => true,
     :enable_gravity         => true
   }
 
   DEFAULT_BUOYANCY_PLANE_SETTINGS = {
     :density                => 997.04,
     :viscosity              => 0.005,
+    :current_x              => 0,
+    :current_y              => 0,
+    :current_z              => 0,
     :plane_size             => 10000,
-    :color                  => Sketchup::Color.new(0,140,255),
+    :color                  => Sketchup::Color.new(40,60,220),
     :alpha                  => 0.7,
     :material_name          => 'MSPhysics Buoyancy'
   }
@@ -128,8 +135,8 @@ module MSPhysics
     :target                 => [15,15]
   }
 
-  EMBEDDED_MUSIC_FORMATS = %w(wav aiff riff ogg voc flac mod it xm s3m).freeze
-  EMBEDDED_SOUND_FORMATS = %w(wav aiff riff ogg voc).freeze
+  EMBEDDED_MUSIC_FORMATS = %w(wav aiff riff ogg voc flac mod it xm s3m m4a 669 med mp3 mp2 mid pat).freeze
+  EMBEDDED_SOUND_FORMATS = %w(wav aiff riff ogg voc mp3 mp2).freeze
 
   JOINT_TYPES = {
     #:none               => 0,
@@ -149,6 +156,10 @@ module MSPhysics
   JOINT_NAMES = %w(hinge motor servo slider piston up_vector spring corkscrew ball_and_socket universal fixed).freeze
 
   DEFAULT_JOINT_SCALE = 1.0
+
+  WATERMARK_COLOR = Sketchup::Color.new(126, 42, 168)
+
+  EPSILON = 1.0e-6
 
   class << self
 
@@ -220,24 +231,7 @@ module MSPhysics
       }
       model.attribute_dictionaries.delete('MSPhysics')
       model.attribute_dictionaries.delete('MSPhysics Sounds')
-    end
-
-    # Get version of the Newton Dynamics physics SDK.
-    # @return [String]
-    def get_newton_version
-      MSPhysics::Newton.get_version
-    end
-
-    # Get float size of the Newton Dynamics physics SDK.
-    # @return [Fixnum]
-    def get_newton_float_size
-      MSPhysics::Newton.get_float_size
-    end
-
-    # Get memory used by the Newton Dynamics physics SDK at the current time.
-    # @return [Fixnum]
-    def get_newton_memory_used
-      MSPhysics::Newton.get_memory_used
+      model.attribute_dictionaries.delete('MSPhysics Replay')
     end
 
     # Get entity type.
@@ -285,6 +279,219 @@ module MSPhysics
       count
     end
 
+    # Get version of the Newton Dynamics physics SDK.
+    # @return [String]
+    def get_newton_version
+      MSPhysics::Newton.get_version
+    end
+
+    # Get float size of the Newton Dynamics physics SDK.
+    # @return [Fixnum]
+    def get_newton_float_size
+      MSPhysics::Newton.get_float_size
+    end
+
+    # Get memory used by the Newton Dynamics physics SDK at the current time.
+    # @return [Fixnum]
+    def get_newton_memory_used
+      MSPhysics::Newton.get_memory_used
+    end
+
+    # Create copy of a camera object.
+    # @param [Sketchup::Camera] camera
+    # @return [Sketchup::Camera]
+    def duplicate_camera(camera)
+      c = Sketchup::Camera.new(camera.eye, camera.target, camera.up)
+      c.aspect_ratio = camera.aspect_ratio
+      c.perspective = camera.perspective?
+      if camera.perspective?
+        c.focal_length = camera.focal_length
+        c.fov = camera.fov
+        c.image_width = camera.image_width
+      else
+        c.height = camera.height
+      end
+      c.description = camera.description
+      return c
+    end
+
+    # Transition between two cameras.
+    # @param [Sketchup::Camera] c1
+    # @param [Sketchup::Camera] c2
+    # @param [Numeric] ratio A value between 0.0 and 1.0
+    # @return [Sketchup::Camera] Interpolated camera
+    def transition_camera(c1, c2, ratio)
+      ratio = AMS.clamp(ratio.to_f, 0.0, 1.0)
+      t1 = Geom::Transformation.new(c1.xaxis, c1.direction, c1.up, c1.eye)
+      t2 = Geom::Transformation.new(c2.xaxis, c2.direction, c2.up, c2.eye)
+      t3 = Geom::Transformation.interpolate(t1, t2, ratio)
+      c3 = Sketchup::Camera.new(t3.origin, t3.origin + t3.yaxis, t3.zaxis)
+      c3.aspect_ratio = c1.aspect_ratio + (c2.aspect_ratio - c1.aspect_ratio) * ratio
+      c3.perspective = c2.perspective?
+      t = c1.perspective?
+      if c3.perspective?
+        c1.perspective = true
+        c3.focal_length = c1.focal_length + (c2.focal_length - c1.focal_length) * ratio
+        c3.fov = c1.fov + (c2.fov - c1.fov) * ratio
+        c3.image_width = c1.image_width + (c2.image_width - c1.image_width) * ratio
+      else
+        c1.perspective = false
+        c3.height = c1.height + (c2.height - c1.height) * ratio
+      end
+      c1.perspective = t
+      c3.description = ratio == 0 ? c1.description : c2.description
+      return c3
+    end
+
+    # Transition between two colors.
+    # @param [Sketchup::Color] c1
+    # @param [Sketchup::Color] c2
+    # @param [Numeric] ratio A value between 0.0 and 1.0
+    # @return [Sketchup::Color] Interpolated color
+    def transition_color(c1, c2, ratio)
+      ratio = AMS.clamp(ratio.to_f, 0.0, 1.0)
+      return Sketchup::Color.new(
+        (c1.red + (c2.red - c1.red) * ratio).to_i,
+        (c1.green + (c2.green - c1.green) * ratio).to_i,
+        (c1.blue + (c2.blue - c1.blue) * ratio).to_i,
+        (c1.alpha + (c2.alpha - c1.alpha) * ratio).to_i)
+    end
+
+    # Transition between two points.
+    # @param [Geom::Point3d] p1
+    # @param [Geom::Point3d] p2
+    # @param [Numeric] ratio A value between 0.0 and 1.0
+    # @return [Geom::Point3d] Interpolated point
+    def transition_point(p1, p2, ratio)
+      ratio = AMS.clamp(ratio.to_f, 0.0, 1.0)
+      return Geom::Point3d.new(
+        p1.x + (p2.x - p1.x) * ratio,
+        p1.y + (p2.y - p1.y) * ratio,
+        p1.z + (p2.z - p1.z) * ratio)
+    end
+
+    # Transition between two vectors.
+    # @param [Geom::Vector3d] v1
+    # @param [Geom::Vector3d] v2
+    # @param [Numeric] ratio A value between 0.0 and 1.0
+    # @return [Geom::Vector3d] Interpolated vector
+    def transition_vector(v1, v2, ratio)
+      ratio = AMS.clamp(ratio.to_f, 0.0, 1.0)
+      return v1.clone if (v1 == v2)
+      if v1.length < EPSILON || v2.length < EPSILON || v1.samedirection?(v2)
+        return Geom::Vector3d.new(
+          v1.x + (v2.x - v1.x) * ratio,
+          v1.y + (v2.y - v1.y) * ratio,
+          v1.z + (v2.z - v1.z) * ratio)
+      else
+        v3 = v1.parallel?(v2) ? v1.axes[0] : v1.cross(v2)
+        t = Geom::Transformation.new(ORIGIN, v3, v1)
+        v2l = v2.transform(t.inverse)
+        theta = Math.acos(v2l.y / v2l.length)
+        theta = -theta if v2l.z < 0
+        rtheta = theta * ratio
+        rlength = v1.length + (v2.length - v1.length) * ratio
+        v3l = Geom::Vector3d.new(0, Math.cos(rtheta) * rlength, Math.sin(rtheta) * rlength)
+        return v3l.transform(t)
+      end
+    end
+
+    # Transition between two transformation matrices.
+    # @param [Geom::Transformation] t1
+    # @param [Geom::Transformation] t2
+    # @param [Numeric] ratio A value between 0.0 and 1.0
+    # @return [Geom::Transformation] Interpolated transformation
+    def transition_transformation(t1, t2, ratio)
+      Geom::Transformation.interpolate(t1, t2, AMS.clamp(ratio.to_f, 0.0, 1.0))
+    end
+
+    # Transition between two numbers.
+    # @param [Numeric] n1
+    # @param [Numeric] n2
+    # @param [Numeric] ratio A value between 0.0 and 1.0
+    # @return [Numeric] Interpolated number
+    def transition_number(n1, n2, ratio)
+      n1 + (n2 - n1) * AMS.clamp(ratio.to_f, 0.0, 1.0)
+    end
+
+    # Create a watermark text.
+    # @param [Fixnum] x X position on screen.
+    # @param [Fixnum] y Y position on screen.
+    # @param [String] text Watermark text.
+    # @param [String] name Watermark name.
+    # @param [String] component Watermark component.
+    # @return [Sketchup::Text, nil] A text object if successful.
+    def add_watermark_text(x, y, text, name = 'watermark', component = 'version_text.skp')
+      dir = File.dirname(__FILE__)
+      path = File.join(dir, "models/#{component}")
+      return unless File.exists?(path)
+      model = Sketchup.active_model
+      view = model.active_view
+      cd = model.definitions.load(path)
+      ray = view.pickray(x,y)
+      loc = ray[0]+ray[1]
+      ci = model.entities.add_instance(cd, Geom::Transformation.new(loc))
+      tt = ci.explode[0]
+      tt.text = text
+      tt.set_attribute('MSPhysics', 'name', name.to_s)
+      mat = model.materials['MSPWatermarkText']
+      unless mat
+        mat = model.materials.add('MSPWatermarkText')
+        mat.color = WATERMARK_COLOR
+        tt.material = mat
+      end
+      layer = model.layers['MSPWatermarkText']
+      unless layer
+        layer = model.layers.add('MSPWatermarkText')
+        layer.color = WATERMARK_COLOR if Sketchup.version.to_i > 13
+      end
+      tt.layer = layer
+      tt
+    end
+
+    # Create a watermark text without material or layer.
+    # @param [Fixnum] x X position on screen.
+    # @param [Fixnum] y Y position on screen.
+    # @param [String] text Watermark text.
+    # @param [String] name Watermark name.
+    # @param [String] component Watermark component.
+    # @return [Sketchup::Text, nil] A text object if successful.
+    def add_watermark_text2(x, y, text, name = 'watermark', component = 'version_text.skp')
+      dir = File.dirname(__FILE__)
+      path = File.join(dir, "models/#{component}")
+      return unless File.exists?(path)
+      model = Sketchup.active_model
+      view = model.active_view
+      cd = model.definitions.load(path)
+      ray = view.pickray(x,y)
+      loc = ray[0]+ray[1]
+      ci = model.entities.add_instance(cd, Geom::Transformation.new(loc))
+      tt = ci.explode[0]
+      tt.text = text
+      tt.set_attribute('MSPhysics', 'name', name.to_s)
+      tt
+    end
+
+    # Get watermark text by name.
+    # @param [String] name
+    # @return [Sketchup::Text, nil] A text object if the text exists.
+    def get_watermark_text_by_name(name)
+      Sketchup.active_model.entities.each { |e|
+        return e if e.is_a?(Sketchup::Text) && e.get_attribute('MSPhysics', 'name') == name.to_s
+      }
+      nil
+    end
+
+    # Get all watermark texts.
+    # @return [Array<Sketchup::Text>]
+    def get_all_watermark_texts
+      texts = []
+      Sketchup.active_model.entities.each { |e|
+        texts << e if e.is_a?(Sketchup::Text) && e.get_attribute('MSPhysics', 'name') != nil
+      }
+      texts
+    end
+
     private
 
     def scale_joints(scale, entities = Sketchup.active_model.entities)
@@ -310,6 +517,9 @@ module MSPhysics
 end # module MSPhysics
 
 unless file_loaded?(__FILE__)
+  # Register Observers
+  Sketchup.add_observer(MSPhysics::Dialog::AppObserver.new)
+  Sketchup.add_observer(MSPhysics::Replay::AppObserver.new)
   # Setup audio
   sdl = MSPhysics::SDL
   mix = MSPhysics::Mixer
@@ -450,7 +660,8 @@ unless file_loaded?(__FILE__)
 
   joints_toolbar.add_separator
 
-  MSPhysics::JOINT_TYPES.keys.each { |type|
+  MSPhysics::JOINT_TYPES.values.sort.each { |value|
+    type = RUBY_VERSION =~ /1.8/ ? MSPhysics::JOINT_TYPES.index(value) : MSPhysics::JOINT_TYPES.key(value)
     name = type.to_s
     words = name.split('_')
     for i in 0...words.size
@@ -618,9 +829,6 @@ unless file_loaded?(__FILE__)
 
   replay_toolbar.show
 
-  # Register replay model observer
-  Sketchup.add_observer(MSPhysics::Replay::AppObserver.new)
-
 
   # Create Edit Menus
   UI.add_context_menu_handler { |menu|
@@ -647,7 +855,7 @@ unless file_loaded?(__FILE__)
       state_menu = body_menu.add_submenu('State')
       state_options = ['Ignore']
       if model.active_entities == model.entities
-        state_options.concat ['Static', 'Frozen', 'Magnetic', 'Collidable', 'Auto Sleep', 'Continuous Collision', 'Enable Friction', 'Enable Script', 'Enable Gravity']
+        state_options.concat ['Static', 'Frozen', 'Magnetic', 'Collidable', 'Auto Sleep', 'Continuous Collision', 'Enable Friction', 'Enable Script', 'Enable Gravity', 'Enable Thruster', 'Enable Emitter']
 
         shape_menu = body_menu.add_submenu('Shape')
         default_shape = MSPhysics::DEFAULT_BODY_SETTINGS[:shape]
@@ -781,16 +989,28 @@ unless file_loaded?(__FILE__)
       bp_menu = msp_menu.add_submenu(text)
       bp_menu.add_item("Properties"){
         default = MSPhysics::DEFAULT_BUOYANCY_PLANE_SETTINGS
-        prompts = ['Density (kg/m³)', 'Viscosity (0.0 - 1.0)']
-        default_density = MSPhysics.get_attribute(buoyancy_planes, 'MSPhysics Buoyancy Plane', 'Density', default[:density])
-        default_viscosity = MSPhysics.get_attribute(buoyancy_planes, 'MSPhysics Buoyancy Plane', 'Viscosity', default[:viscosity])
-        defaults = [default_density, default_viscosity]
+        prompts = ['Density (kg/m³)', 'Viscosity (0.0 - 1.0)', 'Current X', 'Current Y', 'Current Z']
+        dict = 'MSPhysics Buoyancy Plane'
+        ddensity = MSPhysics.get_attribute(buoyancy_planes, dict, 'Density', default[:density])
+        dviscosity = MSPhysics.get_attribute(buoyancy_planes, dict, 'Viscosity', default[:viscosity])
+        dcurrent_x = MSPhysics.get_attribute(buoyancy_planes, dict, 'Current X', default[:current_x])
+        dcurrent_y = MSPhysics.get_attribute(buoyancy_planes, dict, 'Current Y', default[:current_y])
+        dcurrent_z = MSPhysics.get_attribute(buoyancy_planes, dict, 'Current Z', default[:current_z])
+        defaults = [ddensity, dviscosity, dcurrent_x, dcurrent_y, dcurrent_z]
         input = UI.inputbox(prompts, defaults, 'Buoyancy Plane Properties')
         next unless input
+        density = AMS.clamp(input[0].to_f, 0.001, nil)
+        viscosity = AMS.clamp(input[1].to_f, 0, 1)
+        current_x = input[2].to_f
+        current_y = input[3].to_f
+        current_z = input[4].to_f
         op = 'MSPhysics Buoyancy - Edit Plane Properties'
         Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
-        MSPhysics.set_attribute(buoyancy_planes, 'MSPhysics Buoyancy Plane', 'Density', AMS.clamp(input[0].to_f, 0.001, nil))
-        MSPhysics.set_attribute(buoyancy_planes, 'MSPhysics Buoyancy Plane', 'Viscosity', AMS.clamp(input[1].to_f, 0, 1))
+        MSPhysics.set_attribute(buoyancy_planes, dict, 'Density', density)
+        MSPhysics.set_attribute(buoyancy_planes, dict, 'Viscosity', viscosity)
+        MSPhysics.set_attribute(buoyancy_planes, dict, 'Current X', current_x)
+        MSPhysics.set_attribute(buoyancy_planes, dict, 'Current Y', current_y)
+        MSPhysics.set_attribute(buoyancy_planes, dict, 'Current Z', current_z)
         model.commit_operation
       }
     end
@@ -813,21 +1033,58 @@ unless file_loaded?(__FILE__)
     MSPhysics::Replay.active_data_valid? ? MF_ENABLED : MF_GRAYED
   }
 
-  item = plugin_menu.add_item('Export Replay to KT') {
-    MSPhysics::Replay.export_to_kt
+  item = plugin_menu.add_item('Export Replay to Kerkythea') {
+    MSPhysics::Replay.export_to_kerkythea
   }
   plugin_menu.set_validation_proc(item) {
     MSPhysics::Replay.active_data_valid? ? MF_ENABLED : MF_GRAYED
+  }
+
+  item = plugin_menu.add_item('Export Replay to SkIndigo') {
+    MSPhysics::Replay.export_to_skindigo
+  }
+  plugin_menu.set_validation_proc(item) {
+    MSPhysics::Replay.active_data_valid? ? MF_ENABLED : MF_GRAYED
+  }
+
+  item = plugin_menu.add_item('Replay Settings') {
+    prompts = ['Replay Materials', 'Replay Layers', 'Replay Camera', 'Replay Render', 'Replay Shadow']
+    defaults = [
+      MSPhysics::Replay.materials_replay_enabled? ? 'Yes' : 'No',
+      MSPhysics::Replay.layers_replay_enabled? ? 'Yes' : 'No',
+      MSPhysics::Replay.camera_replay_enabled? ? 'Yes' : 'No',
+      MSPhysics::Replay.render_replay_enabled? ? 'Yes' : 'No',
+      MSPhysics::Replay.shadow_replay_enabled? ? 'Yes' : 'No'
+    ]
+    yn = 'Yes|No'
+    drop_downs = [yn, yn, yn, yn, yn]
+    input = UI.inputbox(prompts, defaults, drop_downs, 'Replay Settings')
+    next unless input
+    MSPhysics::Replay.materials_replay_enabled = input[0] == 'Yes'
+    MSPhysics::Replay.layers_replay_enabled = input[1] == 'Yes'
+    MSPhysics::Replay.camera_replay_enabled = input[2] == 'Yes'
+    MSPhysics::Replay.render_replay_enabled = input[3] == 'Yes'
+    MSPhysics::Replay.shadow_replay_enabled = input[4] == 'Yes'
+    model = Sketchup.active_model
+    op = 'MSPhysics Replay - Save Settings'
+    Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+    MSPhysics::Replay.save_replay_settings
+    model.commit_operation
   }
 
   plugin_menu.add_separator
 
   plugin_menu.add_item('Create Buoyancy Plane'){
     default = MSPhysics::DEFAULT_BUOYANCY_PLANE_SETTINGS
-    prompts = ['Density (kg/m³)', 'Viscosity (0.0 - 1.0)']
-    defaults = [default[:density], default[:viscosity]]
+    prompts = ['Density (kg/m³)', 'Viscosity (0.0 - 1.0)', 'Current X', 'Current Y', 'Current Z']
+    defaults = [default[:density], default[:viscosity], default[:current_x], default[:current_y], default[:current_z]]
     input = UI.inputbox(prompts, defaults, 'Buoyancy Plane Properties')
     next unless input
+    density = AMS.clamp(input[0].to_f, 0.001, nil)
+    viscosity = AMS.clamp(input[1].to_f, 0, 1)
+    current_x = input[2].to_f
+    current_y = input[3].to_f
+    current_z = input[4].to_f
     model = Sketchup.active_model
     op = 'MSPhysics Buoyancy - Create Plane'
     Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
@@ -839,13 +1096,15 @@ unless file_loaded?(__FILE__)
     end
     group = model.entities.add_group
     s = default[:plane_size] * 0.5
-    group.entities.add_face([-s*0.5, -s*0.5, 0], [s*0.5, -s*0.5, 0], [s*0.5, s*0.5, 0], [-s*0.5, s*0.5, 0])
+    group.entities.add_face([-s, -s, 0], [s, -s, 0], [s, s, 0], [-s, s, 0])
     group.material = mat
-    density = AMS.clamp(input[0].to_f, 0.001, nil)
-    viscosity = AMS.clamp(input[1].to_f, 0, 1)
+    dict = 'MSPhysics Buoyancy Plane'
     group.set_attribute('MSPhysics', 'Type', 'Buoyancy Plane')
-    group.set_attribute('MSPhysics Buoyancy Plane', 'Density', density)
-    group.set_attribute('MSPhysics Buoyancy Plane', 'Viscosity', viscosity)
+    group.set_attribute(dict, 'Density', density)
+    group.set_attribute(dict, 'Viscosity', viscosity)
+    group.set_attribute(dict, 'Current X', current_x)
+    group.set_attribute(dict, 'Current Y', current_y)
+    group.set_attribute(dict, 'Current Z', current_z)
     model.commit_operation
   }
 
@@ -878,7 +1137,8 @@ unless file_loaded?(__FILE__)
   plugin_menu.add_item('About'){
     msg = "MSPhysics #{MSPhysics::VERSION} -- #{MSPhysics::RELEASE_DATE}\n"
     msg << "Powered by the Newton Dynamics #{MSPhysics::Newton.get_version} physics SDK by Juleo Jerez.\n"
-    msg << "Copyright MIT © 2015, Anton Synytsia\n"
+    msg << "Copyright MIT © 2015, Anton Synytsia.\n"
+    msg << "Credit to Chris Phillips for ideas from SketchyPhysics.\n"
     UI.messagebox(msg)
   }
 

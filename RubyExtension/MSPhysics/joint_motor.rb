@@ -3,8 +3,8 @@ module MSPhysics
   # @since 1.0.0
   class Motor < Joint
 
-    DEFAULT_ACCEL = 40.0
-    DEFAULT_DAMP = 10.0
+    DEFAULT_ACCEL = 1.0
+    DEFAULT_DAMP = 0.5
     DEFAULT_FREE_ROTATE_ENABLED = false
     DEFAULT_CONTROLLER = 1.0
 
@@ -15,12 +15,30 @@ module MSPhysics
     #   Of the given matrix, matrix origin should represent pin origin, and
     #   matrix Z-AXIS should represent pin up.
     def initialize(world, parent, pin_tra)
-      super(world, parent, pin_tra, 6)
+      super(world, parent, pin_tra, 8)
       MSPhysics::Newton::Motor.create(@address)
       MSPhysics::Newton::Motor.set_accel(@address, DEFAULT_ACCEL.degrees)
       MSPhysics::Newton::Motor.set_damp(@address, DEFAULT_DAMP)
       MSPhysics::Newton::Motor.enable_free_rotate(@address, DEFAULT_FREE_ROTATE_ENABLED)
       MSPhysics::Newton::Motor.set_controller(@address, DEFAULT_CONTROLLER)
+    end
+
+    # Get current angle in radians.
+    # @return [Numeric]
+    def cur_angle
+      MSPhysics::Newton::Motor.get_cur_angle(@address)
+    end
+
+    # Get current omega in radians per second.
+    # @return [Numeric]
+    def cur_omega
+      MSPhysics::Newton::Motor.get_cur_omega(@address)
+    end
+
+    # Get current acceleration in radians per second per second.
+    # @return [Numeric]
+    def cur_acceleration
+      MSPhysics::Newton::Motor.get_cur_acceleration(@address)
     end
 
     # Get rotational acceleration in radians per second per second.
@@ -69,24 +87,6 @@ module MSPhysics
     # @param [Boolean] state
     def free_rotate_enabled=(state)
       MSPhysics::Newton::Motor.enable_free_rotate(@address, state)
-    end
-
-    # Get current angle in radians.
-    # @return [Numeric]
-    def cur_angle
-      MSPhysics::Newton::Motor.get_cur_angle(@address)
-    end
-
-    # Get current omega in radians per second.
-    # @return [Numeric]
-    def cur_omega
-      MSPhysics::Newton::Motor.get_cur_omega(@address)
-    end
-
-    # Get current acceleration in radians per second per second.
-    # @return [Numeric]
-    def cur_acceleration
-      MSPhysics::Newton::Motor.get_cur_acceleration(@address)
     end
 
     # Get motor controller, magnitude and direction of the desired acceleration.

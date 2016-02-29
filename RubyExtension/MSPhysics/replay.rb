@@ -3,20 +3,27 @@ module MSPhysics
   # @since 1.0.0
   module Replay
 
+    DEFAULT_REPLAY_GROUPS = true
+    DEFAULT_REPLAY_MATERIALS = true
+    DEFAULT_REPLAY_LAYERS = true
+    DEFAULT_REPLAY_CAMERA = true
+    DEFAULT_REPLAY_RENDER = true
+    DEFAULT_REPLAY_SHADOW = true
+
     @groups_data = {}
     @materials_data = {}
-    @styles_data = {}
     @layers_data = {}
     @camera_data = {}
+    @render_data = {}
     @shadow_data = {}
     @start_frame = nil
     @end_frame = nil
 
     @tgroups_data = {}
     @tmaterials_data = {}
-    @tstyles_data = {}
     @tlayers_data = {}
     @tcamera_data = {}
+    @trender_data = {}
     @tshadow_data = {}
     @tstart_frame = nil
     @tend_frame = nil
@@ -27,14 +34,15 @@ module MSPhysics
     @frame = 0
     @speed = 1
     @animation = nil
+    @selected_page = nil
 
     @record = false
-    @replay_groups = true
-    @replay_materials = true
-    @replay_styles = false
-    @replay_layers = false
-    @replay_camera = false
-    @replay_shadow = false
+    @replay_groups = DEFAULT_REPLAY_GROUPS
+    @replay_materials = DEFAULT_REPLAY_MATERIALS
+    @replay_layers = DEFAULT_REPLAY_LAYERS
+    @replay_camera = DEFAULT_REPLAY_CAMERA
+    @replay_render = DEFAULT_REPLAY_RENDER
+    @replay_shadow = DEFAULT_REPLAY_SHADOW
 
     class << self
 
@@ -63,7 +71,8 @@ module MSPhysics
             data[:original] = {
               :transformation => group.transformation,
               :visible        => group.visible?,
-              :material       => group.material
+              :material       => group.material,
+              :layer          => group.layer
             }
             group.transformation = group.transformation # Do this once just to be able to undo.
           elsif data[:definition] && data[:definition].valid?
@@ -89,6 +98,13 @@ module MSPhysics
             data[:instance] = model.materials.add("MSPReplay#{1000 + rand(9000)}")
           end
         }
+        # Record original layer data.
+        @layers_data.each { |layer, data|
+          if layer.valid?
+            data[:original] = { :visible => layer.visible? }
+            data[:original][:color] = layer.color if Sketchup.version.to_i > 13
+          end
+        }
         # Record original camera data.
         camera = model.active_view.camera
         data = {
@@ -109,13 +125,21 @@ module MSPhysics
           data[:height] = camera.height
         end
         @camera_data[:original] = data
+        # Record original render data.
+        data = {}
+        Sketchup.active_model.rendering_options.each { |k, v| data[k] = v }
+        @render_data[:original] = data
+        # Record original shadow data.
+        data = {}
+        Sketchup.active_model.shadow_info.each { |k, v| data[k] = v }
+        @shadow_data[:original] = data
         # Set starting frame
         @frame = @reversed ? @end_frame : @start_frame
+        # Save selected page
+        @selected_page = model.pages.selected_page
         # Activate animation
         @animation = MSPhysics::Replay::Animation.new
-        if activate_animation
-          model.active_view.animation = @animation
-        end
+        @animation.activate_tool if activate_animation
         true
       end
 
@@ -129,7 +153,7 @@ module MSPhysics
         @reversed = false
         @frame = 0
         # Stop animation
-        Sketchup.active_model.active_view.animation = nil
+        @animation.deactivate_tool
         # Commit operation
         Sketchup.active_model.commit_operation
         true
@@ -149,7 +173,15 @@ module MSPhysics
         view = model.active_view
         camera = view.camera
         # Stop animation
-        view.animation = nil
+        @animation.deactivate_tool
+        # Reset selected page
+        if @selected_page && @selected_page.valid?
+          tt = @selected_page.transition_time
+          @selected_page.transition_time = 0
+          model.pages.selected_page = @selected_page
+          @selected_page.transition_time = tt
+          @selected_page = nil
+        end
         # Reset group data
         @groups_data.each { |group, data|
           instance = data[:instance]
@@ -157,12 +189,14 @@ module MSPhysics
             orig_data = data[:original]
             next if orig_data.nil?
             group.move!(orig_data[:transformation])
+            #~ group.transformation = orig_data[:transformation]
             group.visible = orig_data[:visible] if group.visible? != orig_data[:visible]
             if orig_data[:material].nil?
               group.material = nil if group.material
             elsif orig_data[:material].valid?
               group.material = orig_data[:material] if group.material != orig_data[:material]
             end
+            group.layer = orig_data[:layer] if orig_data[:layer].valid? && group.layer != orig_data[:layer]
           end
           if instance && instance.valid?
             instance.material = nil if instance.material
@@ -196,6 +230,16 @@ module MSPhysics
         if Sketchup.version.to_i < 14
           model.materials.purge_unused
         end
+        # Reset layer data
+        @layers_data.each { |layer, data|
+          next unless layer.valid?
+          orig_data = data[:original]
+          next if orig_data.nil?
+          layer.visible = orig_data[:visible] if layer.visible? != orig_data[:visible]
+          if Sketchup.version.to_i > 13 && layer.color.to_i != orig_data[:color].to_i
+            layer.color = orig_data[:color]
+          end
+        }
         # Reset camera data
         data = @camera_data[:original]
         camera.set(data[:eye], data[:target], data[:up])
@@ -208,6 +252,14 @@ module MSPhysics
         else
           camera.height = data[:height]
         end
+        # Reset render data
+        if @render_data[:original]
+          @render_data[:original].each { |k, v| model.rendering_options[k] = v if model.rendering_options[k] != v }
+        end
+        # Reset shadow data
+        if @shadow_data[:original]
+          @shadow_data[:original].each { |k, v| model.shadow_info[k] = v if model.shadow_info[k] != v }
+        end
         # Commit operation
         model.commit_operation
         true
@@ -218,6 +270,8 @@ module MSPhysics
       def play
         return false unless @active
         @paused = false
+        @animation.activate_tool
+        @animation.activate_anim
         true
       end
 
@@ -234,6 +288,10 @@ module MSPhysics
       def toggle_play
         return false unless @active
         @paused = !@paused
+        unless @paused
+          @animation.activate_tool
+          @animation.activate_anim
+        end
         true
       end
 
@@ -270,13 +328,13 @@ module MSPhysics
       # Determine whether recorded data is not empty.
       # @return [Boolean]
       def recorded_data_valid?
-        @tgroups_data.size > 0 || @tmaterials_data.size > 0 || @tstyles_data.size > 0 || @tlayers_data.size > 0 || @tcamera_data.size > 0 || @tshadow_data.size> 0
+        @tgroups_data.size > 0 || @tmaterials_data.size > 0 || @tlayers_data.size > 0 || @tcamera_data.size > 0 || @trender_data.size > 0 || @tshadow_data.size > 0
       end
 
       # Determine whether active data is not empty.
       # @return [Boolean]
       def active_data_valid?
-        @groups_data.size > 0 || @materials_data.size > 0 || @styles_data.size > 0 || @layers_data.size > 0 || @camera_data.size > 0 || @shadow_data.size> 0
+        @groups_data.size > 0 || @materials_data.size > 0 || @layers_data.size > 0 || @camera_data.size > 0 || @render_data.size > 0 || @shadow_data.size > 0
       end
 
       # Enable/Disable simulation recording.
@@ -315,18 +373,6 @@ module MSPhysics
         @replay_materials
       end
 
-      # Enable/Disable styles replay.
-      # @param [Boolean] state
-      def styles_replay_enabled=(state)
-        @replay_styles = state ? true : false
-      end
-
-      # Determine whether styles replay is enabled.
-      # @return [Boolean]
-      def styles_replay_enabled?
-        @replay_styles
-      end
-
       # Enable/Disable layers replay.
       # @param [Boolean] state
       def layers_replay_enabled=(state)
@@ -351,13 +397,25 @@ module MSPhysics
         @replay_camera
       end
 
-      # Enable/Disable shadow replay.
+      # Enable/Disable replay of rendering options.
+      # @param [Boolean] state
+      def render_replay_enabled=(state)
+        @replay_render = state ? true : false
+      end
+
+      # Determine whether replay of rendering options is enabled.
+      # @return [Boolean]
+      def render_replay_enabled?
+        @replay_render
+      end
+
+      # Enable/Disable replay of shadow info.
       # @param [Boolean] state
       def shadow_replay_enabled=(state)
         @replay_shadow = state ? true : false
       end
 
-      # Determine whether shadow replay is enabled.
+      # Determine whether relay of shadow info is enabled.
       # @return [Boolean]
       def shadow_replay_enabled?
         @replay_shadow
@@ -425,6 +483,7 @@ module MSPhysics
           :transformation => group.transformation,
           :visible        => group.visible?,
           :material       => group.material,
+          :layer          => group.layer
         }
         update_data_frame_limits(data, frame)
       end
@@ -495,41 +554,53 @@ module MSPhysics
         }
       end
 
-      # Record style.
-      # @param [Sketchup::Style] style
-      # @param [Fixnum] frame
-      def record_style(style, frame)
-      end
-
-      # Record all styles.
-      # @param [Fixnum] frame
-      def record_styles(frame)
-      end
-
       # Record layer.
       # @param [Sketchup::Layer] layer
       # @param [Fixnum] frame
       def record_layer(layer, frame)
+        frame = frame.to_i
+        data = @tlayers_data[layer]
+        unless data
+          @tlayers_data[layer] = {}
+          data = @tlayers_data[layer]
+        end
+        data[frame] = { :visible => layer.visible? }
+        data[frame][:color] = layer.color if Sketchup.version.to_i > 13
+        update_data_frame_limits(data, frame)
       end
 
       # Record all layers.
       # @param [Fixnum] frame
       def record_layers(frame)
+        Sketchup.active_model.layers.each { |l|
+          record_layer(l, frame)
+        }
       end
 
-      # Record shadow.
+      # Record rendering options.
+      # @param [Fixnum] frame
+      def record_render(frame)
+        data = {}
+        Sketchup.active_model.rendering_options.each { |k, v| data[k] = v }
+        @trender_data[frame.to_i] = data
+      end
+
+      # Record shadow info.
       # @param [Fixnum] frame
       def record_shadow(frame)
+        data = {}
+        Sketchup.active_model.shadow_info.each { |k, v| data[k] = v }
+        @tshadow_data[frame.to_i] = data
       end
 
-      # Record groups, camera, materials, styles, layers, and shadow.
+      # Record groups, camera, materials, layers, render, and shadow.
       # @param [Fixnum] frame
       def record_all(frame)
         record_groups(frame)
         record_materials(frame)
-        record_styles(frame)
         record_layers(frame)
         record_camera(frame)
+        record_render(frame)
         record_shadow(frame)
       end
 
@@ -537,9 +608,9 @@ module MSPhysics
       def save_recorded_data
         @groups_data = @tgroups_data
         @materials_data = @tmaterials_data
-        @styles_data = @tstyles_data
         @layers_data = @tlayers_data
         @camera_data = @tcamera_data
+        @render_data = @trender_data
         @shadow_data = @tshadow_data
         @start_frame = @tstart_frame
         @end_frame = @tend_frame
@@ -549,25 +620,21 @@ module MSPhysics
       def clear_recorded_data
         @tgroups_data = {}
         @tmaterials_data = {}
-        @tstyles_data = {}
         @tlayers_data = {}
         @tcamera_data = {}
+        @trender_data = {}
         @tshadow_data = {}
         @tstart_frame = nil
         @tend_frame = nil
-      end
-
-      # Save active data into attribute dictionary.
-      def save_active_data
       end
 
       # Clear active data.
       def clear_active_data
         @groups_data = {}
         @materials_data = {}
-        @styles_data = {}
         @layers_data = {}
         @camera_data = {}
+        @render_data = {}
         @shadow_data = {}
         @start_frame = nil
         @end_frame = nil
@@ -689,24 +756,6 @@ module MSPhysics
         return last
       end
 
-      # Get style data at a particular frame.
-      # @param [Sketchup::Style] style
-      # @param [Fixnum] frame
-      # @return [Hash, nil]
-      def get_style_data(style, frame)
-        frame = frame.to_i
-        data = @styles_data[style]
-        return unless data
-        return data[frame] if data[frame]
-        last = nil
-        data.each { |f, fdata|
-          next unless f.is_a?(Fixnum)
-          return last if last != nil && f > frame
-          last = fdata
-        }
-        return last
-      end
-
       # Get layer data at a particular frame.
       # @param [Sketchup::Layer] layer
       # @param [Fixnum] frame
@@ -740,6 +789,21 @@ module MSPhysics
         return last
       end
 
+      # Get render data at a particular frame.
+      # @param [Fixnum] frame
+      # @return [Hash, nil]
+      def get_render_data(frame)
+        frame = frame.to_i
+        return @render_data[frame] if @render_data[frame]
+        last = nil
+        @render_data.each { |f, fdata|
+          next unless f.is_a?(Fixnum)
+          return last if last != nil && f > frame
+          last = fdata
+        }
+        return last
+      end
+
       # Get shadow data at a particular frame.
       # @param [Fixnum] frame
       # @return [Hash, nil]
@@ -761,6 +825,7 @@ module MSPhysics
       def activate_frame(frame)
         return false unless active_data_valid?
         frame = frame.to_i
+        model = Sketchup.active_model
         # Activate group data
         if @replay_groups
           @groups_data.each { |entity, data|
@@ -775,6 +840,7 @@ module MSPhysics
             material = frame_data[:material]
             if entity.valid?
               entity.move!(frame_data[:transformation])
+              #~ entity.transformation = frame_data[:transformation]
               entity.visible = frame_data[:visible] if entity.visible? != frame_data[:visible]
               if material.nil?
                 entity.material = nil if entity.material
@@ -786,8 +852,10 @@ module MSPhysics
                   entity.material = material_data[:instance] if entity.material != material_data[:instance]
                 end
               end
+              entity.layer = frame_data[:layer] if frame_data[:layer].valid? && entity.layer != frame_data[:layer]
             elsif instance && instance.valid? && frame >= data[:start_frame] && frame <= data[:end_frame]
               instance.move!(frame_data[:transformation])
+              #~ instance.transformation = frame_data[:transformation]
               instance.visible = frame_data[:visible] if instance.visible? != frame_data[:visible]
               if material.nil?
                 instance.material = nil if instance.material
@@ -799,6 +867,7 @@ module MSPhysics
                   instance.material = material_data[:instance] if instance.material != material_data[:instance]
                 end
               end
+              instance.layer = frame_data[:layer] if frame_data[:layer].valid? && instance.layer != frame_data[:layer]
             end
           }
         end
@@ -824,10 +893,22 @@ module MSPhysics
             end
           }
         end
+        # Activate layer data
+        if @replay_layers
+          @layers_data.each { |layer, data|
+            next unless layer.valid?
+            frame_data = data[frame]
+            next if frame_data.nil?
+            layer.visible = frame_data[:visible] if layer.visible? != frame_data[:visible]
+            if Sketchup.version.to_i > 13 && layer.color.to_i != frame_data[:color].to_i
+              layer.color = frame_data[:color]
+            end
+          }
+        end
         # Activate camera data.
         if @replay_camera && @camera_data[frame]
           data = @camera_data[frame]
-          camera = Sketchup.active_model.active_view.camera
+          camera = model.active_view.camera
           camera.set(data[:eye], data[:target], data[:up])
           camera.perspective = data[:perspective]
           camera.aspect_ratio = data[:aspect_ratio]
@@ -838,6 +919,14 @@ module MSPhysics
           else
             camera.height = data[:height]
           end
+        end
+        # Activate render data.
+        if @replay_render && @render_data[frame]
+          @render_data[frame].each { |k, v| model.rendering_options[k] = v if model.rendering_options[k] != v }
+        end
+        # Activate shadow data.
+        if @replay_shadow && @shadow_data[frame]
+          @shadow_data[frame].each { |k, v| model.shadow_info[k] = v if model.shadow_info[k] != v }
         end
         true
       end
@@ -853,22 +942,22 @@ module MSPhysics
           return false
         end
         # Display options input box.
-        prompts = ['Start Frame', 'End Frame', 'Speed (0.01 - 10000)', 'Replay Camera', 'Reverse', 'Image Type', 'Resolution', 'Anti-alias', 'Compression', 'Transparent Background   ']
-        yes_no = 'Yes|No'
+        prompts = ['Start Frame', 'End Frame', 'Speed (0.01 - 10000)', 'Reverse', 'Image Type', 'Resolution', 'Anti-alias', 'Compression', 'Transparent Background   ', 'Replay Materials', 'Replay Layers', 'Replay Camera', 'Replay Render', 'Replay Shadow']
+        yn = 'Yes|No'
         image_types = 'bmp|jpg|png|tif'
         res = 'Model-Inherited|Custom|320x240|640x480|768x576|800x600|1024x768|1280x720|1280x1024|1920x1080'
         compression = '0.0|0.1|0.2|0.3|0.4|0.5|0.6|0.7|0.8|0.9|1.0'
-        drop_downs = ['', '', '', yes_no, yes_no, image_types, res, yes_no, compression, yes_no]
-        values = [@start_frame, @end_frame, @speed, @replay_camera ? 'Yes' : 'No', @reversed ? 'Yes' : 'No', 'png', 'Model-Inherited', 'Yes', '0.9', 'No']
+        drop_downs = ['', '', '', yn, image_types, res, yn, compression, yn, yn, yn, yn, yn, yn]
+        values = [@start_frame, @end_frame, @speed, @reversed ? 'Yes' : 'No', 'png', 'Model-Inherited', 'Yes', '0.9', 'No', @replay_materials ? 'Yes' : 'No', @replay_layers ? 'Yes' : 'No', @replay_camera ? 'Yes' : 'No', @replay_render ? 'Yes' : 'No', @replay_shadow ? 'Yes' : 'No']
         results = UI.inputbox(prompts, values, drop_downs, 'Export Animation Options')
         return false unless results
         # Display Custom resolution input box if desired.
-        if results[6] == 'Custom'
+        if results[5] == 'Custom'
           results2 = UI.inputbox(['Width', 'Height'], [800, 600], 'Use Custom Resolution')
           return false unless results2
           w = AMS.clamp(results2[0].to_i, 1, 16000)
           h = AMS.clamp(results2[1].to_i, 1, 16000)
-          results[6] = "#{w}x#{h}"
+          results[5] = "#{w}x#{h}"
         end
         # Select export path
         model_fname = File.basename(model.path, '.skp')
@@ -881,18 +970,28 @@ module MSPhysics
         sframe = results[0].to_i
         eframe = results[1].to_i
         speed = AMS.clamp(results[2].to_f, 0.01, 10000)
-        reversed = results[4] == 'Yes'
-        orig_replay_camera = @replay_camera
-        @replay_camera = results[3] == 'Yes'
+        reversed = results[3] == 'Yes'
         opts = {}
-        if results[6] != 'Model-Inherited'
-          wh = results[6].split('x')
+        if results[5] != 'Model-Inherited'
+          wh = results[5].split('x')
           opts[:width] = wh[0].to_i
           opts[:height] = wh[1].to_i
         end
-        opts[:antialias] = results[7] == 'Yes'
-        opts[:compression] = results[8].to_f
-        opts[:transparent] = results[9] == 'Yes'
+        opts[:antialias] = results[6] == 'Yes'
+        opts[:compression] = results[7].to_f
+        opts[:transparent] = results[8] == 'Yes'
+        orig_rep_grp = @replay_groups
+        orig_rep_mat = @replay_materials
+        orig_rep_lay = @replay_layers
+        orig_rep_cam = @replay_camera
+        orig_rep_ren = @replay_render
+        orig_rep_sha = @replay_shadow
+        @replay_groups = true
+        @replay_materials = results[9] == 'Yes'
+        @replay_layers = results[10] == 'Yes'
+        @replay_camera = results[11] == 'Yes'
+        @replay_render = results[12] == 'Yes'
+        @replay_shadow = results[13] == 'Yes'
         # Export animation
         start_time = Time.now
         called_while_active = @active
@@ -905,7 +1004,7 @@ module MSPhysics
             activate_frame(frame)
             last_frame = frame.to_i
           end
-          opts[:filename] = "#{fpath}/#{fname}#{sprintf("%06d", count)}.#{results[5]}"
+          opts[:filename] = "#{fpath}/#{fname}#{sprintf("%04d", count)}.#{results[4]}"
           view.write_image(opts)
           progress = (frame.to_i - sframe) * 100 / (eframe - sframe).to_f
           Sketchup.status_text = "Exporting MSPhysics Replay Animation    Progress: #{frame.to_i - sframe} / #{eframe - sframe} -- #{sprintf("%.2f", progress)}%"
@@ -914,7 +1013,12 @@ module MSPhysics
         end
         reset unless called_while_active
         # Set original settings
-        @replay_camera = orig_replay_camera
+        @replay_groups = orig_rep_grp
+        @replay_materials = orig_rep_mat
+        @replay_layers = orig_rep_lay
+        @replay_camera = orig_rep_cam
+        @replay_render = orig_rep_ren
+        @replay_shadow = orig_rep_sha
         # Display results
         UI.messagebox("Finished exporting MSPhysics Replay Animation!\n\nExported #{count} frames in #{sprintf("%.2f", Time.now - start_time)} seconds.\n\nYou may use Movie Maker, MakeAVI, or a similar tool to combine all images into a video file.")
         # Return success
@@ -932,10 +1036,10 @@ module MSPhysics
           return false
         end
         # Display options input box.
-        prompts = ['Start Frame', 'End Frame', 'Speed (0.01 - 10000)   ', 'Replay Camera', 'Reverse']
-        yes_no = 'Yes|No'
-        drop_downs = ['', '', '', yes_no, yes_no]
-        values = [@start_frame, @end_frame, @speed, @replay_camera ? 'Yes' : 'No', @reversed ? 'Yes' : 'No']
+        prompts = ['Start Frame', 'End Frame', 'Speed (0.01 - 10000)   ', 'Reverse', 'Replay Materials', 'Replay Layers', 'Replay Camera', 'Replay Render', 'Replay Shadow']
+        yn = 'Yes|No'
+        drop_downs = ['', '', '', yn, yn, yn, yn, yn, yn]
+        values = [@start_frame, @end_frame, @speed, @reversed ? 'Yes' : 'No', @replay_materials ? 'Yes' : 'No', @replay_layers ? 'Yes' : 'No', @replay_camera ? 'Yes' : 'No', @replay_render ? 'Yes' : 'No', @replay_shadow ? 'Yes' : 'No']
         results = UI.inputbox(prompts, values, drop_downs, 'Export Animation Options')
         return false unless results
         # Select export path
@@ -949,9 +1053,19 @@ module MSPhysics
         sframe = results[0].to_i
         eframe = results[1].to_i
         speed = AMS.clamp(results[2].to_f, 0.01, 10000)
-        reversed = results[4] == 'Yes'
-        orig_replay_camera = @replay_camera
-        @replay_camera = results[3] == 'Yes'
+        reversed = results[3] == 'Yes'
+        orig_rep_grp = @replay_groups
+        orig_rep_mat = @replay_materials
+        orig_rep_lay = @replay_layers
+        orig_rep_cam = @replay_camera
+        orig_rep_ren = @replay_render
+        orig_rep_sha = @replay_shadow
+        @replay_groups = true
+        @replay_materials = results[4] == 'Yes'
+        @replay_layers = results[5] == 'Yes'
+        @replay_camera = results[6] == 'Yes'
+        @replay_render = results[7] == 'Yes'
+        @replay_shadow = results[8] == 'Yes'
         # Export animation
         start_time = Time.now
         called_while_active = @active
@@ -964,7 +1078,7 @@ module MSPhysics
             activate_frame(frame)
             last_frame = frame.to_i
           end
-          full_path = "#{fpath}/#{fname}#{sprintf("%06d", count)}.skp"
+          full_path = "#{fpath}/#{fname}#{sprintf("%04d", count)}.skp"
           if Sketchup.version.to_i < 14
             model.save(full_path)
           else
@@ -981,190 +1095,450 @@ module MSPhysics
         end
         reset unless called_while_active
         # Set original settings
-        @replay_camera = orig_replay_camera
+        @replay_groups = orig_rep_grp
+        @replay_materials = orig_rep_mat
+        @replay_layers = orig_rep_lay
+        @replay_camera = orig_rep_cam
+        @replay_render = orig_rep_ren
+        @replay_shadow = orig_rep_sha
         # Display results
         UI.messagebox("Finished exporting MSPhysics Replay Animation!\n\nExported #{count} frames in #{sprintf("%.2f", Time.now - start_time)} seconds.")
         # Return success
         true
       end
 
-      # Export animation into kerkythea files.
+      # Export animation into Kerkythea files.
       # @return [Boolean] success
-      def export_to_kt
-        unless defined?(SU2KT)
+      def export_to_kerkythea
+        unless defined?(::SU2KT)
           UI.messagebox 'Kerkythea (SU2KT) plugin is not installed.'
           return false
         end
-        def SU2KT.export_msp_animation
-          model = Sketchup.active_model
-          view = model.active_view
-          replay = MSPhysics::Replay
-          # Check if animation record is not empty.
-          unless replay.active_data_valid?
-            UI.messagebox("Nothing to export!")
-            return false
-          end
-          SU2KT.reset_global_variables
-          # Get first stage settings.
-          return false unless SU2KT.export_options_window
-          # Get second stage settings.
-          render_set, rend_files = SU2KT.get_render_settings
-          settings = SU2KT.get_stored_values
-          # If file doesn't exist use the first render setting file that was found.
-          settings[6] = File.exist?(settings[6]) ? File.basename(settings[6], '.xml') : render_set[0]
-          prompts = ['Start Frame', 'End Frame', 'Speed (0.01 - 10000)', 'Replay Camera?', 'Reverse?', 'Animated Lights and Sun?', 'Resolution', 'Render Settings']
-          res = %w[Model-Inherited Custom 320x240 640x480 768x576 800x600 1024x768 1280x720 1280x1024 1920x1080].join('|')
-          drop_downs = ['', '', '', 'Yes|No', 'Yes|No', 'Yes|No', res, render_set.join('|')]
-          values = [
-            replay.start_frame,
-            replay.end_frame,
-            replay.speed,
-            replay.camera_replay_enabled? ? 'Yes' : 'No',
-            replay.reversed? ? 'Yes' : 'No',
-            settings[2],
-            settings[5],
-            settings[6]
-          ]
-          results = UI.inputbox(prompts, values, drop_downs, 'Export Animation Options')
-          return false unless results
-          # Use custom resolution
-          if results[6] == 'Custom'
-            results2 = UI.inputbox(['Width', 'Height'], [800, 600], 'Use Custom Resolution')
-            return false unless results2
-            w = AMS.clamp(results2[0].to_i, 1, 16000)
-            h = AMS.clamp(results2[1].to_i, 1, 16000)
-            results[6] = "#{w}x#{h}"
-          end
-          # Replace rendering setting with full file path.
-          results[7] = rend_files[render_set.index(results[7])]
-          # Store new settings.
-          settings[2] = results[5]
-          settings[5] = results[6]
-          settings[6] = results[7]
-          SU2KT.store_values(settings)
-          # Select export path and create export folder.
-          #~ script_file = SU2KT.select_script_path_window
-          #~ return false unless script_file
-          model_filename = File.basename(model.path)
-          if model_filename.empty?
-            model_name = 'Untitled.kst'
-          else
-            model_name = model_filename.split('.')[0..-2].join('.') + '.kst'
-          end
-          script_file = UI.savepanel('Select Export Directory and Name', '', model_name)
-          return false unless script_file
-          if script_file == script_file.split('.')[0..-2].join('.') # No file extension
-            script_file << '.kst'
-          end
-          @model_name = File.basename(script_file)
-          @model_name = @model_name.split('.')[0]
-          @frames_path = File.dirname(script_file) + @ds + 'Anim_' + File.basename(script_file).split('.')[0..-2].join('.')
-          Dir.mkdir(@frames_path) unless FileTest.exist?(@frames_path)
-          @path_textures = File.dirname(script_file)
-          # Optimize values.
-          sframe = results[0].to_i
-          eframe = results[1].to_i
-          speed = AMS.clamp(results[2].to_f, 0.01, 10000)
-          reversed = results[4] == 'Yes'
-          orig_replay_camera = replay.camera_replay_enabled?
-          replay.camera_replay_enabled = results[3] == 'Yes'
-          @anim_sun = (results[5] == 'Yes')
-          @export_full_frame = true
-          @scene_export = true
-          @resolution = (results[6] == 'Model-Inherited') ? '4x4' : results[6]
-          @instanced = false
-          # Create main XML file.
-          out_file = script_file.split('.')[0..-2].join('.') + '.xml'
-          out = File.new(out_file, 'w')
-          # Export data to the main XML file.
-          #SU2KT.export_global_settings(out)
-          SU2KT.export_render_settings(out, results[7])
-          SU2KT.find_lights(model.entities, Geom::Transformation.new)
-          SU2KT.write_sky(out)
-          if @instanced
-            SU2KT.export_instanced(out, model.entities)
-          else
-            SU2KT.export_meshes(out, model.entities)
-          end
-          SU2KT.export_current_view(model.active_view, out)
-          SU2KT.export_lights(out) if @export_lights
-          SU2KT.write_sun(out)
-          SU2KT.finish_close(out)
-          # Update merge settings.
-          SU2KT.set_merge_settings
-          # Create script file.
-          script = File.new(script_file, 'w')
-          # Make sure it loads the main XML file.
-          script.puts "message \"Load #{out_file}\""
-          # Export animation
-          start_time = Time.now
-          called_while_active = replay.active?
-          replay.start(false) unless called_while_active
-          frame = reversed ? eframe : sframe
-          last_frame = nil
-          count = 1
-          while(frame.to_i >= sframe && frame.to_i <= eframe)
-            if frame.to_i != last_frame
-              replay.activate_frame(frame)
-              last_frame = frame.to_i
-            end
-            # Export data to the frame file
-            frame_name = sprintf("%06d", count)
-            full_path = @frames_path + @ds + frame_name + '.xml'
-            script.puts("message \"Merge '#{full_path}' 5 5 4 0 0\"")
-            script.puts("message \"Render\"")
-            script.puts("message \"SaveImage " + @frames_path + @ds + frame_name + ".jpg\"")
-            out = File.new(full_path, 'w')
-            SU2KT.export_render_settings(out, settings[6])
-            SU2KT.find_lights(model.entities, Geom::Transformation.new)
-            SU2KT.write_sky(out)
-            SU2KT.collect_faces(model.entities, Geom::Transformation.new)
-            SU2KT.export_faces(out)
-            SU2KT.export_fm_faces(out)
-            SU2KT.export_current_view(model.active_view, out)
-            SU2KT.export_lights(out) if @export_lights
-            SU2KT.write_sun(out)
-            SU2KT.finish_close(out)
-            # Display progress
-            progress = (frame.to_i - sframe) * 100 / (eframe - sframe).to_f
-            Sketchup.status_text = "Exporting MSPhysics Replay to KT    Progress: #{frame.to_i - sframe} / #{eframe - sframe} -- #{sprintf("%.2f", progress)}%"
-            # Increment frame and counter
-            frame += reversed ? -speed : speed
-            count += 1
-          end
-          replay.reset unless called_while_active
-          # Set original replay settings
-          replay.camera_replay_enabled = orig_replay_camera
-          # Finalize
-          script.close
-          # It is important that textures are exported last!
-          SU2KT.write_textures
-          msg = "Finished exporting MSPhysics Replay Animation!\n\nExported #{count} frames in #{sprintf("%.2f", Time.now - start_time)} seconds.\n\nNow you're left to adjust '#{File.basename(out_file)}' render settings, run '#{File.basename(script_file)}' render script, and combine rendered images using a software, like Windows Movie Maker.\n\nYou may skip adjusting render settings and get to the rendering right away. Would you like to start rendering right now?"
-          result = UI.messagebox(msg, MB_YESNO)
-          @export_file = script_file # Used by render_animation as the script path.
-          # Render animation.
-          if result == IDYES
-            kt_path = SU2KT.get_kt_path
-            return unless kt_path
-            if RUBY_PLATFORM =~ /mswin|mingw/i
-              #batch_file_path = File.join(File.dirname(kt_path), 'start.bat')
-              batch_file_path = File.join(File.dirname(script_file), "#{File.basename(script_file, '.kst')}_start_render.bat")
-              batch = File.new(batch_file_path, 'w')
-              batch.puts "start \"\" \"#{kt_path}\" \"#{script_file}\""
-              batch.close
-              UI.openURL(batch_file_path)
-            else # MAC solution
-              Thread.new do
-                script_file_path = File.join( script_file.split(@ds) )
-                system(`#{kt_path} "#{script_file_path}"`)
-              end
-            end
-          end
-          SU2KT.reset_global_variables
-          # Return success
-          true
-        end unless SU2KT.respond_to?(:export_msp_animation)
-        SU2KT.export_msp_animation
+        unless ::SU2KT.respond_to?(:export_msp_animation)
+          add_in_script = %q{
+def self.export_msp_animation
+  model = Sketchup.active_model
+  view = model.active_view
+  replay = MSPhysics::Replay
+  # Check if animation record is not empty.
+  unless replay.active_data_valid?
+    UI.messagebox("Nothing to export!")
+    return false
+  end
+  SU2KT.reset_global_variables
+  # Get first stage settings.
+  return false unless SU2KT.export_options_window
+  # Get second stage settings.
+  render_set, rend_files = SU2KT.get_render_settings
+  settings = SU2KT.get_stored_values
+  # If file doesn't exist use the first render setting file that was found.
+  settings[6] = File.exist?(settings[6]) ? File.basename(settings[6], '.xml') : render_set[0]
+  prompts = ['Start Frame', 'End Frame', 'Speed (0.01 - 10000)', 'Replay Camera?', 'Reverse?', 'Animated Lights and Sun?', 'Resolution', 'Render Settings']
+  res = %w[Model-Inherited Custom 320x240 640x480 768x576 800x600 1024x768 1280x720 1280x1024 1920x1080].join('|')
+  drop_downs = ['', '', '', 'Yes|No', 'Yes|No', 'Yes|No', res, render_set.join('|')]
+  values = [
+    replay.start_frame,
+    replay.end_frame,
+    replay.speed,
+    replay.camera_replay_enabled? ? 'Yes' : 'No',
+    replay.reversed? ? 'Yes' : 'No',
+    settings[2],
+    settings[5],
+    settings[6]
+  ]
+  results = UI.inputbox(prompts, values, drop_downs, 'Export Animation Options')
+  return false unless results
+  # Use custom resolution
+  if results[6] == 'Custom'
+    results2 = UI.inputbox(['Width', 'Height'], [800, 600], 'Use Custom Resolution')
+    return false unless results2
+    w = AMS.clamp(results2[0].to_i, 1, 16000)
+    h = AMS.clamp(results2[1].to_i, 1, 16000)
+    results[6] = "#{w}x#{h}"
+  end
+  # Replace rendering setting with full file path.
+  results[7] = rend_files[render_set.index(results[7])]
+  # Store new settings.
+  settings[2] = results[5]
+  settings[5] = results[6]
+  settings[6] = results[7]
+  SU2KT.store_values(settings)
+  # Select export path and create export folder.
+  #~ script_file = SU2KT.select_script_path_window
+  #~ return false unless script_file
+  model_filename = File.basename(model.path)
+  if model_filename.empty?
+    model_name = 'Untitled.kst'
+  else
+    model_name = model_filename.split('.')[0..-2].join('.') + '.kst'
+  end
+  script_file = UI.savepanel('Select Export Directory and Name', '', model_name)
+  return false unless script_file
+  if script_file == script_file.split('.')[0..-2].join('.') # No file extension
+    script_file << '.kst'
+  end
+  @model_name = File.basename(script_file)
+  @model_name = @model_name.split('.')[0]
+  @frames_path = File.dirname(script_file) + @ds + 'Anim_' + File.basename(script_file).split('.')[0..-2].join('.')
+  Dir.mkdir(@frames_path) unless FileTest.exist?(@frames_path)
+  @path_textures = File.dirname(script_file)
+  # Optimize values.
+  sframe = results[0].to_i
+  eframe = results[1].to_i
+  speed = AMS.clamp(results[2].to_f, 0.01, 10000)
+  reversed = results[4] == 'Yes'
+  orig_replay_camera = replay.camera_replay_enabled?
+  replay.camera_replay_enabled = results[3] == 'Yes'
+  @anim_sun = (results[5] == 'Yes')
+  @export_full_frame = true
+  @scene_export = true
+  @resolution = (results[6] == 'Model-Inherited') ? '4x4' : results[6]
+  @instanced = false
+  # Create main XML file.
+  out_file = script_file.split('.')[0..-2].join('.') + '.xml'
+  out = File.new(out_file, 'w')
+  # Export data to the main XML file.
+  #SU2KT.export_global_settings(out)
+  SU2KT.export_render_settings(out, results[7])
+  SU2KT.find_lights(model.entities, Geom::Transformation.new)
+  SU2KT.write_sky(out)
+  if @instanced
+    SU2KT.export_instanced(out, model.entities)
+  else
+    SU2KT.export_meshes(out, model.entities)
+  end
+  SU2KT.export_current_view(model.active_view, out)
+  SU2KT.export_lights(out) if @export_lights
+  SU2KT.write_sun(out)
+  SU2KT.finish_close(out)
+  # Update merge settings.
+  SU2KT.set_merge_settings
+  # Create script file.
+  script = File.new(script_file, 'w')
+  # Make sure it loads the main XML file.
+  script.puts "message \"Load #{out_file}\""
+  # Export animation
+  start_time = Time.now
+  called_while_active = replay.active?
+  replay.start(false) unless called_while_active
+  frame = reversed ? eframe : sframe
+  last_frame = nil
+  count = 1
+  while(frame.to_i >= sframe && frame.to_i <= eframe)
+    if frame.to_i != last_frame
+      replay.activate_frame(frame)
+      last_frame = frame.to_i
+    end
+    # Export data to the frame file
+    frame_name = sprintf("%04d", count)
+    full_path = @frames_path + @ds + frame_name + '.xml'
+    script.puts("message \"Merge '#{full_path}' 5 5 4 0 0\"")
+    script.puts("message \"Render\"")
+    script.puts("message \"SaveImage " + @frames_path + @ds + frame_name + ".jpg\"")
+    out = File.new(full_path, 'w')
+    SU2KT.export_render_settings(out, settings[6])
+    SU2KT.find_lights(model.entities, Geom::Transformation.new)
+    SU2KT.write_sky(out)
+    SU2KT.collect_faces(model.entities, Geom::Transformation.new)
+    SU2KT.export_faces(out)
+    SU2KT.export_fm_faces(out)
+    SU2KT.export_current_view(model.active_view, out)
+    SU2KT.export_lights(out) if @export_lights
+    SU2KT.write_sun(out)
+    SU2KT.finish_close(out)
+    # Display progress
+    progress = (frame.to_i - sframe) * 100 / (eframe - sframe).to_f
+    Sketchup.status_text = "Exporting MSPhysics Replay to KT    Progress: #{frame.to_i - sframe} / #{eframe - sframe} -- #{sprintf("%.2f", progress)}%"
+    # Increment frame and counter
+    frame += reversed ? -speed : speed
+    count += 1
+  end
+  replay.reset unless called_while_active
+  # Set original replay settings
+  replay.camera_replay_enabled = orig_replay_camera
+  # Finalize
+  script.close
+  # It is important that textures are exported last!
+  SU2KT.write_textures
+  msg = "Finished exporting MSPhysics Replay Animation!\n\nExported #{count} frames in #{sprintf("%.2f", Time.now - start_time)} seconds.\n\nNow you're left to adjust '#{File.basename(out_file)}' render settings, run '#{File.basename(script_file)}' render script, and combine rendered images using a software, like Windows Movie Maker.\n\nYou may skip adjusting render settings and get to the rendering right away. Would you like to start rendering right now?"
+  result = UI.messagebox(msg, MB_YESNO)
+  @export_file = script_file # Used by render_animation as the script path.
+  # Render animation.
+  if result == IDYES
+    kt_path = SU2KT.get_kt_path
+    return unless kt_path
+    if RUBY_PLATFORM =~ /mswin|mingw/i
+      #batch_file_path = File.join(File.dirname(kt_path), 'start.bat')
+      batch_file_path = File.join(File.dirname(script_file), "#{File.basename(script_file, '.kst')}_start_render.bat")
+      batch = File.new(batch_file_path, 'w')
+      batch.puts "start \"\" \"#{kt_path}\" \"#{script_file}\""
+      batch.close
+      UI.openURL(batch_file_path)
+    else # MAC solution
+      Thread.new do
+        script_file_path = File.join( script_file.split(@ds) )
+        system(`#{kt_path} "#{script_file_path}"`)
+      end
+    end
+  end
+  SU2KT.reset_global_variables
+  # Return success
+  true
+end}
+          ::SU2KT.module_eval(add_in_script, __FILE__, 0)
+        end
+        ::SU2KT.export_msp_animation
+      end
+
+      # Export animation into SkIndigo files.
+      # @return [Boolean] success
+      def export_to_skindigo
+        unless defined?(::SkIndigo)
+          UI.messagebox 'SkIndigo plugin is not installed.'
+          return false
+        end
+        unless ::SkIndigo.respond_to?(:export_msp_animation)
+          add_in_script = %q{
+def self.export_msp_animation
+  model = Sketchup.active_model
+  view = model.active_view
+  replay = MSPhysics::Replay
+  # Check if animation record is not empty.
+  unless replay.active_data_valid?
+    UI.messagebox("Nothing to export!")
+    return false
+  end
+  # Verify the halt time
+  if IndigoRenderSettings.new.halt.to_i == -1
+    result = UI.messagebox("Warning: Halt time is set to -1. This means that each frame will render forever unless the halt time is set to a value such as 10 (s). Halt time can be set in Advanced tab of the SkIndigo render settings dialog. Press YES to proceed exporting or NO to adjust rendering settings first.", MB_YESNO)
+    return false if result == IDNO
+  end
+
+  prompts = ['Start Frame', 'End Frame', 'Speed (0.01 - 10000)', 'Replay Camera?', 'Reverse?']
+  drop_downs = ['', '', '', 'Yes|No', 'Yes|No']
+  values = [
+    replay.start_frame,
+    replay.end_frame,
+    replay.speed,
+    replay.camera_replay_enabled? ? 'Yes' : 'No',
+    replay.reversed? ? 'Yes' : 'No'
+  ]
+  results = UI.inputbox(prompts, values, drop_downs, 'Export Animation Options')
+  return false unless results
+
+  # Select export path and create export folder.
+  model_filename = File.basename(model.path, ".*")
+  if model_filename.empty?
+    queue_filename = 'Untitled.igq'
+  else
+    queue_filename = model_filename + '.igq'
+  end
+  batch_file_path = UI.savepanel('Select Export Directory and Name', '', queue_filename)
+  return false unless batch_file_path
+  export_dir = File.join(File.dirname(batch_file_path), File.basename(batch_file_path, ".*"))
+  Dir.mkdir(export_dir) unless FileTest.exist?(export_dir)
+  export_path = File.join(export_dir, File.basename(batch_file_path, ".*")) + '.igs'
+
+  ie = ::IndigoExporter.new(export_path)
+  ie.settings.save_to_model()
+  model_name = File.basename(ie.path, '.igs')
+  return false if model_name.empty?
+  tex_path = File.join(File.dirname(export_path), 'TX_' + model_name)
+  ie.tex_path = 'TX_' + model_name
+
+  # Optimize values.
+  sframe = results[0].to_i
+  eframe = results[1].to_i
+  speed = AMS.clamp(results[2].to_f, 0.01, 10000)
+  reversed = results[4] == 'Yes'
+  orig_replay_camera = replay.camera_replay_enabled?
+  replay.camera_replay_enabled = results[3] == 'Yes'
+
+  print_timings = !SkIndigo.run_tests?
+
+  # Open the shared IGS file to export to.
+  shared_igs_path = File.join(File.dirname(ie.path), model_name + '-shared.igs')
+  shared_igs_file = File.new(shared_igs_path, 'w')
+  shared_igs_file.puts "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+  shared_igs_file.puts "<scenedata>"
+
+  ie.export_default_mat(shared_igs_file)
+
+  mesh_builder = IndigoMeshBuilder.new
+  IndigoMeshBuilder.reset # Erases the stored meshes, instances, and spheres from last export
+
+  # Process entities (iterate over scene, get list of components/groups etc.. to export)
+  t = Time.now
+  Sketchup.set_status_text("Collecting Instances...")
+  entities_to_export = Sketchup.active_model.entities
+  mesh_builder.process_entities(entities_to_export)
+  puts "Traversed model and got instances in #{Time.now - t} seconds."
+
+  # Build required (visible, referenced) meshes
+  t = Time.now
+  Sketchup.set_status_text("Building Meshes...")
+  mesh_builder.build_meshes()
+  puts "Built meshes in #{Time.now - t} seconds."
+
+  # Write meshes
+  t = Time.now
+  Sketchup.set_status_text("Exporting Meshes...")
+  ie.export_meshes(mesh_builder, shared_igs_file)
+  puts "Exported meshes in #{Time.now - t} seconds."
+
+  ie.get_used_layers()
+
+  # Build a set of the materials that were actually referenced by a model, so that we can just export those materials, and not all materials in the scene.
+  referenced_materials = ie.get_referenced_materials(mesh_builder)
+
+  # Export all the materials
+  t = Time.now
+  Sketchup.set_status_text("Exporting Materials...")
+  referenced_materials.each { |mat, generate_uvs|
+    ie.export_material(IndigoMaterial.new(mat), shared_igs_file, generate_uvs)
+  }
+  puts "Exported materials in #{Time.now - t} seconds." if print_timings
+
+  # Write scatters
+  ie.export_scatters(mesh_builder, shared_igs_file)
+
+  shared_igs_file.puts "</scenedata>"
+  shared_igs_file.close
+
+  # Export textures
+  Sketchup.set_status_text("Exporting textures...")
+  Dir.mkdir(tex_path) if !FileTest.exist?(tex_path)
+
+  # Export all textures collected during the material export process
+  ie.export_textures(ie.textures)
+
+  # Export all collected nkata
+  #~ for path in ie.nkdata
+  #~   nk = NKdata.new(path)
+  #~   nk.export(tex_path) # exports the nkdata to the textures directory
+  #~ end
+
+  # Export all collected ies profiles
+  for path in ie.ies
+    profile = IESProfile.new(path)
+    profile.export(tex_path) if profile.valid? # export the IES profiles to the textures directory
+  end
+
+  if print_timings
+    puts "------ SkIndigo MSPhysics Animation Export Run ------"
+    puts "Instances: #{mesh_builder.instances.size}"
+    puts "Meshes: #{mesh_builder.num_meshes()}"
+    puts "Meshes exported: #{mesh_builder.num_new_meshes_exported}"
+    puts "Spheres: #{mesh_builder.spheres.length}"
+  end
+
+  # Export animation
+  start_time = Time.now
+  called_while_active = replay.active?
+  replay.start(false) unless called_while_active
+  frame = reversed ? eframe : sframe
+  last_frame = nil
+  count = 1
+  while(frame.to_i >= sframe && frame.to_i <= eframe)
+    if frame.to_i != last_frame
+      replay.activate_frame(frame)
+      last_frame = frame.to_i
+    end
+    # Export data to the frame file
+    ie.export_msp_frame(File.dirname(export_path), mesh_builder, shared_igs_path)
+    # Display progress
+    progress = (frame.to_i - sframe) * 100 / (eframe - sframe).to_f
+    Sketchup.status_text = "Exporting MSPhysics Replay to SkIndigo    Progress: #{frame.to_i - sframe} / #{eframe - sframe} -- #{sprintf("%.2f", progress)}%"
+    # Increment frame and counter
+    frame += reversed ? -speed : speed
+    count += 1
+  end
+  replay.reset unless called_while_active
+  # Set original replay settings
+  replay.camera_replay_enabled = orig_replay_camera
+  # Finalize
+  ie.create_animation_igq_file(batch_file_path)
+
+  msg = "Finished exporting MSPhysics Replay Animation!\n\nExported #{count} frames in #{sprintf("%.2f", Time.now - start_time)} seconds.\n\nNow you're left to adjust '#{File.basename(shared_igs_file)}' render settings, run '#{File.basename(batch_file_path)}' render script, and combine rendered images using a software, like Windows Movie Maker.\n\nYou may skip adjusting render settings and get to the rendering right away. Would you like to start rendering right now?"
+  result = UI.messagebox(msg, MB_YESNO)
+  # Render animation.
+  if result == IDYES
+    # Open Indigo for rendering
+    is = IndigoRenderSettings.new
+    indigo_path = SkIndigo.get_indigo_path
+    if indigo_path.nil?
+      UI.messagebox "Indigo application not found.  Rendering Aborted."
+      return true
+    end
+    if FileTest.exist?(indigo_path)
+      output_param = ""
+      case is.network_mode
+      when 1 # master
+        output_param += "-n m " unless SkIndigo.on_mac?
+      when 2 # working master
+        output_param += "-n wm " unless SkIndigo.on_mac?
+      end
+      SkIndigo.launch_indigo(indigo_path, batch_file_path, output_param, is.low_priority?, "normal")
+    end
+  end
+  # Return success
+  true
+end}
+          add_in_script2 = %q{
+def export_msp_frame(igs_path, mb, shared_igs_path)
+  Dir.mkdir(igs_path) unless FileTest.exist?(igs_path)
+  return 0 unless FileTest.exist?(igs_path) # failed to create path
+
+  @next_uid += 100
+
+  # put this in initialization method?
+  igs_path = File.basename(self.path)
+  model_name = File.basename(igs_path, ".*") # minus the file extension
+
+  # Begin exporting the current frame
+  ents = Sketchup.active_model.entities
+  #mb = IndigoMeshBuilder.new
+  mb.reset_instances
+  #mb.build_active_mesh(ents)
+
+  # exported_entity_set = Set.new() # Used to prevent infinite loops on recursive components.
+  # mb.get_instances(ents, Geom::Transformation.new, exported_entity_set)
+  entities_to_export = Sketchup.active_model.entities
+  mb.process_entities(entities_to_export)
+  #mb.build_meshes2()
+
+  frame_num = "%04d" % @frame
+  frame_path = File.join(File.dirname(self.path), model_name + "-#{frame_num}.igs")
+  get_used_layers()
+  out = File.new(frame_path, "w")
+  out.puts "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+  out.puts "<scene>"
+  export_metadata(out)
+  export_render_settings(out)
+  export_tonemapping(out)
+  export_camera(self.model.active_view, out)
+  export_environment(out)
+  export_default_mat(out)
+  mb.spheres.each { |sphere| export_sphere(sphere, out) }
+
+  export_fog(out) if self.model.rendering_options["DisplayFog"]
+
+  out.puts "  <include>"
+  out.puts "      <offset_uids>false</offset_uids>"
+  out.puts "      <pathname>#{File.basename(shared_igs_path)}</pathname>"
+  out.puts "  </include>"
+  out.puts ""
+
+  export_instances(mb, out)
+  export_light_layer_names(out)
+  out.puts "</scene>"
+  out.close
+  @frame += 1
+end}
+          ::SkIndigo.module_eval(add_in_script, __FILE__, 0)
+          ::IndigoExporter.class_eval(add_in_script2, __FILE__, 0)
+        end
+        ::SkIndigo.export_msp_animation
       end
 
       # Export animation into AVI video file.
@@ -1172,19 +1546,55 @@ module MSPhysics
       def export_to_avi
       end
 
+      # Save replay settings into model dictionary.
+      def save_replay_settings
+        model = Sketchup.active_model
+        dict = 'MSPhysics Replay'
+        model.set_attribute(dict, 'Replay Groups', @replay_groups)
+        model.set_attribute(dict, 'Replay Materials', @replay_materials)
+        model.set_attribute(dict, 'Replay Layers', @replay_layers)
+        model.set_attribute(dict, 'Replay Camera', @replay_camera)
+        model.set_attribute(dict, 'Replay Render', @replay_render)
+        model.set_attribute(dict, 'Replay Shadow', @replay_shadow)
+      end
+
+      # Load replay settings from model dictionary.
+      def load_replay_settings
+        model = Sketchup.active_model
+        dict = 'MSPhysics Replay'
+        @replay_groups = model.get_attribute(dict, 'Replay Group', DEFAULT_REPLAY_GROUPS) ? true : false
+        @replay_materials = model.get_attribute(dict, 'Replay Materials', DEFAULT_REPLAY_MATERIALS) ? true : false
+        @replay_layers = model.get_attribute(dict, 'Replay Layers', DEFAULT_REPLAY_LAYERS) ? true : false
+        @replay_camera = model.get_attribute(dict, 'Replay Camera', DEFAULT_REPLAY_CAMERA) ? true : false
+        @replay_render = model.get_attribute(dict, 'Replay Render', DEFAULT_REPLAY_RENDER) ? true : false
+        @replay_shadow = model.get_attribute(dict, 'Replay Shadow', DEFAULT_REPLAY_SHADOW) ? true : false
+      end
+
+      # Reset replay settings.
+      def reset_replay_settings
+        @replay_groups = DEFAULT_REPLAY_GROUPS
+        @replay_materials = DEFAULT_REPLAY_MATERIALS
+        @replay_layers = DEFAULT_REPLAY_LAYERS
+        @replay_camera = DEFAULT_REPLAY_CAMERA
+        @replay_render = DEFAULT_REPLAY_RENDER
+        @replay_shadow = DEFAULT_REPLAY_SHADOW
+      end
+
     end # class << self
 
     # @!visibility private
-    class AppObserver
+    class AppObserver < ::Sketchup::AppObserver
 
       def onNewModel(model)
         MSPhysics::Replay.stop
         MSPhysics::Replay.clear_recorded_data
         MSPhysics::Replay.clear_active_data
+        MSPhysics::Replay.reset_replay_settings
       end
 
       def onOpenModel(model)
         onNewModel(model)
+        MSPhysics::Replay.load_replay_settings
       end
 
     end # class AppObserver
@@ -1194,9 +1604,77 @@ module MSPhysics
 
       def initialize
         @last_frame = nil
+        @tool_active = false
+        @anim_active = false
+      end
+
+      def tool_active?
+        @tool_active
+      end
+
+      def anim_active?
+        @anim_active
+      end
+
+      def activate_tool
+        Sketchup.active_model.select_tool(self) unless @tool_active
+      end
+
+      def deactivate_tool
+        Sketchup.active_model.select_tool(nil) if @tool_active
+      end
+
+      def activate_anim
+        Sketchup.active_model.active_view.animation = self unless @anim_active
+        @anim_active = true
+        Sketchup.active_model.active_view.show_frame
+      end
+
+      def deactivate_anim
+        Sketchup.active_model.active_view.animation = nil if @anim_active
+      end
+
+      def activate
+        @tool_active = true
+        activate_anim
+      end
+
+      def deactivate(view)
+        @tool_active = false
+        deactivate_anim
+      end
+
+      def resume(view)
+        activate_anim
+      end
+
+      def suspend(view)
+      end
+
+      def stop
+        @anim_active = false
+        MSPhysics::Replay.pause
+      end
+
+      def onLButtonDown(flags, x, y, view)
+      end
+
+      def onLButtonUp(flags, x, y, view)
+      end
+
+      def getExtents
+        bb = Sketchup.active_model.bounds
+        if Sketchup.version.to_i > 6
+          Sketchup.active_model.entities.each { |e|
+            next if e.is_a?(Sketchup::Text)
+            bb.add(e.bounds) if e.visible?
+          }
+        end
+        bb
       end
 
       def nextFrame(view)
+        @anim_active = true unless @anim_active
         replay = MSPhysics::Replay
         return false unless replay.active_data_valid?
         Sketchup.status_text = "MSPhysics Replay    Frame: #{replay.frame.to_i}    Speed: #{sprintf("%.2f", replay.speed)}    Reversed: #{replay.reversed? ? 'Yes' : 'No'}    Start Frame: #{replay.start_frame}    End Frame: #{replay.end_frame}"
@@ -1210,7 +1688,7 @@ module MSPhysics
           @last_frame = replay.frame.to_i
         end
         view.show_frame if view
-        true
+        return true
       end
 
     end # class Animation

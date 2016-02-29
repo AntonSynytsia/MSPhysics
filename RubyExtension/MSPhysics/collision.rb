@@ -78,7 +78,7 @@ module MSPhysics
           raise(TypeError, "Entity #{entity} has a non-uniform transformation matrix. Some or all matrix axis are not perpendicular to each other.", caller)
         end
         s = MSPhysics::Geometry.get_matrix_scale(entity.transformation)
-        if s.x.zero? || s.y.zero? || s.z.zero?
+        if s.x < MSPhysics::EPSILON || s.y  < MSPhysics::EPSILON || s.z < MSPhysics::EPSILON
           raise(TypeError, "Entity #{entity} has one of the axis scaled to zero. Zero scaled shapes are not acceptable!", caller)
         end
       end
@@ -156,7 +156,7 @@ module MSPhysics
         bb = MSPhysics::Group.get_bounding_box_from_faces(entity, true){ |e|
           e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
         }
-        if bb.width.zero? || bb.height.zero? || bb.depth.zero?
+        if bb.width < MSPhysics::EPSILON || bb.height < MSPhysics::EPSILON || bb.depth < MSPhysics::EPSILON
           raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
         end
         tra = entity.transformation
@@ -188,7 +188,7 @@ module MSPhysics
         bb = MSPhysics::Group.get_bounding_box_from_faces(entity, true){ |e|
           e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
         }
-        if bb.width.zero? || bb.height.zero? || bb.depth.zero?
+        if bb.width < MSPhysics::EPSILON || bb.height < MSPhysics::EPSILON || bb.depth < MSPhysics::EPSILON
           raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
         end
         tra = entity.transformation
@@ -203,10 +203,11 @@ module MSPhysics
           center.z *= s.z
           offset_matrix = Geom::Transformation.new(center)
         end
-        d = bb.width*s.x
-        d = bb.height*s.y if bb.height*s.y > d
-        d = bb.height*s.z if bb.height*s.z > d
-        MSPhysics::Newton::Collision.create_sphere(world.get_address, d*0.5, 0, offset_matrix)
+        #d = bb.width*s.x
+        #d = bb.height*s.y if bb.height*s.y > d
+        #d = bb.height*s.z if bb.height*s.z > d
+        #MSPhysics::Newton::Collision.create_sphere(world.get_address, d*0.5, 0, offset_matrix)
+        MSPhysics::Newton::Collision.create_scaled_sphere(world.get_address, bb.width*s.x, bb.height*s.y, bb.depth*s.z, 0, offset_matrix)
       end
 
       # Create a cone collision.
@@ -223,7 +224,7 @@ module MSPhysics
         bb = MSPhysics::Group.get_bounding_box_from_faces(entity, true){ |e|
           e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
         }
-        if bb.width.zero? || bb.height.zero? || bb.depth.zero?
+        if bb.width < MSPhysics::EPSILON || bb.height < MSPhysics::EPSILON || bb.depth < MSPhysics::EPSILON
           raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
         end
         tra = entity.transformation
@@ -238,9 +239,7 @@ module MSPhysics
           center.z *= s.z
           offset_matrix = Geom::Transformation.new(center)
         end
-        d = bb.depth*s.z
-        d = bb.height*s.y if bb.height*s.y > d
-        MSPhysics::Newton::Collision.create_cone(world.get_address, d*0.5, bb.width*s.x, 0, offset_matrix)
+        MSPhysics::Newton::Collision.create_scaled_cone(world.get_address, bb.depth*s.z * 0.5, bb.height*s.y * 0.5, bb.width*s.x, 0, offset_matrix)
       end
 
       # Create a cylinder collision.
@@ -257,7 +256,7 @@ module MSPhysics
         bb = MSPhysics::Group.get_bounding_box_from_faces(entity, true){ |e|
           e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
         }
-        if bb.width.zero? || bb.height.zero? || bb.depth.zero?
+        if bb.width < MSPhysics::EPSILON || bb.height < MSPhysics::EPSILON || bb.depth < MSPhysics::EPSILON
           raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
         end
         tra = entity.transformation
@@ -272,9 +271,7 @@ module MSPhysics
           center.z *= s.z
           offset_matrix = Geom::Transformation.new(center)
         end
-        d = bb.depth*s.z
-        d = bb.height*s.y if bb.height*s.y > d
-        MSPhysics::Newton::Collision.create_cylinder(world.get_address, d*0.5, bb.width*s.x, 0, offset_matrix)
+        MSPhysics::Newton::Collision.create_scaled_cylinder(world.get_address, bb.depth*s.z * 0.5, bb.height*s.y * 0.5, bb.width*s.x, 0, offset_matrix)
       end
 
       # Create a capsule collision.
@@ -291,7 +288,7 @@ module MSPhysics
         bb = MSPhysics::Group.get_bounding_box_from_faces(entity, true){ |e|
           e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
         }
-        if bb.width.zero? || bb.height.zero? || bb.depth.zero?
+        if bb.width < MSPhysics::EPSILON || bb.height < MSPhysics::EPSILON || bb.depth < MSPhysics::EPSILON
           raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
         end
         tra = entity.transformation
@@ -306,11 +303,12 @@ module MSPhysics
           center.z *= s.z
           offset_matrix = Geom::Transformation.new(center)
         end
-        d = bb.depth*s.z
-        d = bb.height*s.y if bb.height*s.y > d
-        l = bb.width*s.x-d
-        l = 0 if l < 0
-        MSPhysics::Newton::Collision.create_capsule(world.get_address, d*0.5, l, 0, offset_matrix)
+        #d = bb.depth*s.z
+        #d = bb.height*s.y if bb.height*s.y > d
+        #l = bb.width*s.x-d
+        #l = 0 if l < 0
+        #MSPhysics::Newton::Collision.create_capsule(world.get_address, d*0.5, l, 0, offset_matrix)
+        MSPhysics::Newton::Collision.create_scaled_capsule(world.get_address, bb.depth*s.z * 0.5, bb.height*s.y * 0.5, bb.width*s.x, 0, offset_matrix)
       end
 
       # Create a chamfer cylinder collision.
@@ -327,7 +325,7 @@ module MSPhysics
         bb = MSPhysics::Group.get_bounding_box_from_faces(entity, true){ |e|
           e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
         }
-        if bb.width.zero? || bb.height.zero? || bb.depth.zero?
+        if bb.width < MSPhysics::EPSILON || bb.height < MSPhysics::EPSILON || bb.depth < MSPhysics::EPSILON
           raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
         end
         tra = entity.transformation
@@ -342,12 +340,13 @@ module MSPhysics
           center.z *= s.z
           offset_matrix = Geom::Transformation.new(center)
         end
-        l = bb.width*s.x
-        d = bb.depth*s.z
-        d = bb.height*s.y if bb.height*s.y > d
-        d -= l*2
-        d = 0 if d < 0
-        MSPhysics::Newton::Collision.create_chamfer_cylinder(world.get_address, d*0.5, l, 0, offset_matrix)
+        #l = bb.width*s.x
+        #d = bb.depth*s.z
+        #d = bb.height*s.y if bb.height*s.y > d
+        #d -= l*2
+        #d = 0 if d < 0
+        #MSPhysics::Newton::Collision.create_chamfer_cylinder(world.get_address, d*0.5, l, 0, offset_matrix)
+        MSPhysics::Newton::Collision.create_scaled_chamfer_cylinder(world.get_address, bb.depth*s.z * 0.5, bb.height*s.y * 0.5, bb.width*s.x, 0, offset_matrix)
       end
 
       # Create a convex hull collision.
@@ -412,7 +411,7 @@ module MSPhysics
         if convex_collisions.empty?
           raise(TypeError, "Entity #{entity} doesn't have any valid sub-collisions, making it an invalid compound collision!", caller)
         end
-        collision = MSPhysics::Newton::Collision.create_compound(world.get_address, convex_collisions)
+        collision = MSPhysics::Newton::Collision.create_compound(world.get_address, convex_collisions, 0)
         convex_collisions.each { |col|
           MSPhysics::Newton::Collision.destroy(col)
         }
@@ -445,7 +444,7 @@ module MSPhysics
           }
           triplets[i].reverse! if flipped
         end
-        MSPhysics::Newton::Collision.create_static_mesh(world.get_address, triplets, true, 2)
+        MSPhysics::Newton::Collision.create_static_mesh(world.get_address, triplets, true, 0, 0)
       end
 
       # Create a compound collision from convex decomposition using convex
@@ -476,7 +475,7 @@ module MSPhysics
           }
           triplets[i].reverse! if flipped
         end
-        MSPhysics::Newton::Collision.create_compound_from_cd1(world.get_address, triplets, 1.0e-5, 0.2, 512, 1024)
+        MSPhysics::Newton::Collision.create_compound_from_cd1(world.get_address, triplets, 0.01, 0.2, 512, 1024, 0)
       end
 
       # Create a compound collision from convex decomposition using VHACD 2.2 by
@@ -497,7 +496,7 @@ module MSPhysics
         s.x *= -1 if MSPhysics::Geometry.is_matrix_flipped?(tra)
         mesh.transform!( Geom::Transformation.scaling(s.x, s.y, s.z) )
         indices = mesh.polygons.map { |pl| [pl.x.abs-1, pl.y.abs-1, pl.z.abs-1] }
-        MSPhysics::Newton::Collision.create_compound_from_cd2(world.get_address, mesh.points, indices, GENERATION_PARAMS)
+        MSPhysics::Newton::Collision.create_compound_from_cd2(world.get_address, mesh.points, indices, GENERATION_PARAMS, 0)
       end
 
       # Create a compound collision from convex decomposition using an exact
@@ -518,7 +517,7 @@ module MSPhysics
         s.x *= -1 if MSPhysics::Geometry.is_matrix_flipped?(tra)
         mesh.transform!( Geom::Transformation.scaling(s.x, s.y, s.z) )
         indices = mesh.polygons.map { |pl| [pl.x.abs-1, pl.y.abs-1, pl.z.abs-1] }
-        MSPhysics::Newton::Collision.create_compound_from_cd3(world.get_address, mesh.points, indices, 0.01)
+        MSPhysics::Newton::Collision.create_compound_from_cd3(world.get_address, mesh.points, indices, 0.01, 0)
       end
 
       # Create a compound collision from convex decomposition using an exact
@@ -597,20 +596,20 @@ module MSPhysics
         mesh = MSPhysics::Group.get_triangular_mesh(entity, true, false){ |e|
           e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
         }
-		tra = entity.transformation
+        tra = entity.transformation
         s = MSPhysics::Geometry.get_matrix_scale(tra)
         s.x *= -1 if MSPhysics::Geometry.is_matrix_flipped?(tra)
         mesh.transform!( Geom::Transformation.scaling(s.x, s.y, s.z) )
-		points = mesh.points
-		if points.size < 4
+        points = mesh.points
+        if points.size < 4
           raise(TypeError, "Entity #{entity} has too few vertices. At least four non-coplanar vertices are expected!", caller)
         end
         if MShysics::Geometry.points_coplanar?(points)
           raise(TypeError, "Entity #{entity} has all vertices coplanar. Flat collisions are not acceptable!", caller)
         end
-		mesh.polygons.each_index { |i|
-		  triplets << e.mesh.polygon_points_at(i+1)
-		}
+        mesh.polygons.each_index { |i|
+          triplets << e.mesh.polygon_points_at(i+1)
+        }
       end
 
     end # class << self

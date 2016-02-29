@@ -6,8 +6,9 @@ module MSPhysics
     DEFAULT_MIN = -180.0
     DEFAULT_MAX = 180.0
     DEFAULT_LIMITS_ENABLED = false
-    DEFAULT_ANGULAR_RATE = 600.0
-    DEFAULT_MAX_ACCEL = 3600.0
+    DEFAULT_ACCEL = 40.0
+    DEFAULT_DAMP = 10.0
+    DEFAULT_REDUCTION_RATIO = 0.1
     DEFAULT_CONTROLLER = nil
 
     # Create a servo joint.
@@ -22,9 +23,28 @@ module MSPhysics
       MSPhysics::Newton::Servo.set_min(@address, DEFAULT_MIN.degrees)
       MSPhysics::Newton::Servo.set_max(@address, DEFAULT_MAX.degrees)
       MSPhysics::Newton::Servo.enable_limits(@address, DEFAULT_LIMITS_ENABLED)
-      MSPhysics::Newton::Servo.set_angular_rate(@address, DEFAULT_ANGULAR_RATE.degrees)
-      MSPhysics::Newton::Servo.set_max_accel(@address, DEFAULT_MAX_ACCEL.degrees)
+      MSPhysics::Newton::Servo.set_accel(@address, DEFAULT_ACCEL)
+      MSPhysics::Newton::Servo.set_damp(@address, DEFAULT_DAMP)
+      MSPhysics::Newton::Servo.set_reduction_ratio(@address, DEFAULT_REDUCTION_RATIO)
       MSPhysics::Newton::Servo.set_controller(@address, DEFAULT_CONTROLLER)
+    end
+
+    # Get current angle in radians.
+    # @return [Numeric]
+    def cur_angle
+      MSPhysics::Newton::Servo.get_cur_angle(@address)
+    end
+
+    # Get current omega in radians per second.
+    # @return [Numeric]
+    def cur_omega
+      MSPhysics::Newton::Servo.get_cur_omega(@address)
+    end
+
+    # Get current acceleration in radians per second per second.
+    # @return [Numeric]
+    def cur_acceleration
+      MSPhysics::Newton::Servo.get_cur_acceleration(@address)
     end
 
     # Get minimum angle in radians.
@@ -63,46 +83,58 @@ module MSPhysics
       MSPhysics::Newton::Servo.enable_limits(@address, state)
     end
 
-    # Get maximum angular rate in radians per second.
+    # Get angular acceleration in radians per second per second.
+    # @note The maximum angular rate in radians per second is
+    #   <tt>accel / damp</tt>.
     # @return [Numeric]
-    def angular_rate
-      MSPhysics::Newton::Servo.get_angular_rate(@address)
+    def accel
+      MSPhysics::Newton::Servo.get_accel(@address)
     end
 
-    # Set maximum angular rate in radians per second.
+    # Set angular acceleration in radians per second per second.
+    # @note The maximum angular rate in radians per second is
+    #   <tt>accel / damp</tt>.
     # @param [Numeric] value A value greater than or equal to zero.
-    def angular_rate=(value)
-      MSPhysics::Newton::Servo.set_angular_rate(@address, value)
+    def accel=(value)
+      MSPhysics::Newton::Servo.set_accel(@address, value)
     end
 
-    # Get maximum angular acceleration in radians per second per second.
+    # Get angular damp. Higher damper makes rotation slower.
+    # @note The maximum angular rate in radians per second is
+    #   <tt>accel / damp</tt>.
     # @return [Numeric]
-    def max_accel
-      MSPhysics::Newton::Servo.get_max_accel(@address)
+    def damp
+      MSPhysics::Newton::Servo.get_damp(@address)
     end
 
-    # Set maximum angular acceleration in radians per second per second.
+    # Set angular damp. Higher damper makes rotation slower.
+    # @note The maximum angular rate in radians per second is
+    #   <tt>accel / damp</tt>.
     # @param [Numeric] value A value greater than or equal to zero.
-    def max_accel=(value)
-      MSPhysics::Newton::Servo.set_max_accel(@address, value)
+    def damp=(value)
+      MSPhysics::Newton::Servo.set_damp(@address, value)
     end
 
-    # Get current angle in radians.
-    # @return [Numeric]
-    def cur_angle
-      MSPhysics::Newton::Servo.get_cur_angle(@address)
+    # Get angular reduction ratio. The reduction ratio is a feature that reduces
+    # angular rate when servo angle nears its desired angle. A value of 0.0 will
+    # disable the angular reduction. A value of greater than zero will enable
+    # angular reduction. Angular reduction starts acting upon the angular rate
+    # when the difference between the current angle and the desired angle is
+    # less than or equal to <tt>accel * reduction_ratio / damp</tt> radians.
+    # @return [Numeric] A value between 0.0 and 1.0.
+    def reduction_ratio
+      MSPhysics::Newton::Servo.get_reduction_ratio(@address)
     end
 
-    # Get current omega in radians per second.
-    # @return [Numeric]
-    def cur_omega
-      MSPhysics::Newton::Servo.get_cur_omega(@address)
-    end
-
-    # Get current acceleration in radians per second per second.
-    # @return [Numeric]
-    def cur_acceleration
-      MSPhysics::Newton::Servo.get_cur_acceleration(@address)
+    # Set angular reduction ratio. The reduction ratio is a feature that reduces
+    # angular rate when servo angle nears its desired angle. A value of 0.0 will
+    # disable the angular reduction. A value of greater than zero will enable
+    # angular reduction. Angular reduction starts acting upon the angular rate
+    # when the difference between the current angle and the desired angle is
+    # less than or equal to <tt>accel * reduction_ratio / damp</tt> radians.
+    # @param [Numeric] value A value between 0.0 and 1.0.
+    def reduction_ratio=(value)
+      MSPhysics::Newton::Servo.set_reduction_ratio(@address, value)
     end
 
     # Get servo controller, desired angle in radians. Nil is returned if

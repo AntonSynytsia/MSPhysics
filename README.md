@@ -7,7 +7,7 @@
 
 ##Overview
 
-MSPhysics is a physics simulation tool similar to SketchyPhysics. Unlike,
+MSPhysics is a physics simulation tool similar to SketchyPhysics. Unlike
 SketchyPhysics, MSPhysics has a far more advanced scripting API. When it came
 to creating FPS type games in SP, scripters were limited to having control over
 user input. Scripters had to add extra work-around code in order to gain control
@@ -36,8 +36,8 @@ many ways the goal of this project is to bring SketchyPhysics back to life.
 * Microsoft Windows XP, Vista, 7, 8, or 10.
   This plugin will not work on Mac OS X as many of the techniques and features
   are achieved through Windows API.
-* SketchUp 6 or later.
-* [AMS_Library 3.0.0 +](http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835)
+* SketchUp 6 or later. SU2016 64bit is recommended!
+* [AMS_Library 3.2.0 +](http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835)
 
 
 ## Installation
@@ -55,37 +55,20 @@ folder. Make sure to download and install AMS Library!
 
 ## Version
 
-* MSPhysics 0.3.0
+* MSPhysics 0.4.0
 * NewtonDynamics 3.14
-* SDL 1.2.15
-* SDL_Mixer 1.2.12
+* SDL 2.0.4
+* SDL_Mixer 2.0.1
 
 
 ## Release Date
 
-December 30, 2015
-
-
-## Change Log
-
-* **December 30, 2015**: 0.3.0
-    - Reverted to SDL1 and SDL_Mixer1, which fixed the crash that occurred after
-      using SketchUp for a few minutes.
-    - Optimized the C++ extension.
-    - Upgraded to Newton 3.14.
-    - Added joints. Still more work to go.
-    - Added replay animation tool.
-* **April 16, 2015**: 0.2.1
-    - Fixed a bug which prevented MSPhysics from working in 32bit SU versions.
-* **April 05, 2015**: 0.2.0
-    - Alpha release 2.
-* **April 26, 2014**: 0.1.0
-    - Alpha release 1.
+February 28, 2016
 
 
 ## Licence
 
-[MIT](http://opensource.org/licenses/MIT) © 2015, Anton Synytsia
+[MIT](http://opensource.org/licenses/MIT) © 2015 - 2016, Anton Synytsia
 
 
 ## Credits

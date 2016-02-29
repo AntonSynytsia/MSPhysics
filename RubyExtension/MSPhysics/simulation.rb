@@ -48,7 +48,11 @@ module MSPhysics
       @fps = 0
       @time_info = { :start => 0, :end => 0, :last => 0, :sim => 0, :total => 0 }
       @fps_info = { :update_rate => 10, :last => 0, :change => 0 }
+      @selected_page = nil
       @camera = { :original => nil, :follow => nil, :target => nil, :offset => nil }
+      @rendering_options = {}
+      @shadow_info = {}
+      @layers = {}
       @cursor_id = MSPhysics::CURSORS[:hand]
       @original_cursor_id = @cursor_id
       @cursor_pos = [0,0]
@@ -59,8 +63,8 @@ module MSPhysics
       @pause_updated = false
       @suspended = false
       @mouse_over = true
-      @menu_enter = false
       @menu_entered = false
+      @menu_entered2 = false
       @update_timer = nil
       @ip1 = Sketchup::InputPoint.new
       @ip = Sketchup::InputPoint.new
@@ -68,10 +72,8 @@ module MSPhysics
       @clicked = nil
       @error = nil
       @saved_transformations = {}
-      @mlt = nil
-      @mlt_mat = nil
-      @note = nil
-      @note_mat = nil
+      @lltext = { :ent => nil, :mat => nil, :log => [], :limit => 20 }
+      @dntext = { :ent => nil, :mat => nil }
       @emitted_bodies = {}
       @created_entities = []
       @bb = Geom::BoundingBox.new
@@ -135,6 +137,11 @@ module MSPhysics
       @buoyancy_planes = {}
       @joints = {}
       @controlled_joints = {}
+      @scene_data1 = nil
+      @scene_data2 = nil
+      @scene_selected_time = nil
+      @scene_transition_time = nil
+      @cc_bodies = []
       @@instance = self
     end
 
@@ -191,15 +198,15 @@ module MSPhysics
       @paused
     end
 
-    # Get entity transformation update rate. Entity transformations are updated
-    # every n frames.
-    # @return [Fixnum]
+    # Get simulation update rate, the number of times to update newton world
+    # per frame.
+    # @return [Fixnum] A value between 1 and 100.
     def get_update_rate
       @update_rate
     end
 
-    # Set entity transformation update rate. Entity transformations are updated
-    # every n frames.
+    # Set simulation update rate, the number of times to update newton world
+    # per frame.
     # @param [Fixnum] rate A value between 1 and 100.
     # @return [Fixnum] The new update rate.
     def set_update_rate(rate)
@@ -381,10 +388,21 @@ module MSPhysics
       world_address = @world.get_address
       ovs = MSPhysics::Newton.is_object_validation_enabled?
       MSPhysics::Newton.enable_object_validation(false)
-      body_address = MSPhysics::Newton::World.get_first_body(world_address)
-      while body_address
-        MSPhysics::Newton::Body.set_continuous_collision_state(body_address, @ccm)
-        body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
+      if @ccm
+        body_address = MSPhysics::Newton::World.get_first_body(world_address)
+        while body_address
+          unless MSPhysics::Newton::Body.get_continuous_collision_state(body_address)
+            MSPhysics::Newton::Body.set_continuous_collision_state(body_address, true)
+            @cc_bodies << body_address unless @cc_bodies.include?(body_address)
+          end
+          body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
+        end
+      else
+        @cc_bodies.each { |body_address|
+          next unless MSPhysics::Newton::Body.is_valid?(body_address)
+          MSPhysics::Newton::Body.set_continuous_collision_state(body_address, false)
+        }
+        @cc_bodies.clear
       end
       MSPhysics::Newton.enable_object_validation(ovs)
       @ccm
@@ -425,20 +443,20 @@ module MSPhysics
     end
 
     # @!endgroup
-    # @!group Body/Entity Functions
+    # @!group Body/Group Functions
 
     # Get body by group/component.
-    # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+    # @param [Sketchup::Group, Sketchup::ComponentInstance] group
     # @return [Body, nil]
-    def get_body_by_entity(entity)
-      AMS.validate_type(entity, Sketchup::Group, Sketchup::ComponentInstance)
+    def get_body_by_group(group)
+      AMS.validate_type(group, Sketchup::Group, Sketchup::ComponentInstance)
       world_address = @world.get_address
       ovs = MSPhysics::Newton.is_object_validation_enabled?
       MSPhysics::Newton.enable_object_validation(false)
       body_address = MSPhysics::Newton::World.get_first_body(world_address)
       while body_address
         data = MSPhysics::Newton::Body.get_user_data(body_address)
-        if data.is_a?(MSPhysics::Body) && data.get_group == entity
+        if data.is_a?(MSPhysics::Body) && data.get_group == group
           MSPhysics::Newton.enable_object_validation(ovs)
           return data
         end
@@ -448,8 +466,8 @@ module MSPhysics
       nil
     end
 
-    # Reference body by entity name.
-    # @param [String] name Body name.
+    # Reference body by group name.
+    # @param [String] name Group name.
     # @return [Body, nil] A body object or nil if not found.
     def get_body_by_name(name)
       world_address = @world.get_address
@@ -465,6 +483,51 @@ module MSPhysics
         body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
       end
       MSPhysics::Newton.enable_object_validation(ovs)
+      nil
+    end
+
+    # Reference a list of bodies by group name.
+    # @param [String] name Group name.
+    # @return [Body, nil] A body object or nil if not found.
+    def get_bodies_by_name(name)
+      world_address = @world.get_address
+      ovs = MSPhysics::Newton.is_object_validation_enabled?
+      MSPhysics::Newton.enable_object_validation(false)
+      body_address = MSPhysics::Newton::World.get_first_body(world_address)
+      bodies = []
+      while body_address
+        data = MSPhysics::Newton::Body.get_user_data(body_address)
+        if (data.is_a?(MSPhysics::Body) && data.get_group.name == name)
+          MSPhysics::Newton.enable_object_validation(ovs)
+          bodies << data
+        end
+        body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
+      end
+      MSPhysics::Newton.enable_object_validation(ovs)
+      bodies
+    end
+
+    # Reference a top level group by name.
+    # @param [String] name Group name.
+    # @return [Sketchup::Group, Sketchup::ComponentInstance, nil] A group or nil
+    #   if not found.
+    def get_group_by_name(name)
+      Sketchup.active_model.entities.each { |e|
+        return e if (e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)) && e.name == name
+      }
+      nil
+    end
+
+    # Reference a list of top level groups by name.
+    # @param [String] name Group name.
+    # @return [Array<Sketchup::Group, Sketchup::ComponentInstance>] An array of
+    #   groups/components.
+    def get_groups_by_name(name)
+      groups = []
+      Sketchup.active_model.entities.each { |e|
+        groups << e if (e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)) && e.name == name
+      }
+      groups
     end
 
     # Add a group/component to simulation.
@@ -472,42 +535,42 @@ module MSPhysics
     # @raise [TypeError] if the entity doesn't meet demands for being a valid
     #   physics body.
     # @raise [MSPhysics::ScriptException] if there is an error in body script.
-    # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+    # @param [Sketchup::Group, Sketchup::ComponentInstance] group
     # @return [Body]
-    def add_entity(entity)
-      AMS.validate_type(entity, Sketchup::Group, Sketchup::ComponentInstance)
+    def add_group(group)
+      AMS.validate_type(group, Sketchup::Group, Sketchup::ComponentInstance)
 
-      if get_body_by_entity(entity)
-        raise(TypeError, "Entity #{entity} is already part of simulation!", caller)
+      if get_body_by_group(group)
+        raise(TypeError, "Entity #{group} is already part of simulation!", caller)
       end
 
       default = MSPhysics::DEFAULT_BODY_SETTINGS
       handle = 'MSPhysics Body'
 
-      shape = entity.get_attribute(handle, 'Shape', default[:shape])
-      body = MSPhysics::Body.new(@world, entity, shape)
+      shape = group.get_attribute(handle, 'Shape', default[:shape])
+      body = MSPhysics::Body.new(@world, group, shape)
 
-      body.set_density entity.get_attribute(handle, 'Density', default[:density])
-      body.set_static_friction entity.get_attribute(handle, 'Static Friction', default[:static_friction])
-      body.set_dynamic_friction entity.get_attribute(handle, 'Dynamic Friction', default[:dynamic_friction])
-      body.set_elasticity entity.get_attribute(handle, 'Elasticity', default[:elasticity])
-      body.set_softness entity.get_attribute(handle, 'Softness', default[:softness])
-      body.set_friction_state entity.get_attribute(handle, 'Enable Friction', default[:enable_friction])
-      body.set_magnet_force entity.get_attribute(handle, 'Magnet Force', default[:magnet_force])
-      body.set_magnet_range entity.get_attribute(handle, 'Magnet Range', default[:magnet_range])
-      body.set_static entity.get_attribute(handle, 'Static', default[:static])
-      body.set_frozen entity.get_attribute(handle, 'Frozen', default[:frozen])
-      body.set_magnetic entity.get_attribute(handle, 'Magnetic', default[:magnetic])
-      body.set_collidable entity.get_attribute(handle, 'Collidable', default[:collidable])
-      body.set_auto_sleep_state entity.get_attribute(handle, 'Auto Sleep', default[:auto_sleep])
-      body.set_continuous_collision_state entity.get_attribute(handle, 'Continuous Collision', default[:continuous_collision])
-      body.set_linear_damping entity.get_attribute(handle, 'Linear Damping', default[:linear_damping])
-      ad = entity.get_attribute(handle, 'Angular Damping', default[:angular_damping])
+      body.set_density group.get_attribute(handle, 'Density', default[:density])
+      body.set_static_friction group.get_attribute(handle, 'Static Friction', default[:static_friction])
+      body.set_dynamic_friction group.get_attribute(handle, 'Dynamic Friction', default[:dynamic_friction])
+      body.set_elasticity group.get_attribute(handle, 'Elasticity', default[:elasticity])
+      body.set_softness group.get_attribute(handle, 'Softness', default[:softness])
+      body.set_friction_state group.get_attribute(handle, 'Enable Friction', default[:enable_friction])
+      body.set_magnet_force group.get_attribute(handle, 'Magnet Force', default[:magnet_force])
+      body.set_magnet_range group.get_attribute(handle, 'Magnet Range', default[:magnet_range])
+      body.set_static group.get_attribute(handle, 'Static', default[:static])
+      body.set_frozen group.get_attribute(handle, 'Frozen', default[:frozen])
+      body.set_magnetic group.get_attribute(handle, 'Magnetic', default[:magnetic])
+      body.set_collidable group.get_attribute(handle, 'Collidable', default[:collidable])
+      body.set_auto_sleep_state group.get_attribute(handle, 'Auto Sleep', default[:auto_sleep])
+      body.set_continuous_collision_state group.get_attribute(handle, 'Continuous Collision', default[:continuous_collision])
+      body.set_linear_damping group.get_attribute(handle, 'Linear Damping', default[:linear_damping])
+      ad = group.get_attribute(handle, 'Angular Damping', default[:angular_damping])
       body.set_angular_damping([ad,ad,ad])
-      body.enable_gravity entity.get_attribute(handle, 'Enable Gravity', default[:enable_gravity])
+      body.enable_gravity group.get_attribute(handle, 'Enable Gravity', default[:enable_gravity])
 
-      if entity.get_attribute(handle, 'Enable Script', default[:enable_script])
-        script = entity.get_attribute('MSPhysics Script', 'Value')
+      if group.get_attribute(handle, 'Enable Script', default[:enable_script])
+        script = group.get_attribute('MSPhysics Script', 'Value')
         begin
           #Kernel.eval(script, body.get_binding, MSPhysics::SCRIPT_NAME, 1)
           body.instance_eval(script, MSPhysics::SCRIPT_NAME, 1)
@@ -523,33 +586,38 @@ module MSPhysics
           ref = e.message if !ref && e.message.include?(test)
           line = ref ? ref.split(test, 2)[1].split(':', 2)[0].to_i : nil
           msg = "#{e.class.to_s[0] =~ /a|e|i|o|u/i ? 'An' : 'A'} #{e.class} has occurred while evaluating entity script#{line ? ', line ' + line.to_s : nil}:\n#{e.message}"
-          raise MSPhysics::ScriptException.new(msg, entity, line)
+          raise MSPhysics::ScriptException.new(msg, e.backtrace, group, line)
         end if script.is_a?(String)
       end
 
-      controller = entity.get_attribute(handle, 'Thruster Controller')
-      if controller.is_a?(String) && !controller.empty?
-        lock_axis = entity.get_attribute(handle, 'Thruster Lock Axis', default[:thruster_lock_axis])
-        @thrusters[body] = { :controller => controller, :lock_axis => lock_axis }
-      end
-      controller = entity.get_attribute(handle, 'Emitter Controller')
-      if controller.is_a?(String) && !controller.empty?
-        lock_axis = entity.get_attribute(handle, 'Emitter Lock Axis', default[:emitter_lock_axis])
-        rate = AMS.clamp(entity.get_attribute(handle, 'Emitter Rate', default[:emitter_rate]).to_i, 1, nil)
-        lifetime = AMS.clamp(entity.get_attribute(handle, 'Emitter Lifetime', default[:emitter_lifetime]).to_i, 0, nil)
-        @emitters[body] = { :controller => controller, :lock_axis => lock_axis, :rate => rate, :lifetime => lifetime }
+      if group.get_attribute(handle, 'Enable Thruster', default[:enable_thruster])
+        controller = group.get_attribute(handle, 'Thruster Controller')
+        if controller.is_a?(String) && !controller.empty?
+          lock_axis = group.get_attribute(handle, 'Thruster Lock Axis', default[:thruster_lock_axis])
+          @thrusters[body] = { :controller => controller, :lock_axis => lock_axis }
+        end
       end
 
-      @saved_transformations[entity] = entity.transformation
+      if group.get_attribute(handle, 'Enable Emitter', default[:enable_emitter])
+        controller = group.get_attribute(handle, 'Emitter Controller')
+        if controller.is_a?(String) && !controller.empty?
+          lock_axis = group.get_attribute(handle, 'Emitter Lock Axis', default[:emitter_lock_axis])
+          rate = AMS.clamp(group.get_attribute(handle, 'Emitter Rate', default[:emitter_rate]).to_i, 1, nil)
+          lifetime = AMS.clamp(group.get_attribute(handle, 'Emitter Lifetime', default[:emitter_lifetime]).to_i, 0, nil)
+          @emitters[body] = { :controller => controller, :lock_axis => lock_axis, :rate => rate, :lifetime => lifetime }
+        end
+      end
+
+      @saved_transformations[group] = group.transformation
       body
     end
 
     # Remove a group/component from simulation.
-    # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
+    # @param [Sketchup::Group, Sketchup::ComponentInstance] group
     # @return [Boolean] success
-    def remove_entity(entity)
-      AMS.validate_type(entity, Sketchup::Group, Sketchup::ComponentInstance)
-      body = get_body_by_entity(entity)
+    def remove_group(group)
+      AMS.validate_type(group, Sketchup::Group, Sketchup::ComponentInstance)
+      body = get_body_by_group(group)
       return false unless body
       body.destroy
       true
@@ -656,41 +724,78 @@ module MSPhysics
     # @!endgroup
     # @!group Text Control Functions
 
-    # Log a line to a screen text.
+    # Display text on screen in logged form.
     # @param [String] text
-    # @return [void]
-    def log_line(text)
-      @mlt.puts(text)
+    # @param [Sketchup::Color] color Text color.
+    # @return [String] Displayed text
+    def log_line(text, color = MSPhysics::WATERMARK_COLOR)
+      model = Sketchup.active_model
+      if @lltext[:mat].nil? || @lltext[:mat].deleted?
+        @lltext[:mat] = model.materials.add('MSPLogLine')
+      end
+      if @lltext[:ent].nil? || @lltext[:ent].deleted?
+        @lltext[:ent] = MSPhysics.add_watermark_text2(10, 50, '', 'LogLine')
+        @lltext[:ent].material = @lltext[:mat]
+      end
+      color = Sketchup::Color.new(color) unless color.is_a?(Sketchup::Color)
+      @lltext[:mat].color = color if @lltext[:mat].color.to_i != color.to_i
+      @lltext[:log] << text.to_s
+      @lltext[:log].shift if @lltext[:log].size > @lltext[:limit]
+      @lltext[:ent].text = @lltext[:log].join("\n")
     end
 
-    # Clear the log line text.
+    # Get log-line text limit.
+    # @return [Fixnum]
+    def get_log_line_limit
+      @lltext[:limit]
+    end
+
+    # Set log-line text limit.
+    # @param [Fixnum] limit Desired limit, a value between 1 and 1000.
+    # @return [Fixnum] The new limit.
+    def set_log_line_limit(limit)
+      @lltext[:limit] = AMS.clamp(limit, 1, 1000)
+      ls = @lltext[:log].size
+      if ls > @lltext[:limit]
+        @lltext[:log] = @lltext[:log][ls-@lltext[:limit]...ls]
+        if @lltext[:ent] != nil && @lltext[:ent].valid?
+          @lltext[:ent].text = @lltext[:log].join("\n")
+        end
+      end
+    end
+
+    # Clear log-line text.
     # @return [void]
     def clear_log_line
-      @mlt.clear
+      if @lltext[:ent] != nil && @lltext[:ent].valid?
+        @lltext[:ent].text = ''
+      end
+      @lltext[:log].clear
     end
 
-    # Display note on screen.
+    # Display text on screen.
     # @param [String] text A text to display.
     # @param [Sketchup::Color] color Text color.
-    # @return [void]
-    def display_note(text, color = 'black')
+    # @return [String] Displayed text
+    def display_note(text, color = MSPhysics::WATERMARK_COLOR)
       model = Sketchup.active_model
-      if @note_mat.nil? || @note_mat.deleted?
-        @note_mat = model.materials.add('ScreenText')
+      if @dntext[:mat].nil? || @dntext[:mat].deleted?
+        @dntext[:mat] = model.materials.add('MSPDisplayNote')
       end
-      if @note.nil? || @note.deleted?
-        @note = Sketchup.active_model.add_note("", 0.01, 0.02)
-        @note.material = @note_mat
+      if @dntext[:ent].nil? || @dntext[:ent].deleted?
+        @dntext[:ent] = MSPhysics.add_watermark_text2(10, 10, '', 'DisplayNote')
+        @dntext[:ent].material = @dntext[:mat]
       end
-      @note.text = text.to_s
-      @note_mat.color = color
+      color = Sketchup::Color.new(color) unless color.is_a?(Sketchup::Color)
+      @dntext[:mat].color = color if @dntext[:mat].color.to_i != color.to_i
+      @dntext[:ent].text = text.to_s
     end
 
-    # Clear screen note.
+    # Clear display-note text.
     # @return [void]
-    def clear_note
-      if @note && @note.valid?
-        @note.text = ""
+    def clear_display_note
+      if @dntext[:ent] != nil && @dntext[:ent].valid?
+        @dntext[:ent].text = ''
       end
     end
 
@@ -1083,26 +1188,6 @@ module MSPhysics
 
     # @!endgroup
 
-    # Create a hinge joint.
-    # @param [MSPhysics::Body, nil] parent
-    # @param [MSPhysics::Body] child
-    # @param [Geom::Point3d] pos
-    # @param [Geom::Vector3d] dir
-    # @param [Numeric] min Minimum angle in radians.
-    # @param [Numeric] max Maximum angle in radians.
-    # @param [Boolean] enable_limits Whether to enable min/max limits.
-    # @param [Numeric] friction Rotational friction.
-    # @return [MSPhysics::Hinge]
-    def create_hinge(parent, child, pos, dir, min, max, enable_limits, friction)
-      joint = MSPhysics::Hinge.new(@world, parent, pos, dir)
-      joint.min = min
-      joint.max = max
-      joint.limits_enabled = enable_limits
-      joint.friction = friction
-      joint.connect(child)
-      joint
-    end
-
     private
 
     def do_on_update
@@ -1123,7 +1208,7 @@ module MSPhysics
           MSPhysics::Music.pause
           MSPhysics::Sound.pause(-1)
         end
-        #~ view.show_frame
+        #view.show_frame
         return
       end
       if @pause_updated
@@ -1163,10 +1248,10 @@ module MSPhysics
           end
           if value.length != 0
             value = AMS.scale_vector(value, 1.0/@update_timestep)
-            body.add_force( data[:lock_axis] ? value.transform(body.get_normal_matrix) : value )
+            body.add_force2( data[:lock_axis] ? value.transform(body.get_normal_matrix) : value )
           end
         rescue Exception => e
-          puts "An exception occurred while assigning thruster controller!\nController:\n#{controller}\n#{e.class}:\n#{e.message}"
+          puts "An exception occurred while assigning thruster controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{e.message}"
         end
         false
       }
@@ -1197,7 +1282,7 @@ module MSPhysics
             end
           end
         rescue Exception => e
-          puts "An exception occurred while assigning emitter controller!\nController:\n#{controller}\n#{e.class}:\n#{e.message}"
+          puts "An exception occurred while assigning emitter controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{e.message}"
         end
         false
       }
@@ -1209,11 +1294,11 @@ module MSPhysics
       @buoyancy_planes.reject! { |entity, data|
         next true unless entity.valid?
         tra = entity.transformation
-        normal = tra.zaxis
-        height = tra.origin.z
         body_address = MSPhysics::Newton::World.get_first_body(world_address)
         while body_address
-          MSPhysics::Newton::Body.add_buoyancy(body_address, normal, height, data[:density], data[:viscosity])
+          unless MSPhysics::Newton::Body.is_static?(body_address)
+            MSPhysics::Newton::Body.apply_buoyancy(body_address, tra.origin, tra.zaxis, data[:current].transform(tra), data[:density], data[:viscosity], data[:viscosity])
+          end
           body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
         end
         false
@@ -1253,20 +1338,18 @@ module MSPhysics
         end
         false
       }
-      # Update newton world
-      @world.update(@update_timestep)
       # Update transformations of all transformed entities.
-      if @frame % @update_rate == 0
-        body_address = MSPhysics::Newton::World.get_first_body(world_address)
-        while body_address
-          if MSPhysics::Newton::Body.matrix_changed?(body_address)
-            data = MSPhysics::Newton::Body.get_user_data(body_address)
-            if data.is_a?(MSPhysics::Body) && data.get_group.valid?
-              data.get_group.move!(data.get_matrix)
-            end
+      # Update newton world
+      @world.update(@update_timestep, @update_rate)
+      body_address = MSPhysics::Newton::World.get_first_body(world_address)
+      while body_address
+        if MSPhysics::Newton::Body.matrix_changed?(body_address)
+          data = MSPhysics::Newton::Body.get_user_data(body_address)
+          if data.is_a?(MSPhysics::Body) && data.get_group.valid?
+            data.get_group.move!(data.get_matrix)
           end
-          body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
         end
+        body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
       end
       # Re-enable object validation.
       MSPhysics::Newton.enable_object_validation(ovs)
@@ -1357,7 +1440,7 @@ module MSPhysics
         if @picked[0].is_valid?
           pick_pt = @picked[1].transform(@picked[0].get_matrix)
           dest_pt = @picked[2]
-          MSPhysics::Newton::Body.apply_pick_and_drag(@picked[0].get_address, pick_pt, dest_pt, 120, 10)
+          MSPhysics::Newton::Body.apply_pick_and_drag(@picked[0].get_address, pick_pt, dest_pt, 120.0 / @update_rate, 20.0 / @update_rate)
           #Newton::Body.apply_pick_and_drag2(@picked[0].get_address, pick_pt, dest_pt, 0.3, 0.95, @update_timestep)
         else
           @picked.clear
@@ -1373,14 +1456,24 @@ module MSPhysics
       end
       # Update status bar text
       update_status_text
-      # Redraw view
-      if @frame % @update_rate == 0
-        view.show_frame
+      # Update Scenes
+      if @scene_selected_time
+        r = AMS.clamp((Time.now - @scene_selected_time) / @scene_transition_time, 0 , 1)
+        #r = 0.5 * Math.sin((r - 0.5) * Math::PI) + 0.5
+        @scene_data1.transition(@scene_data2, r)
+        if r == 1.0
+          @scene_data1 = nil
+          @scene_data2 = nil
+          @scene_selected_time = nil
+          @scene_transition_time = nil
+        end
       end
       # Record replay animation
       if MSPhysics::Replay.record_enabled?
         MSPhysics::Replay.record_all(@frame)
       end
+      # Redraw view
+      view.show_frame
     end
 
     def draw_contact_points(view)
@@ -1581,14 +1674,14 @@ module MSPhysics
         joint.min = attr.to_f.degrees
         attr = joint_ent.get_attribute(jdict, 'Max', MSPhysics::Hinge::DEFAULT_MAX)
         joint.max = attr.to_f.degrees
+        attr = joint_ent.get_attribute(jdict, 'Enable Limits', MSPhysics::Hinge::DEFAULT_LIMITS_ENABLED)
+        joint.limits_enabled = attr
+        attr = joint_ent.get_attribute(jdict, 'Friction', MSPhysics::Hinge::DEFAULT_FRICTION)
+        joint.friction = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Stiff', MSPhysics::Hinge::DEFAULT_STIFF)
         joint.stiff = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Damp', MSPhysics::Hinge::DEFAULT_DAMP)
         joint.damp = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Enable Limits', MSPhysics::Hinge::DEFAULT_LIMITS_ENABLED)
-        joint.limits_enabled = attr
-        attr = joint_ent.get_attribute(jdict, 'Enable Damper', MSPhysics::Hinge::DEFAULT_DAMPER_ENABLED)
-        joint.damper_enabled = attr
         attr = joint_ent.get_attribute(jdict, 'Enable Rotate Back', MSPhysics::Hinge::DEFAULT_ROTATE_BACK_ENABLED)
         joint.rotate_back_enabled = attr
         attr = joint_ent.get_attribute(jdict, 'Start Angle', MSPhysics::Hinge::DEFAULT_START_ANGLE)
@@ -1600,7 +1693,7 @@ module MSPhysics
       when 'Motor'
         joint = MSPhysics::Motor.new(@world, parent_body, pin_matrix)
         attr = joint_ent.get_attribute(jdict, 'Accel', MSPhysics::Motor::DEFAULT_ACCEL)
-        joint.accel = attr.to_f.degrees
+        joint.accel = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Damp', MSPhysics::Motor::DEFAULT_DAMP)
         joint.damp = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Enable Free Rotate', MSPhysics::Motor::DEFAULT_FREE_ROTATE_ENABLED)
@@ -1617,10 +1710,12 @@ module MSPhysics
         joint.max = attr.to_f.degrees
         attr = joint_ent.get_attribute(jdict, 'Enable Limits', MSPhysics::Servo::DEFAULT_LIMITS_ENABLED)
         joint.limits_enabled = attr
-        attr = joint_ent.get_attribute(jdict, 'Angular Rate', MSPhysics::Servo::DEFAULT_ANGULAR_RATE)
-        joint.angular_rate = attr.to_f.degrees
-        attr = joint_ent.get_attribute(jdict, 'Max Accel', MSPhysics::Servo::DEFAULT_MAX_ACCEL)
-        joint.max_accel = attr.to_f.degrees
+        attr = joint_ent.get_attribute(jdict, 'Accel', MSPhysics::Servo::DEFAULT_ACCEL)
+        joint.accel = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Damp', MSPhysics::Servo::DEFAULT_DAMP)
+        joint.damp = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Reduction Ratio', MSPhysics::Servo::DEFAULT_REDUCTION_RATIO)
+        joint.reduction_ratio = attr.to_f
         controller = joint_ent.get_attribute(jdict, 'Controller')
         if controller.is_a?(String) && !controller.empty?
           @controlled_joints[joint] = controller
@@ -1631,14 +1726,10 @@ module MSPhysics
         joint.min = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Max', MSPhysics::Slider::DEFAULT_MAX)
         joint.max = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Stiff', MSPhysics::Slider::DEFAULT_STIFF)
-        joint.stiff = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Damp', MSPhysics::Slider::DEFAULT_DAMP)
-        joint.damp = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Enable Limits', MSPhysics::Slider::DEFAULT_LIMITS_ENABLED)
         joint.limits_enabled = attr
-        attr = joint_ent.get_attribute(jdict, 'Enable Damper', MSPhysics::Slider::DEFAULT_DAMPER_ENABLED)
-        joint.damper_enabled = attr
+        attr = joint_ent.get_attribute(jdict, 'Friction', MSPhysics::Slider::DEFAULT_FRICTION)
+        joint.friction = attr.to_f
       when 'Piston'
         joint = MSPhysics::Piston.new(@world, parent_body, pin_matrix)
         attr = joint_ent.get_attribute(jdict, 'Min', MSPhysics::Piston::DEFAULT_MIN)
@@ -1649,8 +1740,10 @@ module MSPhysics
         joint.limits_enabled = attr
         attr = joint_ent.get_attribute(jdict, 'Linear Rate', MSPhysics::Piston::DEFAULT_LINEAR_RATE)
         joint.linear_rate = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Max Accel', MSPhysics::Piston::DEFAULT_MAX_ACCEL)
-        joint.max_accel = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Strength', MSPhysics::Piston::DEFAULT_STRENGTH)
+        joint.strength = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Reduction Ratio', MSPhysics::Piston::DEFAULT_REDUCTION_RATIO)
+        joint.reduction_ratio = attr.to_f
         controller = joint_ent.get_attribute(jdict, 'Controller')
         if controller.is_a?(String) && !controller.empty?
           @controlled_joints[joint] = controller
@@ -1715,10 +1808,6 @@ module MSPhysics
       joint.bodies_collidable = attr
       attr = joint_ent.get_attribute(jdict, 'Breaking Force', MSPhysics::Joint::DEFAULT_BREAKING_FORCE)
       joint.breaking_force = attr.to_f
-      attr = joint_ent.get_attribute(jdict, 'Enable Support Constraints', MSPhysics::Joint::DEFAULT_SC_ENABLED)
-      joint.support_constraints_enabled = attr
-      attr = joint_ent.get_attribute(jdict, 'Support Constraint Distance', MSPhysics::Joint::DEFAULT_SC_DISTANCE)
-      joint.support_constraint_distance = attr.to_f
 
       @joints[joint_ent] = [] unless @joints[joint_ent]
       @joints[joint_ent] << joint
@@ -1731,36 +1820,39 @@ module MSPhysics
       Sketchup.active_model.entities.each { |ent|
         next if !ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)
         next if ent.get_attribute('MSPhysics', 'Type', 'Body') != 'Body'
-        body = get_body_by_entity(ent)
+        body = get_body_by_group(ent)
         next unless body
         joints = MSPhysics::JointConnectionTool.get_connected_joints3(ent)
         connect_closest = ent.get_attribute('MSPhysics Body', 'Connect Closest Joints', false)
         joints.each { |joint_id, cjoints|
           if connect_closest
             cjoints.keys.sort.each { |dist|
-              jdata = cjoints[dist]
-              if jdata[1]
-                jparent_body = get_body_by_entity(jdata[1])
-                next unless jparent_body
-              end
-              begin
-                init_joint(jdata[0], jparent_body, body, jdata[2])
-              rescue Exception => e
-                puts "An exception occurred while creating a joint from #{jdata[0]}!\n#{e.class}:\n#{e.message}\nLocation:\n#{e.backtrace.join("\n")}"
-              end
+              cjoints[dist].each { |jdata|
+                if jdata[1]
+                  jparent_body = get_body_by_group(jdata[1])
+                  next unless jparent_body
+                end
+                begin
+                  init_joint(jdata[0], jparent_body, body, jdata[2])
+                rescue Exception => e
+                  puts "An exception occurred while creating a joint from #{jdata[0]}!\n#{e.class}:\n#{e.message}\nLocation:\n#{e.backtrace.join("\n")}"
+                end
+              }
               break
             }
           else
-            cjoints.each { |dist, jdata|
-              if jdata[1]
-                jparent_body = get_body_by_entity(jdata[1])
-                next unless jparent_body
-              end
-              begin
-                init_joint(jdata[0], jparent_body, body, jdata[2])
-              rescue Exception => e
-                puts "An exception occurred while creating a joint from #{jdata[0]}!\n#{e.class}:\n#{e.message}\nLocation:\n#{e.backtrace.join("\n")}"
-              end
+            cjoints.each { |dist, jdatas|
+              jdatas.each { |jdata|
+                if jdata[1]
+                  jparent_body = get_body_by_group(jdata[1])
+                  next unless jparent_body
+                end
+                begin
+                  init_joint(jdata[0], jparent_body, body, jdata[2])
+                rescue Exception => e
+                  puts "An exception occurred while creating a joint from #{jdata[0]}!\n#{e.class}:\n#{e.message}\nLocation:\n#{e.backtrace.join("\n")}"
+                end
+              }
             }
           end
         }
@@ -1797,6 +1889,8 @@ module MSPhysics
       # Stop any playing sounds and music
       MSPhysics::Sound.destroy_all
       MSPhysics::Music.destroy_all
+      # Save selected page
+      @selected_page = model.pages.selected_page
       # Save camera orientation
       @camera[:original] = [
         camera.eye,
@@ -1819,6 +1913,12 @@ module MSPhysics
       # Set and save original perspective
       @camera[:original] << camera.height
       camera.perspective = t
+      # Save rendering options
+      model.rendering_options.each { |k, v| @rendering_options[k] = v }
+      # Save shadow info
+      model.shadow_info.each { |k, v| @shadow_info[k] = v }
+      # Save layer visibility
+      model.layers.each { |l| @layers[l] = l.visible? }
       # Activate observer
       AMS::Sketchup.add_observer(self)
       # Configure Settings
@@ -1831,20 +1931,13 @@ module MSPhysics
       @world.set_friction_model(settings.get_friction_model)
       @world.set_gravity([0, 0, settings.get_gravity])
       @world.set_material_thickness(settings.get_material_thickness)
-      #@world.set_max_threads_count(@world.get_max_threads_count)
+      #~ @world.set_max_threads_count(@world.get_max_threads_count) # Threads are disabled, so changing thread count won't make a difference.
       @world.set_max_threads_count(1)
       @world.set_contact_merge_tolerance(default_sim[:contact_merge_tolerance])
       destructor = Proc.new {
         Simulation.reset
       }
       MSPhysics::Newton::World.set_destructor_proc(@world.get_address, destructor)
-      # Create multi-line text
-      @mlt = AMS::MultiLineText.new(10,50)
-      @mlt.set_limit(10)
-      @mlt.show_line_numbers(false)
-      @mlt_mat = model.materials.add('MultiLineText')
-      @mlt_mat.color = [0,0,220]
-      @mlt.entity.material = @mlt_mat
       # Enable Newton object validation
       MSPhysics::Newton.enable_object_validation(true)
       # Add entities
@@ -1856,7 +1949,7 @@ module MSPhysics
         if type == 'Body'
           next if entity.get_attribute('MSPhysics Body', 'Ignore')
           begin
-            body = add_entity(entity)
+            body = add_group(entity)
           rescue MSPhysics::ScriptException => e
             abort(e)
             return
@@ -1867,9 +1960,22 @@ module MSPhysics
           end
         elsif type == 'Joint'
         elsif type == 'Buoyancy Plane'
-          density = entity.get_attribute('MSPhysics Buoyancy Plane', 'Density', default_buoyancy[:density]).to_f
-          viscosity = entity.get_attribute('MSPhysics Buoyancy Plane', 'Viscosity', default_buoyancy[:viscosity]).to_f
-          @buoyancy_planes[entity] = { :density => AMS.clamp(density, 0.001, nil), :viscosity => AMS.clamp(viscosity, 0, 1) }
+          dict = 'MSPhysics Buoyancy Plane'
+          density = entity.get_attribute(dict, 'Density')
+          density = default_buoyancy[:density] unless density.is_a?(Numeric)
+          viscosity = entity.get_attribute(dict, 'Viscosity')
+          viscosity = default_buoyancy[:viscosity] unless viscosity.is_a?(Numeric)
+          current_x = entity.get_attribute(dict, 'Current X')
+          current_x = default_buoyancy[:current_x] unless current_x.is_a?(Numeric)
+          current_y = entity.get_attribute(dict, 'Current Y')
+          current_y = default_buoyancy[:current_y] unless current_y.is_a?(Numeric)
+          current_z = entity.get_attribute(dict, 'Current Z')
+          current_z = default_buoyancy[:current_z] unless current_z.is_a?(Numeric)
+          @buoyancy_planes[entity] = {
+            :density => AMS.clamp(density, 0.001, nil),
+            :viscosity => AMS.clamp(viscosity, 0, 1),
+            :current => Geom::Vector3d.new(current_x, current_y, current_z)
+          }
         end
         return unless @world
       }
@@ -1888,8 +1994,8 @@ module MSPhysics
       call_event(:onStart)
       # Refresh view
       view.invalidate
-      # Start the update timer
       if Simulation.is_active?
+        # Start the update timer
         #@update_timer = AMS::Timer.start(0, true){ do_on_update }
         @update_timer = ::UI.start_timer(0, true) { do_on_update }
       end
@@ -1917,24 +2023,23 @@ module MSPhysics
       # Destroy world
       @world.destroy if @world.is_valid?
       @world = nil
-      # Erase multi-line text
-      @mlt.entity.material = nil
-      if model.materials.respond_to?(:remove)
-        model.materials.remove(@mlt_mat)
+      # Erase log-line and display-note
+      if @lltext[:ent] != nil && @lltext[:ent].valid?
+        @lltext[:ent].material = nil
+        @lltext[:ent].erase!
       end
-      @mlt_mat = nil
-      @mlt.remove
-      @mlt = nil
-      # Erase screen-text
-      if @note && @note.valid?
-        @note.material = nil
-        @note.erase!
+      if @lltext[:mat] != nil && @lltext[:mat].valid? && model.materials.respond_to?(:remove)
+        model.materials.remove(@lltext[:mat])
       end
-      if @note_mat && @note_mat.valid? && model.materials.respond_to?(:remove)
-        model.materials.remove(@note_mat)
+      @lltext.clear
+      if @dntext[:ent] != nil && @dntext[:ent].valid?
+        @dntext[:ent].material = nil
+        @dntext[:ent].erase!
       end
-      @note = nil
-      @note_mat = nil
+      if @dntext[:mat] != nil && @dntext[:mat].valid? && model.materials.respond_to?(:remove)
+        model.materials.remove(@dntext[:mat])
+      end
+      @dntext.clear
       # Reset entity transformations
       @saved_transformations.each { |e, t|
         e.move!(t) if e.valid?
@@ -1951,21 +2056,38 @@ module MSPhysics
       AMS::Sketchup.remove_observer(self)
       # Finish all operations
       model.commit_operation
-      # Set camera to original placement.
+      # Reset selected page
+      if @selected_page && @selected_page.valid?
+        tt = @selected_page.transition_time
+        @selected_page.transition_time = 0
+        model.pages.selected_page = @selected_page
+        @selected_page.transition_time = tt
+        @selected_page = nil
+      end
+      # Set camera to original placement
       opts = @camera[:original]
       camera.set(opts[0], opts[1], opts[2])
       camera.aspect_ratio = opts[4]
       camera.description = opts[5]
-      # Enable the perspective mode to avoid a warning.
+      # Enable the perspective mode to avoid a warning
       camera.perspective = true
       camera.focal_length = opts[6]
       camera.fov = opts[7]
       camera.image_width = opts[8]
-      # Enable the parallel projection mode to avoid a warning.
+      # Enable the parallel projection mode to avoid a warning
       camera.perspective = false
       camera.height = opts[9]
-      # Set orignal perspective
+      # Set original perspective
       camera.perspective = opts[3]
+      # Reset rendering options
+      @rendering_options.each { |k, v| model.rendering_options[k] = v }
+      @rendering_options.clear
+      # Reset shadow info
+      @shadow_info.each { |k, v| model.shadow_info[k] = v }
+      @shadow_info.clear
+      # Reset layer visibility
+      @layers.each { |l, s| l.visible = s if l.valid? && l.visible? != s }
+      @layers.clear
       # Clear selection
       model.selection.clear
       # Refresh view
@@ -1982,11 +2104,16 @@ module MSPhysics
       @buoyancy_planes.clear
       @joints.clear
       @controlled_joints.clear
+      @scene_data1 = nil
+      @scene_data2 = nil
+      @scene_selected_time = nil
+      @scene_transition_time = nil
+      @cc_bodies.clear
       @@instance = nil
       # Show info
       if @error
         msg = "MSPhysics Simulation has been aborted due to an error!\n#{@error.class}: #{@error}"
-        puts msg + "\n\n"
+        puts "#{msg}\nTrace:\n#{@error.backtrace.join("\n")}\n\n"
         ::UI.messagebox(msg)
         if @error.is_a?(MSPhysics::ScriptException)
           MSPhysics::Dialog.locate_error(@error)
@@ -2033,12 +2160,6 @@ module MSPhysics
 
     def onMouseEnter(view)
       @mouse_over = true
-      return unless @menu_enter
-      sel = Sketchup.active_model.selection
-      sel.clear
-      sel.add @camera[:follow] if @camera[:follow] && @camera[:follow].valid?
-      sel.add @camera[:target] if @camera[:target] && @camera[:target].valid?
-      @menu_enter = false
     end
 
     def onMouseLeave(view)
@@ -2094,9 +2215,16 @@ module MSPhysics
     end
 
     def onLButtonDown(flags, x, y, view)
-      return if @paused
+      sel = Sketchup.active_model.selection
+      if @paused
+        sel.clear
+        return
+      end
       @ip1.pick(view, x, y)
-      return unless @ip1.valid?
+      unless @ip1.valid?
+        sel.clear
+        return
+      end
       pos = @ip1.position
       # Use ray test as it determines positions more accurate than input point.
       ray = view.pickray(x,y)
@@ -2109,8 +2237,11 @@ module MSPhysics
         ph.do_pick(x,y)
         ent = ph.best_picked
       end
-      return unless ent.is_a?(Sketchup::Group) || ent.is_a?(Sketchup::ComponentInstance)
-      body = get_body_by_entity(ent)
+      unless ent.is_a?(Sketchup::Group) || ent.is_a?(Sketchup::ComponentInstance)
+        sel.clear
+        return
+      end
+      body = get_body_by_group(ent)
       return unless body
 =begin
       # Correct input point position if is not located on the picked entity.
@@ -2152,11 +2283,12 @@ module MSPhysics
       end
       return unless Simulation.is_active?
       # Pick body if the body is not static.
-      return if body.is_static? or @mode == 1
+      return if body.is_static? || @mode == 1
       pick_pt = pos.transform(body.get_matrix.inverse)
       cc = body.get_continuous_collision_state
       body.set_continuous_collision_state(true)
-      @picked = [body, pick_pt, pos, cc]
+      @picked = [body, pick_pt, pos, cc, nil, sel.include?(ent)]
+      sel.add(ent)
       @original_cursor_id = @cursor_id
       set_cursor(MSPhysics::CURSORS[:grab])
       view.lock_inference
@@ -2164,7 +2296,10 @@ module MSPhysics
 
     def onLButtonUp(flags, x, y, view)
       unless @picked.empty?
-        @picked[0].set_continuous_collision_state(@picked[3]) if @picked[0].is_valid?
+        if @picked[0].is_valid?
+          @picked[0].set_continuous_collision_state(@picked[3])
+          view.model.selection.remove(@picked[0].get_group) unless @picked[5]
+        end
         @picked.clear
         set_cursor(@original_cursor_id)
       end
@@ -2177,14 +2312,14 @@ module MSPhysics
     end
 
     def getMenu(menu)
-      menu.add_item(@paused ? 'Play' : 'Pause'){
+      @menu_entered2 = true
+
+      menu.add_item(@paused ? 'Play' : 'Pause') {
         self.toggle_play
       }
-      menu.add_item('Reset'){
+      menu.add_item('Reset') {
         Simulation.reset
       }
-
-      menu.add_separator
 
       model = Sketchup.active_model
       view = model.active_view
@@ -2193,12 +2328,10 @@ module MSPhysics
       ph.do_pick *@cursor_pos
       ent = ph.best_picked
       return unless ent.is_a?(Sketchup::Group) || ent.is_a?(Sketchup::ComponentInstance)
-      body = get_body_by_entity(ent)
-      return unless body
-      @menu_enter = true
-      sel.add ent
-      item = menu.add_item('Camera Follow'){
-        next unless body.is_valid?
+      menu.add_separator
+      sel.add(ent)
+      item = menu.add_item('Camera Follow') {
+        next unless ent.valid?
         if @camera[:follow] == ent
           @camera[:follow] = nil
         else
@@ -2206,30 +2339,46 @@ module MSPhysics
           @camera[:offset] = view.camera.eye - ent.bounds.center
         end
       }
-      menu.set_validation_proc(item){
+      menu.set_validation_proc(item) {
         @camera[:follow] == ent ? MF_CHECKED : MF_UNCHECKED
       }
       item = menu.add_item('Camera Target'){
-        next unless body.is_valid?
+        next unless ent.valid?
         if @camera[:target] == ent
           @camera[:target] = nil
         else
           @camera[:target] = ent
         end
       }
-      menu.set_validation_proc(item){
+      menu.set_validation_proc(item) {
         @camera[:target] == ent ? MF_CHECKED : MF_UNCHECKED
       }
-      if @camera[:target] or @camera[:follow]
-        menu.add_item('Camera Clear'){
+      item = menu.add_item('Camera Follow and Target') {
+        next unless ent.valid?
+        if @camera[:follow] == ent && @camera[:target] == ent
+          @camera[:follow] = nil
+          @camera[:target] = nil
+          @camera[:follow] = nil
+        else
+          @camera[:follow] = ent
+          @camera[:target] = ent
+          @camera[:offset] = view.camera.eye - ent.bounds.center
+        end
+      }
+      menu.set_validation_proc(item) {
+        @camera[:follow] == ent && @camera[:target] == ent ? MF_CHECKED : MF_UNCHECKED
+      }
+      if @camera[:target] != nil || @camera[:follow] != nil
+        menu.add_item('Camera Clear') {
           @camera[:follow] = nil
           @camera[:target] = nil
         }
       end
 
+      body = get_body_by_group(ent)
+      return unless body
       menu.add_separator
-
-      menu.add_item('Freeze Body'){
+      menu.add_item('Freeze Body') {
         next unless body.is_valid?
         body.set_frozen(true)
       }
@@ -2246,9 +2395,11 @@ module MSPhysics
       if Sketchup.version.to_i > 6
         Sketchup.active_model.entities.each { |e|
           next if e.is_a?(Sketchup::Text)
-          @bb.add(e.bounds)
+          @bb.add(e.bounds) if e.visible?
         }
       end
+      wb = @world.get_aabb
+      @bb.add(wb) if wb
       @bb
     end
 
@@ -2278,16 +2429,39 @@ module MSPhysics
     end
 
 
-    def swo_on_enter_menu
+    def swo_on_post_enter_menu
       @menu_entered = true
     end
 
-    def swo_on_exit_menu
+    def swo_on_post_exit_menu
       @menu_entered = false
+      if @menu_entered2
+        sel = Sketchup.active_model.selection
+        sel.clear
+        sel.add @camera[:follow] if @camera[:follow] && @camera[:follow].valid?
+        sel.add @camera[:target] if @camera[:target] && @camera[:target].valid?
+        @menu_entered2 = false
+      end
     end
 
+    def swo_on_page_selected(page1, page2)
+      if page2.transition_time == 0
+        @scene_data1 = nil
+        @scene_data2 = nil
+        @scene_selected_time = nil
+        @scene_transition_time = nil
+      end
+      model = Sketchup.active_model
+      model.active_view.animation = nil
+      @scene_data1 = MSPhysics::SceneData.new()
+      @scene_data2 = MSPhysics::SceneData.new(page2)
+      @scene_selected_time = Time.now
+      dtt = model.options['PageOptions']['TransitionTime']
+      @scene_transition_time = page2.transition_time < 0 ? dtt : page2.transition_time
+    end
 
     def swp_on_key_down(key, val, char)
+      return if @menu_entered
       case key
         when 'escape'
           Simulation.reset
@@ -2296,17 +2470,19 @@ module MSPhysics
           toggle_play
       end
       call_event(:onKeyDown, key, val, char) unless @paused
-      @menu_entered ? 0 : 1
+      1
     end
 
     def swp_on_key_extended(key, val, char)
+      return if @menu_entered
       call_event(:onKeyExtended, key, val, char) unless @paused
-      @menu_entered ? 0 : 1
+      1
     end
 
     def swp_on_key_up(key, val, char)
+      return if @menu_entered
       call_event(:onKeyUp, key, val, char) unless @paused
-      @menu_entered ? 0 : 1
+      1
     end
 
 
@@ -2335,7 +2511,7 @@ module MSPhysics
         ph.do_pick x,y
         ent = ph.best_picked
         return 1 unless ent.is_a?(Sketchup::Group) || ent.is_a?(Sketchup::ComponentInstance)
-        return get_body_by_entity(ent) ? 0 : 1
+        return get_body_by_group(ent) ? 0 : 1
       end
       @mode
     end

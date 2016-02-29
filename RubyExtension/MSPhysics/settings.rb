@@ -88,8 +88,8 @@ module MSPhysics
         return timestep
       end
 
-      # Get simulation update rate. Entity transformations and viewport are
-      # updated every n frames.
+      # Get simulation update rate, the number of times to update newton world
+	  # per frame.
       # @return [Fixnum] A value between 1 and 100.
       def get_update_rate
         default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:update_rate]
@@ -97,8 +97,8 @@ module MSPhysics
         return AMS.clamp(attr.to_i, 1, 100)
       end
 
-      # Set simulation update rate. Entity transformations and viewport are
-      # updated every n frames.
+      # Set simulation update rate, the number of times to update newton world
+	  # per frame.
       # @param [Fixnum] rate A value between 1 and 100.
       # @return [Fixnum] The new update rate.
       def set_update_rate(rate)

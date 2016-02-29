@@ -91,22 +91,34 @@ module MSPhysics
               id = cent.get_attribute('MSPhysics Joint', 'ID')
               next if !ids.include?(id)
               dist = cent.transformation.origin.transform(ptra).distance(cpoint)
+              dist = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist).to_f : dist.round(3)
               if jdist[id].nil? || jdist[id] > dist
                 jdist[id] = dist
-                jents[id] = [cent, ent]
+                jents[id] = [[cent, ent]]
+              elsif jdist[id] == dist
+                jents[id] << [cent, ent]
               end
             }
           elsif type == 'Joint'
             id = ent.get_attribute('MSPhysics Joint', 'ID')
             next if !ids.include?(id)
             dist = ent.transformation.origin.distance(cpoint)
+            dist = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist).to_f : dist.round(3)
             if jdist[id].nil? || jdist[id] > dist
               jdist[id] = dist
-              jents[id] = [ent, nil]
+              jents[id] = [[ent, nil]]
+            elsif jdist[id] == dist
+              jents[id] << [ent, nil]
             end
           end
         }
-        jents.values
+        #if RUBY_VERSION =~ /1.8/
+          cjoints = []
+          jents.each { |id, jdatas| jdatas.each { |jdata|  cjoints << jdata } }
+          return cjoints
+        #else
+          return jents.values.flatten(1)
+        #end
       end
 
       # Get all or closest joints connected to a group/component, depending on
@@ -129,11 +141,11 @@ module MSPhysics
 
       # Get all joints connected to a group/component.
       # @param [Sketchup::Group, Sketchup::ComponentInstance] body
-      # @return [Array] An array of joint data. Each joint data consists of
-      #   three elements. The first one is the joint component. The second one
-      #   is the parent group/component of the joint or nil if joint is a top
-      #   level component. The third one is joint transformation in global
-      #   space.
+      # @return [Hash<Fixnum, Hash<Numeric, Array<Array>>>] A hash of ids,
+      #   distances, and joint data. Each joint data consists of three elements.
+      #   The first one is the joint component. The second one is the parent
+      #   group/component of the joint or nil if joint is a top level component.
+      #   The third one is joint transformation in global space.
       def get_connected_joints3(body)
         ids = body.get_attribute('MSPhysics Body', 'Connected Joints')
         cjoints = {}
@@ -157,7 +169,9 @@ module MSPhysics
               cjoints[id] = {} unless cjoints[id]
               jtra = ptra * MSPhysics::Geometry.extract_matrix_scale(cent.transformation)
               dist = jtra.origin.distance(cpoint)
-              cjoints[id][dist] = [cent, ent, jtra]
+              dist = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist).to_f : dist.round(3)
+              cjoints[id][dist] = [] unless cjoints[id][dist]
+              cjoints[id][dist] << [cent, ent, jtra]
             }
           elsif type == 'Joint'
             id = ent.get_attribute('MSPhysics Joint', 'ID')
@@ -165,22 +179,25 @@ module MSPhysics
             cjoints[id] = {} unless cjoints[id]
             jtra = MSPhysics::Geometry.extract_matrix_scale(ent.transformation)
             dist = jtra.origin.distance(cpoint)
-            cjoints[id][dist] = [ent, nil, jtra]
+            dist = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist).to_f : dist.round(3)
+            cjoints[id][dist] = [] unless cjoints[id][dist]
+            cjoints[id][dist] << [ent, nil, jtra]
           end
         }
         cjoints
       end
 
-      # Get closest joint connected to a group/component.
+      # Get closest joint(s) connected to a group/component.
       # @param [Sketchup::Group, Sketchup::ComponentInstance] body
       # @param [Fixnum] joint_id
-      # @return [Array] Joint data. Joint data consists of two elements. The
-      #   first one is the joint component. The second one is the parent group/
-      #   component of the joint or nil if joint is a top level component.
-      def get_closest_joint(body, joint_id)
+      # @return [Array] An array of joint data. Each joint data consists of two
+      #   elements. The first one is the joint component. The second one is the
+      #   parent group/component of the joint or nil if joint is a top level
+      #   component.
+      def get_closest_joints(body, joint_id)
         cpoint = body.bounds.center
         jdist = nil
-        jent = nil
+        jents = []
         Sketchup.active_model.entities.each { |ent|
           next if !ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)
           next if ent == body
@@ -196,9 +213,12 @@ module MSPhysics
                 id = cent.get_attribute('MSPhysics Joint', 'ID')
                 next if id != joint_id
                 dist = cent.transformation.origin.transform(ptra).distance(cpoint)
+                dist = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist).to_f : dist.round(3)
                 if jdist.nil? || jdist > dist
                   jdist = dist
-                  jent = [cent, ent]
+                  jents = [[cent, ent]]
+                elsif jdist == dist
+                  jents << [cent, ent]
                 end
               end
             }
@@ -206,13 +226,16 @@ module MSPhysics
             id = ent.get_attribute('MSPhysics Joint', 'ID')
             next if id != joint_id
             dist = ent.transformation.origin.distance(cpoint)
+            dist = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist).to_f : dist.round(3)
             if jdist.nil? || jdist > dist
               jdist = dist
-              jent = [ent, nil]
+              jents = [[ent, nil]]
+            elsif jdist == dist
+              jents << [ent, nil]
             end
           end
         }
-        jent
+        jents
       end
 
       # Get all groups/components connected to a joint.
@@ -252,10 +275,16 @@ module MSPhysics
           cjoints = ent.get_attribute('MSPhysics Body', 'Connected Joints')
           next if !cjoints.is_a?(Array) || !cjoints.include?(id)
           if ent.get_attribute('MSPhysics Body', 'Connect Closest Joints', false)
-            closest_joint = get_closest_joint(ent, id)
-            if closest_joint && closest_joint[0] == joint && closest_joint[1] == jparent
-              connected_bodies << ent
-            else
+            closest_joints = get_closest_joints(ent, id)
+            found = false
+            closest_joints.each { |closest_joint|
+              if closest_joint[0] == joint && closest_joint[1] == jparent
+                connected_bodies << ent
+                found = true
+                break
+              end
+            }
+            unless found
               potential_bodies << ent
             end
           else

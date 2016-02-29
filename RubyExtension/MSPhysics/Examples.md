@@ -47,13 +47,13 @@ force.
       # Calculate gravitational force applied on this body.
       force = Geom::Vector3d.new(gravity.x * mass, gravity.y * mass, gravity.z * mass)
       # To oppose that force, simply apply an opposite force.
-      this.add_force(force.reverse)
+      this.add_force2(force.reverse)
     }
 
 Another way is to simply set applied force to zero.
 
     onUpdate {
-      this.set_force([0,0,0])
+      this.set_force2(0, 0, 0)
     }
 
 Make body "stick" to the ground.
@@ -61,7 +61,7 @@ Make body "stick" to the ground.
     onUpdate {
       dir = this.get_group.transformation.zaxis.reverse
       dir.length = this.get_mass * 50
-      this.add_force(dir)
+      this.add_force2(dir)
     }
 
 ## Magnets

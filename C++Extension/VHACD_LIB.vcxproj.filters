@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="VHACD_Lib\src\btAlignedAllocator.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="VHACD_Lib\src\btConvexHullComputer.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="VHACD_Lib\src\VHACD.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="VHACD_Lib\src\vhacdICHull.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="VHACD_Lib\src\vhacdManifoldMesh.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="VHACD_Lib\src\vhacdMesh.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="VHACD_Lib\src\vhacdVolume.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="VHACD_Lib\inc\btAlignedAllocator.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\btAlignedObjectArray.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\btConvexHullComputer.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\btMinMax.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\btScalar.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\btVector3.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\vhacdCircularList.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\vhacdICHull.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\vhacdManifoldMesh.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\vhacdMesh.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\vhacdMutex.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\vhacdSArray.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\vhacdTimer.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\vhacdVector.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\vhacdVHACD.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\vhacdVolume.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\public\VHACD.h">
+      <Filter>Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\vhacdCircularList.inl">
+      <Filter>Inl</Filter>
+    </ClInclude>
+    <ClInclude Include="VHACD_Lib\inc\vhacdVector.inl">
+      <Filter>Inl</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Inc">
+      <UniqueIdentifier>{02FAC70B-0212-4BDA-9A45-4763F3B4BE77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Inl">
+      <UniqueIdentifier>{0B899138-C685-4A5E-AC6C-05DCA01C0511}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src">
+      <UniqueIdentifier>{265F264D-38CB-42E7-A052-8C18DA99ED31}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
