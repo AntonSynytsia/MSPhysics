@@ -82,7 +82,7 @@ module MSPhysics
     # Determine whether cone angle limits are enabled.
     # @return [Boolean]
     def cone_limits_enabled?
-      MSPhysics::Newton::BallAndSocket.are_cone_limits_enabled?(@address)
+      MSPhysics::Newton::BallAndSocket.cone_limits_enabled?(@address)
     end
 
     # Enable/Disable cone angle limits.
@@ -118,7 +118,7 @@ module MSPhysics
     # Determine whether twist angle limits are enabled.
     # @return [Boolean]
     def twist_limits_enabled?
-      MSPhysics::Newton::BallAndSocket.are_twist_limits_enabled?(@address)
+      MSPhysics::Newton::BallAndSocket.twist_limits_enabled?(@address)
     end
 
     # Enable/Disable twist angle limits.

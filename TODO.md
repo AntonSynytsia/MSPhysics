@@ -1,6 +1,5 @@
 - Create an installer that would automatically install AMS Library and MSPhysics
   into desired plugins folder.
-- Update links when posting
 - Make it work on Mac OS X
 - Test under SU6, Windows XP
 - Implement newton cloth and soft bodies.
@@ -18,43 +17,34 @@
     * http://newtondynamics.com/forum/viewtopic.php?f=9&t=8668
 - A dialog to set body mass and volume.
 - Check which functions to add from LazyScript.
-- Handle flat and empty collisions for compound from mesh.
+~ Handle flat and empty collisions for compound from mesh.
 - Add MSPhysics functions to Ace text editor if possible.
 - Add advanced explosion function.
 - Add particle effects
 - Add JoyStick to controller, serial port, and sliders dialog.
-- Rename functions so they are easy to use.
-- Modify joint models and their icons.
 - Compound from convex decomposition doesn't generate right when scaled.
 ~ Repack MSPhysics music and script to reduce size.
 - Split documentation functions into groups.
 ~ Add JointCollection dialog
 - Camera follow doesn't work when zooming out or orbiting camera using smooth zoom.
 - Add feature to create material, assign it to multiple bodies and edit it once.
-- Add GitHub theme to MSPhysics script.
-- Add angle/distance units.
-- Add BodyContext, JointContext. Rename all functions for simpler usage.
-- Add collision up vector feature.
+- Add angle/distance units to joints.
+~ Add collision up vector feature.
 - Add camera follow in scene.
-- Spring joints lock up when pass the limit.
-- Find entity by name
-- check point velocity.
-- avoid processing static and non-dynamic bodies in add_fluid_resistance.
-- add viscosity parameter to add_fluid_resistance.
-- fix noncollision and continuous collision bug.
+~ Spring joints lock up when pass the limit.
+~ Avoid processing static and non-dynamic bodies in add_fluid_resistance.
+~ Add viscosity parameter to add_fluid_resistance.
 - Make replay compatible with LightUp, Vray, Twilight, and Thea Render
 - Save replay data into model info.
-- Separate simulation and simulation tool into separate classes.
-- Finish all joints.
-- Work on slider controller.
-- Add feature to assign names to joints.
+~ Separate simulation and simulation tool into separate classes.
 - Make the joints dialog to display connected joints and bodies.
 - Add curve joint
 - Add plane joint
 - Add joystick controller
-- Update cursors
-- Update joint icons
-- Work on ball & socket, universal, and corkscrew joints.
+- Update all cursors
+- Update joint icons and components.
+- Work on ball & socket and universal joints.
+- Improve the servo joint.
 
 Newton Joint    MSP Joint
 front           right

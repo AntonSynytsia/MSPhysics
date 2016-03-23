@@ -470,7 +470,7 @@ VALUE MSNewton::Body::get_continuous_collision_state(VALUE self, VALUE v_body) {
 
 VALUE MSNewton::Body::set_continuous_collision_state(VALUE self, VALUE v_body, VALUE v_state) {
 	const NewtonBody* body = Util::value_to_body(v_body);
-	NewtonBodySetContinuousCollisionMode(body, RTEST(v_state) ? 1 : 0);
+	NewtonBodySetContinuousCollisionMode(body, Util::value_to_bool(v_state) ? 1 : 0);
 	return NewtonBodyGetContinuousCollisionMode(body) == 1 ? Qtrue : Qfalse;
 }
 

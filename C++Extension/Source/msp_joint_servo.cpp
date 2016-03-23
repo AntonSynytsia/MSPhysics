@@ -14,6 +14,7 @@ const dFloat MSNewton::Servo::DEFAULT_DAMP = 10.0f;
 const dFloat MSNewton::Servo::DEFAULT_REDUCTION_RATIO = 0.1f;
 const dFloat MSNewton::Servo::DEFAULT_CONTROLLER = 0.0f;
 const bool MSNewton::Servo::DEFAULT_CONTROLLER_ENABLED = false;
+const bool MSNewton::Servo::DEFAULT_SP_MODE_ENABLED = false;
 
 
 /*
@@ -65,7 +66,7 @@ void MSNewton::Servo::submit_constraints(const NewtonJoint* joint, dgFloat32 tim
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 
 	// Add two rows to restrict rotation around the the axis perpendicular to the rotation axis.
-	NewtonUserJointAddAngularRow(joint, Joint::c_calculate_angle(matrix0.m_right, matrix1.m_right, matrix0.m_front), &matrix0.m_front[0]);
+	/*NewtonUserJointAddAngularRow(joint, Joint::c_calculate_angle(matrix0.m_right, matrix1.m_right, matrix0.m_front), &matrix0.m_front[0]);
 	if (joint_data->ctype == CT_FLEXIBLE)
 		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
@@ -77,21 +78,29 @@ void MSNewton::Servo::submit_constraints(const NewtonJoint* joint, dgFloat32 tim
 		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
 		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
-	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);*/
 
-	/*// Add two more rows to achieve a more robust angular constraint.
+	// Add two more rows to achieve a more robust angular constraint.
 	// Get a point along the pin axis at some reasonable large distance from the pivot.
 	dVector q0(matrix0.m_posit + matrix0.m_right.Scale(MIN_JOINT_PIN_LENGTH));
 	dVector q1(matrix1.m_posit + matrix1.m_right.Scale(MIN_JOINT_PIN_LENGTH));
 
 	// Add two constraints row perpendicular to the pin vector.
 	dVector q2(q0 + matrix0.m_front.Scale((q1 - q0) % matrix0.m_front));
-	NewtonUserJointAddLinearRow(joint, &q0[0], &q2[0], &matrix0.m_front[0]);
+	NewtonUserJointAddLinearRow(joint, &q0[0], &q1[0], &matrix1.m_front[0]);
+	if (joint_data->ctype == CT_FLEXIBLE)
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
+	else if (joint_data->ctype == CT_ROBUST)
+		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 
 	q2 = q0 + matrix0.m_up.Scale((q1 - q0) % matrix0.m_up);
-	NewtonUserJointAddLinearRow(joint, &q0[0], &q2[0], &matrix0.m_up[0]);
-	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);*/
+	NewtonUserJointAddLinearRow(joint, &q0[0], &q1[0], &matrix1.m_up[0]);
+	if (joint_data->ctype == CT_FLEXIBLE)
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
+	else if (joint_data->ctype == CT_ROBUST)
+		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
+	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 
 	// Add limits and friction
 	if (cj_data->limits_enabled == true && (cur_angle - cj_data->min) < -Joint::ANGULAR_LIMIT_EPSILON) {
@@ -112,6 +121,18 @@ void MSNewton::Servo::submit_constraints(const NewtonJoint* joint, dgFloat32 tim
 			NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 		else if (joint_data->ctype == CT_ROBUST)
 			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
+		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+	}
+	else if (cj_data->sp_mode_enabled) {
+		dFloat rel_angle;
+		if (cj_data->controller_enabled) {
+			dFloat desired_angle = cj_data->min + (cj_data->max - cj_data->min) * cj_data->controller;
+			rel_angle = desired_angle - cur_angle;
+		}
+		else
+			rel_angle = 0.0f;
+		NewtonUserJointAddAngularRow(joint, rel_angle, &matrix0.m_right[0]);
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->accel, cj_data->damp);
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
 	else {
@@ -214,6 +235,7 @@ VALUE MSNewton::Servo::create(VALUE self, VALUE v_joint) {
 	cj_data->cur_accel = 0.0f;
 	cj_data->controller = DEFAULT_CONTROLLER;
 	cj_data->controller_enabled = DEFAULT_CONTROLLER_ENABLED;
+	cj_data->sp_mode_enabled = DEFAULT_SP_MODE_ENABLED;
 
 	joint_data->dof = 6;
 	joint_data->jtype = JT_SERVO;
@@ -278,7 +300,7 @@ VALUE MSNewton::Servo::enable_limits(VALUE self, VALUE v_joint, VALUE v_state) {
 	return Util::to_value(cj_data->limits_enabled);
 }
 
-VALUE MSNewton::Servo::are_limits_enabled(VALUE self, VALUE v_joint) {
+VALUE MSNewton::Servo::limits_enabled(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SERVO);
 	ServoData* cj_data = (ServoData*)joint_data->cj_data;
 	return Util::to_value(cj_data->limits_enabled);
@@ -352,6 +374,22 @@ VALUE MSNewton::Servo::set_controller(VALUE self, VALUE v_joint, VALUE v_control
 	}
 }
 
+VALUE MSNewton::Servo::enable_sp_mode(VALUE self, VALUE v_joint, VALUE v_state) {
+	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SERVO);
+	ServoData* cj_data = (ServoData*)joint_data->cj_data;
+	bool orig_state = cj_data->sp_mode_enabled;
+	cj_data->sp_mode_enabled = Util::value_to_bool(v_state);
+	if (cj_data->sp_mode_enabled != orig_state && joint_data->connected == true)
+		NewtonBodySetSleepState(joint_data->child, 0);
+	return Util::to_value(cj_data->sp_mode_enabled);
+}
+
+VALUE MSNewton::Servo::sp_mode_enabled(VALUE self, VALUE v_joint) {
+	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SERVO);
+	ServoData* cj_data = (ServoData*)joint_data->cj_data;
+	return Util::to_value(cj_data->sp_mode_enabled);
+}
+
 
 void Init_msp_servo(VALUE mNewton) {
 	VALUE mServo = rb_define_module_under(mNewton, "Servo");
@@ -366,7 +404,7 @@ void Init_msp_servo(VALUE mNewton) {
 	rb_define_module_function(mServo, "get_max", VALUEFUNC(MSNewton::Servo::get_max), 1);
 	rb_define_module_function(mServo, "set_max", VALUEFUNC(MSNewton::Servo::set_max), 2);
 	rb_define_module_function(mServo, "enable_limits", VALUEFUNC(MSNewton::Servo::enable_limits), 2);
-	rb_define_module_function(mServo, "are_limits_enabled?", VALUEFUNC(MSNewton::Servo::are_limits_enabled), 1);
+	rb_define_module_function(mServo, "limits_enabled?", VALUEFUNC(MSNewton::Servo::limits_enabled), 1);
 	rb_define_module_function(mServo, "get_accel", VALUEFUNC(MSNewton::Servo::get_accel), 1);
 	rb_define_module_function(mServo, "set_accel", VALUEFUNC(MSNewton::Servo::set_accel), 2);
 	rb_define_module_function(mServo, "get_damp", VALUEFUNC(MSNewton::Servo::get_damp), 1);
@@ -375,4 +413,6 @@ void Init_msp_servo(VALUE mNewton) {
 	rb_define_module_function(mServo, "set_reduction_ratio", VALUEFUNC(MSNewton::Servo::set_reduction_ratio), 2);
 	rb_define_module_function(mServo, "get_controller", VALUEFUNC(MSNewton::Servo::get_controller), 1);
 	rb_define_module_function(mServo, "set_controller", VALUEFUNC(MSNewton::Servo::set_controller), 2);
+	rb_define_module_function(mServo, "enable_sp_mode", VALUEFUNC(MSNewton::Servo::enable_sp_mode), 2);
+	rb_define_module_function(mServo, "sp_mode_enabled?", VALUEFUNC(MSNewton::Servo::sp_mode_enabled), 1);
 }

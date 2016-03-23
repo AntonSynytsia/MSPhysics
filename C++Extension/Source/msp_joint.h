@@ -71,7 +71,7 @@ public:
 	static VALUE get_child(VALUE self, VALUE v_joint);
 	static VALUE get_pin_matrix(VALUE self, VALUE v_joint);
 	static VALUE set_pin_matrix(VALUE self, VALUE v_joint, VALUE v_pin_matrix);
-	static VALUE are_bodies_collidable(VALUE self, VALUE v_joint);
+	static VALUE bodies_collidable(VALUE self, VALUE v_joint);
 	static VALUE set_bodies_collidable(VALUE self, VALUE v_joint, VALUE v_state);
 	static VALUE get_stiffness(VALUE self, VALUE v_joint);
 	static VALUE set_stiffness(VALUE self, VALUE v_joint, VALUE v_stiffness);

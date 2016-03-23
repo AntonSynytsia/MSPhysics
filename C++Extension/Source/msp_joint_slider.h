@@ -15,6 +15,7 @@ private:
 	static const dFloat DEFAULT_MAX;
 	static const bool DEFAULT_LIMITS_ENABLED;
 	static const dFloat DEFAULT_FRICTION;
+	static const dFloat DEFAULT_CONTROLLER;
 
 public:
 	// Structures
@@ -27,6 +28,7 @@ public:
 		dFloat max;
 		bool limits_enabled;
 		dFloat friction;
+		dFloat controller;
 	} SliderData;
 
 	// Callback Functions
@@ -47,9 +49,11 @@ public:
 	static VALUE get_max(VALUE self, VALUE v_joint);
 	static VALUE set_max(VALUE self, VALUE v_joint, VALUE v_max);
 	static VALUE enable_limits(VALUE self, VALUE v_joint, VALUE v_state);
-	static VALUE are_limits_enabled(VALUE self, VALUE v_joint);
+	static VALUE limits_enabled(VALUE self, VALUE v_joint);
 	static VALUE get_friction(VALUE self, VALUE v_joint);
 	static VALUE set_friction(VALUE self, VALUE v_joint, VALUE v_friction);
+	static VALUE get_controller(VALUE self, VALUE v_joint);
+	static VALUE set_controller(VALUE self, VALUE v_joint, VALUE v_controller);
 };
 
 void Init_msp_slider(VALUE mNewton);

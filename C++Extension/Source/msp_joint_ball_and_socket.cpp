@@ -238,7 +238,7 @@ VALUE MSNewton::BallAndSocket::enable_cone_limits(VALUE self, VALUE v_joint, VAL
 	return Util::to_value(cj_data->cone_limits_enabled);
 }
 
-VALUE MSNewton::BallAndSocket::are_cone_limits_enabled(VALUE self, VALUE v_joint) {
+VALUE MSNewton::BallAndSocket::cone_limits_enabled(VALUE self, VALUE v_joint) {
 	JointData* data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
 	BallAndSocketData* cj_data = (BallAndSocketData*)data->cj_data;
 	return Util::to_value(cj_data->cone_limits_enabled);
@@ -277,7 +277,7 @@ VALUE MSNewton::BallAndSocket::enable_twist_limits(VALUE self, VALUE v_joint, VA
 	return Util::to_value(cj_data->twist_limits_enabled);
 }
 
-VALUE MSNewton::BallAndSocket::are_twist_limits_enabled(VALUE self, VALUE v_joint) {
+VALUE MSNewton::BallAndSocket::twist_limits_enabled(VALUE self, VALUE v_joint) {
 	JointData* data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
 	BallAndSocketData* cj_data = (BallAndSocketData*)data->cj_data;
 	return Util::to_value(cj_data->twist_limits_enabled);
@@ -310,13 +310,13 @@ void Init_msp_ball_and_socket(VALUE mNewton) {
 	rb_define_module_function(mBallAndSocket, "get_max_cone_angle", VALUEFUNC(MSNewton::BallAndSocket::get_max_cone_angle), 1);
 	rb_define_module_function(mBallAndSocket, "set_max_cone_angle", VALUEFUNC(MSNewton::BallAndSocket::set_max_cone_angle), 2);
 	rb_define_module_function(mBallAndSocket, "enable_cone_limits", VALUEFUNC(MSNewton::BallAndSocket::enable_cone_limits), 2);
-	rb_define_module_function(mBallAndSocket, "are_cone_limits_enabled?", VALUEFUNC(MSNewton::BallAndSocket::are_cone_limits_enabled), 1);
+	rb_define_module_function(mBallAndSocket, "cone_limits_enabled?", VALUEFUNC(MSNewton::BallAndSocket::cone_limits_enabled), 1);
 	rb_define_module_function(mBallAndSocket, "get_min_twist_angle", VALUEFUNC(MSNewton::BallAndSocket::get_min_twist_angle), 1);
 	rb_define_module_function(mBallAndSocket, "set_min_twist_angle", VALUEFUNC(MSNewton::BallAndSocket::set_min_twist_angle), 2);
 	rb_define_module_function(mBallAndSocket, "get_max_twist_angle", VALUEFUNC(MSNewton::BallAndSocket::get_max_twist_angle), 1);
 	rb_define_module_function(mBallAndSocket, "set_max_twist_angle", VALUEFUNC(MSNewton::BallAndSocket::set_max_twist_angle), 2);
 	rb_define_module_function(mBallAndSocket, "enable_twist_limits", VALUEFUNC(MSNewton::BallAndSocket::enable_twist_limits), 2);
-	rb_define_module_function(mBallAndSocket, "are_twist_limits_enabled?", VALUEFUNC(MSNewton::BallAndSocket::are_twist_limits_enabled), 1);
+	rb_define_module_function(mBallAndSocket, "twist_limits_enabled?", VALUEFUNC(MSNewton::BallAndSocket::twist_limits_enabled), 1);
 	rb_define_module_function(mBallAndSocket, "get_cur_cone_angle", VALUEFUNC(MSNewton::BallAndSocket::get_cur_cone_angle), 1);
 	rb_define_module_function(mBallAndSocket, "get_cur_twist_angle", VALUEFUNC(MSNewton::BallAndSocket::get_cur_twist_angle), 1);
 }

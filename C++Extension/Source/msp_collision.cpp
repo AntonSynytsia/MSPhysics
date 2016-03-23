@@ -112,6 +112,7 @@ VALUE MSNewton::Collision::create_cylinder(VALUE self, VALUE v_world, VALUE v_ra
 	const NewtonCollision* col = NewtonCreateCylinder(
 		world,
 		Util::value_to_dFloat2(v_radius, scale, MIN_SIZE, MAX_SIZE),
+		Util::value_to_dFloat2(v_radius, scale, MIN_SIZE, MAX_SIZE),
 		Util::value_to_dFloat2(v_height, scale, MIN_SIZE, MAX_SIZE),
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
@@ -131,6 +132,7 @@ VALUE MSNewton::Collision::create_scaled_cylinder(VALUE self, VALUE v_world, VAL
 	const NewtonCollision* col = NewtonCreateCylinder(
 		world,
 		r,
+		r,
 		h,
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
@@ -145,6 +147,7 @@ VALUE MSNewton::Collision::create_capsule(VALUE self, VALUE v_world, VALUE v_rad
 	dFloat scale = INCH_TO_METER * world_data->scale;
 	const NewtonCollision* col = NewtonCreateCapsule(
 		world,
+		Util::value_to_dFloat2(v_radius, scale, MIN_SIZE, MAX_SIZE),
 		Util::value_to_dFloat2(v_radius, scale, MIN_SIZE, MAX_SIZE),
 		Util::value_to_dFloat2(v_height, scale, 0.0f, MAX_SIZE),
 		Util::value_to_long(v_id),
@@ -166,6 +169,7 @@ VALUE MSNewton::Collision::create_scaled_capsule(VALUE self, VALUE v_world, VALU
 	const NewtonCollision* col = NewtonCreateCapsule(
 		world,
 		r,
+		r,
 		h < 0 ? 0 : h,
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
@@ -178,7 +182,7 @@ VALUE MSNewton::Collision::create_tapered_capsule(VALUE self, VALUE v_world, VAL
 	const NewtonWorld* world = Util::value_to_world(v_world);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	dFloat scale = INCH_TO_METER * world_data->scale;
-	const NewtonCollision* col = NewtonCreateTaperedCapsule(
+	const NewtonCollision* col = NewtonCreateCapsule(
 		world,
 		Util::value_to_dFloat2(v_radius0, scale, MIN_SIZE, MAX_SIZE),
 		Util::value_to_dFloat2(v_radius1, scale, MIN_SIZE, MAX_SIZE),
@@ -193,7 +197,7 @@ VALUE MSNewton::Collision::create_tapered_cylinder(VALUE self, VALUE v_world, VA
 	const NewtonWorld* world = Util::value_to_world(v_world);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	dFloat scale = INCH_TO_METER * world_data->scale;
-	const NewtonCollision* col = NewtonCreateTaperedCylinder(
+	const NewtonCollision* col = NewtonCreateCylinder(
 		world,
 		Util::value_to_dFloat2(v_radius0, scale, MIN_SIZE, MAX_SIZE),
 		Util::value_to_dFloat2(v_radius1, scale, MIN_SIZE, MAX_SIZE),

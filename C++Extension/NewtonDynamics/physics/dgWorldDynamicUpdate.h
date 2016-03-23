@@ -35,7 +35,7 @@
 #define	DG_SMALL_ISLAND_COUNT			2
 #define	DG_MAX_SKELETON_JOINT_COUNT		4096
 
-#define	DG_FREEZZING_VELOCITY_DRAG		dgFloat32 (0.9f)
+#define	DG_FREEZZING_VELOCITY_DRAG		dgFloat32 (0.1f)
 #define	DG_SOLVER_MAX_ERROR				(DG_FREEZE_MAG * dgFloat32 (0.5f))
 
 
@@ -260,7 +260,7 @@ class dgWorldDynamicUpdate
 	//static void CalculateJointsImpulseVelocParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
 	static void UpdateFeedbackForcesParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
 	static void UpdateBodyVelocityParallelKernel (void* const context, void* const worldContext, dgInt32 threadID); 
-	static void FindActiveJointAndBodies (void* const context, void* const worldContext, dgInt32 threadID); 
+	static void FindActiveJointAndBodiesKernel (void* const context, void* const worldContext, dgInt32 threadID); 
 	static dgInt32 SortJointInfoByColor(const dgParallelSolverSyncData::dgParallelJointMap* const indirectIndexA, const dgParallelSolverSyncData::dgParallelJointMap* const indirectIndexB, void* const context);
 	//void CreateParallelArrayBatchArrays (dgParallelSolverSyncData* const solverSyncData, dgJointInfo* const constraintArray, const dgIsland* const island) const;
 

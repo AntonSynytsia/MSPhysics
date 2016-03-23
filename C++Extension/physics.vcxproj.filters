@@ -121,12 +121,6 @@
     <ClCompile Include="NewtonDynamics\physics\dgCollisionInstance.cpp">
       <Filter>collision</Filter>
     </ClCompile>
-    <ClCompile Include="NewtonDynamics\physics\dgCollisionTaperedCylinder.cpp">
-      <Filter>collision</Filter>
-    </ClCompile>
-    <ClCompile Include="NewtonDynamics\physics\dgCollisionTaperedCapsule.cpp">
-      <Filter>collision</Filter>
-    </ClCompile>
     <ClCompile Include="NewtonDynamics\meshUtil\dgMeshEffect5.cpp">
       <Filter>meshUtil</Filter>
     </ClCompile>
@@ -170,6 +164,9 @@
       <Filter>systems</Filter>
     </ClCompile>
     <ClCompile Include="NewtonDynamics\physics\dgBroadPhaseAggregate.cpp">
+      <Filter>systems</Filter>
+    </ClCompile>
+	<ClCompile Include="NewtonDynamics\physics\dgContactSolver.cpp">
       <Filter>systems</Filter>
     </ClCompile>
   </ItemGroup>
@@ -282,12 +279,6 @@
     <ClInclude Include="NewtonDynamics\physics\dgCollisionInstance.h">
       <Filter>collision</Filter>
     </ClInclude>
-    <ClInclude Include="NewtonDynamics\physics\dgCollisionTaperedCylinder.h">
-      <Filter>collision</Filter>
-    </ClInclude>
-    <ClInclude Include="NewtonDynamics\physics\dgCollisionTaperedCapsule.h">
-      <Filter>collision</Filter>
-    </ClInclude>
     <ClInclude Include="NewtonDynamics\physics\dgBody.h">
       <Filter>bodies</Filter>
     </ClInclude>
@@ -325,6 +316,9 @@
       <Filter>systems</Filter>
     </ClInclude>
     <ClInclude Include="NewtonDynamics\physics\dgBroadPhaseAggregate.h">
+      <Filter>systems</Filter>
+    </ClInclude>
+	<ClInclude Include="NewtonDynamics\physics\dgContactSolver.h">
       <Filter>systems</Filter>
     </ClInclude>
   </ItemGroup>

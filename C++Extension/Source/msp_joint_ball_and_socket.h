@@ -59,13 +59,13 @@ public:
 	static VALUE get_max_cone_angle(VALUE self, VALUE v_joint);
 	static VALUE set_max_cone_angle(VALUE self, VALUE v_joint, VALUE v_angle);
 	static VALUE enable_cone_limits(VALUE self, VALUE v_joint, VALUE v_state);
-	static VALUE are_cone_limits_enabled(VALUE self, VALUE v_joint);
+	static VALUE cone_limits_enabled(VALUE self, VALUE v_joint);
 	static VALUE get_min_twist_angle(VALUE self, VALUE v_joint);
 	static VALUE set_min_twist_angle(VALUE self, VALUE v_joint, VALUE v_angle);
 	static VALUE get_max_twist_angle(VALUE self, VALUE v_joint);
 	static VALUE set_max_twist_angle(VALUE self, VALUE v_joint, VALUE v_angle);
 	static VALUE enable_twist_limits(VALUE self, VALUE v_joint, VALUE v_state);
-	static VALUE are_twist_limits_enabled(VALUE self, VALUE v_joint);
+	static VALUE twist_limits_enabled(VALUE self, VALUE v_joint);
 	static VALUE get_cur_cone_angle(VALUE self, VALUE v_joint);
 	static VALUE get_cur_twist_angle(VALUE self, VALUE v_joint);
 };

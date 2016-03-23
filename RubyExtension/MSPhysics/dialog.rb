@@ -158,6 +158,7 @@ module MSPhysics
         cmd << "$('#tab4-piston').css('display', 'none');"
         cmd << "$('#tab4-spring').css('display', 'none');"
         cmd << "$('#tab4-up_vector').css('display', 'none');"
+        cmd << "$('#tab4-corkscrew').css('display', 'none');"
         cmd << "$('#tab4-ball_and_socket').css('display', 'none');"
 
         if joints.size == 1
@@ -167,6 +168,9 @@ module MSPhysics
 
           attr = @selected_joint.get_attribute('MSPhysics Joint', 'Constraint Type', MSPhysics::Joint::DEFAULT_CONSTRAINT_TYPE).to_i
           cmd << "$('#joint_constraint-#{attr == 0 ? 'standard' : (attr == 1 ? 'flexible' : 'robust')}').prop('checked', true);"
+          attr = @selected_joint.get_attribute('MSPhysics Joint', 'Name').to_s
+          attr = @selected_joint.get_attribute('MSPhysics Joint', 'ID') if attr.empty?
+          cmd << "$('#joint-name').val(#{attr.inspect});"
           attr = @selected_joint.get_attribute('MSPhysics Joint', 'Stiffness', MSPhysics::Joint::DEFAULT_STIFFNESS)
           cmd << "$('#joint-stiffness').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), @precision) }');"
           attr = @selected_joint.get_attribute('MSPhysics Joint', 'Bodies Collidable', MSPhysics::Joint::DEFAULT_BODIES_COLLIDABLE)
@@ -222,6 +226,8 @@ module MSPhysics
             cmd << "$('#servo-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Reduction Ratio', MSPhysics::Servo::DEFAULT_REDUCTION_RATIO)
             cmd << "$('#servo-reduction_ratio').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), @precision) }');"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Sp Mode', MSPhysics::Servo::DEFAULT_SP_MODE_ENABLED)
+            cmd << "$('#servo-enable_sp_mode').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Controller', MSPhysics::Servo::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#servo-controller').val(#{attr.inspect});"
           when 'Slider'
@@ -234,6 +240,8 @@ module MSPhysics
             cmd << "$('#slider-enable_limits').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Friction', MSPhysics::Slider::DEFAULT_FRICTION)
             cmd << "$('#slider-friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Controller', MSPhysics::Slider::DEFAULT_CONTROLLER.to_s)
+            cmd << "$('#slider-controller').val(#{attr.inspect});"
           when 'Piston'
             cmd << "$('#tab4-piston').css('display', 'block');"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Min', MSPhysics::Piston::DEFAULT_MIN)
@@ -276,6 +284,24 @@ module MSPhysics
             cmd << "$('#up_vector-enable_damper').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Controller', MSPhysics::UpVector::DEFAULT_PIN_DIR.to_a.to_s)
             cmd << "$('#up_vector-controller').val(#{attr.inspect});"
+          when 'Corkscrew'
+            cmd << "$('#tab4-corkscrew').css('display', 'block');"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Min Position', MSPhysics::Corkscrew::DEFAULT_MIN_POSITION)
+            cmd << "$('#corkscrew-min_position').val('#{ format_value(attr.to_f, @precision) }');"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Max Position', MSPhysics::Corkscrew::DEFAULT_MAX_POSITION)
+            cmd << "$('#corkscrew-max_position').val('#{ format_value(attr.to_f, @precision) }');"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Linear Limits', MSPhysics::Corkscrew::DEFAULT_LINEAR_LIMITS_ENABLED)
+            cmd << "$('#corkscrew-enable_linear_limits').prop('checked', #{attr ? true : false});"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Linear Friction', MSPhysics::Corkscrew::DEFAULT_LINEAR_FRICTION)
+            cmd << "$('#corkscrew-linear_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Min Angle', MSPhysics::Corkscrew::DEFAULT_MIN_ANGLE)
+            cmd << "$('#corkscrew-min_angle').val('#{ format_value(attr.to_f, @precision) }');"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Max Angle', MSPhysics::Corkscrew::DEFAULT_MAX_ANGLE)
+            cmd << "$('#corkscrew-max_angle').val('#{ format_value(attr.to_f, @precision) }');"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Angular Limits', MSPhysics::Corkscrew::DEFAULT_ANGULAR_LIMITS_ENABLED)
+            cmd << "$('#corkscrew-enable_angular_limits').prop('checked', #{attr ? true : false});"
+            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Angular Friction', MSPhysics::Corkscrew::DEFAULT_ANGULAR_FRICTION)
+            cmd << "$('#corkscrew-angular_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
           when 'BallAndSocket'
             cmd << "$('#tab4-ball_and_socket').css('display', 'block');"
             attr = @selected_joint.get_attribute('MSPhysics Joint', 'Stiff', MSPhysics::BallAndSocket::DEFAULT_STIFF)
@@ -552,7 +578,7 @@ module MSPhysics
               if @selected_joint
                 if %w(stiffness reduction_ratio).include?(attr)
                   value = AMS.clamp(value, 0.0, 1.0)
-                elsif %w(stiff accel damp breaking_force linear_rate strength friction).include?(attr)
+                elsif %w(stiff accel damp breaking_force linear_rate strength friction linear_friction angular_friction).include?(attr)
                   value = AMS.clamp(value, 0.0, nil)
                 end
                 @selected_joint.set_attribute('MSPhysics Joint', option, value.to_i.is_a?(Bignum) ? value.to_s : value)
@@ -640,6 +666,21 @@ module MSPhysics
               end
             end
           }
+          @dialog.add_action_callback('text_input_changed'){ |dlg, id|
+            dict, attr = id.split('-', 2)
+            words = attr.split('_')
+            for i in 0...words.size
+              words[i].capitalize!
+            end
+            option = words.join(' ')
+            case dict
+            when 'joint'
+              if @selected_joint
+                code = dlg.get_element_value(id)
+                @selected_joint.set_attribute('MSPhysics Joint', option, code)
+              end
+            end
+          }
           @dialog.add_action_callback('select_input_changed'){ |dlg, params|
             id, value = eval(params)
             dict, attr = id.split('-', 2)
@@ -664,11 +705,11 @@ module MSPhysics
                 else
                   model.start_operation(op)
                 end
-                @selected_body.set_attribute('MSPhysics Body', attr.capitalize, value)
+                @selected_body.set_attribute('MSPhysics Body', option, value)
                 if attr == 'material'
                   if value == MSPhysics::DEFAULT_BODY_SETTINGS[:material_name]
-                    ['Material', 'Density', 'Static Friction', 'Dynamic Friction', 'Enable Friction', 'Elasticity', 'Softness'].each { |option|
-                      @selected_body.delete_attribute('MSPhysics Body', option)
+                    ['Material', 'Density', 'Static Friction', 'Dynamic Friction', 'Enable Friction', 'Elasticity', 'Softness'].each { |opt|
+                      @selected_body.delete_attribute('MSPhysics Body', opt)
                     }
                   else
                     material = MSPhysics::Materials.get_by_name(value)

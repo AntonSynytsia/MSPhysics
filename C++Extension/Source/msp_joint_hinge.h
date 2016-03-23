@@ -61,13 +61,13 @@ public:
 	static VALUE get_friction(VALUE self, VALUE v_joint);
 	static VALUE set_friction(VALUE self, VALUE v_joint, VALUE v_friction);
 	static VALUE enable_limits(VALUE self, VALUE v_joint, VALUE v_state);
-	static VALUE are_limits_enabled(VALUE self, VALUE v_joint);
+	static VALUE limits_enabled(VALUE self, VALUE v_joint);
 	static VALUE get_stiff(VALUE self, VALUE v_joint);
 	static VALUE set_stiff(VALUE self, VALUE v_joint, VALUE v_stiff);
 	static VALUE get_damp(VALUE self, VALUE v_joint);
 	static VALUE set_damp(VALUE self, VALUE v_joint, VALUE v_damp);
 	static VALUE enable_rotate_back(VALUE self, VALUE v_joint, VALUE v_state);
-	static VALUE is_rotate_back_enabled(VALUE self, VALUE v_joint);
+	static VALUE rotate_back_enabled(VALUE self, VALUE v_joint);
 	static VALUE get_start_angle(VALUE self, VALUE v_joint);
 	static VALUE set_start_angle(VALUE self, VALUE v_joint, VALUE v_angle);
 	static VALUE get_controller(VALUE self, VALUE v_joint);

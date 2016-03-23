@@ -55,7 +55,7 @@ module MSPhysics
     # Determine whether min and max position limits are enabled.
     # @return [Boolean]
     def limits_enabled?
-      MSPhysics::Newton::Spring.are_limits_enabled?(@address)
+      MSPhysics::Newton::Spring.limits_enabled?(@address)
     end
 
     # Enable/Disable min and max position limits.

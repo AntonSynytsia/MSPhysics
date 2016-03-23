@@ -353,7 +353,7 @@ VALUE MSNewton::Joint::set_pin_matrix(VALUE self, VALUE v_joint, VALUE v_pin_mat
 	return Util::matrix_to_value(pin_matrix, world_data->inverse_scale);
 }
 
-VALUE MSNewton::Joint::are_bodies_collidable(VALUE self, VALUE v_joint) {
+VALUE MSNewton::Joint::bodies_collidable(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint(v_joint);
 	return Util::to_value(joint_data->bodies_collidable);
 }
@@ -465,7 +465,7 @@ void Init_msp_joint(VALUE mNewton) {
 	rb_define_module_function(mJoint, "get_child", VALUEFUNC(MSNewton::Joint::get_child), 1);
 	rb_define_module_function(mJoint, "get_pin_matrix", VALUEFUNC(MSNewton::Joint::get_pin_matrix), 1);
 	rb_define_module_function(mJoint, "set_pin_matrix", VALUEFUNC(MSNewton::Joint::set_pin_matrix), 2);
-	rb_define_module_function(mJoint, "are_bodies_collidable?", VALUEFUNC(MSNewton::Joint::are_bodies_collidable), 1);
+	rb_define_module_function(mJoint, "bodies_collidable?", VALUEFUNC(MSNewton::Joint::bodies_collidable), 1);
 	rb_define_module_function(mJoint, "set_bodies_collidable", VALUEFUNC(MSNewton::Joint::set_bodies_collidable), 2);
 	rb_define_module_function(mJoint, "get_stiffness", VALUEFUNC(MSNewton::Joint::get_stiffness), 1);
 	rb_define_module_function(mJoint, "set_stiffness", VALUEFUNC(MSNewton::Joint::set_stiffness), 2);

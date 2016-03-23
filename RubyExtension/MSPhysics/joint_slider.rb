@@ -7,6 +7,7 @@ module MSPhysics
     DEFAULT_MAX = 10.0
     DEFAULT_LIMITS_ENABLED = false
     DEFAULT_FRICTION = 0.0
+    DEFAULT_CONTROLLER = 1.0
 
     # Create a slider joint.
     # @param [MSPhysics::World] world
@@ -21,6 +22,7 @@ module MSPhysics
       MSPhysics::Newton::Slider.set_max(@address, DEFAULT_MAX)
       MSPhysics::Newton::Slider.enable_limits(@address, DEFAULT_LIMITS_ENABLED)
       MSPhysics::Newton::Slider.set_friction(@address, DEFAULT_FRICTION)
+      MSPhysics::Newton::Slider.set_controller(@address, DEFAULT_CONTROLLER)
     end
 
     # Get current position in meters.
@@ -67,7 +69,7 @@ module MSPhysics
     # Determine whether min and max position limits are enabled.
     # @return [Boolean]
     def limits_enabled?
-      MSPhysics::Newton::Slider.are_limits_enabled?(@address)
+      MSPhysics::Newton::Slider.limits_enabled?(@address)
     end
 
     # Enable/Disable min and max position limits.
@@ -86,6 +88,20 @@ module MSPhysics
     # @param [Numeric] value A value greater than or equal to zero.
     def friction=(value)
       MSPhysics::Newton::Slider.set_friction(@address, value)
+    end
+
+    # Get slider controller, the magnitude of the linear friction.
+    # @note By default, the controller value is 1.0.
+    # @return [Numeric]
+    def controller
+      MSPhysics::Newton::Slider.get_controller(@address)
+    end
+
+    # Set slider controller, the magnitude of the linear friction.
+    # @note By default, the controller value is 1.0.
+    # @param [Numeric] value
+    def controller=(value)
+      MSPhysics::Newton::Slider.set_controller(@address, value)
     end
 
   end # class Slider < Joint

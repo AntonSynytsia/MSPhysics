@@ -334,15 +334,16 @@ module MSPhysics
     #   orientation and start position. Pass nil to ray cast from body's current
     #   transformation.
     # @param [Geom::Point3d, Array<Numeric>] target Ray destination point.
+    # @param [Fixnum] max_hits Maximum number of hits, a value b/w 1 and 256.
     # @return [Array<Hit>]
-    def continuous_convex_ray_cast(body, transformation, target)
+    def continuous_convex_ray_cast(body, transformation, target, max_hits = 16)
       World.validate(self)
       MSPhysics::Body.validate(body)
       transformation = body.get_matrix unless transformation
       hits = []
       ovs = MSPhysics::Newton.is_object_validation_enabled?
       MSPhysics::Newton.enable_object_validation(false)
-      MSPhysics::Newton::World.continuous_convex_ray_cast(@address, body.get_collision_address, transformation, target).each { |address, point, vector|
+      MSPhysics::Newton::World.continuous_convex_ray_cast(@address, body.get_collision_address, transformation, target, max_hits).each { |address, point, vector, penetration|
         body = MSPhysics::Newton::Body.get_user_data(address)
         next unless body.is_a?(MSPhysics::Body)
         hits << Hit.new(body, point, vector)

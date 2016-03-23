@@ -55,7 +55,7 @@ public:
 	static VALUE get_max(VALUE self, VALUE v_joint);
 	static VALUE set_max(VALUE self, VALUE v_joint, VALUE v_max);
 	static VALUE enable_limits(VALUE self, VALUE v_joint, VALUE v_state);
-	static VALUE are_limits_enabled(VALUE self, VALUE v_joint);
+	static VALUE limits_enabled(VALUE self, VALUE v_joint);
 	static VALUE get_linear_rate(VALUE self, VALUE v_joint);
 	static VALUE set_linear_rate(VALUE self, VALUE v_joint, VALUE v_linear_rate);
 	static VALUE get_strength(VALUE self, VALUE v_joint);

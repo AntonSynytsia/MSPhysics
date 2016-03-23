@@ -10,7 +10,7 @@ const dFloat MSNewton::Slider::DEFAULT_MIN = -10.0f;
 const dFloat MSNewton::Slider::DEFAULT_MAX = 10.0f;
 const bool MSNewton::Slider::DEFAULT_LIMITS_ENABLED = false;
 const dFloat MSNewton::Slider::DEFAULT_FRICTION = 0.0f;
-
+const dFloat MSNewton::Slider::DEFAULT_CONTROLLER = 1.0f;
 
 /*
  ///////////////////////////////////////////////////////////////////////////////
@@ -82,14 +82,14 @@ void MSNewton::Slider::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 	// Add two constraints row perpendicular to the pin
 	NewtonUserJointAddLinearRow(joint, &q0[0], &q1[0], &matrix0.m_front[0]);
 	if (joint_data->ctype == CT_FLEXIBLE)
-		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
 		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 
 	NewtonUserJointAddLinearRow(joint, &q0[0], &q1[0], &matrix0.m_up[0]);
 	if (joint_data->ctype == CT_FLEXIBLE)
-		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
 		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
@@ -101,7 +101,7 @@ void MSNewton::Slider::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 	// Add one constraint row perpendicular to the pin
 	NewtonUserJointAddLinearRow(joint, &r0[0], &r1[0], &matrix0.m_up[0]);
 	if (joint_data->ctype == CT_FLEXIBLE)
-		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
 		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
@@ -132,12 +132,12 @@ void MSNewton::Slider::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 	else {
 		NewtonUserJointAddLinearRow(joint, &matrix0.m_posit[0], &matrix0.m_posit[0], &matrix1.m_right[0]);
 		BodyData* cbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
-		dFloat power;
+		dFloat power = cj_data->friction * cj_data->controller;
 		if (cbody_data->bstatic == false && cbody_data->mass >= MIN_MASS)
-			power = cbody_data->mass * cj_data->friction;
+			power *= cbody_data->mass;
 		else {
 			BodyData* pbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
-			power = (pbody_data->bstatic == false && pbody_data->mass >= MIN_MASS) ? pbody_data->mass * cj_data->friction : cj_data->friction;
+			if (pbody_data->bstatic == false && pbody_data->mass >= MIN_MASS) power *= pbody_data->mass;
 		}
 		NewtonUserJointSetRowMinimumFriction(joint, -power);
 		NewtonUserJointSetRowMaximumFriction(joint, power);
@@ -211,6 +211,7 @@ VALUE MSNewton::Slider::create(VALUE self, VALUE v_joint) {
 	cj_data->max = DEFAULT_MAX;
 	cj_data->limits_enabled = DEFAULT_LIMITS_ENABLED;
 	cj_data->friction = DEFAULT_FRICTION;
+	cj_data->controller = DEFAULT_CONTROLLER;
 
 	joint_data->dof = 6;
 	joint_data->jtype = JT_SLIDER;
@@ -282,7 +283,7 @@ VALUE MSNewton::Slider::enable_limits(VALUE self, VALUE v_joint, VALUE v_state) 
 	return Util::to_value(cj_data->limits_enabled);
 }
 
-VALUE MSNewton::Slider::are_limits_enabled(VALUE self, VALUE v_joint) {
+VALUE MSNewton::Slider::limits_enabled(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SLIDER);
 	SliderData* cj_data = (SliderData*)joint_data->cj_data;
 	return Util::to_value(cj_data->limits_enabled);
@@ -301,6 +302,23 @@ VALUE MSNewton::Slider::set_friction(VALUE self, VALUE v_joint, VALUE v_friction
 	return Util::to_value(cj_data->friction);
 }
 
+VALUE MSNewton::Slider::get_controller(VALUE self, VALUE v_joint) {
+	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SLIDER);
+	SliderData* cj_data = (SliderData*)joint_data->cj_data;
+	return Util::to_value(cj_data->controller);
+}
+
+VALUE MSNewton::Slider::set_controller(VALUE self, VALUE v_joint, VALUE v_controller) {
+	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SLIDER);
+	SliderData* cj_data = (SliderData*)joint_data->cj_data;
+	dFloat controller = Util::value_to_dFloat(v_controller);
+	if (controller != cj_data->controller) {
+		cj_data->controller = controller;
+		if (joint_data->connected) NewtonBodySetSleepState(joint_data->child, 0);
+	}
+	return Util::to_value(cj_data->controller);
+}
+
 
 void Init_msp_slider(VALUE mNewton) {
 	VALUE mSlider = rb_define_module_under(mNewton, "Slider");
@@ -315,7 +333,9 @@ void Init_msp_slider(VALUE mNewton) {
 	rb_define_module_function(mSlider, "get_max", VALUEFUNC(MSNewton::Slider::get_max), 1);
 	rb_define_module_function(mSlider, "set_max", VALUEFUNC(MSNewton::Slider::set_max), 2);
 	rb_define_module_function(mSlider, "enable_limits", VALUEFUNC(MSNewton::Slider::enable_limits), 2);
-	rb_define_module_function(mSlider, "are_limits_enabled?", VALUEFUNC(MSNewton::Slider::are_limits_enabled), 1);
+	rb_define_module_function(mSlider, "limits_enabled?", VALUEFUNC(MSNewton::Slider::limits_enabled), 1);
 	rb_define_module_function(mSlider, "get_friction", VALUEFUNC(MSNewton::Slider::get_friction), 1);
 	rb_define_module_function(mSlider, "set_friction", VALUEFUNC(MSNewton::Slider::set_friction), 2);
+	rb_define_module_function(mSlider, "get_controller", VALUEFUNC(MSNewton::Slider::get_controller), 1);
+	rb_define_module_function(mSlider, "set_controller", VALUEFUNC(MSNewton::Slider::set_controller), 2);
 }

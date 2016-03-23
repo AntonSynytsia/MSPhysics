@@ -187,6 +187,7 @@
     <OutDir>$(Platform)/$(ProjectName)/$(Configuration)\</OutDir>
     <IntDir>$(Platform)/$(ProjectName)/$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
+    <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug (2.0)|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -194,6 +195,7 @@
     <OutDir>$(Platform)/$(ProjectName)/$(Configuration)\</OutDir>
     <IntDir>$(Platform)/$(ProjectName)/$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
+    <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug (1.8)|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -201,6 +203,7 @@
     <OutDir>$(Platform)/$(ProjectName)/$(Configuration)\</OutDir>
     <IntDir>$(Platform)/$(ProjectName)/$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
+    <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug (1.8)|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -208,34 +211,39 @@
     <OutDir>$(Platform)/$(ProjectName)/$(Configuration)\</OutDir>
     <IntDir>$(Platform)/$(ProjectName)/$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
+    <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release (2.0)|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.so</TargetExt>
     <OutDir>$(Platform)/$(ProjectName)/$(Configuration)\</OutDir>
     <IntDir>$(Platform)/$(ProjectName)/$(Configuration)\</IntDir>
+    <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release (2.0)|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.so</TargetExt>
     <OutDir>$(Platform)/$(ProjectName)/$(Configuration)\</OutDir>
     <IntDir>$(Platform)/$(ProjectName)/$(Configuration)\</IntDir>
+    <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release (1.8)|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.so</TargetExt>
     <OutDir>$(Platform)/$(ProjectName)/$(Configuration)\</OutDir>
     <IntDir>$(Platform)/$(ProjectName)/$(Configuration)\</IntDir>
+    <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release (1.8)|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.so</TargetExt>
     <OutDir>$(Platform)/$(ProjectName)/$(Configuration)\</OutDir>
     <IntDir>$(Platform)/$(ProjectName)/$(Configuration)\</IntDir>
+    <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug (2.0)|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\2.0\win32;$(SolutionDir)ThirdParty\include\ruby\2.0\win32\i386-mswin32_100;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\2.0\win32;$(SolutionDir)ThirdParty\include\ruby\2.0\win32\i386-mswin32_100;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)NewtonDynamics\timeTracker;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WarningLevel>Level4</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
@@ -285,7 +293,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug (2.0)|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\2.0\win32_x64;$(SolutionDir)ThirdParty\include\ruby\2.0\win32_x64\x64-mswin64_100;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\2.0\win32_x64;$(SolutionDir)ThirdParty\include\ruby\2.0\win32_x64\x64-mswin64_100;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)NewtonDynamics\timeTracker;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WarningLevel>Level4</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
@@ -335,7 +343,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug (1.8)|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\1.8\win32;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\1.8\win32;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)NewtonDynamics\timeTracker;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WarningLevel>Level4</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
@@ -385,7 +393,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug (1.8)|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\1.8\win32;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\1.8\win32;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)NewtonDynamics\timeTracker;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WarningLevel>Level4</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
@@ -435,7 +443,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release (2.0)|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\2.0\win32;$(SolutionDir)ThirdParty\include\ruby\2.0\win32\i386-mswin32_100;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\2.0\win32;$(SolutionDir)ThirdParty\include\ruby\2.0\win32\i386-mswin32_100;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)NewtonDynamics\timeTracker;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WarningLevel>Level4</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
@@ -485,7 +493,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release (2.0)|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\2.0\win32_x64;$(SolutionDir)ThirdParty\include\ruby\2.0\win32_x64\x64-mswin64_100;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\2.0\win32_x64;$(SolutionDir)ThirdParty\include\ruby\2.0\win32_x64\x64-mswin64_100;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)NewtonDynamics\timeTracker;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WarningLevel>Level4</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
@@ -495,10 +503,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_USRDLL;_NEWTON_BUILD_DLL;_CRT_SECURE_NO_WARNINGS;_WIN_64_VER;PTW32_STATIC_LIB;RUBY_VERSION20;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <BufferSecurityCheck>true</BufferSecurityCheck>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
       <FloatingPointModel>Precise</FloatingPointModel>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <OpenMPSupport>false</OpenMPSupport>
@@ -507,9 +512,11 @@
       </PrecompiledHeaderFile>
       <DisableSpecificWarnings>4100;4127</DisableSpecificWarnings>
       <ErrorReporting>Prompt</ErrorReporting>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
     </ClCompile>
     <Link>
-      <SuppressStartupBanner>false</SuppressStartupBanner>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty\lib\win32;$(SolutionDir)SDL2\lib\x64;$(SolutionDir)SDL2_mixer\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>x64-msvcrt-ruby200.lib;SDL2.lib;SDL2main.lib;SDL2_mixer.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(SolutionDir)\Source\RubyExtension.def</ModuleDefinitionFile>
@@ -522,6 +529,9 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <ImportLibrary>$(OutDir)$(ProjectName).lib</ImportLibrary>
       <LinkErrorReporting>PromptImmediately</LinkErrorReporting>
+      <SubSystem>Windows</SubSystem>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <DataExecutionPrevention>false</DataExecutionPrevention>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -535,7 +545,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release (1.8)|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\1.8\win32;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\1.8\win32;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)NewtonDynamics\timeTracker;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WarningLevel>Level4</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
@@ -585,7 +595,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release (1.8)|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\1.8\win32;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include\ruby\1.8\win32;$(SolutionDir)NewtonDynamics\ampPhysics;$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\dMath;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\newton;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)NewtonDynamics\timeTracker;$(SolutionDir)VHACD_Lib\public;$(SolutionDir)SDL2\include;$(SolutionDir)SDL2_mixer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WarningLevel>Level4</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>

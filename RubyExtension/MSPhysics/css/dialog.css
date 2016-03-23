@@ -1,24 +1,21 @@
 * {
   margin: 0;
   padding: 0;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
 }
 
-html,
-body,
-button,
-input,
-select,
-textarea {
+html {
+  font-size: 11px;
   font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
-  font-size: 12px;
-  font-weight: normal;
 }
 
 html {
   overflow: hidden;
   width: 100%;
   height: 100%;
-  min-width: 48em;
+  min-width: 42em;
 }
 
 body {
@@ -33,8 +30,6 @@ body {
   background: -webkit-linear-gradient(top,  #05298c 1%,#9ebee2 100%);
   background: linear-gradient(to bottom,  #05298c 1%,#9ebee2 100%);
   filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#05298c', endColorstr='#9ebee2',GradientType=0 );
-  color: WindowText;
-  cursor: default;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   -khtml-user-select: none;
@@ -43,6 +38,16 @@ body {
   user-select: none;
   -ms-high-contrast-adjust: none;
 }
+
+/*h1 {
+  font-size: 2.0em;
+  font-weight: bold;
+}
+
+h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+}*/
 
 h3 {
   font-size: 1.1em;
@@ -58,6 +63,7 @@ form {
 }
 
 input, label {
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
   outline: none;
   position: relative;
   display: inline;
@@ -183,74 +189,55 @@ table {
 
 .custom-text {
   background-color: #FFF;
+  font-size: 0.9em !important;
   color: #0A0A0A;
   cursor: auto;
-  padding: 0.25em;
-  text-indent: 0.25em;
-  vertical-align: middle;
+  padding: 0.25em 0em;
+  text-indent: 0.5em;
   outline: none;
-  transition: all 0.1s ease-in-out;
-  -webkit-transition: all 0.1s ease-in-out;
-  -moz-transition: all 0.1s ease-in-out;
+  transition: all 0.25s ease-in-out;
+  -webkit-transition: all 0.25s ease-in-out;
+  -moz-transition: all 0.25s ease-in-out;
   border-radius: 3px;
   -webkit-border-radius: 3px;
   -moz-border-radius: 3px;
   border: 1px solid rgba(0,0,0, 0.25);
+  vertical-align: top;
 }
 
 .custom-text:focus {
-  box-shadow: 0 0 8px rgba(0, 40, 100, 0.3);
-  -webkit-box-shadow: 0 0 8px rgba(0, 40, 255, 0.3);
-  -moz-box-shadow: 0 0 8px rgba(0, 40, 255, 0.3);
-  border: 1px solid rgba(0, 40, 255, 0.9);
-  transition: 0.15s linear box-shadow;
+  box-shadow: 0 0 8px rgba(0, 100, 100, 0.25);
+  -webkit-box-shadow: 0 0 8px rgba(0, 100, 255, 0.25);
+  -moz-box-shadow: 0 0 8px rgba(0, 100, 255, 0.25);
+  border: 1px solid rgba(0, 100, 255, 0.50);
+  transition: 0.25s linear box-shadow;
+}
+
+.text-input {
+  width: 100%;
 }
 
 .fixnum-input {
-  font-size: 11px !important;
-  width: 7.5em;
+  width: 100%;
 }
 
 .numeric-input {
-  font-size: 11px !important;
-  width: 7.5em;
+  width: 100%;
 }
 
 .controller-input {
-  font-size: 11px !important;
-  width: 24em;
+  width: 100%;
 }
 
 .command-input {
-  font-style: italic;
   background-color: #2E2E2E;
   color: #CFCFCF;
-  width: 20em;
-}
-
-.short-table {
-  width: 26em;
-  padding-left: 1em;
-}
-
-.long-table {
-  width: 34em;
-  padding-left: 1em;
+  width: 100%;
 }
 
 .main-wrap {
   /* overflow to handle inner floating block */
   overflow: hidden;
-}
-
-div.column1 {
-  float: left;
-  width: 22.25em;
-}
-
-div.column2 {
-  float: left;
-  width: 22.25em;
 }
 
 .credit {
@@ -259,7 +246,7 @@ div.column2 {
   padding-right: 1em;
   position: relative;
   color: gray;
-  font-size: 11px;
+  font-size: 0.9em;
 }
 
 #editor {
@@ -271,10 +258,9 @@ div.column2 {
 }
 
 #status-bar {
-  margin: 0 10px;
+  margin: 0 1em;
   position: relative;
   color: gray;
-  font-size: 11px;
 }
 
 .ace_status-indicator {
@@ -283,11 +269,7 @@ div.column2 {
 }
 
 .chosen-container .chosen-results {
-  max-height: 16em !important;
-}
-
-.drop-down {
-  width: 20em;
+  max-height: 12em !important;
 }
 
 .vertical_spacing {
@@ -304,41 +286,54 @@ div.column2 {
   width: 0.5em;
 }
 
-.table-list {
+.sound-list {
   background-color: #2E2E2E;
   color: #CFCFCF;
   border-radius: 3px;
   border: none;
-  position: relative !important;
-  margin: auto 0;
+  margin: auto 0 0.1em 0;
   padding: 0.25em;
-  width: 30em;
+  width: 100%;
 }
 
 .description {
-  font-style: normal;
-  font-size: 0.9em;
+  font-size: 1.0em;
   color: #2F2F2F;
 }
 
 .description em1 {
-  font-style: normal;
   color: #000DFF;
 }
 
 .description em2 {
-  font-style: normal;
   color: #00CF00;
 }
 
 .description em3 {
-  font-style: normal;
   color: #F02B2B;
 }
 
 .description em4 {
-  font-style: normal;
   color: #2F2F2F;
+}
+
+.description em5 {
+  font-weight: bold;
+  color: #606060;
+}
+
+.description tt {
+  color: #170E80;
+}
+
+p.title {
+  font-weight: normal;
+  font-size: 1.3em !important;
+}
+
+p.heading {
+  color: #0AAA0A;
+  font-weight: bold;
 }
 
 table.opts_table {
@@ -346,8 +341,9 @@ table.opts_table {
   padding: 0em 0em 0.5em 0em;
 }
 
-table.opts_table tr, td {
+table.opts_table tr td {
   border: none;
+  vertical-align: middle;
 }
 
 table.opts_table tr {
@@ -357,4 +353,26 @@ table.opts_table tr {
 
 table.opts_table td {
   padding: 0em 0.1em;
+}
+
+table.struct_table {
+  width: 100%;
+  border: none;
+  padding: 0em;
+  margin: 0em;
+}
+
+table.struct_table tr td {
+  border: none;
+  padding: 0em;
+  margin: 0em;
+  vertical-align: top;
+}
+
+table.struct_table input[type=checkbox] {
+  float: right;
+}
+
+.spacing_tab {
+  padding-left: 1em;
 }

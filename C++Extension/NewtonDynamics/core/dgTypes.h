@@ -87,6 +87,7 @@
 #include <pthread.h>
 #include <sched.h>
 #include <semaphore.h>
+#include <dTimeTracker.h>
 
 #if (defined (_MINGW_32_VER) || defined (_MINGW_64_VER))
 	#include <io.h> 
@@ -98,7 +99,7 @@
 #endif
 
 #if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
-	#define DG_SSE4_INSTRUCTIONS_SET
+	//#define DG_SSE4_INSTRUCTIONS_SET
 	#include <intrin.h>
 #endif
 

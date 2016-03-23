@@ -86,14 +86,14 @@ void MSNewton::Spring::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 	// Add two constraints row perpendicular to the pin
 	NewtonUserJointAddLinearRow(joint, &q0[0], &q1[0], &matrix0.m_front[0]);
 	if (joint_data->ctype == CT_FLEXIBLE)
-		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
 		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 
 	NewtonUserJointAddLinearRow(joint, &q0[0], &q1[0], &matrix0.m_up[0]);
 	if (joint_data->ctype == CT_FLEXIBLE)
-		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
 		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
@@ -105,7 +105,7 @@ void MSNewton::Spring::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 	// Add one constraint row perpendicular to the pin
 	NewtonUserJointAddLinearRow(joint, &r0[0], &r1[0], &matrix0.m_up[0]);
 	if (joint_data->ctype == CT_FLEXIBLE)
-		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
 		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
@@ -122,7 +122,7 @@ void MSNewton::Spring::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 		NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
 		if (joint_data->ctype == CT_FLEXIBLE)
 			NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
-		else //if (joint_data->ctype == CT_ROBUST)
+		else if (joint_data->ctype == CT_ROBUST)
 			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
@@ -133,16 +133,19 @@ void MSNewton::Spring::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 		NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
 		if (joint_data->ctype == CT_FLEXIBLE)
 			NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
-		else //if (joint_data->ctype == CT_ROBUST)
+		else if (joint_data->ctype == CT_ROBUST)
 			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
 	else {
 		const dVector& s0 = matrix0.m_posit;
 		dVector s1(s0 + matrix1.m_right.Scale(-cur_pos));
-		NewtonUserJointAddLinearRow(joint, &s0[0], &s1[0], &matrix1.m_right[0]);
+		NewtonUserJointAddLinearRow(joint, &s0[0], &s1[0], &matrix0.m_right[0]);
 		NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->stiff, cj_data->damp);
-		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness * Joint::STIFFNESS_RATIO);
+		//dFloat accel = NewtonCalculateSpringDamperAcceleration(timestep, cj_data->stiff, cur_pos, cj_data->damp, cj_data->cur_vel);
+		//NewtonUserJointSetRowAcceleration(joint, accel);
+		dFloat den = timestep * cj_data->damp + timestep * timestep * cj_data->stiff;
+		NewtonUserJointSetRowStiffness(joint, -den * joint_data->stiffness * 100.0f);
 	}
 }
 
@@ -267,7 +270,7 @@ VALUE MSNewton::Spring::enable_limits(VALUE self, VALUE v_joint, VALUE v_state) 
 	return Util::to_value(cj_data->limits_enabled);
 }
 
-VALUE MSNewton::Spring::are_limits_enabled(VALUE self, VALUE v_joint) {
+VALUE MSNewton::Spring::limits_enabled(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SPRING);
 	SpringData* cj_data = (SpringData*)joint_data->cj_data;
 	return Util::to_value(cj_data->limits_enabled);
@@ -373,7 +376,7 @@ void Init_msp_spring(VALUE mNewton) {
 	rb_define_module_function(mSpring, "get_max", VALUEFUNC(MSNewton::Spring::get_max), 1);
 	rb_define_module_function(mSpring, "set_max", VALUEFUNC(MSNewton::Spring::set_max), 2);
 	rb_define_module_function(mSpring, "enable_limits", VALUEFUNC(MSNewton::Spring::enable_limits), 2);
-	rb_define_module_function(mSpring, "are_limits_enabled?", VALUEFUNC(MSNewton::Spring::are_limits_enabled), 1);
+	rb_define_module_function(mSpring, "limits_enabled?", VALUEFUNC(MSNewton::Spring::limits_enabled), 1);
 	rb_define_module_function(mSpring, "get_stiff", VALUEFUNC(MSNewton::Spring::get_stiff), 1);
 	rb_define_module_function(mSpring, "set_stiff", VALUEFUNC(MSNewton::Spring::set_stiff), 2);
 	rb_define_module_function(mSpring, "get_damp", VALUEFUNC(MSNewton::Spring::get_damp), 1);

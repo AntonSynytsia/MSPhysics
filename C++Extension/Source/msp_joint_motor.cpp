@@ -60,7 +60,7 @@ void MSNewton::Motor::submit_constraints(const NewtonJoint* joint, dgFloat32 tim
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 
 	// Add two rows to restrict rotation around the the axis perpendicular to the rotation axis.
-	NewtonUserJointAddAngularRow(joint, Joint::c_calculate_angle(matrix0.m_right, matrix1.m_right, matrix0.m_front), &matrix0.m_front[0]);
+	/*NewtonUserJointAddAngularRow(joint, Joint::c_calculate_angle(matrix0.m_right, matrix1.m_right, matrix0.m_front), &matrix0.m_front[0]);
 	if (joint_data->ctype == CT_FLEXIBLE)
 		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
@@ -72,21 +72,29 @@ void MSNewton::Motor::submit_constraints(const NewtonJoint* joint, dgFloat32 tim
 		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
 		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
-	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);*/
 
-	/*// Add two more rows for a more robust angular constraint.
+	// Add two more rows for a more robust angular constraint.
 	// Get a point along the pin axis at some reasonable large distance from the pivot.
 	dVector q0(matrix0.m_posit + matrix0.m_right.Scale(MIN_JOINT_PIN_LENGTH));
 	dVector q1(matrix1.m_posit + matrix1.m_right.Scale(MIN_JOINT_PIN_LENGTH));
 
 	// Add two constraints row perpendicular to the pin vector.
 	dVector q2(q0 + matrix0.m_front.Scale((q1 - q0) % matrix0.m_front));
-	NewtonUserJointAddLinearRow(joint, &q0[0], &q2[0], &matrix0.m_front[0]);
+	NewtonUserJointAddLinearRow(joint, &q0[0], &q2[0], &matrix1.m_front[0]);
+	if (joint_data->ctype == CT_FLEXIBLE)
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
+	else if (joint_data->ctype == CT_ROBUST)
+		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 
 	q2 = q0 + matrix0.m_up.Scale((q1 - q0) % matrix0.m_up);
-	NewtonUserJointAddLinearRow(joint, &q0[0], &q2[0], &matrix0.m_up[0]);
-	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);*/
+	NewtonUserJointAddLinearRow(joint, &q0[0], &q2[0], &matrix1.m_up[0]);
+	if (joint_data->ctype == CT_FLEXIBLE)
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
+	else if (joint_data->ctype == CT_ROBUST)
+		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
+	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 
 	// Add accel and damp
 	dFloat desired_accel = cj_data->accel * cj_data->controller;

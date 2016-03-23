@@ -1,3 +1,9 @@
+## 0.5.0 - Mar 22, 2016
+- Added corkscrew joint.
+- Removed dependency on external VC libraries.
+- Fixed crash that could occur on particular platforms. Thanks to pcberdwin for testing.
+- Optimized the dialog and fixed some bugs.
+
 ## 0.4.0 - Feb 28, 2016
 - Upgraded to custom recompiled SDL2 and SDL2 Mixer.
 - Added an option to export replay animation to Skindigo.

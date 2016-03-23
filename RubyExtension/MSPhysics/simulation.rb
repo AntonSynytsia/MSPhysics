@@ -530,6 +530,60 @@ module MSPhysics
       groups
     end
 
+    # Get all joints associated with a particular group.
+    # @param [Sketchup::Group, Sketchup::ComponentInstance] group
+    # @return [Array<Joint>]
+    def get_joints_by_group(group)
+      AMS.validate_type(group, Sketchup::Group, Sketchup::ComponentInstance)
+      joints = @joints[group]
+      opt_joints = []
+      if joints
+        joints.each { |joint|
+          opt_joints << joint if joint.valid?
+        }
+      end
+      opt_joints
+    end
+
+    # Get the first joint associated with a particular group.
+    # @param [Sketchup::Group, Sketchup::ComponentInstance] group
+    # @return [Joint, nil]  A joint or nil if not found.
+    def get_joint_by_group(group)
+      AMS.validate_type(group, Sketchup::Group, Sketchup::ComponentInstance)
+      joints = @joints[group]
+      if joints
+        joints.each { |joint|
+          return joint if joint.valid?
+        }
+      end
+      nil
+    end
+
+    # Get all joints with a particular name.
+    # @parma [String] name Joint Name.
+    # @return [Array<Joint>]
+    def get_joints_by_name(name)
+      opt_joints = []
+      @joints.each { |group, joints|
+        joints.each { |joint|
+          opt_joints << joint if joint.valid? && joint.name == name
+        }
+      }
+      opt_joints
+    end
+
+    # Get the first joint with a particular name.
+    # @parma [String] name Joint Name.
+    # @return [Joint, nil] A joint or nil if not found.
+    def get_joint_by_name(name)
+      @joints.each { |group, joints|
+        joints.each { |joint|
+          return joint if joint.valid? && joint.name == name
+        }
+      }
+      nil
+    end
+
     # Add a group/component to simulation.
     # @raise [TypeError] if the specified entity is already part of simulation.
     # @raise [TypeError] if the entity doesn't meet demands for being a valid
@@ -705,20 +759,6 @@ module MSPhysics
     def erase_on_end(entity)
       AMS.validate_type(entity, Sketchup::Drawingelement)
       @created_entities << entity
-    end
-
-    # Get joints associated with joint entity.
-    # @return [Array<Joint>]
-    def get_joints_by_entity(entity)
-      AMS.validate_type(entity, Sketchup::Group, Sketchup::ComponentInstance)
-      joints = @joints[entity]
-      opt_joints = []
-      if joints
-        joints.each { |joint|
-          opt_joints << joint if joint.valid?
-        }
-      end
-      opt_joints
     end
 
     # @!endgroup
@@ -1320,9 +1360,15 @@ module MSPhysics
         return unless Simulation.is_active?
         next true if !joint.valid?
         begin
-          if joint.is_a?(Servo) || joint.is_a?(Piston)
+          if joint.is_a?(Servo)
             if value.is_a?(Numeric)
-              joint.controller = joint.is_a?(Servo) ? value.degrees : value
+              joint.controller = joint.sp_mode_enabled? ? value : value.degrees
+            elsif value.nil?
+              joint.controller = nil
+            end
+          elsif joint.is_a?(Piston)
+            if value.is_a?(Numeric)
+              joint.controller = value
             elsif value.nil?
               joint.controller = nil
             end
@@ -1716,6 +1762,8 @@ module MSPhysics
         joint.damp = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Reduction Ratio', MSPhysics::Servo::DEFAULT_REDUCTION_RATIO)
         joint.reduction_ratio = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Enable Sp Mode', MSPhysics::Servo::DEFAULT_SP_MODE_ENABLED)
+        joint.sp_mode_enabled = attr
         controller = joint_ent.get_attribute(jdict, 'Controller')
         if controller.is_a?(String) && !controller.empty?
           @controlled_joints[joint] = controller
@@ -1730,6 +1778,10 @@ module MSPhysics
         joint.limits_enabled = attr
         attr = joint_ent.get_attribute(jdict, 'Friction', MSPhysics::Slider::DEFAULT_FRICTION)
         joint.friction = attr.to_f
+        controller = joint_ent.get_attribute(jdict, 'Controller')
+        if controller.is_a?(String) && !controller.empty?
+          @controlled_joints[joint] = controller
+        end
       when 'Piston'
         joint = MSPhysics::Piston.new(@world, parent_body, pin_matrix)
         attr = joint_ent.get_attribute(jdict, 'Min', MSPhysics::Piston::DEFAULT_MIN)
@@ -1778,6 +1830,25 @@ module MSPhysics
         if controller.is_a?(String) && !controller.empty?
           @controlled_joints[joint] = controller
         end
+      when 'Corkscrew'
+        joint = MSPhysics::Corkscrew.new(@world, parent_body, pin_matrix)
+        attr = joint_ent.get_attribute(jdict, 'Min Position', MSPhysics::Corkscrew::DEFAULT_MIN_POSITION)
+        joint.min_position = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Max Position', MSPhysics::Corkscrew::DEFAULT_MAX_POSITION)
+        joint.max_position = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Enable Linear Limits', MSPhysics::Corkscrew::DEFAULT_LINEAR_LIMITS_ENABLED)
+        joint.linear_limits_enabled = attr
+        attr = joint_ent.get_attribute(jdict, 'Linear Friction', MSPhysics::Corkscrew::DEFAULT_LINEAR_FRICTION)
+        joint.linear_friction = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Min Angle', MSPhysics::Corkscrew::DEFAULT_MIN_ANGLE)
+        joint.min_angle = attr.to_f.degrees
+        attr = joint_ent.get_attribute(jdict, 'Max Angle', MSPhysics::Corkscrew::DEFAULT_MAX_ANGLE)
+        joint.max_angle = attr.to_f.degrees
+        attr = joint_ent.get_attribute(jdict, 'Enable Angular Limits', MSPhysics::Corkscrew::DEFAULT_ANGULAR_LIMITS_ENABLED)
+        joint.angular_limits_enabled = attr
+        attr = joint_ent.get_attribute(jdict, 'Angular Friction', MSPhysics::Corkscrew::DEFAULT_ANGULAR_FRICTION)
+        joint.angular_friction = attr.to_f
+    when 'Universal'
       when 'BallAndSocket'
         joint = MSPhysics::BallAndSocket.new(@world, parent_body, pin_matrix)
         attr = joint_ent.get_attribute(jdict, 'Stiff', MSPhysics::BallAndSocket::DEFAULT_STIFF)
@@ -1802,12 +1873,16 @@ module MSPhysics
 
       attr = joint_ent.get_attribute(jdict, 'Constraint Type', MSPhysics::Joint::DEFAULT_CONSTRAINT_TYPE).to_i
       joint.constraint_type = attr
+      attr = joint_ent.get_attribute(jdict, 'Name').to_s
+      attr = joint_ent.get_attribute(jdict, 'ID').to_s if attr.empty?
+      joint.name = attr
       attr = joint_ent.get_attribute(jdict, 'Stiffness', MSPhysics::Joint::DEFAULT_STIFFNESS)
       joint.stiffness = attr.to_f
       attr = joint_ent.get_attribute(jdict, 'Bodies Collidable', MSPhysics::Joint::DEFAULT_BODIES_COLLIDABLE)
       joint.bodies_collidable = attr
       attr = joint_ent.get_attribute(jdict, 'Breaking Force', MSPhysics::Joint::DEFAULT_BREAKING_FORCE)
       joint.breaking_force = attr.to_f
+      joint.name = joint_ent.get_attribute(jdict, 'ID').to_s
 
       @joints[joint_ent] = [] unless @joints[joint_ent]
       @joints[joint_ent] << joint
@@ -2398,7 +2473,7 @@ module MSPhysics
           @bb.add(e.bounds) if e.visible?
         }
       end
-      wb = @world.get_aabb
+      wb = @world.get_aabb if @world != nil && @world.is_valid?
       @bb.add(wb) if wb
       @bb
     end

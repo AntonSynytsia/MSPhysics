@@ -19,6 +19,7 @@ private:
 	static const dFloat DEFAULT_REDUCTION_RATIO;
 	static const dFloat DEFAULT_CONTROLLER;
 	static const bool DEFAULT_CONTROLLER_ENABLED;
+	static const bool DEFAULT_SP_MODE_ENABLED;
 
 public:
 	// Structures
@@ -35,6 +36,7 @@ public:
 		dFloat reduction_ratio;
 		dFloat controller;
 		bool controller_enabled;
+		bool sp_mode_enabled;
 	} ServoData;
 
 	// Callback Functions
@@ -55,7 +57,7 @@ public:
 	static VALUE get_max(VALUE self, VALUE v_joint);
 	static VALUE set_max(VALUE self, VALUE v_joint, VALUE v_max);
 	static VALUE enable_limits(VALUE self, VALUE v_joint, VALUE v_state);
-	static VALUE are_limits_enabled(VALUE self, VALUE v_joint);
+	static VALUE limits_enabled(VALUE self, VALUE v_joint);
 	static VALUE get_accel(VALUE self, VALUE v_joint);
 	static VALUE set_accel(VALUE self, VALUE v_joint, VALUE v_accel);
 	static VALUE get_damp(VALUE self, VALUE v_joint);
@@ -64,6 +66,8 @@ public:
 	static VALUE set_reduction_ratio(VALUE self, VALUE v_joint, VALUE v_reduction_ratio);
 	static VALUE get_controller(VALUE self, VALUE v_joint);
 	static VALUE set_controller(VALUE self, VALUE v_joint, VALUE v_controller);
+	static VALUE enable_sp_mode(VALUE self, VALUE v_joint, VALUE v_state);
+	static VALUE sp_mode_enabled(VALUE self, VALUE v_joint);
 };
 
 void Init_msp_servo(VALUE mNewton);

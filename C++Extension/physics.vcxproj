@@ -119,7 +119,7 @@
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
       <OmitFramePointers>false</OmitFramePointers>
-      <AdditionalIncludeDirectories>$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\pthreads.2;%(AdditionalLibraryDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)NewtonDynamics\timeTracker;%(AdditionalLibraryDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;PTW32_STATIC_LIB;_WIN_32_VER</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>
@@ -164,7 +164,7 @@
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
       <OmitFramePointers>false</OmitFramePointers>
-      <AdditionalIncludeDirectories>$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\pthreads.2;%(AdditionalLibraryDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)NewtonDynamics\timeTracker;%(AdditionalLibraryDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;PTW32_STATIC_LIB;_WIN_64_VER</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>
@@ -209,7 +209,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\pthreads.2;%(AdditionalLibraryDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)NewtonDynamics\timeTracker;%(AdditionalLibraryDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;PTW32_STATIC_LIB;_WIN_32_VER</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>
@@ -257,7 +257,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\pthreads.2;%(AdditionalLibraryDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)NewtonDynamics\core;$(SolutionDir)NewtonDynamics\physics;$(SolutionDir)NewtonDynamics\meshUtil;$(SolutionDir)NewtonDynamics\pthreads.2;$(SolutionDir)NewtonDynamics\timeTracker;%(AdditionalLibraryDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;PTW32_STATIC_LIB;_WIN_64_VER</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>
@@ -310,10 +310,9 @@
     <ClCompile Include="NewtonDynamics\physics\dgCollisionDeformableClothPatch.cpp" />
     <ClCompile Include="NewtonDynamics\physics\dgCollisionDeformableSolidMesh.cpp" />
     <ClCompile Include="NewtonDynamics\physics\dgCollisionInstance.cpp" />
-    <ClCompile Include="NewtonDynamics\physics\dgCollisionTaperedCapsule.cpp" />
-    <ClCompile Include="NewtonDynamics\physics\dgCollisionTaperedCylinder.cpp" />
     <ClCompile Include="NewtonDynamics\physics\dgConstraint.cpp" />
     <ClCompile Include="NewtonDynamics\physics\dgContact.cpp" />
+	<ClCompile Include="NewtonDynamics\physics\dgContactSolver.cpp" />
     <ClCompile Include="NewtonDynamics\physics\dgCorkscrewConstraint.cpp" />
     <ClCompile Include="NewtonDynamics\physics\dgDeformableBodiesUpdate.cpp" />
     <ClCompile Include="NewtonDynamics\physics\dgDeformableContact.cpp" />
@@ -375,10 +374,9 @@
     <ClInclude Include="NewtonDynamics\physics\dgCollisionDeformableClothPatch.h" />
     <ClInclude Include="NewtonDynamics\physics\dgCollisionDeformableSolidMesh.h" />
     <ClInclude Include="NewtonDynamics\physics\dgCollisionInstance.h" />
-    <ClInclude Include="NewtonDynamics\physics\dgCollisionTaperedCapsule.h" />
-    <ClInclude Include="NewtonDynamics\physics\dgCollisionTaperedCylinder.h" />
     <ClInclude Include="NewtonDynamics\physics\dgConstraint.h" />
     <ClInclude Include="NewtonDynamics\physics\dgContact.h" />
+	<ClInclude Include="NewtonDynamics\physics\dgContactSolver.h" />
     <ClInclude Include="NewtonDynamics\physics\dgCorkscrewConstraint.h" />
     <ClInclude Include="NewtonDynamics\physics\dgDeformableBodiesUpdate.h" />
     <ClInclude Include="NewtonDynamics\physics\dgDeformableContact.h" />

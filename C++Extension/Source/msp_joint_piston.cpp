@@ -86,14 +86,14 @@ void MSNewton::Piston::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 	// Add two constraints row perpendicular to the pin
 	NewtonUserJointAddLinearRow(joint, &q0[0], &q1[0], &matrix0.m_front[0]);
 	if (joint_data->ctype == CT_FLEXIBLE)
-		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
 		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 
 	NewtonUserJointAddLinearRow(joint, &q0[0], &q1[0], &matrix0.m_up[0]);
 	if (joint_data->ctype == CT_FLEXIBLE)
-		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
 		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
@@ -105,7 +105,7 @@ void MSNewton::Piston::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 	// Add one constraint row perpendicular to the pin
 	NewtonUserJointAddLinearRow(joint, &r0[0], &r1[0], &matrix0.m_up[0]);
 	if (joint_data->ctype == CT_FLEXIBLE)
-		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
 		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
@@ -372,7 +372,7 @@ VALUE MSNewton::Piston::enable_limits(VALUE self, VALUE v_joint, VALUE v_state) 
 	return Util::to_value(cj_data->limits_enabled);
 }
 
-VALUE MSNewton::Piston::are_limits_enabled(VALUE self, VALUE v_joint) {
+VALUE MSNewton::Piston::limits_enabled(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_PISTON);
 	PistonData* cj_data = (PistonData*)joint_data->cj_data;
 	return Util::to_value(cj_data->limits_enabled);
@@ -464,7 +464,7 @@ void Init_msp_piston(VALUE mNewton) {
 	rb_define_module_function(mPiston, "get_max", VALUEFUNC(MSNewton::Piston::get_max), 1);
 	rb_define_module_function(mPiston, "set_max", VALUEFUNC(MSNewton::Piston::set_max), 2);
 	rb_define_module_function(mPiston, "enable_limits", VALUEFUNC(MSNewton::Piston::enable_limits), 2);
-	rb_define_module_function(mPiston, "are_limits_enabled?", VALUEFUNC(MSNewton::Piston::are_limits_enabled), 1);
+	rb_define_module_function(mPiston, "limits_enabled?", VALUEFUNC(MSNewton::Piston::limits_enabled), 1);
 	rb_define_module_function(mPiston, "get_linear_rate", VALUEFUNC(MSNewton::Piston::get_linear_rate), 1);
 	rb_define_module_function(mPiston, "set_linear_rate", VALUEFUNC(MSNewton::Piston::set_linear_rate), 2);
 	rb_define_module_function(mPiston, "get_strength", VALUEFUNC(MSNewton::Piston::get_strength), 1);

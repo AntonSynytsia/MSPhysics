@@ -14,6 +14,7 @@ private:
 	static void destructor_callback(const NewtonWorld* const world);
 	static int aabb_overlap_callback(const NewtonMaterial* const material, const NewtonBody* const body0, const NewtonBody* const body1, int thread_index);
 	static void contact_callback(const NewtonJoint* const contact_joint, dFloat timestep, int thread_index);
+	static unsigned ray_prefilter_callback(const NewtonBody* const body, const NewtonCollision* const collision, void* const user_data);
 	static dFloat ray_filter_callback(const NewtonBody* const body, const NewtonCollision* const shape_hit, const dFloat* const hit_contact, const dFloat* const hit_normal, dLong collision_id, void* const user_data, dFloat intersect_param);
 	static dFloat continuous_ray_filter_callback(const NewtonBody* const body, const NewtonCollision* const shape_hit, const dFloat* const hit_contact, const dFloat* const hit_normal, dLong collision_id, void* const user_data, dFloat intersect_param);
 	static int body_iterator(const NewtonBody* const body, void* const user_data);
@@ -26,6 +27,7 @@ private:
 	static void c_clear_touch_events(const NewtonWorld* world);
 	static void c_clear_matrix_change_record(const NewtonWorld* world);
 	static void c_disconnect_flagged_joints(const NewtonWorld* world);
+	static void c_enable_cccd_bodies(const NewtonWorld* world);
 
 public:
 	// Ruby Functions
@@ -55,7 +57,7 @@ public:
 	static VALUE ray_cast(VALUE self, VALUE v_world, VALUE v_point1, VALUE v_point2);
 	static VALUE continuous_ray_cast(VALUE self, VALUE v_world, VALUE v_point1, VALUE v_point2);
 	static VALUE convex_ray_cast(VALUE self, VALUE v_world, VALUE v_collision, VALUE v_matrix, VALUE v_target);
-	static VALUE continuous_convex_ray_cast(VALUE self, VALUE v_world, VALUE v_collision, VALUE v_matrix, VALUE v_target);
+	static VALUE continuous_convex_ray_cast(VALUE self, VALUE v_world, VALUE v_collision, VALUE v_matrix, VALUE v_target, VALUE v_max_hits);
 	static VALUE add_explosion(VALUE self, VALUE v_world, VALUE v_center, VALUE v_blast_radius, VALUE v_blast_force);
 	static VALUE get_aabb(VALUE self, VALUE v_world);
 	static VALUE get_destructor_proc(VALUE self, VALUE v_world);

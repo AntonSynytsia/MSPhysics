@@ -35,6 +35,8 @@ void MSNewton::World::destructor_callback(const NewtonWorld* const world) {
 int MSNewton::World::aabb_overlap_callback(const NewtonMaterial* const material, const NewtonBody* const body0, const NewtonBody* const body1, int thread_index) {
 	BodyData* data0 = (BodyData*)NewtonBodyGetUserData(body0);
 	BodyData* data1 = (BodyData*)NewtonBodyGetUserData(body1);
+	NewtonWorld* world = NewtonBodyGetWorld(body0);
+	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	if ((data0->collidable == false || data1->collidable == false) ||
 		(data0->bstatic == true && data1->bstatic == true) ||
 		(NewtonBodyGetFreezeState(body0) == 1 && NewtonBodyGetFreezeState(body1) == 1) ||
@@ -42,6 +44,14 @@ int MSNewton::World::aabb_overlap_callback(const NewtonMaterial* const material,
 		(data1->bstatic == true && NewtonBodyGetFreezeState(body0) == 1) ||
 		(data0->non_collidable_bodies.find(body1) != data0->non_collidable_bodies.end()) ||
 		(data1->non_collidable_bodies.find(body0) != data1->non_collidable_bodies.end())) {
+		if (NewtonBodyGetContinuousCollisionMode(body0) == 1) {
+			NewtonBodySetContinuousCollisionMode(body0, 0);
+			world_data->temp_cccd_bodies.push_back(body0);
+		}
+		if (NewtonBodyGetContinuousCollisionMode(body1) == 1) {
+			NewtonBodySetContinuousCollisionMode(body1, 0);
+			world_data->temp_cccd_bodies.push_back(body1);
+		}
 		return 0;
 	}
 	else {
@@ -125,6 +135,11 @@ void MSNewton::World::contact_callback(const NewtonJoint* const contact_joint, d
 				data1->touchers[body0] = 2;
 		}
 	}
+}
+
+unsigned MSNewton::World::ray_prefilter_callback(const NewtonBody* const body, const NewtonCollision* const collision, void* const user_data) {
+	bool* continuous = (bool*)user_data;
+	return continuous ? 1 : 0;
 }
 
 dFloat MSNewton::World::ray_filter_callback(const NewtonBody* const body, const NewtonCollision* const shape_hit, const dFloat* const hit_contact, const dFloat* const hit_normal, dLong collision_id, void* const user_data, dFloat intersect_param) {
@@ -311,6 +326,14 @@ void MSNewton::World::c_disconnect_flagged_joints(const NewtonWorld* world) {
 	world_data->joints_to_disconnect.clear();
 }
 
+void MSNewton::World::c_enable_cccd_bodies(const NewtonWorld* world) {
+	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
+	for (std::vector<const NewtonBody*>::iterator it = world_data->temp_cccd_bodies.begin(); it != world_data->temp_cccd_bodies.end(); ++it)
+		NewtonBodySetContinuousCollisionMode(*it, 1);
+	world_data->temp_cccd_bodies.clear();
+}
+
+
 /*
  ///////////////////////////////////////////////////////////////////////////////
   Ruby Functions
@@ -325,7 +348,6 @@ VALUE MSNewton::World::create(VALUE self, VALUE v_world_scale) {
 	dFloat world_scale = Util::clamp<dFloat>(Util::value_to_dFloat(v_world_scale), 0.1f, 100.0f);
 	NewtonWorld* world = NewtonCreate();
 	NewtonInvalidateCache(world);
-
 	WorldData *data = new WorldData;
 	valid_worlds[world] = true;
 	data->solver_model = DEFAULT_SOLVER_MODEL;
@@ -347,6 +369,7 @@ VALUE MSNewton::World::create(VALUE self, VALUE v_world_scale) {
 	data->inverse_scale4 = 1.0f / data->scale4;
 	data->gravity_enabled = false;
 	data->process_info = true;
+	data->temp_cccd_bodies;
 	for (int i = 0; i < 3; ++i) {
 		if (std::abs(data->gravity[i]) > EPSILON)
 			data->gravity_enabled = true;
@@ -356,16 +379,13 @@ VALUE MSNewton::World::create(VALUE self, VALUE v_world_scale) {
 	rb_gc_register_address(&data->user_data);
 
 	NewtonSetContactMergeTolerance(world, DEFAULT_CONTACT_MERGE_TOLERANCE);
-
 	//int id = NewtonMaterialGetDefaultGroupID(world);
 	int id = NewtonMaterialCreateGroupID(world);
 	data->material_id = id;
-
 	NewtonMaterialSetSurfaceThickness(world, id, id, DEFAULT_MATERIAL_THICKNESS);
 	NewtonMaterialSetDefaultFriction(world, id, id, DEFAULT_STATIC_FRICTION, DEFAULT_DYNAMIC_FRICTION);
 	NewtonMaterialSetDefaultElasticity(world, id, id, DEFAULT_ELASTICITY);
 	NewtonMaterialSetDefaultSoftness(world, id, id, DEFAULT_SOFTNESS);
-
 	NewtonSetSolverModel(world, DEFAULT_SOLVER_MODEL);
 	NewtonSetFrictionModel(world, DEFAULT_FRICTION_MODEL);
 	NewtonSetSolverConvergenceQuality(world, DEFAULT_CONVERGENCE_QUALITY);
@@ -437,12 +457,14 @@ VALUE MSNewton::World::update(int argc, VALUE* argv, VALUE self) {
 	for (int i = 0; i < update_rate - 1; ++i) {
 		c_update_magnets(world);
 		NewtonUpdate(world, timestep);
+		c_enable_cccd_bodies(world);
 		c_disconnect_flagged_joints(world);
 	}
 	world_data->process_info = true;
 	c_clear_touch_events(world);
 	c_update_magnets(world);
 	NewtonUpdate(world, timestep);
+	c_enable_cccd_bodies(world);
 	c_disconnect_flagged_joints(world);
 	c_process_touch_events(world);
 	world_data->time += timestep * update_rate;
@@ -471,12 +493,14 @@ VALUE MSNewton::World::update_async(int argc, VALUE* argv, VALUE self) {
 	for (int i = 0; i < update_rate - 1; ++i) {
 		c_update_magnets(world);
 		NewtonUpdateAsync(world, timestep);
+		c_enable_cccd_bodies(world);
 		c_disconnect_flagged_joints(world);
 	}
 	world_data->process_info = true;
 	c_clear_touch_events(world);
 	c_update_magnets(world);
 	NewtonUpdate(world, timestep);
+	c_enable_cccd_bodies(world);
 	c_disconnect_flagged_joints(world);
 	c_process_touch_events(world);
 	world_data->time += timestep * update_rate;
@@ -606,22 +630,40 @@ VALUE MSNewton::World::convex_ray_cast(VALUE self, VALUE v_world, VALUE v_collis
 	const NewtonCollision* collision = Util::value_to_collision(v_collision);
 	dMatrix matrix = Util::value_to_matrix(v_matrix, world_data->scale);
 	dVector target = Util::value_to_point(v_target, world_data->scale);
-	Hit hit;
-	NewtonWorldConvexRayCast(world, collision, &matrix[0][0], &target[0], ray_filter_callback, &hit, NULL, 0);
-	return hit.body ? rb_ary_new3(3, Util::to_value(hit.body), Util::point_to_value(hit.point, world_data->inverse_scale), Util::vector_to_value(hit.normal)) : Qnil;
+	bool continuous = false;
+	dFloat hit_param;
+	NewtonWorldConvexCastReturnInfo info[1];
+	int hit_count = NewtonWorldConvexCast(world, &matrix[0][0], &target[0], collision, &hit_param, &continuous, ray_prefilter_callback, &info[0], 1, 0);
+	if (hit_count != 0)
+		return rb_ary_new3(
+			4,
+			Util::to_value(info[0].m_hitBody),
+			Util::point_to_value(dVector(info[0].m_point), world_data->inverse_scale),
+			Util::vector_to_value(dVector(info[0].m_normal)),
+			Util::to_value(info[0].m_penetration));
+	else
+		return Qnil;
 }
 
-VALUE MSNewton::World::continuous_convex_ray_cast(VALUE self, VALUE v_world, VALUE v_collision, VALUE v_matrix, VALUE v_target) {
+VALUE MSNewton::World::continuous_convex_ray_cast(VALUE self, VALUE v_world, VALUE v_collision, VALUE v_matrix, VALUE v_target, VALUE v_max_hits) {
 	const NewtonWorld* world = Util::value_to_world(v_world);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	const NewtonCollision* collision = Util::value_to_collision(v_collision);
 	dMatrix matrix = Util::value_to_matrix(v_matrix, world_data->scale);
 	dVector target = Util::value_to_point(v_target, world_data->scale);
-	RayData ray_data;
-	NewtonWorldConvexRayCast(world, collision, &matrix[0][0], &target[0], continuous_ray_filter_callback, &ray_data, NULL, 0);
-	VALUE hits = rb_ary_new2( (long)ray_data.hits.size() );
-	for (unsigned int i = 0; i < ray_data.hits.size(); ++i) {
-		VALUE hit = rb_ary_new3(3, Util::to_value(ray_data.hits[i].body), Util::point_to_value(ray_data.hits[i].point, world_data->inverse_scale), Util::vector_to_value(ray_data.hits[i].normal));
+	unsigned int max_hits = Util::clamp<unsigned int>(Util::value_to_uint(v_max_hits), 1, 256);
+	bool continuous = true;
+	dFloat hit_param;
+	std::vector<NewtonWorldConvexCastReturnInfo> info((size_t)max_hits);
+	int hit_count = NewtonWorldConvexCast(world, &matrix[0][0], &target[0], collision, &hit_param, &continuous, ray_prefilter_callback, &info[0], max_hits, 0);
+	VALUE hits = rb_ary_new2((long)hit_count);
+	for (int i = 0; i < hit_count; ++i) {
+		VALUE hit = rb_ary_new3(
+			4,
+			Util::to_value(info[i].m_hitBody),
+			Util::point_to_value(dVector(info[i].m_point), world_data->inverse_scale),
+			Util::vector_to_value(dVector(info[i].m_normal)),
+			Util::to_value(info[i].m_penetration));
 		rb_ary_store(hits, i, hit);
 	}
 	return hits;
@@ -870,7 +912,7 @@ void Init_msp_world(VALUE mNewton) {
 	rb_define_module_function(mWorld, "ray_cast", VALUEFUNC(MSNewton::World::ray_cast), 3);
 	rb_define_module_function(mWorld, "continuous_ray_cast", VALUEFUNC(MSNewton::World::continuous_ray_cast), 3);
 	rb_define_module_function(mWorld, "convex_ray_cast", VALUEFUNC(MSNewton::World::convex_ray_cast), 4);
-	rb_define_module_function(mWorld, "continuous_convex_ray_cast", VALUEFUNC(MSNewton::World::continuous_convex_ray_cast), 4);
+	rb_define_module_function(mWorld, "continuous_convex_ray_cast", VALUEFUNC(MSNewton::World::continuous_convex_ray_cast), 5);
 	rb_define_module_function(mWorld, "add_explosion", VALUEFUNC(MSNewton::World::add_explosion), 4);
 	rb_define_module_function(mWorld, "get_aabb", VALUEFUNC(MSNewton::World::get_aabb), 1);
 	rb_define_module_function(mWorld, "get_destructor_proc", VALUEFUNC(MSNewton::World::get_destructor_proc), 1);

@@ -61,7 +61,7 @@ require File.join(dir, 'scene_data.rb')
 module MSPhysics
 
   DEFAULT_SIMULATION_SETTINGS = {
-    :solver_model           => 4,
+    :solver_model           => 0,
     :friction_model         => 0,
     :update_rate            => 2,
     :update_timestep        => 1/60.0,
@@ -216,7 +216,10 @@ module MSPhysics
       ents.each { |e|
         e.delete_attribute('MSPhysics') if e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body'
         e.delete_attribute('MSPhysics Body')
-        e.delete_attribute('MSPhysics Joint')
+        #~ e.delete_attribute('MSPhysics Joint')
+        e.attribute_dictionary('MSPhysics Joint').keys.each { k|
+          e.delete_attribute('MSPhysics Joint', k) if k != 'Type'
+        }
         e.delete_attribute('MSPhysics Script')
         e.delete_attribute('MSPhysics Buoyancy Plane')
       }
@@ -977,10 +980,38 @@ unless file_loaded?(__FILE__)
           model.commit_operation
         }
       end
+      joint_type_menu = joint_menu.add_submenu('Type')
+      %w(Standard Flexible Robust).each { |jname|
+        jtype = jname == 'Robust' ? 2 : (jname == 'Flexible' ? 1 : 0)
+        item = joint_type_menu.add_item(jname) {
+          op = 'MSPhysics Joint - Type'
+          Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+          MSPhysics.set_attribute(joints, 'MSPhysics Joint', 'Constraint Type', jtype)
+          model.commit_operation
+        }
+        joint_type_menu.set_validation_proc(item) {
+          MSPhysics.get_attribute(joints, 'MSPhysics Joint', 'Constraint Type', MSPhysics::Joint::DEFAULT_CONSTRAINT_TYPE) == jtype ? MF_CHECKED : MF_UNCHECKED
+        }
+      }
+      item = joint_menu.add_item('Connected Collide') {
+        op = 'MSPhysics Joint - Make Same ID'
+        Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+        state = MSPhysics.get_attribute(joints, 'MSPhysics Joint', 'Bodies Collidable', MSPhysics::Joint::DEFAULT_BODIES_COLLIDABLE) ? true : false
+        MSPhysics.set_attribute(joints, 'MSPhysics Joint', 'Bodies Collidable', !state)
+        model.commit_operation
+      }
+      joint_type_menu.set_validation_proc(item) {
+        MSPhysics.get_attribute(joints, 'MSPhysics Joint', 'Bodies Collidable', MSPhysics::Joint::DEFAULT_CONSTRAINT_TYPE) ? MF_CHECKED : MF_UNCHECKED
+      }
       joint_menu.add_item('Reset Properties') {
         op = 'MSPhysics Joint - Reset Properties'
         Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
-        MSPhysics.delete_attribute(bodies, 'MSPhysics Joint')
+        #~ MSPhysics.delete_attribute(joints, 'MSPhysics Joint')
+        joints.each { |joint|
+          joint.attribute_dictionary('MSPhysics Joint').keys.each { k|
+            joint.delete_attribute('MSPhysics Joint', k) if k != 'Type'
+          }
+        }
         model.commit_operation
       }
     end
@@ -1110,6 +1141,15 @@ unless file_loaded?(__FILE__)
 
   plugin_menu.add_separator
 
+  plugin_menu.add_item('Select All Joints') {
+    model = Sketchup.active_model
+    model.selection.clear
+    model.definitions.each { |d|
+      d.instances.each { |i|
+        model.selection.add(i) if i.get_attribute('MSPhysics', 'Type') == 'Joint'
+      }
+    }
+  }
   plugin_menu.add_item('Delete All Attributes'){
     msg = "This option removes all MSPhysics assigned properties and scripts.\n"
     msg << "Do you want to proceed?"

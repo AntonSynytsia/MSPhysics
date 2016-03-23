@@ -5,10 +5,10 @@ module MSPhysics
 
     DEFAULT_REPLAY_GROUPS = true
     DEFAULT_REPLAY_MATERIALS = true
-    DEFAULT_REPLAY_LAYERS = true
+    DEFAULT_REPLAY_LAYERS = false
     DEFAULT_REPLAY_CAMERA = true
-    DEFAULT_REPLAY_RENDER = true
-    DEFAULT_REPLAY_SHADOW = true
+    DEFAULT_REPLAY_RENDER = false
+    DEFAULT_REPLAY_SHADOW = false
 
     @groups_data = {}
     @materials_data = {}

@@ -52,7 +52,7 @@ public:
 	static VALUE get_max(VALUE self, VALUE v_joint);
 	static VALUE set_max(VALUE self, VALUE v_joint, VALUE v_max);
 	static VALUE enable_limits(VALUE self, VALUE v_joint, VALUE v_state);
-	static VALUE are_limits_enabled(VALUE self, VALUE v_joint);
+	static VALUE limits_enabled(VALUE self, VALUE v_joint);
 	static VALUE get_stiff(VALUE self, VALUE v_joint);
 	static VALUE set_stiff(VALUE self, VALUE v_joint, VALUE v_stiff);
 	static VALUE get_damp(VALUE self, VALUE v_joint);

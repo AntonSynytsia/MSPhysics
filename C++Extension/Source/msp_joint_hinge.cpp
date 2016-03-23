@@ -80,7 +80,7 @@ void MSNewton::Hinge::submit_constraints(const NewtonJoint* joint, dgFloat32 tim
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 
 	// Add two rows to restrict rotation around the the axis perpendicular to the rotation axis.
-	NewtonUserJointAddAngularRow(joint, Joint::c_calculate_angle(matrix0.m_right, matrix1.m_right, matrix0.m_front), &matrix0.m_front[0]);
+	/*NewtonUserJointAddAngularRow(joint, Joint::c_calculate_angle(matrix0.m_right, matrix1.m_right, matrix0.m_front), &matrix0.m_front[0]);
 	if (joint_data->ctype == CT_FLEXIBLE)
 		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
@@ -92,21 +92,29 @@ void MSNewton::Hinge::submit_constraints(const NewtonJoint* joint, dgFloat32 tim
 		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
 		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
-	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);*/
 
-	/*// Add two more rows for a more robust angular constraint.
+	// Add two more rows for a more robust angular constraint.
 	// Get a point along the pin axis at some reasonable large distance from the pivot.
 	dVector q0(matrix0.m_posit + matrix0.m_right.Scale(MIN_JOINT_PIN_LENGTH));
 	dVector q1(matrix1.m_posit + matrix1.m_right.Scale(MIN_JOINT_PIN_LENGTH));
 
 	// Add two constraints row perpendicular to the pin vector.
 	dVector q2(q0 + matrix0.m_front.Scale((q1 - q0) % matrix0.m_front));
-	NewtonUserJointAddLinearRow(joint, &q0[0], &q2[0], &matrix0.m_front[0]);
+	NewtonUserJointAddLinearRow(joint, &q0[0], &q1[0], &matrix1.m_front[0]);
+	if (joint_data->ctype == CT_FLEXIBLE)
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
+	else if (joint_data->ctype == CT_ROBUST)
+		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 
 	q2 = q0 + matrix0.m_up.Scale((q1 - q0) % matrix0.m_up);
-	NewtonUserJointAddLinearRow(joint, &q0[0], &q2[0], &matrix0.m_up[0]);
-	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);*/
+	NewtonUserJointAddLinearRow(joint, &q0[0], &q1[0], &matrix1.m_up[0]);
+	if (joint_data->ctype == CT_FLEXIBLE)
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
+	else if (joint_data->ctype == CT_ROBUST)
+		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
+	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 
 	// Check if need to re-enable limits.
 	if (cj_data->temp_disable_limits == true && cur_angle >= cj_data->min && cur_angle <= cj_data->max)
@@ -133,10 +141,12 @@ void MSNewton::Hinge::submit_constraints(const NewtonJoint* joint, dgFloat32 tim
 	}
 	else if (cj_data->rotate_back_enabled) {
 		NewtonUserJointAddAngularRow(joint, -cur_angle, &matrix0.m_right[0]);
-		NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->stiff, cj_data->damp);
+		//NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->stiff, cj_data->damp);
 		/*dFloat rel_omega = (omega0 - omega1) % matrix0.m_right;
 		dFloat rel_accel = -cur_angle / timestep * cj_data->stiff - cj_data->damp * rel_omega;
 		NewtonUserJointSetRowAcceleration(joint, rel_accel);*/
+		dFloat accel = NewtonCalculateSpringDamperAcceleration(timestep, cj_data->stiff, cur_angle, cj_data->damp, cj_data->cur_omega);
+		NewtonUserJointSetRowAcceleration(joint, accel);
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness * Joint::STIFFNESS_RATIO);
 	}
 	else {
@@ -296,7 +306,7 @@ VALUE MSNewton::Hinge::enable_limits(VALUE self, VALUE v_joint, VALUE v_state) {
 	return Util::to_value(cj_data->limits_enabled);
 }
 
-VALUE MSNewton::Hinge::are_limits_enabled(VALUE self, VALUE v_joint) {
+VALUE MSNewton::Hinge::limits_enabled(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_HINGE);
 	HingeData* cj_data = (HingeData*)joint_data->cj_data;
 	return Util::to_value(cj_data->limits_enabled);
@@ -348,7 +358,7 @@ VALUE MSNewton::Hinge::enable_rotate_back(VALUE self, VALUE v_joint, VALUE v_sta
 	return Util::to_value(cj_data->rotate_back_enabled);
 }
 
-VALUE MSNewton::Hinge::is_rotate_back_enabled(VALUE self, VALUE v_joint) {
+VALUE MSNewton::Hinge::rotate_back_enabled(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_HINGE);
 	HingeData* cj_data = (HingeData*)joint_data->cj_data;
 	return Util::to_value(cj_data->rotate_back_enabled);
@@ -408,7 +418,7 @@ void Init_msp_hinge(VALUE mNewton) {
 	rb_define_module_function(mHinge, "get_max", VALUEFUNC(MSNewton::Hinge::get_max), 1);
 	rb_define_module_function(mHinge, "set_max", VALUEFUNC(MSNewton::Hinge::set_max), 2);
 	rb_define_module_function(mHinge, "enable_limits", VALUEFUNC(MSNewton::Hinge::enable_limits), 2);
-	rb_define_module_function(mHinge, "are_limits_enabled?", VALUEFUNC(MSNewton::Hinge::are_limits_enabled), 1);
+	rb_define_module_function(mHinge, "limits_enabled?", VALUEFUNC(MSNewton::Hinge::limits_enabled), 1);
 	rb_define_module_function(mHinge, "get_friction", VALUEFUNC(MSNewton::Hinge::get_friction), 1);
 	rb_define_module_function(mHinge, "set_friction", VALUEFUNC(MSNewton::Hinge::set_friction), 2);
 	rb_define_module_function(mHinge, "get_stiff", VALUEFUNC(MSNewton::Hinge::get_stiff), 1);
@@ -416,7 +426,7 @@ void Init_msp_hinge(VALUE mNewton) {
 	rb_define_module_function(mHinge, "get_damp", VALUEFUNC(MSNewton::Hinge::get_damp), 1);
 	rb_define_module_function(mHinge, "set_damp", VALUEFUNC(MSNewton::Hinge::set_damp), 2);
 	rb_define_module_function(mHinge, "enable_rotate_back", VALUEFUNC(MSNewton::Hinge::enable_rotate_back), 2);
-	rb_define_module_function(mHinge, "is_rotate_back_enabled?", VALUEFUNC(MSNewton::Hinge::is_rotate_back_enabled), 1);
+	rb_define_module_function(mHinge, "rotate_back_enabled?", VALUEFUNC(MSNewton::Hinge::rotate_back_enabled), 1);
 	rb_define_module_function(mHinge, "get_start_angle", VALUEFUNC(MSNewton::Hinge::get_start_angle), 1);
 	rb_define_module_function(mHinge, "set_start_angle", VALUEFUNC(MSNewton::Hinge::set_start_angle), 2);
 	rb_define_module_function(mHinge, "get_controller", VALUEFUNC(MSNewton::Hinge::get_controller), 1);

@@ -44,7 +44,7 @@ li.active a, li.active a:hover {
 
 /*----- Content of Tabs -----*/
 .tab-content {
-  padding: 1.0em;
+  padding: 0.75em;
   border-radius: 0.5em;
   border: none;
   background-color: #F5F5F5;

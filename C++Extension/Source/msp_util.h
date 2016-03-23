@@ -265,6 +265,7 @@ typedef struct WorldData
 	bool gravity_enabled;
 	int material_id;
 	bool process_info;
+	std::vector<const NewtonBody*> temp_cccd_bodies;
 } WorldData;
 
 // Variables

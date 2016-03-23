@@ -78,7 +78,7 @@ module MSPhysics
     # Determine whether min & max angle limits are enabled.
     # @return [Boolean]
     def limits_enabled?
-      MSPhysics::Newton::Hinge.are_limits_enabled?(@address)
+      MSPhysics::Newton::Hinge.limits_enabled?(@address)
     end
 
     # Enable/Disable min & max angle limits.
@@ -134,7 +134,7 @@ module MSPhysics
     # Determine whether a feature to rotate back to a starting angle is enabled.
     # @return [Boolean]
     def rotate_back_enabled?
-      MSPhysics::Newton::Hinge.is_rotate_back_enabled?(@address)
+      MSPhysics::Newton::Hinge.rotate_back_enabled?(@address)
     end
 
     # Enable/Disable a feature to rotate back to a starting angle.

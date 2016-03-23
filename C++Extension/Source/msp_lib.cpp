@@ -8,6 +8,8 @@ The C++ version of MSPhysics implements the following:
 Implementation by Anton Synytsia
 
 Do the following when updating NewtonDynamics:
+* File: dgTypes.h, line 102
+	Comment out #define DG_SSE4_INSTRUCTIONS_SET
 * File: dgBody.h
 	Change DG_MINIMUM_MASS to 1.0e-6f
 * File: dgBody.cpp, lines 496-498
@@ -16,16 +18,14 @@ Do the following when updating NewtonDynamics:
 	~ Change tiltAngle to 0.785398f. (45 degrees)
 * File: dgCollisionCompound.cpp
 	Change DG_MAX_MIN_VOLUME to 1.0e-6f
-* File: dgBilateralConstraint.cpp, line 237
-	Comment out desc.m_jointStiffness[index] = - den / DG_PSD_DAMP_TOL ;
 * File: dgContact.h
-	Change DG_MAX_CONTATCS to 4096
+	~ Change DG_MAX_CONTATCS to 4096
 * File: dgBroadPhase.h
-	Change DG_BROADPHASE_MAX_STACK_DEPTH to 4096
+	~ Change DG_BROADPHASE_MAX_STACK_DEPTH to 4096
 * File: dgWorldDynamicUpdate.h
-	Change DG_MAX_SKELETON_JOINT_COUNT to 4096
+	~ Change DG_MAX_SKELETON_JOINT_COUNT to 4096
 * File: dgWorldDynamicUpdate.cpp
-	Change DG_PARALLEL_JOINT_COUNT_CUT_OFF to 4096
+	~ Change DG_PARALLEL_JOINT_COUNT_CUT_OFF to 4096
 * File: dgThread.h, line 27
 	Uncomment #define DG_USE_THREAD_EMULATION
 * File: Newton.cpp, line 2091
@@ -83,6 +83,7 @@ void Init_msp_lib() {
 	Init_msp_joint(mNewton);
 
 	Init_msp_ball_and_socket(mNewton);
+	Init_msp_corkscrew(mNewton);
 	Init_msp_fixed(mNewton);
 	Init_msp_hinge(mNewton);
 	Init_msp_motor(mNewton);

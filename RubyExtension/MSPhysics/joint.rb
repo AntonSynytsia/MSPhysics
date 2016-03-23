@@ -41,6 +41,7 @@ module MSPhysics
       MSPhysics::Newton::Joint.set_stiffness(@address, DEFAULT_STIFFNESS)
       MSPhysics::Newton::Joint.set_bodies_collidable(@address, DEFAULT_BODIES_COLLIDABLE)
       MSPhysics::Newton::Joint.set_breaking_force(@address, DEFAULT_BREAKING_FORCE)
+      @name = ''
     end
 
     # Get joint address.
@@ -155,7 +156,7 @@ module MSPhysics
     # Determine whether parent body is collidable with its child body.
     # @return [Boolean]
     def bodies_collidable?
-      MSPhysics::Newton::Joint.are_bodies_collidable?(@address)
+      MSPhysics::Newton::Joint.bodies_collidable?(@address)
     end
 
     # Set parent body collidable/noncollidable with its child body.
@@ -188,5 +189,17 @@ module MSPhysics
       MSPhysics::Newton::Joint.set_breaking_force(@address, force)
     end
 
-  end # class Joint  
+    # Get joint name.
+    # @return [String]
+    def name
+      @name.dup
+    end
+
+    # Set joint name
+    # @param [String] value
+    def name=(value)
+      @name = value.to_s.dup
+    end
+
+  end # class Joint
 end # module MSPhysics

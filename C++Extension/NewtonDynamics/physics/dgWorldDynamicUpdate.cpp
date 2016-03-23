@@ -79,6 +79,7 @@ dgWorldDynamicUpdate::dgWorldDynamicUpdate()
 
 void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 {
+	dTimeTrackerEvent(__FUNCTION__);
 	dgWorld* const world = (dgWorld*) this;
 	dgBodyMasterList& masterList = *world;
 
@@ -115,11 +116,14 @@ void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 	sentinelBody->m_active = false;
 	sentinelBody->m_equilibrium = true;
 	for (dgInt32 i = 0; i < threadCount; i ++) {
-		world->QueueJob (FindActiveJointAndBodies, &descriptor, world);
+		world->QueueJob (FindActiveJointAndBodiesKernel, &descriptor, world);
 	}
 	world->SynchronizationBarrier();
-
-	dgSort (m_islandMemory, m_islands, CompareIslands); 
+	{
+		dTimeTrackerEvent("SortIsland");
+		dgSort (m_islandMemory, m_islands, CompareIslands); 
+	}
+	
 
 	if (!(world->m_amp && (world->m_hardwaredIndex > 0))) {
 		dgInt32 index = 0;
@@ -165,6 +169,8 @@ void dgWorldDynamicUpdate::UpdateDynamics(dgFloat32 timestep)
 
 void dgWorldDynamicUpdate::BuildIslands(dgFloat32 timestep)
 {
+	dTimeTrackerEvent(__FUNCTION__);
+
 	dgWorld* const world = (dgWorld*) this;
 	dgUnsigned32 lru = m_markLru - 1;
 
@@ -668,9 +674,9 @@ dgInt32 dgWorldDynamicUpdate::CompareIslands(const dgIsland* const islandA, cons
 }
 
 
-
-void dgWorldDynamicUpdate::FindActiveJointAndBodies (void* const context, void* const worldContext, dgInt32 threadID)
+void dgWorldDynamicUpdate::FindActiveJointAndBodiesKernel (void* const context, void* const worldContext, dgInt32 threadID)
 {
+	dTimeTrackerEvent(__FUNCTION__);
 	dgWorldDynamicUpdateSyncDescriptor* const descriptor = (dgWorldDynamicUpdateSyncDescriptor*) context;
 
 	dgWorld* const world = (dgWorld*) worldContext;
@@ -684,9 +690,9 @@ void dgWorldDynamicUpdate::FindActiveJointAndBodies (void* const context, void* 
 }
 
 
-
 void dgWorldDynamicUpdate::CalculateIslandReactionForcesKernel (void* const context, void* const worldContext, dgInt32 threadID)
 {
+	dTimeTrackerEvent(__FUNCTION__);
 	dgWorldDynamicUpdateSyncDescriptor* const descriptor = (dgWorldDynamicUpdateSyncDescriptor*) context;
 
 	dgFloat32 timestep = descriptor->m_timestep;
