@@ -420,6 +420,7 @@ VALUE MSNewton::Body::create_dynamic(VALUE self, VALUE v_world, VALUE v_collisio
 	data->touchers;
 	data->matrix_scale = scale;
 	data->default_collision_scale = dVector(sx, sy, sz);
+	data->collision_scale = dVector(sx, sy, sz);
 	data->default_collision_offset = col_matrix.m_posit;
 	data->matrix_changed = false;
 	data->gravity_enabled = true;
@@ -479,13 +480,16 @@ VALUE MSNewton::Body::get_matrix(VALUE self, VALUE v_body) {
 	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
-	const NewtonCollision* collision = NewtonBodyGetCollision(body);
+	//const NewtonCollision* collision = NewtonBodyGetCollision(body);
 	dMatrix matrix;
 	NewtonBodyGetMatrix(body, &matrix[0][0]);
 	const dVector& dcs = body_data->default_collision_scale;
 	const dVector& ms = body_data->matrix_scale;
-	dFloat csx, csy, csz;
-	NewtonCollisionGetScale(collision, &csx, &csy, &csz);
+	//dFloat csx, csy, csz;
+	//NewtonCollisionGetScale(collision, &csx, &csy, &csz);
+	dFloat csx = body_data->collision_scale.m_x;
+	dFloat csy = body_data->collision_scale.m_y;
+	dFloat csz = body_data->collision_scale.m_z;
 	dVector actual_matrix_scale(ms.m_x * csx / dcs.m_x, ms.m_y * csy / dcs.m_y, ms.m_z * csz / dcs.m_z);
 	Util::set_matrix_scale(matrix, actual_matrix_scale);
 	return Util::matrix_to_value(matrix, world_data->inverse_scale);
@@ -511,7 +515,7 @@ VALUE MSNewton::Body::set_matrix(VALUE self, VALUE v_body, VALUE v_matrix) {
 	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
-	const NewtonCollision* collision = NewtonBodyGetCollision(body);
+	//const NewtonCollision* collision = NewtonBodyGetCollision(body);
 	dMatrix matrix = Util::value_to_matrix(v_matrix, world_data->scale);
 	if (Util::is_matrix_flipped(matrix)) {
 		matrix.m_front.m_x *= -1;
@@ -522,8 +526,11 @@ VALUE MSNewton::Body::set_matrix(VALUE self, VALUE v_body, VALUE v_matrix) {
 	NewtonBodySetMatrix(body, &matrix[0][0]);
 	const dVector& dcs = body_data->default_collision_scale;
 	const dVector& ms = body_data->matrix_scale;
-	dFloat csx, csy, csz;
-	NewtonCollisionGetScale(collision, &csx, &csy, &csz);
+	//dFloat csx, csy, csz;
+	//NewtonCollisionGetScale(collision, &csx, &csy, &csz);
+	dFloat csx = body_data->collision_scale.m_x;
+	dFloat csy = body_data->collision_scale.m_y;
+	dFloat csz = body_data->collision_scale.m_z;
 	dVector actual_matrix_scale(ms.m_x * csx / dcs.m_x, ms.m_y * csy / dcs.m_y, ms.m_z * csz / dcs.m_z);
 	Util::set_matrix_scale(matrix, actual_matrix_scale);
 	return Util::matrix_to_value(matrix, world_data->inverse_scale);
@@ -670,7 +677,10 @@ VALUE MSNewton::Body::set_mass(VALUE self, VALUE v_body, VALUE v_mass) {
 	dFloat mass = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_mass) * world_data->scale3, MIN_MASS);
 	body_data->mass = mass;
 	body_data->density = mass / body_data->volume;
+	dVector com;
+	NewtonBodyGetCentreOfMass(body, &com[0]);
 	NewtonBodySetMassProperties(body, body_data->bstatic ? 0.0f : Util::clamp(body_data->mass, MIN_MASS, MAX_MASS), NewtonBodyGetCollision(body));
+	NewtonBodySetCentreOfMass(body, &com[0]);
 	return Util::to_value(body_data->mass * world_data->inverse_scale3);
 }
 
@@ -686,7 +696,10 @@ VALUE MSNewton::Body::set_density(VALUE self, VALUE v_body, VALUE v_density) {
 	if (!body_data->dynamic) return Qnil;
 	body_data->density = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_density), MIN_DENSITY);
 	body_data->mass = body_data->density * body_data->volume;
+	dVector com;
+	NewtonBodyGetCentreOfMass(body, &com[0]);
 	NewtonBodySetMassProperties(body, body_data->bstatic ? 0.0f : Util::clamp(body_data->mass, MIN_MASS, MAX_MASS), NewtonBodyGetCollision(body));
+	NewtonBodySetCentreOfMass(body, &com[0]);
 	return Util::to_value(body_data->density);
 }
 
@@ -706,7 +719,10 @@ VALUE MSNewton::Body::set_volume(VALUE self, VALUE v_body, VALUE v_volume) {
 	if (!body_data->dynamic) return Qnil;
 	body_data->volume = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_volume) * world_data->scale3, MIN_VOLUME);
 	body_data->mass = body_data->density * body_data->volume;
+	dVector com;
+	NewtonBodyGetCentreOfMass(body, &com[0]);
 	NewtonBodySetMassProperties(body, body_data->bstatic ? 0.0f : Util::clamp(body_data->mass, MIN_MASS, MAX_MASS), NewtonBodyGetCollision(body));
+	NewtonBodySetCentreOfMass(body, &com[0]);
 	return Util::to_value(body_data->volume * world_data->inverse_scale3);
 }
 
@@ -734,7 +750,10 @@ VALUE MSNewton::Body::set_static(VALUE self, VALUE v_body, VALUE v_static) {
 	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
 	if (!body_data->dynamic) return Qtrue;
 	body_data->bstatic = Util::value_to_bool(v_static);
+	dVector com;
+	NewtonBodyGetCentreOfMass(body, &com[0]);
 	NewtonBodySetMassProperties(body, body_data->bstatic ? 0.0f : Util::clamp(body_data->mass, MIN_MASS, MAX_MASS), NewtonBodyGetCollision(body));
+	NewtonBodySetCentreOfMass(body, &com[0]);
 	return Util::to_value(body_data->bstatic);
 }
 
@@ -1588,6 +1607,7 @@ VALUE MSNewton::Body::copy(VALUE self, VALUE v_body, VALUE v_matrix, VALUE v_rea
 	new_data->user_data = rb_ary_new();
 	new_data->matrix_scale = dVector(body_data->matrix_scale);
 	new_data->default_collision_scale = dVector(body_data->default_collision_scale);
+	new_data->collision_scale = dVector(body_data->collision_scale);
 	new_data->default_collision_offset = dVector(body_data->default_collision_offset);
 	new_data->matrix_changed = false;
 	new_data->gravity_enabled = body_data->gravity_enabled;
@@ -1760,10 +1780,12 @@ VALUE MSNewton::Body::set_material_id(VALUE self, VALUE v_body, VALUE v_id) {
 
 VALUE MSNewton::Body::get_collision_scale(VALUE self, VALUE v_body) {
 	const NewtonBody* body = Util::value_to_body(v_body);
-	const NewtonCollision* collision = NewtonBodyGetCollision(body);
-	dFloat sx, sy, sz;
-	NewtonCollisionGetScale(collision, &sx, &sy, &sz);
-	return Util::vector_to_value(dVector(sx, sy, sz));
+	//const NewtonCollision* collision = NewtonBodyGetCollision(body);
+	//dFloat sx, sy, sz;
+	//NewtonCollisionGetScale(collision, &sx, &sy, &sz);
+	//return Util::vector_to_value(dVector(sx, sy, sz));
+	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
+	return Util::vector_to_value(body_data->collision_scale);
 }
 
 VALUE MSNewton::Body::set_collision_scale(VALUE self, VALUE v_body, VALUE v_scale) {
@@ -1776,6 +1798,7 @@ VALUE MSNewton::Body::set_collision_scale(VALUE self, VALUE v_body, VALUE v_scal
 	scale.m_x = Util::clamp(scale.m_x, 0.01f, 100.0f);
 	scale.m_y = Util::clamp(scale.m_y, 0.01f, 100.0f);
 	scale.m_z = Util::clamp(scale.m_z, 0.01f, 100.0f);
+	body_data->collision_scale = scale;
 	const dVector& dco = body_data->default_collision_offset;
 	const dVector& dcs = body_data->default_collision_scale;
 	dMatrix col_matrix;
@@ -1787,7 +1810,10 @@ VALUE MSNewton::Body::set_collision_scale(VALUE self, VALUE v_body, VALUE v_scal
 	NewtonBodySetCollisionScale(body, scale.m_x, scale.m_y, scale.m_z);
 	body_data->volume = NewtonConvexCollisionCalculateVolume(collision);
 	body_data->mass = body_data->density * body_data->volume;
+	dVector com;
+	NewtonBodyGetCentreOfMass(body, &com[0]);
 	NewtonBodySetMassProperties(body, body_data->bstatic ? 0.0f : Util::clamp(body_data->mass, MIN_MASS, MAX_MASS), collision);
+	NewtonBodySetCentreOfMass(body, &com[0]);
 	NewtonBodySetSleepState(body, 0);
 	return Util::vector_to_value(scale);
 }
@@ -1801,11 +1827,14 @@ VALUE MSNewton::Body::get_default_collision_scale(VALUE self, VALUE v_body) {
 VALUE MSNewton::Body::get_actual_matrix_scale(VALUE self, VALUE v_body) {
 	const NewtonBody* body = Util::value_to_body(v_body);
 	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
-	const NewtonCollision* collision = NewtonBodyGetCollision(body);
+	//const NewtonCollision* collision = NewtonBodyGetCollision(body);
 	const dVector& dcs = body_data->default_collision_scale;
 	const dVector& ms = body_data->matrix_scale;
-	dFloat csx, csy, csz;
-	NewtonCollisionGetScale(collision, &csx, &csy, &csz);
+	//dFloat csx, csy, csz;
+	//NewtonCollisionGetScale(collision, &csx, &csy, &csz);
+	dFloat csx = body_data->collision_scale.m_x;
+	dFloat csy = body_data->collision_scale.m_y;
+	dFloat csz = body_data->collision_scale.m_z;
 	dVector actual_matrix_scale(ms.m_x * csx / dcs.m_x, ms.m_y * csy / dcs.m_y, ms.m_z * csz / dcs.m_z);
 	return Util::vector_to_value(actual_matrix_scale);
 }

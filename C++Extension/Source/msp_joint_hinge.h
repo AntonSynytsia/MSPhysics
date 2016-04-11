@@ -14,8 +14,9 @@ private:
 	static const dFloat DEFAULT_MIN;
 	static const dFloat DEFAULT_MAX;
 	static const bool DEFAULT_LIMITS_ENABLED;
+	static const bool DEFAULT_STRONG_MODE_ENABLED;
 	static const dFloat DEFAULT_FRICTION;
-	static const dFloat DEFAULT_STIFF;
+	static const dFloat DEFAULT_ACCEL;
 	static const dFloat DEFAULT_DAMP;
 	static const bool DEFAULT_ROTATE_BACK_ENABLED;
 	static const dFloat DEFAULT_START_ANGLE;
@@ -31,8 +32,9 @@ public:
 		dFloat min;
 		dFloat max;
 		bool limits_enabled;
+		bool strong_mode_enabled;
 		dFloat friction;
-		dFloat stiff;
+		dFloat accel;
 		dFloat damp;
 		bool rotate_back_enabled;
 		dFloat start_angle;
@@ -62,8 +64,10 @@ public:
 	static VALUE set_friction(VALUE self, VALUE v_joint, VALUE v_friction);
 	static VALUE enable_limits(VALUE self, VALUE v_joint, VALUE v_state);
 	static VALUE limits_enabled(VALUE self, VALUE v_joint);
-	static VALUE get_stiff(VALUE self, VALUE v_joint);
-	static VALUE set_stiff(VALUE self, VALUE v_joint, VALUE v_stiff);
+	static VALUE enable_strong_mode(VALUE self, VALUE v_joint, VALUE v_state);
+	static VALUE strong_mode_enabled(VALUE self, VALUE v_joint);
+	static VALUE get_accel(VALUE self, VALUE v_joint);
+	static VALUE set_accel(VALUE self, VALUE v_joint, VALUE v_accel);
 	static VALUE get_damp(VALUE self, VALUE v_joint);
 	static VALUE set_damp(VALUE self, VALUE v_joint, VALUE v_damp);
 	static VALUE enable_rotate_back(VALUE self, VALUE v_joint, VALUE v_state);

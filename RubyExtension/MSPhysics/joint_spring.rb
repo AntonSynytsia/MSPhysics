@@ -5,9 +5,10 @@ module MSPhysics
 
     DEFAULT_MIN = -10.0
     DEFAULT_MAX = 10.0
-    DEFAULT_STIFF = 40.0
+    DEFAULT_ACCEL = 40.0
     DEFAULT_DAMP = 10.0
     DEFAULT_LIMITS_ENABLED = false
+    DEFAULT_STRONG_MODE_ENABLED = true
     DEFAULT_START_POSITION = 0.0
     DEFAULT_CONTROLLER = 1.0
 
@@ -16,15 +17,16 @@ module MSPhysics
     # @param [MSPhysics::Body, nil] parent
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
     #   Of the given matrix, matrix origin should represent pin origin, and
-    #   matrix Z-AXIS should represent pin up.
+    #   matrix Z-axis should represent pin up.
     def initialize(world, parent, pin_tra)
       super(world, parent, pin_tra, 6)
       MSPhysics::Newton::Spring.create(@address)
       MSPhysics::Newton::Spring.set_min(@address, DEFAULT_MIN)
       MSPhysics::Newton::Spring.set_max(@address, DEFAULT_MAX)
-      MSPhysics::Newton::Spring.set_stiff(@address, DEFAULT_STIFF)
+      MSPhysics::Newton::Spring.set_accel(@address, DEFAULT_ACCEL)
       MSPhysics::Newton::Spring.set_damp(@address, DEFAULT_DAMP)
       MSPhysics::Newton::Spring.enable_limits(@address, DEFAULT_LIMITS_ENABLED)
+      MSPhysics::Newton::Spring.enable_strong_mode(@address, DEFAULT_STRONG_MODE_ENABLED)
       MSPhysics::Newton::Spring.set_start_position(@address, DEFAULT_START_POSITION)
       MSPhysics::Newton::Spring.set_controller(@address, DEFAULT_CONTROLLER)
     end
@@ -58,31 +60,47 @@ module MSPhysics
       MSPhysics::Newton::Spring.limits_enabled?(@address)
     end
 
-    # Enable/Disable min and max position limits.
+    # Enable/disable min and max position limits.
     # @param [Boolean] state
     def limits_enabled=(state)
       MSPhysics::Newton::Spring.enable_limits(@address, state)
     end
 
-    # Get movement stiffness. Higher stiffness makes movement stronger.
+    # Determine whether strong stiff and damp mode is enabled.
+    # @return [Boolean]
+    def strong_mode_enabled?
+      MSPhysics::Newton::Spring.strong_mode_enabled?(@address)
+    end
+
+    # Enable/disable strong stiff and damp mode.
+    # @param [Boolean] state
+    def strong_mode_enabled=(state)
+      MSPhysics::Newton::Spring.enable_strong_mode(@address, state)
+    end
+
+    # Get movement acceleration.
+    # @note Higher acceleration makes movement faster.
     # @return [Numeric]
-    def stiff
-      MSPhysics::Newton::Spring.get_stiff(@address)
+    def accel
+      MSPhysics::Newton::Spring.get_accel(@address)
     end
 
-    # Set movement stiffness. Higher stiffness makes movement stronger.
+    # Set movement acceleration.
+    # @note Higher acceleration makes movement faster.
     # @param [Numeric] value A value greater than or equal to zero.
-    def stiff=(value)
-      MSPhysics::Newton::Spring.set_stiff(@address, value)
+    def accel=(value)
+      MSPhysics::Newton::Spring.set_accel(@address, value)
     end
 
-    # Get movement damper. Higher damper makes movement slower.
+    # Get movement damper.
+    # @note Higher damper makes movement stronger.
     # @return [Numeric]
     def damp
       MSPhysics::Newton::Spring.get_damp(@address)
     end
 
-    # Set movement damper. Higher damper makes movement slower.
+    # Set movement damper.
+    # @note Higher damper makes movement stronger.
     # @param [Numeric] value A value greater than or equal to zero.
     def damp=(value)
       MSPhysics::Newton::Spring.set_damp(@address, value)
@@ -106,7 +124,7 @@ module MSPhysics
       MSPhysics::Newton::Spring.get_cur_acceleration(@address)
     end
 
-    # Get starting position along joint Z-AXIS in meters.
+    # Get starting position along joint Z-axis in meters.
     # @note The actual starting position is
     #   <tt>start_posistion * controller</tt>.
     # @return [Numeric]
@@ -114,7 +132,7 @@ module MSPhysics
       MSPhysics::Newton::Spring.get_start_position(@address)
     end
 
-    # Set starting position along joint Z-AXIS in meters.
+    # Set starting position along joint Z-axis in meters.
     # @note The actual starting position is
     #   <tt>start_posistion * controller</tt>.
     # @param [Numeric] position

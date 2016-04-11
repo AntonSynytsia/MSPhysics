@@ -389,6 +389,7 @@ VALUE MSNewton::World::create(VALUE self, VALUE v_world_scale) {
 	NewtonSetSolverModel(world, DEFAULT_SOLVER_MODEL);
 	NewtonSetFrictionModel(world, DEFAULT_FRICTION_MODEL);
 	NewtonSetSolverConvergenceQuality(world, DEFAULT_CONVERGENCE_QUALITY);
+	NewtonSelectBroadphaseAlgorithm(world, 0);
 
 	NewtonMaterialSetCollisionCallback(world, id, id, aabb_overlap_callback, contact_callback);
 	NewtonWorldSetDestructorCallback(world, destructor_callback);

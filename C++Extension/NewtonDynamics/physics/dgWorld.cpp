@@ -432,7 +432,7 @@ dgFloat32 dgWorld::GetContactMergeTolerance() const
 
 void dgWorld::SetContactMergeTolerance(dgFloat32 tolerenace)
 {
-	m_contactTolerance = dgMax (tolerenace, dgFloat32 (1.e-3));
+	m_contactTolerance = dgMax (tolerenace, dgFloat32 (1.e-3f));
 }
 
 
@@ -958,6 +958,7 @@ void dgWorld::StepDynamics (dgFloat32 timestep)
 	UpdateDynamics (timestep);
 
 	if (m_postListener.GetCount()) {
+		dTimeTrackerEvent("postListeners");
 		for (dgListenerList::dgListNode* node = m_postListener.GetFirst(); node; node = node->GetNext()) {
 			dgListener& listener = node->GetInfo();
 			listener.m_onListenerUpdate (this, listener.m_userData, timestep);

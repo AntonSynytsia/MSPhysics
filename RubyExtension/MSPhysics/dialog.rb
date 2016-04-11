@@ -57,6 +57,66 @@ module MSPhysics
         # Sound dialog
         update_sound_state
         # Body dialog
+        update_body_state
+        # Joint dialog
+        update_joint_state
+        # Update size
+        @dialog.execute_script("update_size();")
+      end
+
+      # @api private
+      # Update dialog style.
+      # @return [void]
+      def update_dialog_style
+        return unless @handle
+        style = AMS::Window.get_long(@handle, -16)
+        new_style = @active_tab == 3 && @selected_body && @selected_body.parent.is_a?(Sketchup::Model) ? style | 0x00050000 : style & ~0x01050000
+        AMS::Window.lock_update(@handle)
+        AMS::Window.set_long(@handle, -16, new_style)
+        AMS::Window.lock_update(nil)
+        AMS::Window.set_pos(@handle, 0, 0, 0, 0, 0, 0x0237)
+      end
+
+      # @api private
+      # Update UI simulation tab.
+      # @return [void]
+      def update_simulation_state
+        return unless is_visible?
+        settings = MSPhysics::Settings
+        cmd = ''
+        cmd << "$('#simulation-solver_model').val('#{settings.get_solver_model}');"
+        cmd << "$('#simulation-solver_model').trigger('chosen:updated');"
+        cmd << "$('#simulation-friction_model').val('#{settings.get_friction_model}');"
+        cmd << "$('#simulation-friction_model').trigger('chosen:updated');"
+        cmd << "$('#simulation-update_timestep').val('#{(1.0/settings.get_update_timestep).round}');"
+        cmd << "$('#simulation-update_timestep').trigger('chosen:updated');"
+        cmd << "$('#simulation-continuous_collision').prop('checked', #{settings.get_continuous_collision_state});"
+        cmd << "$('#simulation-collision_wireframe').prop('checked', #{settings.collision_wireframe_visible?});"
+        cmd << "$('#simulation-axes').prop('checked', #{settings.axes_visible?});"
+        cmd << "$('#simulation-aabb').prop('checked', #{settings.aabb_visible?});"
+        cmd << "$('#simulation-contact_points').prop('checked', #{settings.contact_points_visible?});"
+        cmd << "$('#simulation-contact_forces').prop('checked', #{settings.contact_forces_visible?});"
+        cmd << "$('#simulation-bodies').prop('checked', #{settings.bodies_visible?});"
+        cmd << "$('#simulation-gravity').val('#{ format_value(settings.get_gravity, @precision) }');"
+        cmd << "$('#simulation-material_thickness').val('#{ format_value(settings.get_material_thickness * 32.0, @precision) }');"
+        cmd << "$('#simulation-update_rate').val('#{settings.get_update_rate}');"
+        cmd << "$('#simulation-world_scale').val('#{ format_value(settings.get_world_scale, @precision) }');"
+        @dialog.execute_script(cmd)
+      end
+
+      # @api private
+      # Update UI properties tab.
+      # @return [void]
+      def update_body_state
+        return unless is_visible?
+        model = Sketchup.active_model
+        sel = model.selection.to_a
+        bodies = []
+        sel.each { |ent|
+          next unless ent.is_a?(Sketchup::Group) || ent.is_a?(Sketchup::ComponentInstance)
+          bodies << ent if ent.get_attribute('MSPhysics', 'Type', 'Body') == 'Body'
+        }
+        cmd = ''
         if bodies.size == 1
           @selected_body = bodies[0]
           # Top level entities have access to the full body properties.
@@ -107,7 +167,7 @@ module MSPhysics
             cmd << "$('#body-material').val('#{material}');"
             cmd << "$('#body-material').trigger('chosen:updated');"
             # Display state and other check-box properties
-            ['Ignore', 'Collidable', 'Static', 'Frozen', 'Auto Sleep', 'Enable Friction', 'Magnetic', 'Enable Script', 'Continuous Collision', 'Enable Gravity', 'Thruster Lock Axis', 'Emitter Lock Axis', 'Enable Thruster', 'Enable Emitter'].each { |option|
+            ['Ignore', 'Collidable', 'Static', 'Frozen', 'Auto Sleep', 'Enable Friction', 'Magnetic', 'Enable Script', 'Continuous Collision', 'Enable Gravity', 'Thruster Lock Axis', 'Emitter Lock Axis', 'Enable Thruster', 'Enable Emitter', 'Connect Closest Joints'].each { |option|
               property = option.downcase.gsub(' ', '_')
               default_state = default[property.to_sym]
               state = @selected_body.get_attribute('MSPhysics Body', option, default_state) ? true : false
@@ -147,7 +207,22 @@ module MSPhysics
           cmd << "$('#tab3-none').css('display', 'block');"
           cmd << "$('#tab3-content').css('display', 'none');"
         end
-        # Joint tab
+        @dialog.execute_script(cmd)
+      end
+
+      # @api private
+      # Update UI joint tab.
+      # @return [void]
+      def update_joint_state
+        return unless is_visible?
+        model = Sketchup.active_model
+        sel = model.selection.to_a
+        joints = []
+        sel.each { |ent|
+          next unless ent.is_a?(Sketchup::Group) || ent.is_a?(Sketchup::ComponentInstance)
+          joints << ent if ent.get_attribute('MSPhysics', 'Type', 'Body') == 'Joint'
+        }
+        cmd = ''
         cmd << "$('#tab4-none').css('display', 'block');"
         cmd << "$('#tab4-general').css('display', 'none');"
         cmd << "$('#tab4-fixed').css('display', 'none');"
@@ -160,212 +235,245 @@ module MSPhysics
         cmd << "$('#tab4-up_vector').css('display', 'none');"
         cmd << "$('#tab4-corkscrew').css('display', 'none');"
         cmd << "$('#tab4-ball_and_socket').css('display', 'none');"
+        cmd << "$('#tab4-universal').css('display', 'none');"
 
         if joints.size == 1
           @selected_joint = joints[0]
+          jdict = 'MSPhysics Joint'
+          attr = @selected_joint.get_attribute(jdict, 'Angle Units', MSPhysics::DEFAULT_ANGLE_UNITS)
+          ang_ratio = attr == 'deg' ? 1.degrees : 1
+          iang_ratio = 1.0 / ang_ratio
+          attr = @selected_joint.get_attribute(jdict, 'Position Units', MSPhysics::DEFAULT_POSITION_UNITS)
+          pos_ratio = case attr
+            when 'mm'
+              0.001
+            when 'cm'
+              0.01
+            when 'dm'
+              0.1
+            when 'm'
+              1.0
+            when 'in'
+              0.0254
+            when 'ft'
+              0.3048
+            when 'yd'
+              0.9144
+            else
+              1.0
+          end
+          ipos_ratio = 1.0 / pos_ratio
+
           cmd << "$('#tab4-none').css('display', 'none');"
           cmd << "$('#tab4-general').css('display', 'block');"
 
-          attr = @selected_joint.get_attribute('MSPhysics Joint', 'Constraint Type', MSPhysics::Joint::DEFAULT_CONSTRAINT_TYPE).to_i
+          attr = @selected_joint.get_attribute(jdict, 'Constraint Type', MSPhysics::Joint::DEFAULT_CONSTRAINT_TYPE).to_i
           cmd << "$('#joint_constraint-#{attr == 0 ? 'standard' : (attr == 1 ? 'flexible' : 'robust')}').prop('checked', true);"
-          attr = @selected_joint.get_attribute('MSPhysics Joint', 'Name').to_s
-          attr = @selected_joint.get_attribute('MSPhysics Joint', 'ID') if attr.empty?
+          attr = @selected_joint.get_attribute(jdict, 'Name').to_s
+          attr = @selected_joint.get_attribute(jdict, 'ID') if attr.empty?
           cmd << "$('#joint-name').val(#{attr.inspect});"
-          attr = @selected_joint.get_attribute('MSPhysics Joint', 'Stiffness', MSPhysics::Joint::DEFAULT_STIFFNESS)
+          attr = @selected_joint.get_attribute(jdict, 'Stiffness', MSPhysics::Joint::DEFAULT_STIFFNESS)
           cmd << "$('#joint-stiffness').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), @precision) }');"
-          attr = @selected_joint.get_attribute('MSPhysics Joint', 'Bodies Collidable', MSPhysics::Joint::DEFAULT_BODIES_COLLIDABLE)
+          attr = @selected_joint.get_attribute(jdict, 'Bodies Collidable', MSPhysics::Joint::DEFAULT_BODIES_COLLIDABLE)
           cmd << "$('#joint-bodies_collidable').prop('checked', #{attr ? true : false});"
-          attr = @selected_joint.get_attribute('MSPhysics Joint', 'Breaking Force', MSPhysics::Joint::DEFAULT_BREAKING_FORCE)
+          attr = @selected_joint.get_attribute(jdict, 'Breaking Force', MSPhysics::Joint::DEFAULT_BREAKING_FORCE)
           cmd << "$('#joint-breaking_force').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
 
-          joint_type = @selected_joint.get_attribute('MSPhysics Joint', 'Type')
+          joint_type = @selected_joint.get_attribute(jdict, 'Type')
           case joint_type
           when 'Fixed'
             cmd << "$('#tab4-fixed').css('display', 'block');"
           when 'Hinge'
             cmd << "$('#tab4-hinge').css('display', 'block');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Min', MSPhysics::Hinge::DEFAULT_MIN)
+            attr = @selected_joint.get_attribute(jdict, 'Angle Units', MSPhysics::DEFAULT_ANGLE_UNITS).to_s
+            cmd << "$('#hinge-angle_units').val('#{attr}');"
+            cmd << "$('#hinge-angle_units').trigger('chosen:updated');"
+            attr = @selected_joint.get_attribute(jdict, 'Min', fix_numeric_value(MSPhysics::Hinge::DEFAULT_MIN * iang_ratio))
             cmd << "$('#hinge-min').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Max', MSPhysics::Hinge::DEFAULT_MAX)
+            attr = @selected_joint.get_attribute(jdict, 'Max', fix_numeric_value(MSPhysics::Hinge::DEFAULT_MAX * iang_ratio))
             cmd << "$('#hinge-max').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Limits', MSPhysics::Hinge::DEFAULT_LIMITS_ENABLED)
+            attr = @selected_joint.get_attribute(jdict, 'Enable Limits', MSPhysics::Hinge::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#hinge-enable_limits').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Friction', MSPhysics::Hinge::DEFAULT_FRICTION)
+            attr = @selected_joint.get_attribute(jdict, 'Friction', fix_numeric_value(MSPhysics::Hinge::DEFAULT_FRICTION))
             cmd << "$('#hinge-friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Stiff', MSPhysics::Hinge::DEFAULT_STIFF)
-            cmd << "$('#hinge-stiff').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Damp', MSPhysics::Hinge::DEFAULT_DAMP)
+            attr = @selected_joint.get_attribute(jdict, 'Accel', fix_numeric_value(MSPhysics::Hinge::DEFAULT_ACCEL))
+            cmd << "$('#hinge-accel').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            attr = @selected_joint.get_attribute(jdict, 'Damp', fix_numeric_value(MSPhysics::Hinge::DEFAULT_DAMP))
             cmd << "$('#hinge-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Rotate Back', MSPhysics::Hinge::DEFAULT_ROTATE_BACK_ENABLED)
+            attr = @selected_joint.get_attribute(jdict, 'Enable Rotate Back', MSPhysics::Hinge::DEFAULT_ROTATE_BACK_ENABLED)
             cmd << "$('#hinge-enable_rotate_back').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Start Angle', MSPhysics::Hinge::DEFAULT_START_ANGLE)
+            attr = @selected_joint.get_attribute(jdict, 'Enable Strong Mode', MSPhysics::Hinge::DEFAULT_STRONG_MODE_ENABLED)
+            cmd << "$('#hinge-enable_strong_mode').prop('checked', #{attr ? true : false});"
+            attr = @selected_joint.get_attribute(jdict, 'Start Angle', fix_numeric_value(MSPhysics::Hinge::DEFAULT_START_ANGLE * iang_ratio))
             cmd << "$('#hinge-start_angle').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Controller', MSPhysics::Hinge::DEFAULT_CONTROLLER.to_s)
+            attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::Hinge::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#hinge-controller').val(#{attr.inspect});"
           when 'Motor'
             cmd << "$('#tab4-motor').css('display', 'block');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Accel', MSPhysics::Motor::DEFAULT_ACCEL)
+            attr = @selected_joint.get_attribute(jdict, 'Accel', fix_numeric_value(MSPhysics::Motor::DEFAULT_ACCEL))
             cmd << "$('#motor-accel').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Damp', MSPhysics::Motor::DEFAULT_DAMP)
+            attr = @selected_joint.get_attribute(jdict, 'Damp', fix_numeric_value(MSPhysics::Motor::DEFAULT_DAMP))
             cmd << "$('#motor-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Free Rotate', MSPhysics::Motor::DEFAULT_FREE_ROTATE_ENABLED)
+            attr = @selected_joint.get_attribute(jdict, 'Enable Free Rotate', MSPhysics::Motor::DEFAULT_FREE_ROTATE_ENABLED)
             cmd << "$('#motor-enable_free_rotate').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Controller', MSPhysics::Motor::DEFAULT_CONTROLLER.to_s)
+            attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::Motor::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#motor-controller').val(#{attr.inspect});"
           when 'Servo'
             cmd << "$('#tab4-servo').css('display', 'block');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Min', MSPhysics::Servo::DEFAULT_MIN)
+            attr = @selected_joint.get_attribute(jdict, 'Angle Units', MSPhysics::DEFAULT_ANGLE_UNITS).to_s
+            cmd << "$('#servo-angle_units').val('#{attr}');"
+            cmd << "$('#servo-angle_units').trigger('chosen:updated');"
+            attr = @selected_joint.get_attribute(jdict, 'Min', fix_numeric_value(MSPhysics::Servo::DEFAULT_MIN * iang_ratio))
             cmd << "$('#servo-min').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Max', MSPhysics::Servo::DEFAULT_MAX)
+            attr = @selected_joint.get_attribute(jdict, 'Max', fix_numeric_value(MSPhysics::Servo::DEFAULT_MAX * iang_ratio))
             cmd << "$('#servo-max').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Limits', MSPhysics::Servo::DEFAULT_LIMITS_ENABLED)
+            attr = @selected_joint.get_attribute(jdict, 'Enable Limits', MSPhysics::Servo::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#servo-enable_limits').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Accel', MSPhysics::Servo::DEFAULT_ACCEL)
+            attr = @selected_joint.get_attribute(jdict, 'Accel', fix_numeric_value(MSPhysics::Servo::DEFAULT_ACCEL))
             cmd << "$('#servo-accel').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Damp', MSPhysics::Servo::DEFAULT_DAMP)
+            attr = @selected_joint.get_attribute(jdict, 'Damp', fix_numeric_value(MSPhysics::Servo::DEFAULT_DAMP))
             cmd << "$('#servo-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Reduction Ratio', MSPhysics::Servo::DEFAULT_REDUCTION_RATIO)
+            attr = @selected_joint.get_attribute(jdict, 'Reduction Ratio', fix_numeric_value(MSPhysics::Servo::DEFAULT_REDUCTION_RATIO))
             cmd << "$('#servo-reduction_ratio').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Sp Mode', MSPhysics::Servo::DEFAULT_SP_MODE_ENABLED)
+            attr = @selected_joint.get_attribute(jdict, 'Enable Sp Mode', MSPhysics::Servo::DEFAULT_SP_MODE_ENABLED)
             cmd << "$('#servo-enable_sp_mode').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Controller', MSPhysics::Servo::DEFAULT_CONTROLLER.to_s)
+            attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::Servo::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#servo-controller').val(#{attr.inspect});"
           when 'Slider'
             cmd << "$('#tab4-slider').css('display', 'block');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Min', MSPhysics::Slider::DEFAULT_MIN)
+            attr = @selected_joint.get_attribute(jdict, 'Position Units', MSPhysics::DEFAULT_POSITION_UNITS).to_s
+            cmd << "$('#slider-position_units').val('#{attr}');"
+            cmd << "$('#slider-position_units').trigger('chosen:updated');"
+            attr = @selected_joint.get_attribute(jdict, 'Min', fix_numeric_value(MSPhysics::Slider::DEFAULT_MIN * ipos_ratio))
             cmd << "$('#slider-min').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Max', MSPhysics::Slider::DEFAULT_MAX)
+            attr = @selected_joint.get_attribute(jdict, 'Max', fix_numeric_value(MSPhysics::Slider::DEFAULT_MAX * ipos_ratio))
             cmd << "$('#slider-max').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Limits', MSPhysics::Slider::DEFAULT_LIMITS_ENABLED)
+            attr = @selected_joint.get_attribute(jdict, 'Enable Limits', MSPhysics::Slider::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#slider-enable_limits').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Friction', MSPhysics::Slider::DEFAULT_FRICTION)
+            attr = @selected_joint.get_attribute(jdict, 'Friction', fix_numeric_value(MSPhysics::Slider::DEFAULT_FRICTION))
             cmd << "$('#slider-friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Controller', MSPhysics::Slider::DEFAULT_CONTROLLER.to_s)
+            attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::Slider::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#slider-controller').val(#{attr.inspect});"
           when 'Piston'
             cmd << "$('#tab4-piston').css('display', 'block');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Min', MSPhysics::Piston::DEFAULT_MIN)
+            attr = @selected_joint.get_attribute(jdict, 'Position Units', MSPhysics::DEFAULT_POSITION_UNITS).to_s
+            cmd << "$('#piston-position_units').val('#{attr}');"
+            cmd << "$('#piston-position_units').trigger('chosen:updated');"
+            attr = @selected_joint.get_attribute(jdict, 'Min', fix_numeric_value(MSPhysics::Piston::DEFAULT_MIN * ipos_ratio))
             cmd << "$('#piston-min').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Max', MSPhysics::Piston::DEFAULT_MAX)
+            attr = @selected_joint.get_attribute(jdict, 'Max', fix_numeric_value(MSPhysics::Piston::DEFAULT_MAX * ipos_ratio))
             cmd << "$('#piston-max').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Limits', MSPhysics::Piston::DEFAULT_LIMITS_ENABLED)
+            attr = @selected_joint.get_attribute(jdict, 'Enable Limits', MSPhysics::Piston::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#piston-enable_limits').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Linear Rate', MSPhysics::Piston::DEFAULT_LINEAR_RATE)
+            attr = @selected_joint.get_attribute(jdict, 'Linear Rate', fix_numeric_value(MSPhysics::Piston::DEFAULT_LINEAR_RATE * ipos_ratio))
             cmd << "$('#piston-linear_rate').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Strength', MSPhysics::Piston::DEFAULT_STRENGTH)
+            attr = @selected_joint.get_attribute(jdict, 'Strength', fix_numeric_value(MSPhysics::Piston::DEFAULT_STRENGTH))
             cmd << "$('#piston-strength').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Reduction Ratio', MSPhysics::Piston::DEFAULT_REDUCTION_RATIO)
+            attr = @selected_joint.get_attribute(jdict, 'Reduction Ratio', fix_numeric_value(MSPhysics::Piston::DEFAULT_REDUCTION_RATIO))
             cmd << "$('#piston-reduction_ratio').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Controller', MSPhysics::Piston::DEFAULT_CONTROLLER.to_s)
+            attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::Piston::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#piston-controller').val(#{attr.inspect});"
           when 'Spring'
             cmd << "$('#tab4-spring').css('display', 'block');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Min', MSPhysics::Spring::DEFAULT_MIN)
+            attr = @selected_joint.get_attribute(jdict, 'Position Units', MSPhysics::DEFAULT_POSITION_UNITS).to_s
+            cmd << "$('#spring-position_units').val('#{attr}');"
+            cmd << "$('#spring-position_units').trigger('chosen:updated');"
+            attr = @selected_joint.get_attribute(jdict, 'Min', fix_numeric_value(MSPhysics::Spring::DEFAULT_MIN * ipos_ratio))
             cmd << "$('#spring-min').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Max', MSPhysics::Spring::DEFAULT_MAX)
+            attr = @selected_joint.get_attribute(jdict, 'Max', fix_numeric_value(MSPhysics::Spring::DEFAULT_MAX * ipos_ratio))
             cmd << "$('#spring-max').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Limits', MSPhysics::Spring::DEFAULT_LIMITS_ENABLED)
+            attr = @selected_joint.get_attribute(jdict, 'Enable Limits', MSPhysics::Spring::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#spring-enable_limits').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Stiff', MSPhysics::Spring::DEFAULT_STIFF)
-            cmd << "$('#spring-stiff').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Damp', MSPhysics::Spring::DEFAULT_DAMP)
+            attr = @selected_joint.get_attribute(jdict, 'Accel', fix_numeric_value(MSPhysics::Spring::DEFAULT_ACCEL))
+            cmd << "$('#spring-accel').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            attr = @selected_joint.get_attribute(jdict, 'Damp', fix_numeric_value(MSPhysics::Spring::DEFAULT_DAMP))
             cmd << "$('#spring-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Start Position', MSPhysics::Spring::DEFAULT_START_POSITION)
+            attr = @selected_joint.get_attribute(jdict, 'Enable Strong Mode', MSPhysics::Spring::DEFAULT_STRONG_MODE_ENABLED)
+            cmd << "$('#spring-enable_strong_mode').prop('checked', #{attr ? true : false});"
+            attr = @selected_joint.get_attribute(jdict, 'Start Position', fix_numeric_value(MSPhysics::Spring::DEFAULT_START_POSITION * ipos_ratio))
             cmd << "$('#spring-start_position').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Controller', MSPhysics::Spring::DEFAULT_CONTROLLER.to_s)
+            attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::Spring::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#spring-controller').val(#{attr.inspect});"
           when 'UpVector'
             cmd << "$('#tab4-up_vector').css('display', 'block');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Stiff', MSPhysics::UpVector::DEFAULT_STIFF)
-            cmd << "$('#up_vector-stiff').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Damp', MSPhysics::UpVector::DEFAULT_DAMP)
+            attr = @selected_joint.get_attribute(jdict, 'Accel', fix_numeric_value(MSPhysics::UpVector::DEFAULT_ACCEL))
+            cmd << "$('#up_vector-accel').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            attr = @selected_joint.get_attribute(jdict, 'Damp', fix_numeric_value(MSPhysics::UpVector::DEFAULT_DAMP))
             cmd << "$('#up_vector-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Damper', MSPhysics::UpVector::DEFAULT_DAMPER_ENABLED)
+            attr = @selected_joint.get_attribute(jdict, 'Enable Damper', MSPhysics::UpVector::DEFAULT_DAMPER_ENABLED)
             cmd << "$('#up_vector-enable_damper').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Controller', MSPhysics::UpVector::DEFAULT_PIN_DIR.to_a.to_s)
+            attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::UpVector::DEFAULT_PIN_DIR.to_a.to_s)
             cmd << "$('#up_vector-controller').val(#{attr.inspect});"
           when 'Corkscrew'
             cmd << "$('#tab4-corkscrew').css('display', 'block');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Min Position', MSPhysics::Corkscrew::DEFAULT_MIN_POSITION)
+            attr = @selected_joint.get_attribute(jdict, 'Position Units', MSPhysics::DEFAULT_POSITION_UNITS).to_s
+            cmd << "$('#corkscrew-position_units').val('#{attr}');"
+            cmd << "$('#corkscrew-position_units').trigger('chosen:updated');"
+            attr = @selected_joint.get_attribute(jdict, 'Min Position', fix_numeric_value(MSPhysics::Corkscrew::DEFAULT_MIN_POSITION * ipos_ratio))
             cmd << "$('#corkscrew-min_position').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Max Position', MSPhysics::Corkscrew::DEFAULT_MAX_POSITION)
+            attr = @selected_joint.get_attribute(jdict, 'Max Position', fix_numeric_value(MSPhysics::Corkscrew::DEFAULT_MAX_POSITION * ipos_ratio))
             cmd << "$('#corkscrew-max_position').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Linear Limits', MSPhysics::Corkscrew::DEFAULT_LINEAR_LIMITS_ENABLED)
+            attr = @selected_joint.get_attribute(jdict, 'Enable Linear Limits', MSPhysics::Corkscrew::DEFAULT_LINEAR_LIMITS_ENABLED)
             cmd << "$('#corkscrew-enable_linear_limits').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Linear Friction', MSPhysics::Corkscrew::DEFAULT_LINEAR_FRICTION)
+            attr = @selected_joint.get_attribute(jdict, 'Linear Friction', fix_numeric_value(MSPhysics::Corkscrew::DEFAULT_LINEAR_FRICTION))
             cmd << "$('#corkscrew-linear_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Min Angle', MSPhysics::Corkscrew::DEFAULT_MIN_ANGLE)
+            attr = @selected_joint.get_attribute(jdict, 'Angle Units', MSPhysics::DEFAULT_ANGLE_UNITS).to_s
+            cmd << "$('#corkscrew-angle_units').val('#{attr}');"
+            cmd << "$('#corkscrew-angle_units').trigger('chosen:updated');"
+            attr = @selected_joint.get_attribute(jdict, 'Min Angle', fix_numeric_value(MSPhysics::Corkscrew::DEFAULT_MIN_ANGLE * iang_ratio))
             cmd << "$('#corkscrew-min_angle').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Max Angle', MSPhysics::Corkscrew::DEFAULT_MAX_ANGLE)
+            attr = @selected_joint.get_attribute(jdict, 'Max Angle', fix_numeric_value(MSPhysics::Corkscrew::DEFAULT_MAX_ANGLE * iang_ratio))
             cmd << "$('#corkscrew-max_angle').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Angular Limits', MSPhysics::Corkscrew::DEFAULT_ANGULAR_LIMITS_ENABLED)
+            attr = @selected_joint.get_attribute(jdict, 'Enable Angular Limits', MSPhysics::Corkscrew::DEFAULT_ANGULAR_LIMITS_ENABLED)
             cmd << "$('#corkscrew-enable_angular_limits').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Angular Friction', MSPhysics::Corkscrew::DEFAULT_ANGULAR_FRICTION)
+            attr = @selected_joint.get_attribute(jdict, 'Angular Friction', fix_numeric_value(MSPhysics::Corkscrew::DEFAULT_ANGULAR_FRICTION))
             cmd << "$('#corkscrew-angular_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
           when 'BallAndSocket'
             cmd << "$('#tab4-ball_and_socket').css('display', 'block');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Stiff', MSPhysics::BallAndSocket::DEFAULT_STIFF)
-            cmd << "$('#ball_and_socket-stiff').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Damp', MSPhysics::BallAndSocket::DEFAULT_DAMP)
-            cmd << "$('#ball_and_socket-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Damper', MSPhysics::BallAndSocket::DEFAULT_DAMPER_ENABLED)
-            cmd << "$('#ball_and_socket-enable_damper').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Max Cone Angle', MSPhysics::BallAndSocket::DEFAULT_MAX_CONE_ANGLE)
+            attr = @selected_joint.get_attribute(jdict, 'Angle Units', MSPhysics::DEFAULT_ANGLE_UNITS).to_s
+            cmd << "$('#ball_and_socket-angle_units').val('#{attr}');"
+            cmd << "$('#ball_and_socket-angle_units').trigger('chosen:updated');"
+            attr = @selected_joint.get_attribute(jdict, 'Max Cone Angle', fix_numeric_value(MSPhysics::BallAndSocket::DEFAULT_MAX_CONE_ANGLE * iang_ratio))
             cmd << "$('#ball_and_socket-max_cone_angle').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Cone Limits', MSPhysics::BallAndSocket::DEFAULT_CONE_LIMITS_ENABLED)
+            attr = @selected_joint.get_attribute(jdict, 'Enable Cone Limits', MSPhysics::BallAndSocket::DEFAULT_CONE_LIMITS_ENABLED)
             cmd << "$('#ball_and_socket-enable_cone_limits').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Min Twist Angle', MSPhysics::BallAndSocket::DEFAULT_MIN_TWIST_ANGLE)
+            attr = @selected_joint.get_attribute(jdict, 'Min Twist Angle', fix_numeric_value(MSPhysics::BallAndSocket::DEFAULT_MIN_TWIST_ANGLE * iang_ratio))
             cmd << "$('#ball_and_socket-min_twist_angle').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Max Twist Angle', MSPhysics::BallAndSocket::DEFAULT_MAX_TWIST_ANGLE)
+            attr = @selected_joint.get_attribute(jdict, 'Max Twist Angle', fix_numeric_value(MSPhysics::BallAndSocket::DEFAULT_MAX_TWIST_ANGLE * iang_ratio))
             cmd << "$('#ball_and_socket-max_twist_angle').val('#{ format_value(attr.to_f, @precision) }');"
-            attr = @selected_joint.get_attribute('MSPhysics Joint', 'Enable Twist Limits', MSPhysics::BallAndSocket::DEFAULT_TWIST_LIMITS_ENABLED)
+            attr = @selected_joint.get_attribute(jdict, 'Enable Twist Limits', MSPhysics::BallAndSocket::DEFAULT_TWIST_LIMITS_ENABLED)
             cmd << "$('#ball_and_socket-enable_twist_limits').prop('checked', #{attr ? true : false});"
+            attr = @selected_joint.get_attribute(jdict, 'Friction', fix_numeric_value(MSPhysics::BallAndSocket::DEFAULT_FRICTION))
+            cmd << "$('#ball_and_socket-friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::BallAndSocket::DEFAULT_CONTROLLER.to_s)
+            cmd << "$('#ball_and_socket-controller').val(#{attr.inspect});"
+          when 'Universal'
+            cmd << "$('#tab4-universal').css('display', 'block');"
+            cmd << "$('#tab4-universal').css('display', 'block');"
+            attr = @selected_joint.get_attribute(jdict, 'Angle Units', MSPhysics::DEFAULT_ANGLE_UNITS).to_s
+            cmd << "$('#universal-angle_units').val('#{attr}');"
+            cmd << "$('#universal-angle_units').trigger('chosen:updated');"
+            attr = @selected_joint.get_attribute(jdict, 'Min1', fix_numeric_value(MSPhysics::Universal::DEFAULT_MIN * iang_ratio))
+            cmd << "$('#universal-min1').val('#{ format_value(attr.to_f, @precision) }');"
+            attr = @selected_joint.get_attribute(jdict, 'Max1', fix_numeric_value(MSPhysics::Universal::DEFAULT_MAX * iang_ratio))
+            cmd << "$('#universal-max1').val('#{ format_value(attr.to_f, @precision) }');"
+            attr = @selected_joint.get_attribute(jdict, 'Enable Limits1', MSPhysics::Universal::DEFAULT_LIMITS_ENABLED)
+            cmd << "$('#universal-enable_limits1').prop('checked', #{attr ? true : false});"
+            attr = @selected_joint.get_attribute(jdict, 'Min2', fix_numeric_value(MSPhysics::Universal::DEFAULT_MIN * iang_ratio))
+            cmd << "$('#universal-min2').val('#{ format_value(attr.to_f, @precision) }');"
+            attr = @selected_joint.get_attribute(jdict, 'Max2', fix_numeric_value(MSPhysics::Universal::DEFAULT_MAX * iang_ratio))
+            cmd << "$('#universal-max2').val('#{ format_value(attr.to_f, @precision) }');"
+            attr = @selected_joint.get_attribute(jdict, 'Enable Limits2', MSPhysics::Universal::DEFAULT_LIMITS_ENABLED)
+            cmd << "$('#universal-enable_limits2').prop('checked', #{attr ? true : false});"
+            attr = @selected_joint.get_attribute(jdict, 'Friction', fix_numeric_value(MSPhysics::Universal::DEFAULT_FRICTION))
+            cmd << "$('#universal-friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::Universal::DEFAULT_CONTROLLER.to_s)
+            cmd << "$('#universal-controller').val(#{attr.inspect});"
           end
           cmd << "activate_tab(4);" unless @selected_body
         else
           @selected_joint = nil
         end
-        cmd << "update_size();"
-        @dialog.execute_script(cmd)
-      end
-
-      # @api private
-      # Update dialog style.
-      # @return [void]
-      def update_dialog_style
-        return unless @handle
-        style = AMS::Window.get_long(@handle, -16)
-        new_style = @active_tab == 3 && @selected_body && @selected_body.parent.is_a?(Sketchup::Model) ? style | 0x00050000 : style & ~0x01050000
-        AMS::Window.lock_update(@handle)
-        AMS::Window.set_long(@handle, -16, new_style)
-        AMS::Window.lock_update(nil)
-        AMS::Window.set_pos(@handle, 0, 0, 0, 0, 0, 0x0237)
-      end
-
-      # @api private
-      # Update UI simulation tab.
-      # @return [void]
-      def update_simulation_state
-        return unless is_visible?
-        settings = MSPhysics::Settings
-        cmd = ''
-        cmd << "$('#simulation-solver_model').val('#{settings.get_solver_model}');"
-        cmd << "$('#simulation-solver_model').trigger('chosen:updated');"
-        cmd << "$('#simulation-friction_model').val('#{settings.get_friction_model}');"
-        cmd << "$('#simulation-friction_model').trigger('chosen:updated');"
-        cmd << "$('#simulation-update_timestep').val('#{(1.0/settings.get_update_timestep).round}');"
-        cmd << "$('#simulation-update_timestep').trigger('chosen:updated');"
-        cmd << "$('#simulation-continuous_collision').prop('checked', #{settings.get_continuous_collision_state});"
-        cmd << "$('#simulation-collision_wireframe').prop('checked', #{settings.collision_wireframe_visible?});"
-        cmd << "$('#simulation-axis').prop('checked', #{settings.axis_visible?});"
-        cmd << "$('#simulation-aabb').prop('checked', #{settings.aabb_visible?});"
-        cmd << "$('#simulation-contact_points').prop('checked', #{settings.contact_points_visible?});"
-        cmd << "$('#simulation-contact_forces').prop('checked', #{settings.contact_forces_visible?});"
-        cmd << "$('#simulation-bodies').prop('checked', #{settings.bodies_visible?});"
-        cmd << "$('#simulation-gravity').val('#{ format_value(settings.get_gravity, @precision) }');"
-        cmd << "$('#simulation-material_thickness').val('#{ format_value(settings.get_material_thickness * 32.0, @precision) }');"
-        cmd << "$('#simulation-update_rate').val('#{settings.get_update_rate}');"
-        cmd << "$('#simulation-world_scale').val('#{ format_value(settings.get_world_scale, @precision) }');"
         @dialog.execute_script(cmd)
       end
 
@@ -404,6 +512,133 @@ module MSPhysics
       end
 
       # @api private
+      # Get default value of a particular attribute in joint.
+      # @param [Sketchup::Group, Sketchup::ComonentInstance] joint
+      # @param [String] attr_name
+      # @return [Object, nil]
+      def get_joint_default_value(joint, attr_name)
+        jdict = 'MSPhysics Joint'
+        attr = joint.get_attribute(jdict, 'Angle Units', MSPhysics::DEFAULT_ANGLE_UNITS)
+        ang_ratio = attr == 'deg' ? 1.degrees : 1
+        iang_ratio = 1.0 / ang_ratio
+        attr = joint.get_attribute(jdict, 'Position Units', MSPhysics::DEFAULT_POSITION_UNITS)
+        pos_ratio = case attr
+          when 'mm'
+            0.001
+          when 'cm'
+            0.01
+          when 'dm'
+            0.1
+          when 'm'
+            1.0
+          when 'in'
+            0.0254
+          when 'ft'
+            0.3048
+          when 'yd'
+            0.9144
+        else
+          1.0
+        end
+        ipos_ratio = 1.0 / pos_ratio
+        joint_type = @selected_joint.get_attribute(jdict, 'Type')
+        res = case joint_type
+          when 'Hinge'
+            case attr_name
+              when 'Min'; MSPhysics::Hinge::DEFAULT_MIN * iang_ratio
+              when 'Max'; MSPhysics::Hinge::DEFAULT_MAX * iang_ratio
+              when 'Enable Limits'; MSPhysics::Hinge::DEFAULT_LIMITS_ENABLED
+              when 'Friction'; MSPhysics::Hinge::DEFAULT_FRICTION
+              when 'Accel'; MSPhysics::Hinge::DEFAULT_ACCEL
+              when 'Damp'; MSPhysics::Hinge::DEFAULT_DAMP
+              when 'Enable Rotate Back'; MSPhysics::Hinge::DEFAULT_ROTATE_BACK_ENABLED
+              when 'Enable Strong Mode'; MSPhysics::Hinge::DEFAULT_STRONG_MODE_ENABLED
+              when 'Start Angle'; MSPhysics::Hinge::DEFAULT_START_ANGLE * iang_ratio
+              when 'Controller'; MSPhysics::Hinge::DEFAULT_CONTROLLER
+            end
+          when 'Motor'
+            case attr_name
+              when 'Accel'; MSPhysics::Motor::DEFAULT_ACCEL
+              when 'Damp'; MSPhysics::Motor::DEFAULT_DAMP
+              when 'Enable Free Rotate'; MSPhysics::Motor::DEFAULT_FREE_ROTATE_ENABLED
+              when 'Controller'; MSPhysics::Motor::DEFAULT_CONTROLLER
+            end
+          when 'Servo'
+            case attr_name
+              when 'Min'; MSPhysics::Servo::DEFAULT_MIN * iang_ratio
+              when 'Max'; MSPhysics::Servo::DEFAULT_MAX * iang_ratio
+              when 'Enable Limits'; MSPhysics::Servo::DEFAULT_LIMITS_ENABLED
+              when 'Accel'; MSPhysics::Servo::DEFAULT_ACCEL
+              when 'Damp'; MSPhysics::Servo::DEFAULT_DAMP
+              when 'Reduction Ratio'; MSPhysics::Servo::DEFAULT_REDUCTION_RATIO
+              when 'Enable Sp Mode'; MSPhysics::Servo::DEFAULT_SP_MODE_ENABLED
+              when 'Controller'; MSPhysics::Servo::DEFAULT_CONTROLLER
+            end
+          when 'Slider'
+            case attr_name
+              when 'Min'; MSPhysics::Slider::DEFAULT_MIN * ipos_ratio
+              when 'Max'; MSPhysics::Slider::DEFAULT_MAX * ipos_ratio
+              when 'Enable Limits'; MSPhysics::Slider::DEFAULT_LIMITS_ENABLED
+              when 'Friction'; MSPhysics::Slider::DEFAULT_FRICTION
+              when 'Controller'; MSPhysics::Slider::DEFAULT_CONTROLLER
+            end
+          when 'Piston'
+            case attr_name
+              when 'Min'; MSPhysics::Piston::DEFAULT_MIN * ipos_ratio
+              when 'Max'; MSPhysics::Piston::DEFAULT_MAX * ipos_ratio
+              when 'Enable Limits'; MSPhysics::Piston::DEFAULT_LIMITS_ENABLED
+              when 'Linear Rate'; MSPhysics::Piston::DEFAULT_LINEAR_RATE * ipos_ratio
+              when 'Strength'; MSPhysics::Piston::DEFAULT_STRENGTH
+              when 'Reduction Ratio'; MSPhysics::Piston::DEFAULT_REDUCTION_RATIO
+              when 'Controller'; MSPhysics::Piston::DEFAULT_CONTROLLER
+            end
+          when 'Spring'
+            case attr_name
+              when 'Min'; MSPhysics::Spring::DEFAULT_MIN * ipos_ratio
+              when 'Max'; MSPhysics::Spring::DEFAULT_MAX * ipos_ratio
+              when 'Enable Limits'; MSPhysics::Spring::DEFAULT_LIMITS_ENABLED
+              when 'Accel'; MSPhysics::Spring::DEFAULT_ACCEL
+              when 'Damp'; MSPhysics::Spring::DEFAULT_DAMP
+              when 'Enable Strong Mode'; MSPhysics::Spring::DEFAULT_STRONG_MODE_ENABLED
+              when 'Start Position'; MSPhysics::Spring::DEFAULT_START_POSITION * ipos_ratio
+              when 'Controller'; MSPhysics::Spring::DEFAULT_CONTROLLER
+            end
+          when 'UpVector'
+            case attr_name
+              when 'Accel'; MSPhysics::UpVector::DEFAULT_ACCEL
+              when 'Damp'; MSPhysics::UpVector::DEFAULT_DAMP
+              when 'Enable Damper'; MSPhysics::UpVector::DEFAULT_DAMPER_ENABLED
+              when 'Controller'; MSPhysics::UpVector::DEFAULT_PIN_DIR
+            end
+          when 'Corkscrew'
+            case attr_name
+              when 'Min Position'; MSPhysics::Corkscrew::DEFAULT_MIN_POSITION * ipos_ratio
+              when 'Max Position'; MSPhysics::Corkscrew::DEFAULT_MAX_POSITION * ipos_ratio
+              when 'Enable Linear Limits'; MSPhysics::Corkscrew::DEFAULT_LINEAR_LIMITS_ENABLED
+              when 'Linear Friction'; MSPhysics::Corkscrew::DEFAULT_LINEAR_FRICTION
+              when 'Min Angle'; MSPhysics::Corkscrew::DEFAULT_MIN_ANGLE * iang_ratio
+              when 'Max Angle'; MSPhysics::Corkscrew::DEFAULT_MAX_ANGLE * iang_ratio
+              when 'Enable Angular Limits'; MSPhysics::Corkscrew::DEFAULT_ANGULAR_LIMITS_ENABLED
+              when 'Angular Friction'; MSPhysics::Corkscrew::DEFAULT_ANGULAR_FRICTION
+            end
+          when 'BallAndSocket'
+            case attr_name
+              when 'Accel'; MSPhysics::BallAndSocket::DEFAULT_ACCEL
+              when 'Damp'; MSPhysics::BallAndSocket::DEFAULT_DAMP
+              when 'Enable Damper'; MSPhysics::BallAndSocket::DEFAULT_DAMPER_ENABLED
+              when 'Max Cone Angle'; MSPhysics::BallAndSocket::DEFAULT_MAX_CONE_ANGLE * iang_ratio
+              when 'Enable Cone Limits'; MSPhysics::BallAndSocket::DEFAULT_CONE_LIMITS_ENABLED
+              when 'Min Twist Angle'; MSPhysics::BallAndSocket::DEFAULT_MIN_TWIST_ANGLE * iang_ratio
+              when 'Max Twist Angle'; MSPhysics::BallAndSocket::DEFAULT_MAX_TWIST_ANGLE * iang_ratio
+              when 'Enable Twist Limits'; MSPhysics::BallAndSocket::DEFAULT_TWIST_LIMITS_ENABLED
+            end
+          when 'Universal'
+        end
+        res = fix_numeric_value(res) if res.is_a?(Numeric)
+        res
+      end
+
+      # @api private
       # Format value into string.
       # @param [Numeric] value
       # @param [Fixnum] precision
@@ -412,6 +647,14 @@ module MSPhysics
         precision = AMS.clamp(precision.to_i, 0, 10)
         v = sprintf("%.#{precision}f", value.to_f)
         (v.to_f == value.to_f ? '' : '~ ') + v
+      end
+
+      # @api private
+      # Remove trailing 9s.
+      # @param [Numeric] value
+      # @return [String]
+      def fix_numeric_value(value)
+        (value * 1.0e10).round * 1.0e-10
       end
 
       # Open/Close MSPhysics UI.
@@ -463,8 +706,8 @@ module MSPhysics
                 settings.set_continuous_collision_state(value)
               when 'collision_wireframe'
                 settings.show_collision_wireframe(value)
-              when 'axis'
-                settings.show_axis(value)
+              when 'axes'
+                settings.show_axes(value)
               when 'aabb'
                 settings.show_aabb(value)
               when 'contact_points'
@@ -578,7 +821,7 @@ module MSPhysics
               if @selected_joint
                 if %w(stiffness reduction_ratio).include?(attr)
                   value = AMS.clamp(value, 0.0, 1.0)
-                elsif %w(stiff accel damp breaking_force linear_rate strength friction linear_friction angular_friction).include?(attr)
+                elsif %w(accel damp breaking_force linear_rate strength friction linear_friction angular_friction).include?(attr)
                   value = AMS.clamp(value, 0.0, nil)
                 end
                 @selected_joint.set_attribute('MSPhysics Joint', option, value.to_i.is_a?(Bignum) ? value.to_s : value)
@@ -637,7 +880,13 @@ module MSPhysics
               end
             when 'joint', *MSPhysics::JOINT_NAMES
               if @selected_joint
-                @selected_joint.get_attribute('MSPhysics Joint', option)
+                begin
+                  #default = eval("MSPhysics::#{dict.split('_').map { |w| w.capitalize }.join}::DEFAULT_#{attr.upcase}")
+                  default = get_joint_default_value(@selected_joint, option)
+                rescue Exception => e
+                  default = 0
+                end
+                @selected_joint.get_attribute('MSPhysics Joint', option, default)
               end
             end
             if value.is_a?(Numeric)
@@ -734,6 +983,9 @@ module MSPhysics
               elsif id == 'editor-wrap'
                 @editor_wrap = value.to_s
               end
+            when 'joint', *MSPhysics::JOINT_NAMES
+              @selected_joint.set_attribute('MSPhysics Joint', option, value)
+              update_joint_state
             end
           }
           @dialog.add_action_callback('tab_changed'){ |dlg, params|
@@ -819,9 +1071,10 @@ module MSPhysics
 
       # Open MSPhysics UI and set pointer to the location of an error.
       # @param [MSPhysics::ScriptException] error
-      # @return [void]
+      # @return [Boolean] success
       def locate_error(error)
         AMS.validate_type(error, MSPhysics::ScriptException)
+        return false if error.entity.deleted?
         model = Sketchup.active_model
         model.selection.clear
         model.selection.add(error.entity)
@@ -833,6 +1086,7 @@ module MSPhysics
           msg << "editor_set_cursor(#{error.line}, 0); editor_select_current_line();" if error.line
           @dialog.execute_script(msg) if @dialog
         }
+        true
       end
 
       # Add sound to UI.

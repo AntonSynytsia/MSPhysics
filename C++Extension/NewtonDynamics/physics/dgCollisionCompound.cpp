@@ -36,7 +36,7 @@
 #define DG_MAX_MIN_VOLUME				dgFloat32 (1.0e-6f)
 
 
-dgVector dgCollisionCompound::m_padding (dgFloat32 (1.0e-3f)); 
+dgVector dgCollisionCompound::m_padding (dgFloat32 (1.0e-6f)); 
 
 class dgCollisionCompound::dgHeapNodePair
 {
@@ -132,7 +132,10 @@ dgCollisionCompound::dgOOBBTestData::dgOOBBTestData (const dgMatrix& matrix, con
 			dgVector tmp (m_matrix.UnrotateVector(axis));
 			dgVector d (m_size.DotProduct4(tmp.Abs()) + m_padding);
 			dgVector c (origin.DotProduct4(axis));
-			extends[index] = ((c - d).PackLow (c + d));
+//			extends[index] = ((c - d).PackLow (c + d));
+			dgVector diff (c - d);
+			dgVector sum (c + d);
+			extends[index] = dgVector (diff.m_x, sum.m_x, diff.m_y, sum.m_y);
 			m_crossAxisAbs[index] = axis.Abs();
 			index ++;
 		}
@@ -141,11 +144,11 @@ dgCollisionCompound::dgOOBBTestData::dgOOBBTestData (const dgMatrix& matrix, con
 	dgVector tmp;
 	dgVector::Transpose4x4 (m_crossAxis[0], m_crossAxis[1], m_crossAxis[2], m_crossAxis[3], m_crossAxis[0], m_crossAxis[1], m_crossAxis[2], m_crossAxis[3]);
 	dgVector::Transpose4x4 (m_crossAxis[3], m_crossAxis[4], m_crossAxis[5], m_crossAxis[6], m_crossAxis[4], m_crossAxis[5], m_crossAxis[6], m_crossAxis[7]);
-	dgVector::Transpose4x4 (m_crossAxis[6], m_crossAxis[7], m_crossAxis[8], tmp,				m_crossAxis[8], m_crossAxis[8], m_crossAxis[8], m_crossAxis[8]);
+	dgVector::Transpose4x4 (m_crossAxis[6], m_crossAxis[7], m_crossAxis[8], tmp,			m_crossAxis[8], m_crossAxis[8], m_crossAxis[8], m_crossAxis[8]);
 
 	dgVector::Transpose4x4 (m_crossAxisAbs[0], m_crossAxisAbs[1], m_crossAxisAbs[2], m_crossAxisAbs[3], m_crossAxisAbs[0], m_crossAxisAbs[1], m_crossAxisAbs[2], m_crossAxisAbs[3]);
 	dgVector::Transpose4x4 (m_crossAxisAbs[3], m_crossAxisAbs[4], m_crossAxisAbs[5], m_crossAxisAbs[6], m_crossAxisAbs[4], m_crossAxisAbs[5], m_crossAxisAbs[6], m_crossAxisAbs[7]);
-	dgVector::Transpose4x4 (m_crossAxisAbs[6], m_crossAxisAbs[7], m_crossAxisAbs[8], tmp,				    m_crossAxisAbs[8], m_crossAxisAbs[8], m_crossAxisAbs[8], m_crossAxisAbs[8]);
+	dgVector::Transpose4x4 (m_crossAxisAbs[6], m_crossAxisAbs[7], m_crossAxisAbs[8], tmp,				m_crossAxisAbs[8], m_crossAxisAbs[8], m_crossAxisAbs[8], m_crossAxisAbs[8]);
 
 	dgVector::Transpose4x4 (m_extendsMinX[0], m_extendsMaxX[0], tmp, tmp, extends[0], extends[1], extends[2], extends[3]);
 	dgVector::Transpose4x4 (m_extendsMinX[1], m_extendsMaxX[1], tmp, tmp, extends[4], extends[5], extends[6], extends[7]);
@@ -621,13 +624,10 @@ void dgCollisionCompound::CalcAABB (const dgMatrix& matrix, dgVector& p0, dgVect
 	}
 }
 
-
-
-dgInt32 dgCollisionCompound::CalculatePlaneIntersection (const dgVector& normal, const dgVector& point, dgVector* const contactsOut, dgFloat32 normalSign) const
+dgInt32 dgCollisionCompound::CalculatePlaneIntersection (const dgVector& normal, const dgVector& point, dgVector* const contactsOut) const
 {
 	return 0;
 }
-
 
 void dgCollisionCompound::DebugCollision (const dgMatrix& matrix, dgCollision::OnDebugCollisionMeshCallback callback, void* const userData) const
 {
@@ -637,7 +637,6 @@ void dgCollisionCompound::DebugCollision (const dgMatrix& matrix, dgCollision::O
 		collision->DebugCollision (matrix, callback, userData);
 	}
 }
-
 
 dgFloat32 dgCollisionCompound::RayCast (const dgVector& localP0, const dgVector& localP1, dgFloat32 maxT, dgContactPoint& contactOut, const dgBody* const body, void* const userData, OnRayPrecastAction preFilter) const
 {
@@ -2250,7 +2249,7 @@ dgInt32 dgCollisionCompound::CalculateContactsToCollisionTree (dgBroadPhase::dgP
 
 	const dgContactMaterial* const material = constraint->GetMaterial();
 	const dgVector& treeScale = treeCollisionInstance->GetScale();
-	
+
 	dgAssert (contacts);
 	dgFloat32 closestDist = dgFloat32 (1.0e10f);
 	while (stack) {

@@ -200,7 +200,7 @@ dgVector dgCollisionBox::SupportVertex (const dgVector& dir, dgInt32* const vert
 	if (vertexIndex) {
 		dgVector index (m_indexMark.CompProduct4(mask & dgVector::m_one));
 		index = (index.AddHorizontal()).GetInt();
-		*vertexIndex = index.m_ix;
+		*vertexIndex = dgInt32 (index.m_ix);
 	}
 	return (m_size[1] & mask) + m_size[0].AndNot(mask);
 }
@@ -213,7 +213,7 @@ dgVector dgCollisionBox::SupportVertexSpecial(const dgVector& dir, dgInt32* cons
 	if (vertexIndex) {
 		dgVector index(m_indexMark.CompProduct4(mask & dgVector::m_one));
 		index = (index.AddHorizontal()).GetInt();
-		*vertexIndex = index.m_ix;
+		*vertexIndex = dgInt32 (index.m_ix);
 	}
 
 	dgVector padd (D_BOX_SKIN_THINCKNESS);
@@ -332,7 +332,7 @@ const dgCollisionConvex::dgConvexSimplexEdge** dgCollisionBox::GetVertexToEdgeMa
 
 
 
-dgInt32 dgCollisionBox::CalculatePlaneIntersection (const dgVector& normal, const dgVector& point, dgVector* const contactsOut, dgFloat32 normalSign___) const
+dgInt32 dgCollisionBox::CalculatePlaneIntersection (const dgVector& normal, const dgVector& point, dgVector* const contactsOut) const
 {
 	dgVector support[4];
 	dgInt32 featureCount = 3;

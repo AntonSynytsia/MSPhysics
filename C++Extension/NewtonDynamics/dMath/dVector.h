@@ -23,8 +23,9 @@ class TemplateVector
 {
 	public:
 	TemplateVector ();
-	TemplateVector (const T *ptr);
-	TemplateVector (T m_x, T m_y, T m_z, T m_w); 
+	TemplateVector (const T val);
+	TemplateVector (const T* const ptr);
+	TemplateVector (T m_x, T m_y, T m_z, T m_w = T(1.0f)); 
 	TemplateVector Scale (T s) const;
 
 	T& operator[] (int i);
@@ -54,48 +55,80 @@ D_MSC_VECTOR_ALIGMENT
 class dVector: public TemplateVector<dFloat>
 {
 	public:
-	dVector();
-	dVector (const TemplateVector<dFloat>& v);
-	dVector (const dFloat *ptr);
-	dVector (dFloat x, dFloat y, dFloat z, dFloat w = 1.0f); 
-};
-
-
-class dBigVector: public TemplateVector<double>
-{
-	public: 
-	dBigVector(){};
-	dBigVector (const TemplateVector<dFloat>& v)
-		:TemplateVector<dFloat64> (v.m_x, v.m_y, v.m_z, v.m_w)
+	dVector()
+		:TemplateVector<dFloat>()
 	{
 	}
 
-#ifndef _NEWTON_USE_DOUBLE
+	dVector(dFloat val)
+		:TemplateVector<dFloat>(val)
+	{
+	}
+
+	dVector (const TemplateVector<dFloat>& v)
+		:TemplateVector<dFloat>(v)
+	{
+	}
+
+	dVector (const dFloat* const ptr)
+		:TemplateVector<dFloat>(ptr)
+	{
+	}
+
+	dVector (dFloat x, dFloat y, dFloat z, dFloat w = 1.0f) 
+		:TemplateVector<dFloat>(x, y, z, w)
+	{
+	}
+};
+
+
+class dBigVector: public TemplateVector<dFloat64>
+{
+	public: 
+	dBigVector(){};
+	dBigVector(dFloat64 val)
+		:TemplateVector<dFloat64> (val)
+	{
+	}
+
+	dBigVector (const dFloat64* const ptr)
+		:TemplateVector<dFloat64> (ptr)
+	{
+	}
+
 	dBigVector (const TemplateVector<dFloat64>& v)
 		:TemplateVector<dFloat64> (v.m_x, v.m_y, v.m_z, v.m_w)
 	{
 	}
-#endif
 
-	//	dBigVector (const dFloat *ptr);
-	dBigVector (dFloat x, dFloat y, dFloat z, dFloat w = dFloat(1.0f))
-		:TemplateVector<dFloat64> (x, y, z, w)
+	dBigVector(const dVector& v)
+		:TemplateVector<dFloat64>(v.m_x, v.m_y, v.m_z, v.m_w)
 	{
 	}
 
-#ifndef _NEWTON_USE_DOUBLE
-	dBigVector (dFloat64 x, dFloat64 y, dFloat64 z, dFloat64 w = dFloat64(1.0f))
+	dBigVector (dFloat64 x, dFloat64 y, dFloat64 z, dFloat64 w = dFloat(1.0f))
 		:TemplateVector<dFloat64> (x, y, z, w)
 	{
 	}
-#endif
 };
 
 
-
+template<class T>
+TemplateVector<T>::TemplateVector() 
+{
+#ifdef _DEBUG
+	static int xxxx;
+	xxxx ++;
+	if (xxxx > 1024 * 10)
+		dAssert (0);
+#endif
+}
 
 template<class T>
-TemplateVector<T>::TemplateVector() {}
+TemplateVector<T>::TemplateVector(const T val)
+	:m_x (val), m_y(val), m_z(val), m_w(val)
+{
+}
 
 template<class T>
 TemplateVector<T>::TemplateVector(const T *ptr)
@@ -108,7 +141,6 @@ TemplateVector<T>::TemplateVector(T x, T y, T z, T w)
 	:m_x (x), m_y(y), m_z(z), m_w(w)
 {
 }
-
 
 template<class T>
 T& TemplateVector<T>::operator[] (int i)
@@ -127,7 +159,6 @@ TemplateVector<T> TemplateVector<T>::Scale (T scale) const
 {
 	return TemplateVector<T> (m_x * scale, m_y * scale, m_z * scale, m_w);
 }
-
 
 template<class T>
 TemplateVector<T> TemplateVector<T>::operator+ (const TemplateVector<T>& B) const
@@ -159,13 +190,11 @@ TemplateVector<T>& TemplateVector<T>::operator-= (const TemplateVector<T>& A)
 	return *this;
 }
 
-
 template<class T>
 T TemplateVector<T>::operator% (const TemplateVector<T>& A) const
 {
 	return m_x * A.m_x + m_y * A.m_y + m_z * A.m_z;
 }
-
 
 template<class T>
 TemplateVector<T> TemplateVector<T>::operator* (const TemplateVector<T>& B) const
@@ -175,35 +204,12 @@ TemplateVector<T> TemplateVector<T>::operator* (const TemplateVector<T>& B) cons
 								m_x * B.m_y - m_y * B.m_x, m_w);
 }
 
-
-
 template<class T>
 TemplateVector<T> TemplateVector<T>::CompProduct (const TemplateVector<T>& A) const
 {
 	return TemplateVector<T> (m_x * A.m_x, m_y * A.m_y, m_z * A.m_z, A.m_w);
 }
 
-
-
-inline dVector::dVector()
-	:TemplateVector<dFloat>()
-{
-}
-
-inline dVector::dVector (const TemplateVector<dFloat>& v)
-	:TemplateVector<dFloat>(v)
-{
-}
-
-inline dVector::dVector (const dFloat *ptr)
-	:TemplateVector<dFloat>(ptr)
-{
-}
-
-inline dVector::dVector (dFloat x, dFloat y, dFloat z, dFloat w) 
-	:TemplateVector<dFloat>(x, y, z, w)
-{
-}
 
 #endif
 

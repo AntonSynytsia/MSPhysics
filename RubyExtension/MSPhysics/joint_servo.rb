@@ -3,8 +3,8 @@ module MSPhysics
   # @since 1.0.0
   class Servo < Joint
 
-    DEFAULT_MIN = -180.0
-    DEFAULT_MAX = 180.0
+    DEFAULT_MIN = -180.0.degrees
+    DEFAULT_MAX = 180.0.degrees
     DEFAULT_LIMITS_ENABLED = false
     DEFAULT_ACCEL = 40.0
     DEFAULT_DAMP = 10.0
@@ -21,8 +21,8 @@ module MSPhysics
     def initialize(world, parent, pin_tra)
       super(world, parent, pin_tra, 6)
       MSPhysics::Newton::Servo.create(@address)
-      MSPhysics::Newton::Servo.set_min(@address, DEFAULT_MIN.degrees)
-      MSPhysics::Newton::Servo.set_max(@address, DEFAULT_MAX.degrees)
+      MSPhysics::Newton::Servo.set_min(@address, DEFAULT_MIN)
+      MSPhysics::Newton::Servo.set_max(@address, DEFAULT_MAX)
       MSPhysics::Newton::Servo.enable_limits(@address, DEFAULT_LIMITS_ENABLED)
       MSPhysics::Newton::Servo.set_accel(@address, DEFAULT_ACCEL)
       MSPhysics::Newton::Servo.set_damp(@address, DEFAULT_DAMP)
@@ -80,7 +80,7 @@ module MSPhysics
       MSPhysics::Newton::Servo.limits_enabled?(@address)
     end
 
-    # Enable/Disable min & max angle limits.
+    # Enable/disable min & max angle limits.
     # @note This option has no effect if SP mode is enabled.
     # @param [Boolean] state
     def limits_enabled=(state)
@@ -103,7 +103,8 @@ module MSPhysics
       MSPhysics::Newton::Servo.set_accel(@address, value)
     end
 
-    # Get angular damp. Higher damper makes rotation slower.
+    # Get angular damper.
+    # @note Higher damper makes rotation stronger.
     # @note If SP mode is disabled, the maximum angular rate in radians per
     #   second is <tt>accel / damp</tt>.
     # @return [Numeric]
@@ -111,7 +112,8 @@ module MSPhysics
       MSPhysics::Newton::Servo.get_damp(@address)
     end
 
-    # Set angular damp. Higher damper makes rotation slower.
+    # Set angular damper.
+    # @note Higher damper makes rotation stronger.
     # @note If SP mode is disabled, the maximum angular rate in radians per
     #   second is <tt>accel / damp</tt>.
     # @param [Numeric] value A value greater than or equal to zero.
@@ -146,33 +148,33 @@ module MSPhysics
     end
 
     # Determine whether SketchyPhysics mode is enabled.
-    # @note In SketchyPhysics mode, thee controller parameter is used to control
+    # @note In SketchyPhysics mode, the controller parameter is used to control
     #   the ratio between the min and max angle range, as well as, the servo is
-    #   stronger and usually rotates faster to its desired angle.
+    #   stronger and usually rotates faster to its desired destination angle.
     # @return [Boolean]
     def sp_mode_enabled?
       MSPhysics::Newton::Servo.sp_mode_enabled?(@address)
     end
 
-    # Enable/Disable the SketchyPhysics mode.
-    # @note In SketchyPhysics mode, thee controller parameter is used to control
+    # Enable/disable SketchyPhysics mode.
+    # @note In SketchyPhysics mode, the controller parameter is used to control
     #   the ratio between the min and max angle range, as well as, the servo is
-    #   stronger and usually rotates faster to its desired angle.
+    #   stronger and usually rotates faster to its desired destination angle.
     # @param [Boolean] state
     def sp_mode_enabled=(state)
       MSPhysics::Newton::Servo.enable_sp_mode(@address, state)
     end
 
-    # Get servo controller, desired angle in radians or ratio between the min
-    # and max angle range, depending on the mode. Pass nil to 'turn off' the
-    # servo.
+    # Get servo controller, a desired angle in radians or ratio between the min
+    # and max angle range, depending on the mode. Nil is returned if the servo
+    # is turned off.
     # @return [Numeric, nil]
     def controller
       MSPhysics::Newton::Servo.get_controller(@address)
     end
 
-    # Set servo controller, desired angle in radians or ratio between the min
-    # and max angle range, depending on the mode. Pass nil to 'turn off' the
+    # Set servo controller, a desired angle in radians or ratio between the min
+    # and max angle range, depending on the mode. Pass nil to turn off the
     # servo.
     # @param [Numeric, nil] value
     def controller=(value)

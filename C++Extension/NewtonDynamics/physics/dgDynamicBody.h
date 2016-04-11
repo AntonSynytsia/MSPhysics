@@ -30,7 +30,7 @@
 #define DG_FREEZE_MAG		dgFloat32(0.1f)
 #define DG_FREEZE_MAG2		dgFloat32(DG_FREEZE_MAG * DG_FREEZE_MAG)
 
-#define DG_ErrTolerance		(1.0e-2f)
+#define DG_ErrTolerance		(1.0e-3f)
 #define DG_ErrTolerance2	(DG_ErrTolerance * DG_ErrTolerance)
 
 class dgSkeletonContainer;

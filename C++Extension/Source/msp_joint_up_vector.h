@@ -12,7 +12,7 @@ class MSNewton::UpVector {
 private:
 	// Variables
 	static const dVector DEFAULT_PIN_DIR;
-	static const dFloat DEFAULT_STIFF;
+	static const dFloat DEFAULT_ACCEL;
 	static const dFloat DEFAULT_DAMP;
 	static const bool DEFAULT_DAMPER_ENABLED;
 
@@ -22,7 +22,7 @@ public:
 	{
 		dVector pin_dir;
 		dMatrix pin_matrix;
-		dFloat stiff;
+		dFloat accel;
 		dFloat damp;
 		bool damper_enabled;
 	} UpVectorData;
@@ -39,8 +39,8 @@ public:
 	static VALUE create(VALUE self, VALUE v_joint);
 	static VALUE get_pin_dir(VALUE self, VALUE v_joint);
 	static VALUE set_pin_dir(VALUE self, VALUE v_joint, VALUE v_pin_dir);
-	static VALUE get_stiff(VALUE self, VALUE v_joint);
-	static VALUE set_stiff(VALUE self, VALUE v_joint, VALUE v_stiff);
+	static VALUE get_accel(VALUE self, VALUE v_joint);
+	static VALUE set_accel(VALUE self, VALUE v_joint, VALUE v_accel);
 	static VALUE get_damp(VALUE self, VALUE v_joint);
 	static VALUE set_damp(VALUE self, VALUE v_joint, VALUE v_damp);
 	static VALUE enable_damper(VALUE self, VALUE v_joint, VALUE v_state);

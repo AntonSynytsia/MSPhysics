@@ -248,7 +248,7 @@ module MSPhysics
       # Set the scale ratios of a transformation matrix.
       # @param [Geom::Transformation, Array<Numeric>] tra
       # @param [Geom::Vector3d, Array<Numeric>] scale An array of three numeric
-      #   values containing the scale ratios of the x_axis, y_axis, and z_axis.
+      #   values containing the scale ratios of the X-axis, Y-axis, and Z-axis.
       # @return [Geom::Transformation]
       def set_matrix_scale(tra, scale)
         s = Geom::Transformation.scaling(scale.x, scale.y, scale.z)
@@ -406,7 +406,7 @@ module MSPhysics
         return origin + dir
       end
 
-      # Rotate t1 so that its Z-AXIS aligns with Z-AXIS of t2.
+      # Rotate t1 so that its Z-axis aligns with Z-axis of t2.
       # @param [Geom::Transformation] t1
       # @param [Geom::Transformation] t2
       # @return [Geom::Transformation] Rotated matrix.

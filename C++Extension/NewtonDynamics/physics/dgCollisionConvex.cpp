@@ -170,7 +170,7 @@ bool dgCollisionConvex::SanityCheck (dgPolyhedra& hull) const
 		ptr = ptr->m_next;
 		dgVector p1 (m_vertex[ptr->m_incidentVertex]);
 		dgVector e1 (p1 - p0);
-		dgVector n0 (dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32 (0.0f));
+		dgVector n0 (dgFloat32 (0.0f));
 		for (ptr = ptr->m_next; ptr != edge; ptr = ptr->m_next) {
 			dgVector p2 (m_vertex[ptr->m_incidentVertex]);
 			dgVector e2 (p2 - p0);
@@ -185,7 +185,7 @@ bool dgCollisionConvex::SanityCheck (dgPolyhedra& hull) const
 				dgVector p1 (m_vertex[neiborg->m_incidentVertex]);
 				dgVector dp (p1 - p0);
 				dgFloat32 project = dp % n0;
-				if (project > dgFloat32 (1.0e-9f)) {
+				if (project > dgFloat32 (1.0e-5f)) {
 					return false;
 				}
 			}
@@ -822,7 +822,7 @@ dgFloat32 dgCollisionConvex::RayCast(const dgVector& localP0, const dgVector& lo
 	return rayCaster.RayCast(localP0, localP1, maxT, contactOut);
 }
 
-dgInt32 dgCollisionConvex::CalculatePlaneIntersection (const dgVector& normal, const dgVector& origin, dgVector* const contactsOut, dgFloat32 normalSign) const
+dgInt32 dgCollisionConvex::CalculatePlaneIntersection (const dgVector& normal, const dgVector& origin, dgVector* const contactsOut) const
 {
 	dgVector support[4];
 	dgInt32 featureCount = 3;
@@ -831,7 +831,7 @@ dgInt32 dgCollisionConvex::CalculatePlaneIntersection (const dgVector& normal, c
 	if (vertToEdgeMapping) {
 		dgInt32 edgeIndex;
 		featureCount = 1;
-		support[0] = SupportVertex (normal.Scale4(normalSign), &edgeIndex);
+		support[0] = SupportVertex (normal, &edgeIndex);
 		edge = vertToEdgeMapping[edgeIndex];
 
 		// 5 degrees

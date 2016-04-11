@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
     <meta http-equiv="MSThemeCompatible" content="Yes" />
     <meta http-equiv="X-UA-Compatible" content="IE=10" />
     <title>MSPhysics UI</title>
@@ -13,7 +13,7 @@
     <link href="../css/expander.css" rel="stylesheet" type="text/css" />
     <script type="text/javascript" src="../js/jquery.js"></script>
     <script type="text/javascript" src="../js/chosen.js"></script>
-    <script type="text/javascript" src="../js/ace/ace.js">charset="utf-8"></script>
+    <script type="text/javascript" src="../js/ace/ace.js" charset="utf-8"></script>
     <script type="text/javascript" src="../js/ace/ext-statusbar.js"></script>
     <script type="text/javascript" src="../js/dialog.js"></script>
     <script type="text/javascript" src="../js/expander.js"></script>
@@ -48,8 +48,8 @@
                     <td><input id="simulation-collision_wireframe" type="checkbox"></input></td>
                   </tr>
                   <tr title="Draw centre of mass axes of all bodies.">
-                    <td><label class="spacing_tab" for="simulation-axis">Centre of Mass</label></td>
-                    <td><input id="simulation-axis" type="checkbox"></input></td>
+                    <td><label class="spacing_tab" for="simulation-axes">Centre of Mass</label></td>
+                    <td><input id="simulation-axes" type="checkbox"></input></td>
                   </tr>
                   <tr title="Draw world axes aligned bounding box (AABB) of all bodies.">
                     <td><label class="spacing_tab" for="simulation-aabb">Bounding Box</label></td>
@@ -72,7 +72,7 @@
               <td>
                 <table class="struct_table">
                   <tr><td colspan="2"><p class="heading">Update Timestep</p></td></tr>
-                  <tr><td colspan="2"><select id="simulation-update_timestep" data-placeholder="Update Timestep" class="chosen-select-no-single drop-down" style="width:17.2em;">
+                  <tr><td colspan="2"><select id="simulation-update_timestep" data-placeholder="Update Timestep" class="chosen-select-no-single drop-down" style="width: 229px;">
                     <option value="30">Double (1/30)</option>
                     <option value="60">Normal (1/60)</option>
                     <option value="120">x 1/2 (1/120)</option>
@@ -91,7 +91,7 @@
                     <option value="1200">x 1/20 (1/1200)</option>
                   </select></td></tr>
                   <tr><td colspan="2"><p class="heading">Solver Model</p></td></tr>
-                  <tr><td colspan="2"><select id="simulation-solver_model" data-placeholder="Solver Model" class="chosen-select-no-single drop-down" style="width:17.2em;">
+                  <tr><td colspan="2"><select id="simulation-solver_model" data-placeholder="Solver Model" class="chosen-select-no-single drop-down" style="width: 229px;">
                     <option value="0">Exact</option>
                     <option value="1">Iterative 1 Pass</option>
                     <option value="2">Iterative 2 Passes</option>
@@ -110,12 +110,12 @@
                     <option value="64">Iterative 64 Passes</option>
                   </select></td></tr>
                   <tr><td colspan="2"><p class="heading">Friction Model</p></td></tr>
-                  <tr><td colspan="2"><select id="simulation-friction_model" data-placeholder="Friction Model" class="chosen-select-no-single drop-down" style="width:17.2em;">
+                  <tr><td colspan="2"><select id="simulation-friction_model" data-placeholder="Friction Model" class="chosen-select-no-single drop-down" style="width: 229px;">
                     <option value="0">Exact Coulomb</option>
                     <option value="1">Adaptive Coulomb</option>
                   </select></td></tr>
                   <tr><td colspan="2"><p class="heading">Properties</p></td></tr>
-                  <tr title="The gravitational acceleration along Z_AXIS in meters per second squared (m/s²).">
+                  <tr title="The gravitational acceleration along Z-axis in meters per second squared (m/s²).">
                     <td><label class="spacing_tab" for="simulation-gravity">Gravity</label></td>
                     <td><input id="simulation-gravity" class="custom-text numeric-input" type="text"></input></td>
                   </tr>
@@ -150,7 +150,7 @@
                   <table class="struct_table">
                     <col width="80%" />
                     <tr><td colspan="2"><p class="heading">Collision Shape</p></td></tr>
-                    <tr><td colspan="2"><select id="body-shape" data-placeholder="Collision Shape" class="chosen-select-no-single drop-down" style="width:14em;">
+                    <tr><td colspan="2"><select id="body-shape" data-placeholder="Collision Shape" class="chosen-select-no-single drop-down" style="width: 186px;">
                       <option value="Null">Null</option>
                       <option value="Box">Box</option>
                       <option value="Sphere">Sphere</option>
@@ -164,7 +164,7 @@
                       <option value="Static Mesh">Static Mesh</option>
                     </select></td></tr>
                     <tr><td colspan="2"><p class="heading">Material</p></td></tr>
-                    <tr><td colspan="2"><select id="body-material" data-placeholder="Material" class="chosen-select-no-single drop-down" style="width:14em;"></select></td></tr>
+                    <tr><td colspan="2"><select id="body-material" data-placeholder="Material" class="chosen-select-no-single drop-down" style="width: 186px;"></select></td></tr>
                     <tr><td colspan="2"><p class="heading">State</p></td></tr>
                     <tr title="Ignored groups/components are not added to simulation.">
                       <td><label class="spacing_tab" for="body-ignore">Ignore</label></td>
@@ -191,20 +191,24 @@
                       <td><input id="body-continuous_collision" type="checkbox"></input></td>
                     </tr>
                     <tr title="Enable/disable body script.">
-                      <td><label class="spacing_tab" for="body-enable_script">Enable Script</label></td>
+                      <td><label class="spacing_tab" for="body-enable_script">Script</label></td>
                       <td><input id="body-enable_script" type="checkbox"></input></td>
                     </tr>
                     <tr title="Enable/disable gravitational pull on the body.">
-                      <td><label class="spacing_tab" for="body-enable_gravity">Enable Gravity</label></td>
+                      <td><label class="spacing_tab" for="body-enable_gravity">Gravity</label></td>
                       <td><input id="body-enable_gravity" type="checkbox"></input></td>
                     </tr>
                     <tr title="Enable/disable thruster.">
-                      <td><label class="spacing_tab" for="body-enable_thruster">Enable Thruster</label></td>
+                      <td><label class="spacing_tab" for="body-enable_thruster">Thruster</label></td>
                       <td><input id="body-enable_thruster" type="checkbox"></input></td>
                     </tr>
                     <tr title="Enable/disable emitter.">
-                      <td><label class="spacing_tab" for="body-enable_emitter">Enable Emitter</label></td>
+                      <td><label class="spacing_tab" for="body-enable_emitter">Emitter</label></td>
                       <td><input id="body-enable_emitter" type="checkbox"></input></td>
+                    </tr>
+                    <tr title="Whether to connect the closest of all the connected and copied joints.">
+                      <td><label class="spacing_tab" for="body-connect_closest_joints">Connect Closest Joints</label></td>
+                      <td><input id="body-connect_closest_joints" type="checkbox"></input></td>
                     </tr>
                   </table>
                 </td>
@@ -224,8 +228,8 @@
                       <td><label class="spacing_tab" for="body-dynamic_friction">Dynamic Friction</label></td>
                       <td><input id="body-dynamic_friction" class="custom-text numeric-input" type="text"></input></td>
                     </tr>
-                    <tr title="Enabled/disable body friction.">
-                      <td><label class="spacing_tab" for="body-enable_friction">Enable Friction</label></td>
+                    <tr title="Enable/disable friction for this body.">
+                      <td><label class="spacing_tab" for="body-enable_friction">Friction</label></td>
                       <td><input id="body-enable_friction" type="checkbox"></input></td>
                     </tr>
                     <tr class="vertical_spacing"></tr>
@@ -266,7 +270,7 @@
             <table class="struct_table">
               <col width="35%" />
               <tr><td colspan="2"><p class="heading">Thruster</p></td></tr>
-              <tr title="A numeric or directional impulse in Newton-seconds. Passing a numeric value will apply force along Z_AXIS. Passing a Vector3d or an Array object will apply force along the direction of a vector.">
+              <tr title="A numeric or directional impulse in Newton-seconds. Passing a numeric value will apply force along Z-axis. Passing a Vector3d or an Array object will apply force along the direction of a vector.">
                 <td><label class="spacing_tab" for="body-thruster_controller">Controller</label></td>
                 <td><input id="body-thruster_controller" class="custom-text controller-input" type="text"></input></td>
               </tr>
@@ -278,7 +282,7 @@
             <table class="struct_table">
               <col width="35%" />
               <tr><td colspan="2"><p class="heading">Emitter</p></td></tr>
-              <tr title="A numeric or directional impulse in Newton-seconds. Passing a numeric value will apply force along Z_AXIS. Passing a Vector3d or an Array object will apply force along the direction of a vector. A value of zero or a vector with a magnitude of zero will cease emitting the body.">
+              <tr title="A numeric or directional impulse in Newton-seconds. Passing a numeric value will apply force along Z-axis. Passing a Vector3d or an Array object will apply force along the direction of a vector. A value of zero or a vector with a magnitude of zero will cease emitting the body.">
                 <td><label class="spacing_tab" for="body-emitter_controller">Controller</label></td>
                 <td><input id="body-emitter_controller" class="custom-text controller-input" type="text"></input></td>
               </tr>
@@ -310,7 +314,7 @@
               <table class="opts_table">
                 <tr>
                   <td><p>Theme</p></td>
-                  <td><select id="editor-theme" data-placeholder="Theme" class="chosen-select-no-single drop-down" style="width: 14em;">
+                  <td><select id="editor-theme" data-placeholder="Theme" class="chosen-select-no-single drop-down" style="width: 186px;">
                     <optgroup label="Light">
                       <option value="chrome">Chrome</option>
                       <option value="clouds">Clouds</option>
@@ -342,7 +346,6 @@
                       <option value="mono_industrial">Mono Industrial</option>
                       <option value="monokai">Monokai</option>
                       <option value="msphysics_dark">MSPhysics Dark</option>
-                      <option value="notepad">Notepad</option>
                       <option value="pastel_on_dark">Pastel on Dark</option>
                       <option value="solarized_dark">Solarized Dark</option>
                       <option value="terminal">Terminal</option>
@@ -356,7 +359,7 @@
                   </select></td>
                   <td class="horizontal_spacing" />
                   <td><p>Soft Wrap</p></td>
-                  <td><select id="editor-wrap" data-placeholder="Wrap" class="chosen-select-no-single drop-down" style="width: 6em;">
+                  <td><select id="editor-wrap" data-placeholder="Wrap" class="chosen-select-no-single drop-down" style="width: 70px;">
                     <option value="off">Off</option>
                     <option value="40">40</option>
                     <option value="80">80</option>
@@ -365,7 +368,7 @@
                   </select></td>
                   <td class="horizontal_spacing" />
                   <td><p>Font Size</p></td>
-                  <td><select id="editor-font" data-placeholder="Font" class="chosen-select-no-single drop-down" style="width: 5em;">
+                  <td><select id="editor-font" data-placeholder="Font" class="chosen-select-no-single drop-down" style="width: 70px;">
                     <option value="6">6</option>
                     <option value="7">7</option>
                     <option value="8">8</option>
@@ -438,7 +441,7 @@
                   <td><label for="joint-breaking_force">Breaking Force</label></td>
                   <td><input id="joint-breaking_force" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="Enable/Disable collision between parent and child connected bodies.">
+                <tr title="Enable/disable collision between parent and child connected bodies.">
                   <td><label for="joint-bodies_collidable">Connected Collide</label></td>
                   <td><input id="joint-bodies_collidable" type="checkbox"></input></td>
                 </tr>
@@ -466,37 +469,48 @@
             <div class="spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
-                <tr title="The minimum angle in degrees with respect to the starting angle.">
+                <tr>
+                  <td><label for="hinge-angle_units">Angle Units</label></td>
+                  <td><select id="hinge-angle_units" data-placeholder="Angle Units" class="chosen-select-no-single drop-down" style="width: 248px;">
+                    <option value="rad">Radians</option>
+                    <option value="deg">Degrees</option>
+                  </select></td>
+                </tr>
+                <tr title="The minimum angle in desired units with respect to the starting angle.">
                   <td><label for="hinge-min">Min</label></td>
                   <td><input id="hinge-min" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The maximum angle in degrees with respect to the starting angle.">
+                <tr title="The maximum angle in desired units with respect to the starting angle.">
                   <td><label for="hinge-max">Max</label></td>
                   <td><input id="hinge-max" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
                 <tr title="Enable/disable minimum and maximum angle limits.">
-                  <td><label for="hinge-enable_limits">Enable Limits</label></td>
+                  <td><label for="hinge-enable_limits">Limits</label></td>
                   <td><input id="hinge-enable_limits" type="checkbox"></input></td>
                 </tr>
                 <tr title="The angular friction, a value greater than or equal to zero. Note: This feature has an effect only if 'rotate back' is disabled.">
                   <td><label for="hinge-friction">Friction</label></td>
                   <td><input id="hinge-friction" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The angular stiffness, a value greater than or equal to zero. Higher stiffness makes rotation stronger. Note: This feature has an effect only if 'rotate back' is enabled.">
-                  <td><label for="hinge-stiff">Stiff</label></td>
-                  <td><input id="hinge-stiff" class="custom-text numeric-input" type="text"></input></td>
+                <tr title="The angular acceleration, a value greater than or equal to zero. Higher acceleration makes rotation faster. Note: This feature has an effect only if 'rotate back' is enabled.">
+                  <td><label for="hinge-accel">Accel</label></td>
+                  <td><input id="hinge-accel" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The angular damper, a value greater than or equal to zero. Higher damper makes rotation slower. Note: This feature has an effect only if 'rotate back' is enabled.">
+                <tr title="The angular damper, a value greater than or equal to zero. Higher damper makes rotation stronger. Note: This feature has an effect only if 'rotate back' is enabled.">
                   <td><label for="hinge-damp">Damp</label></td>
                   <td><input id="hinge-damp" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The starting angle in degrees. Note: Actual starting angle is start_angle • controller.">
+                <tr title="The starting angle in desired units. Note: Actual starting angle is start_angle • controller.">
                   <td><label for="hinge-start_angle">Start Angle</label></td>
                   <td><input id="hinge-start_angle" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
                 <tr title="Enable/disable a feature to rotate back to a starting angle.">
                   <td><label for="hinge-enable_rotate_back">Rotate Back</label></td>
                   <td><input id="hinge-enable_rotate_back" type="checkbox"></input></td>
+                </tr>
+                <tr title="Make angular spring stronger than usual. Note: This feature has an effect only if 'rotate back' is enabled.">
+                  <td><label for="hinge-enable_strong_mode">Strong Mode</label></td>
+                  <td><input id="hinge-enable_strong_mode" type="checkbox"></input></td>
                 </tr>
                 <tr title="Control magnitude of the angular friction or magnitude and direction of the starting angle, depending on the state of the 'rotate back' feature.">
                   <td><label for="hinge-controller">Controller</label></td>
@@ -512,18 +526,18 @@
                       <p class="description">Friction mode - a hinge with angular friction.</p>
                       <ul>
                         <li class="description">The <em1>Friction</em2> parameter may be used to adjust angular friction.</li>
-                        <li class="description">The <em2>Controller</em2> parameter may be used to amplify/reduce the magnitude of the angular frictional.</li>
+                        <li class="description">The <em2>Controller</em2> parameter may be used to control the magnitude of the angular frictional.</li>
                         <li class="description">The actual angular friction is <em1>friction • controller</em1>.</li>
                         <li class="description">The <em2>Rotate Back</em2> parameter must be disabled in order to use this mode.</li>
                       </ul>
                     </li>
                     <li style="padding-left:1em;">
-                      <p class="description">Spring mode - a hinge with angular spring that rotates connected bodies back to their starting angle or any desired angle.</p>
+                      <p class="description">Spring mode - a hinge with angular spring that rotates connected bodies back to their starting angle.</p>
                       <ul>
-                        <li class="description">The <em2>Stiff</em2> and <em2>Damp</em2> parameters may be used to control acceleration and strength of the angular spring.</li>
+                        <li class="description">The <em2>Accel</em2> and <em2>Damp</em2> parameters may be used to control acceleration and strength of the angular spring.</li>
                         <li class="description">The <em2>Start Angle</em2> parameter may be used to preset the desired starting angle.</li>
                         <li class="description">The <em2>Controller</em2> parameter may be used to control the magnitude of the starting angle.</li>
-                        <li class="description">The actual starting angle, in degrees, is <em1>start_angle • controller</em1>.</li>
+                        <li class="description">The actual starting angle, in preset units, is <em1>start_angle • controller</em1>.</li>
                         <li class="description">The <em2>Rotate Back</em2> parameter must be enabled in order to use this mode.</li>
                       </ul>
                     </li>
@@ -541,7 +555,7 @@
                   <td><label for="motor-accel">Accel</label></td>
                   <td><input id="motor-accel" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The angular damper, a numeric value greater than or equal to zero. Higher damper makes rotation slower.">
+                <tr title="The angular damper, a numeric value greater than or equal to zero. Higher damper makes rotation stronger.">
                   <td><label for="motor-damp">Damp</label></td>
                   <td><input id="motor-damp" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
@@ -567,23 +581,30 @@
             <div class="spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
-                <tr title="The minimum angle in degrees.">
+                <tr>
+                  <td><label for="servo-angle_units">Angle Units</label></td>
+                  <td><select id="servo-angle_units" data-placeholder="Angle Units" class="chosen-select-no-single drop-down" style="width: 248px;">
+                    <option value="rad">Radians</option>
+                    <option value="deg">Degrees</option>
+                  </select></td>
+                </tr>
+                <tr title="The minimum angle in desired angle units.">
                   <td><label for="servo-min">Min</label></td>
                   <td><input id="servo-min" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The maximum angle in degrees.">
+                <tr title="The maximum angle in desired angle units.">
                   <td><label for="servo-max">Max</label></td>
                   <td><input id="servo-max" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
                 <tr title="Enable/disable minimum and maximum angle limits.">
-                  <td><label for="servo-enable_limits">Enable Limits</label></td>
+                  <td><label for="servo-enable_limits">Limits</label></td>
                   <td><input id="servo-enable_limits" type="checkbox"></input></td>
                 </tr>
                 <tr title="The angular acceleration in radians per second per second, a numeric value greater than or equal to zero.">
                   <td><label for="servo-accel">Accel</label></td>
                   <td><input id="servo-accel" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The angular damper, a numeric value greater than or equal to zero. Higher damper makes rotation slower.">
+                <tr title="The angular damper, a numeric value greater than or equal to zero. Higher damper makes rotation stronger.">
                   <td><label for="servo-damp">Damp</label></td>
                   <td><input id="servo-damp" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
@@ -592,10 +613,10 @@
                   <td><input id="servo-reduction_ratio" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
                 <tr title="Whether to resemble SkethyPhysics mode. See notes for details.">
-                  <td><label for="servo-enable_sp_mode">Resemble SP Mode</label></td>
+                  <td><label for="servo-enable_sp_mode">SketchyPhysics Mode</label></td>
                   <td><input id="servo-enable_sp_mode" type="checkbox"></input></td>
                 </tr>
-                <tr title="Control the desired angle in degrees or the ratio between min and max limits, depending on the mode. Pass nil to 'turn off' the servo.">
+                <tr title="Control the angle in preset angle units or the ratio between min and max limits, depending on the mode. Pass nil to 'turn off' the servo.">
                   <td><label for="servo-controller">Controller</label></td>
                   <td><input id="servo-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
@@ -609,7 +630,7 @@
                       <p class="description">MSPhysics Mode</p>
                       <ul>
                         <li class="description">The maximum angular rate, in radians per second, is <em1>accel / damp<em1>.</li>
-                        <li class="description">The controller parameter assumes input as the desired angle in degrees.</li>
+                        <li class="description">The controller parameter assumes input as the desired angle in preset units.</li>
                         <li class="description">The desired angle is clamped between min and max limits if the limits are enabled.</li>
                         <li class="description">The reduction ratio may be used to decelerate angular rate when servo nears its desired angle.</li>
                       </ul>
@@ -618,8 +639,8 @@
                       <p class="description">SketchyPhysics Mode</p>
                       <ul>
                         <li class="description">The controller parameter assumes input as the ratio between min and max angles.</li>
-                        <li class="description">The desired angle is, <em1>min + (max - min) * controller</em1></li>
-                        <li class="description"><em2>Enable Limits</em2> and <em2>Reduction Ratio</em2> parameters have no effect in this mode.</li>
+                        <li class="description">The desired angle, in preset units, is, <em1>min + (max - min) * controller</em1></li>
+                        <li class="description">The enable/disable <em2>Limits</em2> and <em2>Reduction Ratio</em2> parameters have no effect in this mode.</li>
                       </ul>
                     </li>
                   </ol>
@@ -632,16 +653,28 @@
             <div class="spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
-                <tr title="The minimum position in meters.">
+                <tr>
+                  <td><label for="slider-position_units">Position Units</label></td>
+                  <td><select id="slider-position_units" data-placeholder="Position Units" class="chosen-select-no-single drop-down" style="width: 248px;">
+                    <option value="mm">Millimeters</option>
+                    <option value="cm">Centimeters</option>
+                    <option value="dm">Decimeters</option>
+                    <option value="m">Meters</option>
+                    <option value="in">Inches</option>
+                    <option value="ft">Feet</option>
+                    <option value="yd">Yards</option>
+                  </select></td>
+                </tr>
+                <tr title="The minimum position in preset units.">
                   <td><label for="slider-min">Min</label></td>
                   <td><input id="slider-min" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The maximum position in meters.">
+                <tr title="The maximum position in preset units.">
                   <td><label for="slider-max">Max</label></td>
                   <td><input id="slider-max" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
                 <tr title="Enable/disable minimum and maximum position limits.">
-                  <td><label for="slider-enable_limits">Enable Limits</label></td>
+                  <td><label for="slider-enable_limits">Limits</label></td>
                   <td><input id="slider-enable_limits" type="checkbox"></input></td>
                 </tr>
                 <tr title="The linear friction, a value greater than or equal to zero. Note: The actual friction is friction • magnitude.">
@@ -666,19 +699,31 @@
             <div class="spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
-                <tr title="The minimum position in meters.">
+                <tr>
+                  <td><label for="piston-position_units">Position Units</label></td>
+                  <td><select id="piston-position_units" data-placeholder="Position Units" class="chosen-select-no-single drop-down" style="width: 248px;">
+                    <option value="mm">Millimeters</option>
+                    <option value="cm">Centimeters</option>
+                    <option value="dm">Decimeters</option>
+                    <option value="m">Meters</option>
+                    <option value="in">Inches</option>
+                    <option value="ft">Feet</option>
+                    <option value="yd">Yards</option>
+                  </select></td>
+                </tr>
+                <tr title="The minimum position in preset units.">
                   <td><label for="piston-min">Min</label></td>
                   <td><input id="piston-min" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The maximum position in meters.">
+                <tr title="The maximum position in preset units.">
                   <td><label for="piston-max">Max</label></td>
                   <td><input id="piston-max" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
                 <tr title="Enable/disable minimum and maximum position limits.">
-                  <td><label for="piston-enable_limits">Enable Limits</label></td>
+                  <td><label for="piston-enable_limits">Limits</label></td>
                   <td><input id="piston-enable_limits" type="checkbox"></input></td>
                 </tr>
-                <tr title="The desired linear rate in meters per second, a value greater than or equal to zero.">
+                <tr title="The desired linear rate in preset units per second, a value greater than or equal to zero.">
                   <td><label for="piston-linear_rate">Linear Rate</label></td>
                   <td><input id="piston-linear_rate" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
@@ -690,7 +735,7 @@
                   <td><label for="piston-reduction_ratio">Reduction Ratio</label></td>
                   <td><input id="piston-reduction_ratio" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="Control desired position in meters. Pass nil to 'turn off' the piston.">
+                <tr title="Control desired position in preset units. Pass nil to 'turn off' the piston.">
                   <td><label for="piston-controller">Controller</label></td>
                   <td><input id="piston-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
@@ -702,29 +747,45 @@
             <div class="spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
-                <tr title="The minimum position in meters with respect to the starting position.">
+                <tr>
+                  <td><label for="spring-position_units">Position Units</label></td>
+                  <td><select id="spring-position_units" data-placeholder="Position Units" class="chosen-select-no-single drop-down" style="width: 248px;">
+                    <option value="mm">Millimeters</option>
+                    <option value="cm">Centimeters</option>
+                    <option value="dm">Decimeters</option>
+                    <option value="m">Meters</option>
+                    <option value="in">Inches</option>
+                    <option value="ft">Feet</option>
+                    <option value="yd">Yards</option>
+                  </select></td>
+                </tr>
+                <tr title="The minimum position in preset units with respect to the starting position.">
                   <td><label for="spring-min">Min</label></td>
                   <td><input id="spring-min" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The maximum position in meters with respect to the starting position.">
+                <tr title="The maximum position in preset units with respect to the starting position.">
                   <td><label for="spring-max">Max</label></td>
                   <td><input id="spring-max" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
                 <tr title="Enable/disable minimum and maximum position limits.">
-                  <td><label for="spring-enable_limits">Enable Limits</label></td>
+                  <td><label for="spring-enable_limits">Limits</label></td>
                   <td><input id="spring-enable_limits" type="checkbox"></input></td>
                 </tr>
-                <tr title="The linear stiffness, a value greater than or equal to zero. Higher stiffness makes movement stronger.">
-                  <td><label for="spring-stiff">Stiff</label></td>
-                  <td><input id="spring-stiff" class="custom-text numeric-input" type="text"></input></td>
+                <tr title="The linear acceleration, a value greater than or equal to zero. Higher acceleration makes movement faster.">
+                  <td><label for="spring-accel">Accel</label></td>
+                  <td><input id="spring-accel" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The linear damper, a value greater than or equal to zero. Higher damper makes movement slower.">
+                <tr title="The linear damper, a value greater than or equal to zero. Higher damper makes movement stronger.">
                   <td><label for="spring-damp">Damp</label></td>
                   <td><input id="spring-damp" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The starting position along joint Z-AXIS in meters. Note: The actual starting position is start_position • controller.">
+                <tr title="The starting position along joint Z-axis in preset units. Note: The actual starting position is start_position • controller.">
                   <td><label for="spring-start_position">Start Position</label></td>
                   <td><input id="spring-start_position" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="Enable/disable strong mode for the linear spring.">
+                  <td><label for="spring-enable_strong_mode">Strong Mode</label></td>
+                  <td><input id="spring-enable_strong_mode" type="checkbox"></input></td>
                 </tr>
                 <tr title="Control the magnitude and direction of the starting position. Note: Actual starting position is start_position • controller.">
                   <td><label for="spring-controller">Controller</label></td>
@@ -734,7 +795,7 @@
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
-                  <p class="description">The starting position may be modified with a controller. The actual starting position, in meters, is <em1>start_position • controller</em1>.</p>
+                  <p class="description">The starting position may be modified with a controller. The actual starting position, in preset units, is <em1>start_position • controller</em1>.</p>
                 </div>
               </div>
             </div>
@@ -744,16 +805,16 @@
             <div class="spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
-                <tr title="The angular stiffness, a value greater than or equal to zero. Higher stiffness makes rotation stronger.">
-                  <td><label for="up_vector-stiff">Stiff</label></td>
-                  <td><input id="up_vector-stiff" class="custom-text numeric-input" type="text"></input></td>
+                <tr title="The angular acceleration, a value greater than or equal to zero. Higher acceleration makes rotation faster.">
+                  <td><label for="up_vector-accel">Accel</label></td>
+                  <td><input id="up_vector-accel" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The angular damper, a value greater than or equal to zero. Higher damper makes rotation slower.">
+                <tr title="The angular damper, a value greater than or equal to zero. Higher damper makes rotation stronger.">
                   <td><label for="up_vector-damp">Damp</label></td>
                   <td><input id="up_vector-damp" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="Enable/disable angular stiffness and damper.">
-                  <td><label for="up_vector-enable_damper">Enable Damper</label></td>
+                <tr title="Enable/disable angular acceleration and damper.">
+                  <td><label for="up_vector-enable_damper">Damper</label></td>
                   <td><input id="up_vector-enable_damper" type="checkbox"></input></td>
                 </tr>
                 <tr title="Control vector direction with respect to joint orientation. Pass an Array or a Geom::Vector3d object.">
@@ -768,32 +829,51 @@
             <div class="spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
-                <tr title="The minimum position in meters.">
+                <tr>
+                  <td><label for="corkscrew-position_units">Position Units</label></td>
+                  <td><select id="corkscrew-position_units" data-placeholder="Position Units" class="chosen-select-no-single drop-down" style="width: 248px;">
+                    <option value="mm">Millimeters</option>
+                    <option value="cm">Centimeters</option>
+                    <option value="dm">Decimeters</option>
+                    <option value="m">Meters</option>
+                    <option value="in">Inches</option>
+                    <option value="ft">Feet</option>
+                    <option value="yd">Yards</option>
+                  </select></td>
+                </tr>
+                <tr title="The minimum position in preset units.">
                   <td><label for="corkscrew-min_position">Min Position</label></td>
                   <td><input id="corkscrew-min_position" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The maximum position in meters.">
+                <tr title="The maximum position in preset units.">
                   <td><label for="corkscrew-max_position">Max Position</label></td>
                   <td><input id="corkscrew-max_position" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
                 <tr title="Enable/disable minimum and maximum position limits.">
-                  <td><label for="corkscrew-enable_linear_limits">Enable Linear Limits</label></td>
+                  <td><label for="corkscrew-enable_linear_limits">Position Limits</label></td>
                   <td><input id="corkscrew-enable_linear_limits" type="checkbox"></input></td>
                 </tr>
                 <tr title="The linear friction, a value greater than or equal to zero.">
                   <td><label for="corkscrew-linear_friction">Linear Friction</label></td>
                   <td><input id="corkscrew-linear_friction" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The minimum angle in degrees.">
+                <tr>
+                  <td><label for="corkscrew-angle_units">Angle Units</label></td>
+                  <td><select id="corkscrew-angle_units" data-placeholder="Angle Units" class="chosen-select-no-single drop-down" style="width: 248px;">
+                    <option value="rad">Radians</option>
+                    <option value="deg">Degrees</option>
+                  </select></td>
+                </tr>
+                <tr title="The minimum angle in preset units.">
                   <td><label for="corkscrew-min_angle">Min Angle</label></td>
                   <td><input id="corkscrew-min_angle" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The maximum angle in degrees.">
+                <tr title="The maximum angle in preset units.">
                   <td><label for="corkscrew-max_angle">Max Angle</label></td>
                   <td><input id="corkscrew-max_angle" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
                 <tr title="Enable/disable minimum and maximum angle limits.">
-                  <td><label for="corkscrew-enable_angular_limits">Enable Angular Limits</label></td>
+                  <td><label for="corkscrew-enable_angular_limits">Angle Limits</label></td>
                   <td><input id="corkscrew-enable_angular_limits" type="checkbox"></input></td>
                 </tr>
                 <tr title="The angular friction, a value greater than or equal to zero.">
@@ -808,39 +888,101 @@
             <div class="spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
-                <tr title="The angular stiffness, a value greater than or equal to zero. Higher stiffness makes rotation stronger.">
-                  <td><label for="ball_and_socket-stiff">Stiff</label></td>
-                  <td><input id="ball_and_socket-stiff" class="custom-text numeric-input" type="text"></input></td>
+                <tr>
+                  <td><label for="ball_and_socket-angle_units">Angle Units</label></td>
+                  <td><select id="ball_and_socket-angle_units" data-placeholder="Angle Units" class="chosen-select-no-single drop-down" style="width: 248px;">
+                    <option value="rad">Radians</option>
+                    <option value="deg">Degrees</option>
+                  </select></td>
                 </tr>
-                <tr title="The angular damper, a value greater than or equal to zero. Higher damper makes rotation slower.">
-                  <td><label for="ball_and_socket-damp">Damp</label></td>
-                  <td><input id="ball_and_socket-damp" class="custom-text numeric-input" type="text"></input></td>
-                </tr>
-                <tr title="Enable/disable angular stiffness and damper.">
-                  <td><label for="ball_and_socket-enable_damper">Enable Damper</label></td>
-                  <td><input id="ball_and_socket-enable_damper" type="checkbox"></input></td>
-                </tr>
-                <tr title="The maximum cone angle in degrees.">
+                <tr title="The maximum cone angle in preset units.">
                   <td><label for="ball_and_socket-max_cone_angle">Max Cone Angle</label></td>
                   <td><input id="ball_and_socket-max_cone_angle" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="Enable/disable cone limits.">
-                  <td><label for="ball_and_socket-enable_cone_limits">Enable Cone Limits</label></td>
+                <tr title="Enable/disable maximum cone angle limit.">
+                  <td><label for="ball_and_socket-enable_cone_limits">Cone Limits</label></td>
                   <td><input id="ball_and_socket-enable_cone_limits" type="checkbox"></input></td>
                 </tr>
-                <tr title="The minimum twist angle in degrees.">
+                <tr title="The minimum twist angle in preset units.">
                   <td><label for="ball_and_socket-min_twist_angle">Min Twist Angle</label></td>
                   <td><input id="ball_and_socket-min_twist_angle" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The maximum twist angle in degrees.">
+                <tr title="The maximum twist angle in preset units.">
                   <td><label for="ball_and_socket-max_twist_angle">Max Twist Angle</label></td>
                   <td><input id="ball_and_socket-max_twist_angle" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="Enable/disable twist limits.">
-                  <td><label for="ball_and_socket-enable_twist_limits">Enable Twist Limits</label></td>
+                <tr title="Enable/disable minimum and maximum twist limits.">
+                  <td><label for="ball_and_socket-enable_twist_limits">Twist Limits</label></td>
                   <td><input id="ball_and_socket-enable_twist_limits" type="checkbox"></input></td>
                 </tr>
+                <tr title="The angular friction, a value greater than or equal to zero.">
+                  <td><label for="ball_and_socket-friction">Friction</label></td>
+                  <td><input id="ball_and_socket-friction" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="Control magnitude of the angular friction.">
+                  <td><label for="ball_and_socket-controller">Controller</label></td>
+                  <td><input id="ball_and_socket-controller" class="custom-text controller-input" type="text"></input></td>
+                </tr>
               </table>
+              <div>
+                <label class="expander description"><em5>Notes</em5></label>
+                <div class="content spacing_tab">
+                  <p class="description">The magnitude of the angular friction can be controlled via the controller. The actual angular friction is, <em1>friction • controller</em1>.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="tab4-universal">
+            <p class="title">Universal</p>
+            <div class="spacing_tab">
+              <table class="struct_table">
+                <col width="40%" />
+                <tr>
+                  <td><label for="universal-angle_units">Angle Units</label></td>
+                  <td><select id="universal-angle_units" data-placeholder="Angle Units" class="chosen-select-no-single drop-down" style="width: 248px;">
+                    <option value="rad">Radians</option>
+                    <option value="deg">Degrees</option>
+                  </select></td>
+                </tr>
+                <tr title="The minimum angle along joint Z-axis in preset units.">
+                  <td><label for="universal-min1">Min 1</label></td>
+                  <td><input id="universal-min1" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="The maximum angle along joint Z-axis in preset units.">
+                  <td><label for="universal-max1">Max 1</label></td>
+                  <td><input id="universal-max1" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="Enable/disable minimum and maximum angle limits along joint Z-axis.">
+                  <td><label for="universal-enable_limits1">Limits 1</label></td>
+                  <td><input id="universal-enable_limits1" type="checkbox"></input></td>
+                </tr>
+                <tr title="The minimum angle along joint X-axis in preset units.">
+                  <td><label for="universal-min2">Min 2</label></td>
+                  <td><input id="universal-min2" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="The maximum angle along joint X-axis in preset units.">
+                  <td><label for="universal-max2">Max 2</label></td>
+                  <td><input id="universal-max2" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="Enable/disable minimum and maximum angle limits along joint X-axis.">
+                  <td><label for="universal-enable_limits2">Limits 2</label></td>
+                  <td><input id="universal-enable_limits2" type="checkbox"></input></td>
+                </tr>
+                <tr title="The angular friction, a value greater than or equal to zero.">
+                  <td><label for="universal-friction">Friction</label></td>
+                  <td><input id="universal-friction" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="Control magnitude of the angular friction.">
+                  <td><label for="universal-controller">Controller</label></td>
+                  <td><input id="universal-controller" class="custom-text controller-input" type="text"></input></td>
+                </tr>
+              </table>
+              <div>
+                <label class="expander description"><em5>Notes</em5></label>
+                <div class="content spacing_tab">
+                  <p class="description">The magnitude of the angular friction can be controlled via the controller. The actual angular friction is, <em1>friction • controller</em1>.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

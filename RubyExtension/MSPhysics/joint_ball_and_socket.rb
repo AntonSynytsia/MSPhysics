@@ -3,78 +3,40 @@ module MSPhysics
   # @since 1.0.0
   class BallAndSocket < Joint
 
-    DEFAULT_STIFF = 40.0
-    DEFAULT_DAMP = 10.0
-    DEFAULT_DAMPER_ENABLED = false
-    DEFAULT_MAX_CONE_ANGLE = 30.0
+    DEFAULT_MAX_CONE_ANGLE = 30.0.degrees
     DEFAULT_CONE_LIMITS_ENABLED = false
-    DEFAULT_MIN_TWIST_ANGLE = -180.0
-    DEFAULT_MAX_TWIST_ANGLE = 180.0
+    DEFAULT_MIN_TWIST_ANGLE = -180.0.degrees
+    DEFAULT_MAX_TWIST_ANGLE = 180.0.degrees
     DEFAULT_TWIST_LIMITS_ENABLED = false
+    DEFAULT_FRICTION = 0.0
+    DEFAULT_CONTROLLER = 1.0
 
-    # Create a BallAndSocket joint.
+    # Create a ball & socket joint.
     # @param [MSPhysics::World] world
     # @param [MSPhysics::Body, nil] parent
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
     #   Of the given matrix, matrix origin should represent pin origin, and
-    #   matrix Z-AXIS should represent pin up.
+    #   matrix Z-axis should represent pin up.
     def initialize(world, parent, pin_tra)
       super(world, parent, pin_tra, 6)
       MSPhysics::Newton::BallAndSocket.create(@address)
-      MSPhysics::Newton::BallAndSocket.set_stiff(@address, DEFAULT_STIFF)
-      MSPhysics::Newton::BallAndSocket.set_damp(@address, DEFAULT_DAMP)
-      MSPhysics::Newton::BallAndSocket.enable_damper(@address, DEFAULT_DAMPER_ENABLED)
-      MSPhysics::Newton::BallAndSocket.set_max_cone_angle(@address, DEFAULT_MAX_CONE_ANGLE.degrees)
+      MSPhysics::Newton::BallAndSocket.set_max_cone_angle(@address, DEFAULT_MAX_CONE_ANGLE)
       MSPhysics::Newton::BallAndSocket.enable_cone_limits(@address, DEFAULT_CONE_LIMITS_ENABLED)
-      MSPhysics::Newton::BallAndSocket.set_min_twist_angle(@address, DEFAULT_MIN_TWIST_ANGLE.degrees)
-      MSPhysics::Newton::BallAndSocket.set_max_twist_angle(@address, DEFAULT_MAX_TWIST_ANGLE.degrees)
+      MSPhysics::Newton::BallAndSocket.set_min_twist_angle(@address, DEFAULT_MIN_TWIST_ANGLE)
+      MSPhysics::Newton::BallAndSocket.set_max_twist_angle(@address, DEFAULT_MAX_TWIST_ANGLE)
       MSPhysics::Newton::BallAndSocket.enable_twist_limits(@address, DEFAULT_TWIST_LIMITS_ENABLED)
-    end
-
-    # Get rotation stiffness. Higher stiffness makes rotation stronger.
-    # @return [Numeric]
-    def stiff
-      MSPhysics::Newton::BallAndSocket.get_stiff(@address)
-    end
-
-    # Set rotation stiffness. Higher stiffness makes rotation stronger.
-    # @param [Numeric] value A value greater than or equal to zero.
-    def stiff=(value)
-      MSPhysics::Newton::BallAndSocket.set_stiff(@address, value)
-    end
-
-    # Get rotation damper. Higher damper makes rotation slower.
-    # @return [Numeric]
-    def damp
-      MSPhysics::Newton::BallAndSocket.get_damp(@address)
-    end
-
-    # Set rotation damper. Higher damper makes rotation slower.
-    # @param [Numeric] value A value greater than or equal to zero.
-    def damp=(value)
-      MSPhysics::Newton::BallAndSocket.set_damp(@address, value)
-    end
-
-    # Determine whether rotation stiff & damp parameters are enabled.
-    # @return [Boolean]
-    def damper_enabled?
-      MSPhysics::Newton::BallAndSocket.is_damper_enabled?(@address)
-    end
-
-    # Enable/Disable rotation stiff & damp parameters.
-    # @param [Boolean] state
-    def damper_enabled=(state)
-      MSPhysics::Newton::BallAndSocket.enable_damper(@address, state)
+      MSPhysics::Newton::BallAndSocket.set_friction(@address, DEFAULT_FRICTION)
+      MSPhysics::Newton::BallAndSocket.set_controller(@address, DEFAULT_CONTROLLER)
     end
 
     # Get maximum cone angle in radians.
-    # @return [Numeric]
+    # @return [Numeric] A value between 0.0 and PI.
     def max_cone_angle
       MSPhysics::Newton::BallAndSocket.get_max_cone_angle(@address)
     end
 
     # Set maximum cone angle in radians.
-    # @param [Numeric] angle
+    # @param [Numeric] angle A value between 0.0 and PI.
     def max_cone_angle=(angle)
       MSPhysics::Newton::BallAndSocket.set_max_cone_angle(@address, angle)
     end
@@ -85,7 +47,7 @@ module MSPhysics
       MSPhysics::Newton::BallAndSocket.cone_limits_enabled?(@address)
     end
 
-    # Enable/Disable cone angle limits.
+    # Enable/disable cone angle limits.
     # @param [Boolean] state
     def cone_limits_enabled=(state)
       MSPhysics::Newton::BallAndSocket.enable_cone_limits(@address, state)
@@ -121,7 +83,7 @@ module MSPhysics
       MSPhysics::Newton::BallAndSocket.twist_limits_enabled?(@address)
     end
 
-    # Enable/Disable twist angle limits.
+    # Enable/disable twist angle limits.
     # @param [Boolean] state
     def twist_limits_enabled=(state)
       MSPhysics::Newton::BallAndSocket.enable_twist_limits(@address, state)
@@ -137,6 +99,36 @@ module MSPhysics
     # @return [Numeric]
     def cur_twist_angle
       MSPhysics::Newton::BallAndSocket.get_cur_twist_angle(@address)
+    end
+
+    # Get angular friction.
+    # @note The actual friction is <tt>friction * controller</tt>.
+    # @return [Numeric] A value greater than or equal to zero.
+    def friction
+      MSPhysics::Newton::BallAndSocket.get_friction(@address)
+    end
+
+    # Set angular friction.
+    # @note The actual friction is <tt>friction * controller</tt>.
+    # @param [Numeric] value A value greater than or equal to zero.
+    def friction=(value)
+      MSPhysics::Newton::BallAndSocket.set_friction(@address, value)
+    end
+
+    # Get magnitude of the angular friction.
+    # @note Default controller value is 1.0.
+    # @note The actual friction is <tt>friction * controller</tt>.
+    # @return [Numeric]
+    def controller
+      MSPhysics::Newton::BallAndSocket.get_controller(@address)
+    end
+
+    # Set magnitude of the angular friction.
+    # @note Default controller value is 1.0.
+    # @note The actual friction is <tt>friction * controller</tt>.
+    # @param [Numeric] value
+    def controller=(value)
+      MSPhysics::Newton::BallAndSocket.set_controller(@address, value)
     end
 
   end # class BallAndSocket < Joint

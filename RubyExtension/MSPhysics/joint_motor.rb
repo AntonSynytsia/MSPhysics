@@ -13,11 +13,11 @@ module MSPhysics
     # @param [MSPhysics::Body, nil] parent
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
     #   Of the given matrix, matrix origin should represent pin origin, and
-    #   matrix Z-AXIS should represent pin up.
+    #   matrix Z-axis should represent pin up.
     def initialize(world, parent, pin_tra)
       super(world, parent, pin_tra, 8)
       MSPhysics::Newton::Motor.create(@address)
-      MSPhysics::Newton::Motor.set_accel(@address, DEFAULT_ACCEL.degrees)
+      MSPhysics::Newton::Motor.set_accel(@address, DEFAULT_ACCEL)
       MSPhysics::Newton::Motor.set_damp(@address, DEFAULT_DAMP)
       MSPhysics::Newton::Motor.enable_free_rotate(@address, DEFAULT_FREE_ROTATE_ENABLED)
       MSPhysics::Newton::Motor.set_controller(@address, DEFAULT_CONTROLLER)
@@ -59,7 +59,8 @@ module MSPhysics
       MSPhysics::Newton::Motor.set_accel(@address, value)
     end
 
-    # Get rotational damper. Higher damper makes rotation slower.
+    # Get rotational damper.
+	# @note Higher damper makes rotation stronger.
     # @note The maximum angular rate in radians per second is
     #   <tt>accel * controller / damp</tt>.
     # @return [Numeric]
@@ -67,7 +68,8 @@ module MSPhysics
       MSPhysics::Newton::Motor.get_damp(@address)
     end
 
-    # Set rotational damper. Higher damper makes rotation slower.
+    # Set rotational damper.
+	# @note Higher damper makes rotation stronger.
     # @note The maximum angular rate in radians per second is
     #   <tt>accel * controller / damp</tt>.
     # @param [Numeric] value A value greater than or equal to zero.
@@ -82,7 +84,7 @@ module MSPhysics
       MSPhysics::Newton::Motor.is_free_rotate_enabled?(@address)
     end
 
-    # Enable/Disable free rotate. Free rotate allows the motor to spin freely
+    # Enable/disable free rotate. Free rotate allows the motor to spin freely
     # when accel is zero.
     # @param [Boolean] state
     def free_rotate_enabled=(state)

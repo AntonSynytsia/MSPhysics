@@ -11,29 +11,30 @@ namespace MSNewton {
 class MSNewton::Universal {
 private:
 	// Variables
+	static const dFloat DEFAULT_MIN;
+	static const dFloat DEFAULT_MAX;
+	static const bool DEFAULT_LIMITS_ENABLED;
+	static const dFloat DEFAULT_FRICTION;
+	static const dFloat DEFAULT_CONTROLLER;
 
 public:
 	// Structures
 	typedef struct UniversalData
 	{
-		AngularIntegration* ai0;
-		dFloat cur_omega0;
-		dFloat cur_accel0;
-		dFloat min0;
-		dFloat max0;
-		bool limits_enabled0;
-		dFloat angular_accel0;
-		dFloat angular_damp0;
-		bool motor_enabled0;
 		AngularIntegration* ai1;
 		dFloat cur_omega1;
 		dFloat cur_accel1;
 		dFloat min1;
 		dFloat max1;
 		bool limits_enabled1;
-		dFloat angular_accel1;
-		dFloat angular_damp1;
-		bool motor_enabled1;
+		AngularIntegration* ai2;
+		dFloat cur_omega2;
+		dFloat cur_accel2;
+		dFloat min2;
+		dFloat max2;
+		bool limits_enabled2;
+		dFloat friction;
+		dFloat controller;
 	} UniversalData;
 
 	// Callback Functions
@@ -46,25 +47,6 @@ public:
 	// Ruby Functions
 	static VALUE is_valid(VALUE self, VALUE v_joint);
 	static VALUE create(VALUE self, VALUE v_joint);
-	static VALUE get_cur_angle0(VALUE self, VALUE v_joint);
-	static VALUE get_cur_omega0(VALUE self, VALUE v_joint);
-	static VALUE get_cur_acceleration0(VALUE self, VALUE v_joint);
-	static VALUE get_min0(VALUE self, VALUE v_joint);
-	static VALUE set_min0(VALUE self, VALUE v_joint, VALUE v_min);
-	static VALUE get_max0(VALUE self, VALUE v_joint);
-	static VALUE set_max0(VALUE self, VALUE v_joint, VALUE v_max);
-	static VALUE enable_limits0(VALUE self, VALUE v_joint, VALUE v_state);
-	static VALUE limits_enabled0(VALUE self, VALUE v_joint);
-	static VALUE get_friction0(VALUE self, VALUE v_joint);
-	static VALUE set_friction0(VALUE self, VALUE v_joint, VALUE v_friction);
-	static VALUE get_accel0(VALUE self, VALUE v_joint);
-	static VALUE set_accel0(VALUE self, VALUE v_joint, VALUE v_accel);
-	static VALUE get_damp0(VALUE self, VALUE v_joint);
-	static VALUE set_damp0(VALUE self, VALUE v_joint, VALUE v_damp);
-	static VALUE enable_motor0(VALUE self, VALUE v_joint, VALUE v_state);
-	static VALUE motor_enabled0(VALUE self, VALUE v_joint);
-	static VALUE get_controller0(VALUE self, VALUE v_joint);
-	static VALUE set_controller0(VALUE self, VALUE v_joint, VALUE v_controller);
 	static VALUE get_cur_angle1(VALUE self, VALUE v_joint);
 	static VALUE get_cur_omega1(VALUE self, VALUE v_joint);
 	static VALUE get_cur_acceleration1(VALUE self, VALUE v_joint);
@@ -74,16 +56,19 @@ public:
 	static VALUE set_max1(VALUE self, VALUE v_joint, VALUE v_max);
 	static VALUE enable_limits1(VALUE self, VALUE v_joint, VALUE v_state);
 	static VALUE limits_enabled1(VALUE self, VALUE v_joint);
-	static VALUE get_friction1(VALUE self, VALUE v_joint);
-	static VALUE set_friction1(VALUE self, VALUE v_joint, VALUE v_friction);
-	static VALUE get_accel1(VALUE self, VALUE v_joint);
-	static VALUE set_accel1(VALUE self, VALUE v_joint, VALUE v_accel);
-	static VALUE get_damp1(VALUE self, VALUE v_joint);
-	static VALUE set_damp1(VALUE self, VALUE v_joint, VALUE v_damp);
-	static VALUE enable_motor1(VALUE self, VALUE v_joint, VALUE v_state);
-	static VALUE motor_enabled1(VALUE self, VALUE v_joint);
-	static VALUE get_controller1(VALUE self, VALUE v_joint);
-	static VALUE set_controller1(VALUE self, VALUE v_joint, VALUE v_controller);
+	static VALUE get_cur_angle2(VALUE self, VALUE v_joint);
+	static VALUE get_cur_omega2(VALUE self, VALUE v_joint);
+	static VALUE get_cur_acceleration2(VALUE self, VALUE v_joint);
+	static VALUE get_min2(VALUE self, VALUE v_joint);
+	static VALUE set_min2(VALUE self, VALUE v_joint, VALUE v_min);
+	static VALUE get_max2(VALUE self, VALUE v_joint);
+	static VALUE set_max2(VALUE self, VALUE v_joint, VALUE v_max);
+	static VALUE enable_limits2(VALUE self, VALUE v_joint, VALUE v_state);
+	static VALUE limits_enabled2(VALUE self, VALUE v_joint);
+	static VALUE get_friction(VALUE self, VALUE v_joint);
+	static VALUE set_friction(VALUE self, VALUE v_joint, VALUE v_friction);
+	static VALUE get_controller(VALUE self, VALUE v_joint);
+	static VALUE set_controller(VALUE self, VALUE v_joint, VALUE v_controller);
 };
 
 void Init_msp_universal(VALUE mNewton);

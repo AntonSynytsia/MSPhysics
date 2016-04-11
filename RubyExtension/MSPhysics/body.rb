@@ -157,6 +157,17 @@ module MSPhysics
         @_collision_shape = args[2].to_s.downcase.gsub(' ', '_')
         collision = MSPhysics::Collision.create(args[0], @_group, @_collision_shape)
         @_address = MSPhysics::Newton::Body.create_dynamic(args[0].get_address, collision, @_group.transformation, args[0].get_default_material_id)
+        if @_collision_shape == 'null'
+          bb = MSPhysics::Group.get_bounding_box_from_faces(@_group, true, nil) { |e|
+            e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
+          }
+          scale = MSPhysics::Geometry.get_matrix_scale(@_group.transformation)
+          c = bb.center
+          c.x *= scale.x
+          c.y *= scale.y
+          c.z *= scale.z
+          MSPhysics::Newton::Body.set_centre_of_mass(@_address, c)
+        end
         MSPhysics::Newton::Collision.destroy(collision)
       else
         # Create a clone of an existing body.
@@ -454,9 +465,9 @@ module MSPhysics
     #   @param [Geom::Vector3d, Array<Numeric>] velocity The magnitude of the
     #     velocity vector is assumed in meters per second.
     # @overload set_velocity(vx, vy, vz)
-    #   @param [Numeric] vx Velocity in meters per second along xaxis.
-    #   @param [Numeric] vy Velocity in meters per second along yaxis.
-    #   @param [Numeric] vz Velocity in meters per second along zaxis.
+    #   @param [Numeric] vx Velocity in meters per second along X-axis.
+    #   @param [Numeric] vy Velocity in meters per second along Y-axis.
+    #   @param [Numeric] vz Velocity in meters per second along Z-axis.
     # @return [Geom::Vector3d] The newly assigned velocity vector.
     def set_velocity(*args)
       Body.validate(self)
@@ -473,9 +484,9 @@ module MSPhysics
     # Get global angular velocity of the body.
     # @example
     #   Each value of the omega vector represents angular velocity in radians
-    #   per second along xaxis, yaxis, or zaxis in global space. For example, if
-    #   omega of a body is (0,0,PI), it means that the body rotates along zaxis
-    #   in global space at an angular velocity of 360 degrees per second.
+    #   per second along X-axis, Y-axis, or Z-axis in global space. For example,
+    #   if omega of a body is (0,0,PI), it means that the body rotates along
+    #   Z-axis in global space at an angular velocity of 360 degrees per second.
     # @return [Geom::Vector3d] The magnitude of the omega vector is represented
     #   in radians per second.
     def get_omega
@@ -488,9 +499,9 @@ module MSPhysics
     #   @param [Geom::Vector3d, Array<Numeric>] omega The magnitude of the omega
     #     vector is assumed in radians per second.
     # @overload set_omega(vx, vy, vz)
-    #   @param [Numeric] vx Omega in radians per second along xaxis.
-    #   @param [Numeric] vy Omega in radians per second along yaxis.
-    #   @param [Numeric] vz Omega in radians per second along zaxis.
+    #   @param [Numeric] vx Omega in radians per second along X-axis.
+    #   @param [Numeric] vy Omega in radians per second along Y-axis.
+    #   @param [Numeric] vz Omega in radians per second along Z-axis.
     # @return [Geom::Vector3d] The newly assigned omega vector.
     def set_omega(*args)
       Body.validate(self)
@@ -854,7 +865,7 @@ module MSPhysics
       MSPhysics::Newton::Body.set_magnetic(@_address, state)
     end
 
-    # Get world axis aligned bounding box (AABB) of the body.
+    # Get world axes aligned bounding box (AABB) of the body.
     # @return [Geom::BoundingBox]
     def get_bounding_box
       Body.validate(self)
@@ -893,9 +904,9 @@ module MSPhysics
     #   @param [Geom::Vector3d, Array<Numeric>] damp Each value of the damp
     #     vector is assumed as an angular coefficient, a value b/w 0.0 and 1.0.
     # @overload set_angular_damping(dx, dy, dz)
-    #   @param [Numeric] dx Xaxis damping coefficient, a value b/w 0.0 and 1.0.
-    #   @param [Numeric] dy Yaxis damping coefficient, a value b/w 0.0 and 1.0.
-    #   @param [Numeric] dz Zaxis damping coefficient, a value b/w 0.0 and 1.0.
+    #   @param [Numeric] dx X-axis damping coefficient, a value b/w 0.0 and 1.0.
+    #   @param [Numeric] dy Y-axis damping coefficient, a value b/w 0.0 and 1.0.
+    #   @param [Numeric] dz Z-axis damping coefficient, a value b/w 0.0 and 1.0.
     # @return [Geom::Vector3d] The newly assigned angular damping.
     def set_angular_damping(*args)
       Body.validate(self)
@@ -1367,7 +1378,7 @@ module MSPhysics
       end
     end
 
-    # Enable/Disable gravitational force on this body.
+    # Enable/disable gravitational force on this body.
     # @param [Boolean] state
     # @return [Boolean] The new state
     def enable_gravity(state)
@@ -1429,8 +1440,8 @@ module MSPhysics
 
     # Get body collision scale.
     # @note Does not include group scale.
-    # @return [Geom::Vector3d] A vector representing the xaxis, yaxis, and zaxis
-    #   scale factors of the collision.
+    # @return [Geom::Vector3d] A vector representing the X-axis, Y-axis, and
+    #   Z-axis scale factors of the collision.
     def get_collision_scale
       Body.validate(self)
       MSPhysics::Newton::Body.get_collision_scale(@_address)
@@ -1440,16 +1451,16 @@ module MSPhysics
     # @note Does not include group scale.
     # @overload set_collision_scale(scale)
     #   @param [Geom::Vector3d, Array<Numeric>] scale A vector representing
-    #     xaxis, yaxis, and zaxis scale factors of the body collision.
+    #     X-axis, Y-axis, and Z-axis scale factors of the body collision.
     # @overload set_collision_scale(sx, sy, sz)
-    #   @param [Numeric] sx Scale along the xaxis of the body, a value between
+    #   @param [Numeric] sx Scale along the X-axis of the body, a value between
     #     0.01 and 100.
-    #   @param [Numeric] sy Scale along the yaxis of the body, a value between
+    #   @param [Numeric] sy Scale along the Y-axis of the body, a value between
     #     0.01 and 100.
-    #   @param [Numeric] sz Scale along the zaxis of the body, a value between
+    #   @param [Numeric] sz Scale along the Z-axis of the body, a value between
     #     0.01 and 100.
-    # @return [Geom::Vector3d] A vector representing the new xaxis, yaxis, and
-    #   zaxis scale factors of the body collision.
+    # @return [Geom::Vector3d] A vector representing the new X-axis, Y-axis, and
+    #   Z-axis scale factors of the body collision.
     def set_collision_scale(*args)
       Body.validate(self)
       if args.size == 3
@@ -1466,8 +1477,8 @@ module MSPhysics
 
     # Get default scale of the body collision.
     # @note Does not include group scale.
-    # @return [Geom::Vector3d] A vector representing the default xaxis, yaxis,
-    #   and zaxis scale factors of the collision.
+    # @return [Geom::Vector3d] A vector representing the default X-axis, Y-axis,
+    #   and Z-axis scale factors of the collision.
     def get_default_collision_scale
       Body.validate(self)
       MSPhysics::Newton::Body.get_default_collision_scale(@_address)
@@ -1475,14 +1486,14 @@ module MSPhysics
 
     # Get scale of the body matrix that is a product of group scale and
     # collision scale.
-    # @return [Geom::Vector3d] A vector representing the xaxis, yaxis, and zaxis
-    #   scale factors of the actual body matrix.
+    # @return [Geom::Vector3d] A vector representing the X-axis, Y-axis, and
+    #   Z-axis scale factors of the actual body matrix.
     def get_actual_matrix_scale
       Body.validate(self)
       MSPhysics::Newton::Body.get_actual_matrix_scale(@_address)
     end
 
-    # Make the body's Z-AXIS to look in a particular direction.
+    # Make the body's Z-axis to look in a particular direction.
     # @param [Geom::Vector3d, nil] pin_dir Direction in global space. Pass nil
     #   to disable the look at constraint.
     # @param [Numeric] stiff Rotational stiffness.
@@ -1616,7 +1627,7 @@ module MSPhysics
       @_script_state
     end
 
-    # Enable/Disable body script. Disabling script will prevent all events of
+    # Enable/disable body script. Disabling script will prevent all events of
     # the body from being called.
     # @param [Boolean] state
     # @return [Boolean] The newly assigned state.

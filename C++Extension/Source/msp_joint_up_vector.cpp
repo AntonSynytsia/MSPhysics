@@ -7,7 +7,7 @@
 */
 
 const dVector MSNewton::UpVector::DEFAULT_PIN_DIR(0.0f, 0.0f, 1.0f);
-const dFloat MSNewton::UpVector::DEFAULT_STIFF = 40.0f;
+const dFloat MSNewton::UpVector::DEFAULT_ACCEL = 40.0f;
 const dFloat MSNewton::UpVector::DEFAULT_DAMP = 10.0f;
 const bool MSNewton::UpVector::DEFAULT_DAMPER_ENABLED = false;
 
@@ -44,28 +44,28 @@ void MSNewton::UpVector::submit_constraints(const NewtonJoint* joint, dgFloat32 
 		// Add an angular constraint to correct the error angle.
 		NewtonUserJointAddAngularRow(joint, angle, &lateral_dir[0]);
 		if (cj_data->damper_enabled)
-			NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->stiff, cj_data->damp);
-		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+			NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->accel, cj_data->damp);
+		NewtonUserJointSetRowStiffness(joint, -joint_data->stiffness);
 
 		// In theory only one correction is needed, but this produces instability as the body may move sideway.
 		// A lateral correction prevent this from happening.
 		dVector front_dir(lateral_dir * pin_matrix.m_right);
 		NewtonUserJointAddAngularRow(joint, 0.0f, &front_dir[0]);
 		if (cj_data->damper_enabled)
-			NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->stiff, cj_data->damp);
-		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+			NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->accel, cj_data->damp);
+		NewtonUserJointSetRowStiffness(joint, -joint_data->stiffness);
 	}
 	else {
 		// If the angle error is very small, then two angular corrections along the plane axis do the trick.
 		NewtonUserJointAddAngularRow(joint, 0.0f, &pin_matrix.m_front[0]);
 		if (cj_data->damper_enabled)
-			NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->stiff, cj_data->damp);
-		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+			NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->accel, cj_data->damp);
+		NewtonUserJointSetRowStiffness(joint, -joint_data->stiffness);
 
 		NewtonUserJointAddAngularRow(joint, 0.0f, &pin_matrix.m_up[0]);
 		if (cj_data->damper_enabled)
-			NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->stiff, cj_data->damp);
-		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+			NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->accel, cj_data->damp);
+		NewtonUserJointSetRowStiffness(joint, -joint_data->stiffness);
 	}
 }
 
@@ -118,7 +118,7 @@ VALUE MSNewton::UpVector::create(VALUE self, VALUE v_joint) {
 	UpVectorData* cj_data = new UpVectorData;
 	cj_data->pin_dir = DEFAULT_PIN_DIR;
 	cj_data->pin_matrix = Util::matrix_from_pin_dir(ORIGIN, cj_data->pin_dir);
-	cj_data->stiff = DEFAULT_STIFF;
+	cj_data->accel = DEFAULT_ACCEL;
 	cj_data->damp = DEFAULT_DAMP;
 	cj_data->damper_enabled = DEFAULT_DAMPER_ENABLED;
 
@@ -156,17 +156,17 @@ VALUE MSNewton::UpVector::set_pin_dir(VALUE self, VALUE v_joint, VALUE v_pin_dir
 	return Util::vector_to_value(cj_data->pin_dir);
 }
 
-VALUE MSNewton::UpVector::get_stiff(VALUE self, VALUE v_joint) {
+VALUE MSNewton::UpVector::get_accel(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_UP_VECTOR);
 	UpVectorData* cj_data = (UpVectorData*)joint_data->cj_data;
-	return Util::to_value(cj_data->stiff);
+	return Util::to_value(cj_data->accel);
 }
 
-VALUE MSNewton::UpVector::set_stiff(VALUE self, VALUE v_joint, VALUE v_stiff) {
+VALUE MSNewton::UpVector::set_accel(VALUE self, VALUE v_joint, VALUE v_accel) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_UP_VECTOR);
 	UpVectorData* cj_data = (UpVectorData*)joint_data->cj_data;
-	cj_data->stiff = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_stiff), 0.0f);
-	return Util::to_value(cj_data->stiff);
+	cj_data->accel = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_accel), 0.0f);
+	return Util::to_value(cj_data->accel);
 }
 
 VALUE MSNewton::UpVector::get_damp(VALUE self, VALUE v_joint) {
@@ -203,8 +203,8 @@ void Init_msp_up_vector(VALUE mNewton) {
 	rb_define_module_function(mUpVector, "create", VALUEFUNC(MSNewton::UpVector::create), 1);
 	rb_define_module_function(mUpVector, "get_pin_dir", VALUEFUNC(MSNewton::UpVector::get_pin_dir), 1);
 	rb_define_module_function(mUpVector, "set_pin_dir", VALUEFUNC(MSNewton::UpVector::set_pin_dir), 2);
-	rb_define_module_function(mUpVector, "get_stiff", VALUEFUNC(MSNewton::UpVector::get_stiff), 1);
-	rb_define_module_function(mUpVector, "set_stiff", VALUEFUNC(MSNewton::UpVector::set_stiff), 2);
+	rb_define_module_function(mUpVector, "get_accel", VALUEFUNC(MSNewton::UpVector::get_accel), 1);
+	rb_define_module_function(mUpVector, "set_accel", VALUEFUNC(MSNewton::UpVector::set_accel), 2);
 	rb_define_module_function(mUpVector, "get_damp", VALUEFUNC(MSNewton::UpVector::get_damp), 1);
 	rb_define_module_function(mUpVector, "set_damp", VALUEFUNC(MSNewton::UpVector::set_damp), 2);
 	rb_define_module_function(mUpVector, "enable_damper", VALUEFUNC(MSNewton::UpVector::enable_damper), 2);

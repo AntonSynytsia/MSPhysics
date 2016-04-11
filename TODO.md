@@ -1,86 +1,24 @@
-- Create an installer that would automatically install AMS Library and MSPhysics
-  into desired plugins folder.
-- Make it work on Mac OS X
-- Test under SU6, Windows XP
-- Implement newton cloth and soft bodies.
-- Implement user mesh collision.
-- Implement newton vehicle.
-- Add world compound interface
-    * Convert group of bodies into compound.
-    * Convert compound into group of bodies.
-- Add path follow joint.
-- Add geared joints.
+- Create an installer that would automatically install AMS Library and MSPhysics into desired plugins folder.
+- Make compatible with Mac OS X.
+- Implement newton cloth and soft bodies interface.
+- Implement user mesh collision interface.
+- Implement newton vehicle interface.
+- Implement fractured compound interface.
+- Add geared joints interface.
 - Add differential joint.
-- Add hinge2 joint, a joint with motor and servo in one.
-- Add spline joint
-    * http://newtondynamics.com/forum/viewtopic.php?f=9&t=4716&p=33835#p33835
-    * http://newtondynamics.com/forum/viewtopic.php?f=9&t=8668
-- A dialog to set body mass and volume.
+- Add an option to the dialog to control body mass.
 - Check which functions to add from LazyScript.
-~ Handle flat and empty collisions for compound from mesh.
 - Add MSPhysics functions to Ace text editor if possible.
 - Add advanced explosion function.
-- Add particle effects
-- Add JoyStick to controller, serial port, and sliders dialog.
-- Compound from convex decomposition doesn't generate right when scaled.
-~ Repack MSPhysics music and script to reduce size.
-- Split documentation functions into groups.
-~ Add JointCollection dialog
-- Camera follow doesn't work when zooming out or orbiting camera using smooth zoom.
-- Add feature to create material, assign it to multiple bodies and edit it once.
-- Add angle/distance units to joints.
-~ Add collision up vector feature.
 - Add camera follow in scene.
-~ Spring joints lock up when pass the limit.
-~ Avoid processing static and non-dynamic bodies in add_fluid_resistance.
-~ Add viscosity parameter to add_fluid_resistance.
+- Add serial port.
 - Make replay compatible with LightUp, Vray, Twilight, and Thea Render
 - Save replay data into model info.
-~ Separate simulation and simulation tool into separate classes.
+- ~Separate simulation and simulation tool into separate classes.
 - Make the joints dialog to display connected joints and bodies.
 - Add curve joint
 - Add plane joint
-- Add joystick controller
-- Update all cursors
-- Update joint icons and components.
-- Work on ball & socket and universal joints.
-- Improve the servo joint.
-
-Newton Joint    MSP Joint
-front           right
-up              front
-right           up
-
-=Joints=
-
-Joint ID should consist of five numbers: 10000 + rand(90000)
-When joint is created, it should be assigned a unique joint ID.
-If joint is copied it should remain with the same ID.
-User should have an option to make joint ID unique from other joints.
-A body should contain connected joint IDs.
-As well, it should have an option to connect closest of the joints with particular IDs.
-
-If user selects a body, the body tab should display a list of connected/potentially connected joints.
-When user howers over a particular connected joint in the dialog, it should be highlighted in space.
-When user selects a particular joint in a dialog, a joint should be added to selection and a joint tab
-should be activated, however, the body should also remain in selection. When user goes back to the body
-tab, and selects a different joint, the prior selected joint should be deselected and a new joint should
-be selected.
-
-The joints dialog should display joint properties, connected/potentially connected bodies, and joint ID.
-Joint ID can be modified.
-When joint ID is modified the connected bodies section should be updated.
-
-Additional features:
-- User can disconnect joints via dialog.
-- User can connect joints via dialog.
-- Named joints
-
-When body is selected it should have these joint related commands:
-- Connect Closest
-- Disconnect All Joints
-
-When joint is selected it should have these commands:
-- Discnonnect All Bodies
-- Make unique ID.
-- Make same ID (if more than one joints are selected)
+- Add joystick controller.
+- Add curve functions similar to those in SketchyPhysics.
+- Add particle effects functions
+- Make particular joints be controlled by sliders by default.

@@ -6,15 +6,13 @@
  ///////////////////////////////////////////////////////////////////////////////
 */
 
-const dFloat MSNewton::BallAndSocket::DEFAULT_STIFF = 40.0f;
-const dFloat MSNewton::BallAndSocket::DEFAULT_DAMP = 10.0f;
-const bool MSNewton::BallAndSocket::DEFAULT_DAMPER_ENABLED = false;
 const dFloat MSNewton::BallAndSocket::DEFAULT_MAX_CONE_ANGLE = 30.0f * DEG_TO_RAD;
 const bool MSNewton::BallAndSocket::DEFAULT_CONE_LIMITS_ENABLED = false;
 const dFloat MSNewton::BallAndSocket::DEFAULT_MIN_TWIST_ANGLE = -180.0f * DEG_TO_RAD;
 const dFloat MSNewton::BallAndSocket::DEFAULT_MAX_TWIST_ANGLE = 180.0f * DEG_TO_RAD;
 const bool MSNewton::BallAndSocket::DEFAULT_TWIST_LIMITS_ENABLED = false;
-
+const dFloat MSNewton::BallAndSocket::DEFAULT_FRICTION = 0.0f;
+const dFloat MSNewton::BallAndSocket::DEFAULT_CONTROLLER = 1.0f;
 
 /*
  ///////////////////////////////////////////////////////////////////////////////
@@ -31,53 +29,131 @@ void MSNewton::BallAndSocket::submit_constraints(const NewtonJoint* joint, dgFlo
 
 	// Calculate the position of the pivot point and the Jacobian direction vectors, in global space.
 	MSNewton::Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1);
-	dMatrix matrix2 = Util::rotate_matrix_to_dir(matrix0, matrix1.m_right);
 
-	// Restrict the movement on the pivot point along all tree orthonormal directions.
-	NewtonUserJointAddLinearRow(joint, &matrix0.m_posit[0], &matrix1.m_posit[0], &matrix1.m_front[0]);
-	NewtonUserJointAddLinearRow(joint, &matrix0.m_posit[0], &matrix1.m_posit[0], &matrix1.m_up[0]);
-	NewtonUserJointAddLinearRow(joint, &matrix0.m_posit[0], &matrix1.m_posit[0], &matrix1.m_right[0]);
-
-	// Calculate current angles.
-	dFloat sin_angle;
-	dFloat cos_angle;
-	MSNewton::Joint::c_calculate_angle(matrix1.m_front, matrix2.m_front, matrix1.m_right, sin_angle, cos_angle);
-	cj_data->twist_ai.update(cos_angle, sin_angle);
-	dFloat cur_twist_angle = cj_data->twist_ai.get_angle();
-
+	// Calculate current cone angle.
 	const dVector& cone_dir0 = matrix0.m_right;
 	const dVector& cone_dir1 = matrix1.m_right;
-	dFloat cone_angle_cos = cone_dir0 % cone_dir1;
-	cj_data->cur_cone_angle = dAcos(cone_angle_cos);
+	dFloat cur_cone_angle_cos = cone_dir0 % cone_dir1;
+	cj_data->cur_cone_angle = dAcos(cur_cone_angle_cos);
+	dVector lateral_dir;
+	if (dAbs(cur_cone_angle_cos) > 0.99995f)
+		lateral_dir = matrix0.m_up;
+	else
+		lateral_dir = cone_dir0 * cone_dir1;
+	// Calculate current twist angle.
+	dFloat sin_angle;
+	dFloat cos_angle;
+	if (dAbs(cur_cone_angle_cos) > 0.99995f) {
+		// No need to unrotate front vector if the current cone angle is near zero.
+		MSNewton::Joint::c_calculate_angle(matrix1.m_front, matrix0.m_front, matrix0.m_right, sin_angle, cos_angle);
+	}
+	else {
+		// Unrotate the front vector in order to calculate the twist angle.
+		dVector front = Util::rotate_vector(matrix0.m_front, lateral_dir, -cj_data->cur_cone_angle);
+		MSNewton::Joint::c_calculate_angle(matrix1.m_front, front, matrix1.m_right, sin_angle, cos_angle);
+	}
+	cj_data->twist_ai->update(cos_angle, sin_angle);
+	dFloat cur_twist_angle = cj_data->twist_ai->get_angle();
+
+	// Restrict the movement on the pivot point along all tree orthonormal directions.
+	NewtonUserJointAddLinearRow(joint, &matrix0.m_posit[0], &matrix1.m_posit[0], &matrix0.m_front[0]);
+	if (joint_data->ctype == CT_FLEXIBLE)
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
+	else if (joint_data->ctype == CT_ROBUST)
+		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
+	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+
+	NewtonUserJointAddLinearRow(joint, &matrix0.m_posit[0], &matrix1.m_posit[0], &matrix0.m_up[0]);
+	if (joint_data->ctype == CT_FLEXIBLE)
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
+	else if (joint_data->ctype == CT_ROBUST)
+		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
+	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+
+	NewtonUserJointAddLinearRow(joint, &matrix0.m_posit[0], &matrix1.m_posit[0], &matrix0.m_right[0]);
+	if (joint_data->ctype == CT_FLEXIBLE)
+		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
+	else if (joint_data->ctype == CT_ROBUST)
+		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
+	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+
+	// Calculate friction
+	dFloat power = cj_data->friction * dAbs(cj_data->controller);
+	BodyData* cbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
+	if (cbody_data->bstatic == false && cbody_data->mass >= MIN_MASS)
+		power *= cbody_data->mass;
+	else {
+		BodyData* pbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
+		if (pbody_data->bstatic == false && pbody_data->mass >= MIN_MASS) power *= pbody_data->mass;
+	}
 
 	// Handle cone angle
-	if (cj_data->cone_limits_enabled && cj_data->cone_angle_cos > 0.9999f) {
+	if (cj_data->cone_limits_enabled == true && (cj_data->max_cone_angle < 1.0e-4f)) {
+		// Handle in case joint being a hinge; max cone angle is near zero.
 		NewtonUserJointAddAngularRow(joint, MSNewton::Joint::c_calculate_angle(matrix0.m_right, matrix1.m_right, matrix1.m_front), &matrix1.m_front[0]);
+		if (joint_data->ctype == CT_FLEXIBLE)
+			NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
+		else if (joint_data->ctype == CT_ROBUST)
+			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 
 		NewtonUserJointAddAngularRow(joint, MSNewton::Joint::c_calculate_angle(matrix0.m_right, matrix1.m_right, matrix1.m_up), &matrix1.m_up[0]);
+		if (joint_data->ctype == CT_FLEXIBLE)
+			NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
+		else if (joint_data->ctype == CT_ROBUST)
+			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
-	else if (cj_data->cone_limits_enabled && cone_angle_cos <= cj_data->cone_angle_cos) {
-		dVector lateral_dir(cone_dir0 * cone_dir1);
-		dFloat mag2 = lateral_dir % lateral_dir;
-		lateral_dir = lateral_dir.Scale(1.0f / dSqrt(mag2));
-		dQuaternion rot(cj_data->cone_angle_half_cos, lateral_dir.m_x * cj_data->cone_angle_half_sin, lateral_dir.m_y * cj_data->cone_angle_half_sin, lateral_dir.m_z * cj_data->cone_angle_half_sin);
-		dVector front_dir(rot.UnrotateVector(cone_dir1));
-		dVector up_dir(lateral_dir * front_dir);
-
-		NewtonUserJointAddAngularRow(joint, 0.0f, &up_dir[0]);
-		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
-
-		NewtonUserJointAddAngularRow(joint, MSNewton::Joint::c_calculate_angle(cone_dir0, front_dir, lateral_dir), &lateral_dir[0]);
+	else if (cj_data->cone_limits_enabled == true && (cj_data->cur_cone_angle - cj_data->max_cone_angle) > Joint::ANGULAR_LIMIT_EPSILON) {
+		// Handle in case current cone angle is greater than max cone angle
+		NewtonUserJointAddAngularRow(joint, cj_data->cur_cone_angle-cj_data->max_cone_angle, &lateral_dir[0]);
 		NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
+		if (joint_data->ctype == CT_FLEXIBLE)
+			NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
+		else if (joint_data->ctype == CT_ROBUST)
+			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
+		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+		dVector front_dir = lateral_dir * matrix0.m_right;
+		NewtonUserJointAddAngularRow(joint, 0.0f, &front_dir[0]);
+		NewtonUserJointSetRowMinimumFriction(joint, -power);
+		NewtonUserJointSetRowMaximumFriction(joint, power);
+		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+	}
+	else {
+		// Handle in case limits are not necessary
+		dVector front_dir = lateral_dir * matrix0.m_right;
+		NewtonUserJointAddAngularRow(joint, 0.0f, &lateral_dir[0]);
+		NewtonUserJointSetRowMinimumFriction(joint, -power);
+		NewtonUserJointSetRowMaximumFriction(joint, power);
+		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+		NewtonUserJointAddAngularRow(joint, 0.0f, &front_dir[0]);
+		NewtonUserJointSetRowMinimumFriction(joint, -power);
+		NewtonUserJointSetRowMaximumFriction(joint, power);
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
 
 	// Handle twist angle
-	if (cj_data->twist_limits_enabled == true && cur_twist_angle < cj_data->min_twist_angle) {
-		dFloat rel_angle = cj_data->min_twist_angle - cur_twist_angle;
-		NewtonUserJointAddAngularRow(joint, rel_angle, &matrix0.m_right[0]);
+	if (cj_data->twist_limits_enabled == true && cj_data->min_twist_angle > cj_data->max_twist_angle) {
+		// Handle in case min angle is greater than max
+		NewtonUserJointAddAngularRow(joint, cur_twist_angle, &matrix0.m_right[0]);
+		if (joint_data->ctype == CT_FLEXIBLE)
+			NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
+		else if (joint_data->ctype == CT_ROBUST)
+			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
+		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+	}
+	else if (cj_data->twist_limits_enabled == true && (cj_data->max_twist_angle - cj_data->min_twist_angle) < 1.0e-4f) {
+		// Handle in case min angle is almost equal to max
+		NewtonUserJointAddAngularRow(joint, cj_data->max_twist_angle - cur_twist_angle, &matrix0.m_right[0]);
+		if (joint_data->ctype == CT_FLEXIBLE)
+			NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
+		else if (joint_data->ctype == CT_ROBUST)
+			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
+		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+	}
+	else if (cj_data->twist_limits_enabled == true && (cur_twist_angle - cj_data->min_twist_angle) < -Joint::ANGULAR_LIMIT_EPSILON) {
+		// Handle in case current twist angle is less than min
+		NewtonUserJointAddAngularRow(joint, cj_data->min_twist_angle - cur_twist_angle, &matrix0.m_right[0]);
 		NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
 		if (joint_data->ctype == CT_FLEXIBLE)
 			NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
@@ -85,14 +161,21 @@ void MSNewton::BallAndSocket::submit_constraints(const NewtonJoint* joint, dgFlo
 			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
-	else if (cj_data->twist_limits_enabled == true && cur_twist_angle > cj_data->max_twist_angle) {
-		dFloat rel_angle = cj_data->max_twist_angle - cur_twist_angle;
-		NewtonUserJointAddAngularRow(joint, rel_angle, &matrix0.m_right[0]);
+	else if (cj_data->twist_limits_enabled == true && (cur_twist_angle - cj_data->max_twist_angle) > Joint::ANGULAR_LIMIT_EPSILON) {
+		// Handle in case current twist angle is greater than max
+		NewtonUserJointAddAngularRow(joint, cj_data->max_twist_angle - cur_twist_angle, &matrix0.m_right[0]);
 		NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
 		if (joint_data->ctype == CT_FLEXIBLE)
 			NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 		else if (joint_data->ctype == CT_ROBUST)
 			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
+		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+	}
+	else {
+		// Handle in case limits are not necessary
+		NewtonUserJointAddAngularRow(joint, 0.0f, &matrix0.m_right[0]);
+		NewtonUserJointSetRowMinimumFriction(joint, -power);
+		NewtonUserJointSetRowMaximumFriction(joint, power);
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
 }
@@ -127,7 +210,7 @@ void MSNewton::BallAndSocket::on_connect(JointData* data) {
 void MSNewton::BallAndSocket::on_disconnect(JointData* data) {
 	BallAndSocketData* cj_data = (BallAndSocketData*)data->cj_data;
 	cj_data->cur_cone_angle = 0.0f;
-	cj_data->twist_ai.set_angle(0.0f);
+	cj_data->twist_ai->set_angle(0.0f);
 }
 
 
@@ -152,16 +235,15 @@ VALUE MSNewton::BallAndSocket::create(VALUE self, VALUE v_joint) {
 	cj_data->min_twist_angle = DEFAULT_MIN_TWIST_ANGLE;
 	cj_data->max_twist_angle = DEFAULT_MAX_TWIST_ANGLE;
 	cj_data->cur_cone_angle = 0.0f;
-	cj_data->twist_ai.set_angle(0.0f);
+	cj_data->twist_ai = new AngularIntegration();
 	cj_data->cone_limits_enabled = DEFAULT_CONE_LIMITS_ENABLED;
 	cj_data->twist_limits_enabled = DEFAULT_TWIST_LIMITS_ENABLED;
-	cj_data->stiff = DEFAULT_STIFF;
-	cj_data->damp = DEFAULT_DAMP;
-	cj_data->damper_enabled = DEFAULT_DAMPER_ENABLED;
 	cj_data->cone_angle_cos = dCos(cj_data->max_cone_angle);
 	cj_data->cone_angle_sin = dSin(cj_data->max_cone_angle);
 	cj_data->cone_angle_half_cos = dCos(cj_data->max_cone_angle * 0.5f);
 	cj_data->cone_angle_half_sin = dSin(cj_data->max_cone_angle * 0.5f);
+	cj_data->friction = DEFAULT_FRICTION;
+	cj_data->controller = DEFAULT_CONTROLLER;
 
 	data->dof = 6;
 	data->jtype = JT_BALL_AND_SOCKET;
@@ -175,45 +257,6 @@ VALUE MSNewton::BallAndSocket::create(VALUE self, VALUE v_joint) {
 	return Util::to_value(data);
 }
 
-VALUE MSNewton::BallAndSocket::get_stiff(VALUE self, VALUE v_joint) {
-	JointData* joint_data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
-	BallAndSocketData* cj_data = (BallAndSocketData*)joint_data->cj_data;
-	return Util::to_value(cj_data->stiff);
-}
-
-VALUE MSNewton::BallAndSocket::set_stiff(VALUE self, VALUE v_joint, VALUE v_stiff) {
-	JointData* joint_data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
-	BallAndSocketData* cj_data = (BallAndSocketData*)joint_data->cj_data;
-	cj_data->stiff = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_stiff), 0.0f);
-	return Util::to_value(cj_data->stiff);
-}
-
-VALUE MSNewton::BallAndSocket::get_damp(VALUE self, VALUE v_joint) {
-	JointData* joint_data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
-	BallAndSocketData* cj_data = (BallAndSocketData*)joint_data->cj_data;
-	return Util::to_value(cj_data->damp);
-}
-
-VALUE MSNewton::BallAndSocket::set_damp(VALUE self, VALUE v_joint, VALUE v_damp) {
-	JointData* joint_data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
-	BallAndSocketData* cj_data = (BallAndSocketData*)joint_data->cj_data;
-	cj_data->damp = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_damp), 0.0f);
-	return Util::to_value(cj_data->damp);
-}
-
-VALUE MSNewton::BallAndSocket::enable_damper(VALUE self, VALUE v_joint, VALUE v_state) {
-	JointData* joint_data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
-	BallAndSocketData* cj_data = (BallAndSocketData*)joint_data->cj_data;
-	cj_data->damper_enabled = Util::value_to_bool(v_state);
-	return Util::to_value(cj_data->damper_enabled);
-}
-
-VALUE MSNewton::BallAndSocket::is_damper_enabled(VALUE self, VALUE v_joint) {
-	JointData* joint_data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
-	BallAndSocketData* cj_data = (BallAndSocketData*)joint_data->cj_data;
-	return Util::to_value(cj_data->damper_enabled);
-}
-
 VALUE MSNewton::BallAndSocket::get_max_cone_angle(VALUE self, VALUE v_joint) {
 	JointData* data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
 	BallAndSocketData* cj_data = (BallAndSocketData*)data->cj_data;
@@ -223,7 +266,7 @@ VALUE MSNewton::BallAndSocket::get_max_cone_angle(VALUE self, VALUE v_joint) {
 VALUE MSNewton::BallAndSocket::set_max_cone_angle(VALUE self, VALUE v_joint, VALUE v_angle) {
 	JointData* data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
 	BallAndSocketData* cj_data = (BallAndSocketData*)data->cj_data;
-	cj_data->max_cone_angle = Util::value_to_dFloat(v_angle);
+	cj_data->max_cone_angle = Util::clamp<dFloat>(Util::value_to_dFloat(v_angle), 0.0f, PI);
 	cj_data->cone_angle_cos = dCos(cj_data->max_cone_angle);
 	cj_data->cone_angle_sin = dSin(cj_data->max_cone_angle);
 	cj_data->cone_angle_half_cos = dCos(cj_data->max_cone_angle * 0.5f);
@@ -292,7 +335,38 @@ VALUE MSNewton::BallAndSocket::get_cur_cone_angle(VALUE self, VALUE v_joint) {
 VALUE MSNewton::BallAndSocket::get_cur_twist_angle(VALUE self, VALUE v_joint) {
 	JointData* data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
 	BallAndSocketData* cj_data = (BallAndSocketData*)data->cj_data;
-	return Util::to_value(cj_data->twist_ai.get_angle());
+	return Util::to_value(cj_data->twist_ai->get_angle());
+}
+
+VALUE MSNewton::BallAndSocket::get_friction(VALUE self, VALUE v_joint) {
+	JointData* joint_data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
+	BallAndSocketData* cj_data = (BallAndSocketData*)joint_data->cj_data;
+	return Util::to_value(cj_data->friction);
+}
+
+VALUE MSNewton::BallAndSocket::set_friction(VALUE self, VALUE v_joint, VALUE v_friction) {
+	JointData* joint_data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
+	BallAndSocketData* cj_data = (BallAndSocketData*)joint_data->cj_data;
+	cj_data->friction = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_friction), 0.0f);
+	return Util::to_value(cj_data->friction);
+}
+
+VALUE MSNewton::BallAndSocket::get_controller(VALUE self, VALUE v_joint) {
+	JointData* joint_data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
+	BallAndSocketData* cj_data = (BallAndSocketData*)joint_data->cj_data;
+	return Util::to_value(cj_data->controller);
+}
+
+VALUE MSNewton::BallAndSocket::set_controller(VALUE self, VALUE v_joint, VALUE v_controller) {
+	JointData* joint_data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
+	BallAndSocketData* cj_data = (BallAndSocketData*)joint_data->cj_data;
+	dFloat desired_controller = Util::value_to_dFloat(v_controller);
+	if (cj_data->controller != desired_controller) {
+		cj_data->controller = desired_controller;
+		if (joint_data->connected)
+			NewtonBodySetSleepState(joint_data->child, 0);
+	}
+	return Util::to_value(cj_data->controller);
 }
 
 
@@ -301,12 +375,6 @@ void Init_msp_ball_and_socket(VALUE mNewton) {
 
 	rb_define_module_function(mBallAndSocket, "is_valid?", VALUEFUNC(MSNewton::BallAndSocket::is_valid), 1);
 	rb_define_module_function(mBallAndSocket, "create", VALUEFUNC(MSNewton::BallAndSocket::create), 1);
-	rb_define_module_function(mBallAndSocket, "get_stiff", VALUEFUNC(MSNewton::BallAndSocket::get_stiff), 1);
-	rb_define_module_function(mBallAndSocket, "set_stiff", VALUEFUNC(MSNewton::BallAndSocket::set_stiff), 2);
-	rb_define_module_function(mBallAndSocket, "get_damp", VALUEFUNC(MSNewton::BallAndSocket::get_damp), 1);
-	rb_define_module_function(mBallAndSocket, "set_damp", VALUEFUNC(MSNewton::BallAndSocket::set_damp), 2);
-	rb_define_module_function(mBallAndSocket, "enable_damper", VALUEFUNC(MSNewton::BallAndSocket::enable_damper), 2);
-	rb_define_module_function(mBallAndSocket, "is_damper_enabled?", VALUEFUNC(MSNewton::BallAndSocket::is_damper_enabled), 1);
 	rb_define_module_function(mBallAndSocket, "get_max_cone_angle", VALUEFUNC(MSNewton::BallAndSocket::get_max_cone_angle), 1);
 	rb_define_module_function(mBallAndSocket, "set_max_cone_angle", VALUEFUNC(MSNewton::BallAndSocket::set_max_cone_angle), 2);
 	rb_define_module_function(mBallAndSocket, "enable_cone_limits", VALUEFUNC(MSNewton::BallAndSocket::enable_cone_limits), 2);
@@ -319,4 +387,8 @@ void Init_msp_ball_and_socket(VALUE mNewton) {
 	rb_define_module_function(mBallAndSocket, "twist_limits_enabled?", VALUEFUNC(MSNewton::BallAndSocket::twist_limits_enabled), 1);
 	rb_define_module_function(mBallAndSocket, "get_cur_cone_angle", VALUEFUNC(MSNewton::BallAndSocket::get_cur_cone_angle), 1);
 	rb_define_module_function(mBallAndSocket, "get_cur_twist_angle", VALUEFUNC(MSNewton::BallAndSocket::get_cur_twist_angle), 1);
+	rb_define_module_function(mBallAndSocket, "get_friction", VALUEFUNC(MSNewton::BallAndSocket::get_friction), 1);
+	rb_define_module_function(mBallAndSocket, "set_friction", VALUEFUNC(MSNewton::BallAndSocket::set_friction), 2);
+	rb_define_module_function(mBallAndSocket, "get_controller", VALUEFUNC(MSNewton::BallAndSocket::get_controller), 1);
+	rb_define_module_function(mBallAndSocket, "set_controller", VALUEFUNC(MSNewton::BallAndSocket::set_controller), 2);
 }

@@ -431,7 +431,7 @@ dgInt32 dgBroadPhase::ConvexCast(const dgBroadPhaseNode** stackPool, dgFloat32* 
 
 			dgBody* const body = me->GetBody();
 			if (body) {
-				if (!PREFILTER_RAYCAST(prefilter, body, shape, userData)) {
+				if (!PREFILTER_RAYCAST(prefilter, body, body->m_collision, userData)) {
 					dgInt32 count = m_world->CollideContinue(shape, matrix, velocA, velocB, body->m_collision, body->m_matrix, velocB, velocB, timeToImpact, points, normals, penetration, attributeA, attributeB, maxContacts, threadIndex);
 
 					if (timeToImpact < maxParam) {
@@ -542,7 +542,7 @@ dgInt32 dgBroadPhase::Collide(const dgBroadPhaseNode** stackPool, dgInt32* const
 
 			dgBody* const body = me->GetBody();
 			if (body) {
-				if (!PREFILTER_RAYCAST(prefilter, body, shape, userData)) {
+				if (!PREFILTER_RAYCAST(prefilter, body, body->m_collision, userData)) {
 					dgInt32 count = m_world->Collide(shape, matrix, body->m_collision, body->m_matrix, points, normals, penetration, attributeA, attributeB, DG_CONVEX_CAST_POOLSIZE, threadIndex);
 
 					if (count) {
@@ -1828,9 +1828,9 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 
 	// update pre-listeners after the force and true are applied
 	if (m_world->m_preListener.GetCount()) {
+		dTimeTrackerEvent("preListeners");
 		for (dgWorld::dgListenerList::dgListNode* node = m_world->m_preListener.GetFirst(); node; node = node->GetNext()) {
 			dgWorld::dgListener& listener = node->GetInfo();
-			dTimeTrackerEvent(listener.m_name);
 			listener.m_onListenerUpdate(m_world, listener.m_userData, timestep);
 		}
 	}
@@ -1847,7 +1847,7 @@ void dgBroadPhase::UpdateContacts(dgFloat32 timestep)
 	for (dgBodyMasterList::dgListNode* node = masterList->GetLast(); node; node = node->GetPrev()) {
 		dgDynamicBody* const body = (dgDynamicBody*)node->GetInfo().GetBody();
 		if ((body->GetType() == dgBody::m_dynamicBody) && (body->GetInvMass().m_w > dgFloat32 (0.0f))) {
-			#if 0
+			#if 1
 				static FILE* file = fopen("replay.bin", "wb");
 				if (file) {
 					fwrite(&body->m_accel, sizeof (dgVector), 1, file);

@@ -337,7 +337,7 @@ module MSPhysics
         @groups_data.size > 0 || @materials_data.size > 0 || @layers_data.size > 0 || @camera_data.size > 0 || @render_data.size > 0 || @shadow_data.size > 0
       end
 
-      # Enable/Disable simulation recording.
+      # Enable/disable simulation recording.
       # @param [Boolean] state
       def record_enabled=(state)
         @record = state ? true : false
@@ -349,7 +349,7 @@ module MSPhysics
         @record
       end
 
-      # Enable/Disable groups replay.
+      # Enable/disable groups replay.
       # @param [Boolean] state
       def groups_replay_enabled=(state)
         @replay_groups = state ? true : false
@@ -361,7 +361,7 @@ module MSPhysics
         @replay_groups
       end
 
-      # Enable/Disable materials replay.
+      # Enable/disable materials replay.
       # @param [Boolean] state
       def materials_replay_enabled=(state)
         @replay_materials = state ? true : false
@@ -373,7 +373,7 @@ module MSPhysics
         @replay_materials
       end
 
-      # Enable/Disable layers replay.
+      # Enable/disable layers replay.
       # @param [Boolean] state
       def layers_replay_enabled=(state)
         @replay_layers = state ? true : false
@@ -385,7 +385,7 @@ module MSPhysics
         @replay_layers
       end
 
-      # Enable/Disable camera replay.
+      # Enable/disable camera replay.
       # @param [Boolean] state
       def camera_replay_enabled=(state)
         @replay_camera = state ? true : false
@@ -397,7 +397,7 @@ module MSPhysics
         @replay_camera
       end
 
-      # Enable/Disable replay of rendering options.
+      # Enable/disable replay of rendering options.
       # @param [Boolean] state
       def render_replay_enabled=(state)
         @replay_render = state ? true : false
@@ -409,7 +409,7 @@ module MSPhysics
         @replay_render
       end
 
-      # Enable/Disable replay of shadow info.
+      # Enable/disable replay of shadow info.
       # @param [Boolean] state
       def shadow_replay_enabled=(state)
         @replay_shadow = state ? true : false

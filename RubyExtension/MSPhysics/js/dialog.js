@@ -140,13 +140,14 @@ $(document).ready( function() {
   editor.renderer.setShowGutter(true);
   editor.renderer.setShowPrintMargin(true);
   editor.session.setUseSoftTabs(true);
-  editor.session.setTabSize(4);
+  editor.session.setTabSize(2);
   editor.session.setUseWrapMode(true);
   editor.setHighlightSelectedWord(true);
   editor.setBehavioursEnabled(true);
   editor.setFadeFoldWidgets(true);
   editor.setOption('scrollPastEnd', true);
   container.style.fontSize = '12px';
+  container.style.fontFamily = 'Courier New';
   editor.getSession().on('change', function(e) {
     script_saved = false;
   });

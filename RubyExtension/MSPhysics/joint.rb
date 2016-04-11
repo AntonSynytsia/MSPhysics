@@ -5,7 +5,7 @@ module MSPhysics
 
     DEFAULT_CONSTRAINT_TYPE = 0 # Standard - 0; Flexible - 1; Robust - 2.
     DEFAULT_STIFFNESS = 1.00
-    DEFAULT_BODIES_COLLIDABLE = true
+    DEFAULT_BODIES_COLLIDABLE = false
     DEFAULT_BREAKING_FORCE = 0.0
 
     class << self
@@ -28,7 +28,7 @@ module MSPhysics
     # @param [MSPhysics::Body, nil] parent
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
     #   Of the given matrix, matrix origin should represent pin origin, and
-    #   matrix Z-AXIS should represent pin up.
+    #   matrix Z-axis should represent pin up.
     # @param [Fixnum] dof Maximum degrees of freedom.
     def initialize(world, parent, pin_tra, dof)
       MSPhysics::World.validate(world)

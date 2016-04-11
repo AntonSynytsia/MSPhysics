@@ -259,6 +259,19 @@ dMatrix Util::rotate_matrix_to_dir(const dMatrix& matrix, const dVector& dir) {
 	return (matrix * ta.Inverse()) * tb;
 }
 
+dVector Util::rotate_vector(const dVector& vector, const dVector& normal, const dFloat& angle) {
+	VALUE v_tra = rb_funcall(
+		suTransformation,
+		rb_intern("rotation"),
+		3,
+		Util::point_to_value(ORIGIN),
+		Util::vector_to_value(normal),
+		Util::to_value(angle));
+	VALUE v_itra = rb_funcall(v_tra, rb_intern("inverse"), 0);
+	VALUE v_rvector = rb_funcall(Util::vector_to_value(vector), rb_intern("transform"), 1, v_itra);
+	return Util::value_to_vector(v_rvector);
+}
+
 bool Util::is_world_valid(const NewtonWorld* address) {
 	return valid_worlds.find(address) != valid_worlds.end();
 }

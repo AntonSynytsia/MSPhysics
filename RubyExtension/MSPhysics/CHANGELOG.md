@@ -1,3 +1,13 @@
+## 0.6.0 - Apr 11, 2016
+- Added strong mode to linear and angular springs.
+- Added a feature to allow customizing angle and distance units for joints.
+- Added more options to the MSPhysics context menu.
+- Revamped the connect closest joints feature.
+- Added cursor visibility control functions.
+- Added sliders control panel.
+- Completed ball & socket and universal joints.
+- Updated joint icons. Thanks to PituPhysics for helping.
+
 ## 0.5.0 - Mar 22, 2016
 - Added corkscrew joint.
 - Removed dependency on external VC libraries.

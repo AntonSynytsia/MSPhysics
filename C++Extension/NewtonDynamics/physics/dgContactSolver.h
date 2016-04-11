@@ -37,11 +37,11 @@ class dgMinkFace
 } DG_GCC_VECTOR_ALIGMENT;
 
 #define DG_SEPARATION_PLANES_ITERATIONS	8
-#define DG_CONVEX_MINK_STACK_SIZE		64 // 64
-#define DG_CONNICS_CONTATS_ITERATIONS	32 // 32
-#define DG_CONVEX_MINK_MAX_FACES		512 // 512
-#define DG_CONVEX_MINK_MAX_POINTS		256 // 256
-#define DG_MAX_EDGE_COUNT				2048 // 2048
+#define DG_CONVEX_MINK_STACK_SIZE		64
+#define DG_CONNICS_CONTATS_ITERATIONS	32
+#define DG_CONVEX_MINK_MAX_FACES		512
+#define DG_CONVEX_MINK_MAX_POINTS		256
+#define DG_MAX_EDGE_COUNT				2048
 #define DG_ROBUST_PLANE_CLIP			dgFloat32 (1.0f / 256.0f)
 #define DG_MINK_VERTEX_ERR				(dgFloat32 (1.0e-3f))
 #define DG_MINK_VERTEX_ERR2				(DG_MINK_VERTEX_ERR * DG_MINK_VERTEX_ERR)
@@ -85,10 +85,9 @@ class dgContactSolver: public dgDownHeap<dgMinkFace *, dgFloat32>
 	DG_INLINE void SupportVertex(const dgVector& dir, dgInt32 vertexIndex);
 	
 	DG_INLINE void TranslateSimplex(const dgVector& step);
-	DG_INLINE dgInt32 CalculateIntersectingPlane(dgInt32 count);
+	
 	DG_INLINE void CalculateContactFromFeacture(dgInt32 featureType);
 	DG_INLINE dgPerimenterEdge* ReduceContacts(dgPerimenterEdge* poly, dgInt32 maxCount) const;
-
 	DG_INLINE void ReduceDegeneratedTriangle();
 	DG_INLINE dgVector ReduceLine(dgInt32& indexOut);
 	DG_INLINE dgVector ReduceTriangle(dgInt32& indexOut);
@@ -103,6 +102,7 @@ class dgContactSolver: public dgDownHeap<dgMinkFace *, dgFloat32>
 	dgInt32 CalculateContacts (const dgVector& point, const dgVector& normal);
 	dgInt32 CalculateClosestSimplex();
 	dgInt32 CalculateClosestSimplexLarge ();
+	dgInt32 CalculateIntersectingPlane(dgInt32 count);
 
 	dgVector m_normal;
 	dgVector m_closestPoint0;

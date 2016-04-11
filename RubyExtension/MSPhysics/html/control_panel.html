@@ -1,41 +1,26 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="en">
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta http-equiv="MSThemeCompatible" content="Yes" />
-    <meta http-equiv="X-UA-Compatible" content="IE=10" />
-    <title>MSPhysics Control Panel</title>
-    <meta name="author" content="Anton Synytsia" />
-    <link href="../css/carpe_slider.css" rel="stylesheet" type="text/css" />
-    <link href="../css/control_panel.css" rel="stylesheet" type="text/css" />
-    <script type="text/javascript" src="../js/jquery.js"></script>
-    <script type="text/javascript" src="../js/carpe_slider.js"></script>
-    <script type="text/javascript" src="../js/control_panel.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+	<meta http-equiv="MSThemeCompatible" content="Yes" />
+	<meta http-equiv="X-UA-Compatible" content="IE=10" />
+	<title>MSPhysics Control Panel</title>
+	<meta name="author" content="Anton Synytsia" />
+	<link href="../css/dhtmlxslider_skyblue.css" rel="stylesheet" type="text/css" />
+	<link href="../css/dhtmlxslider_terrace.css" rel="stylesheet" type="text/css" />
+	<link href="../css/dhtmlxslider_web.css" rel="stylesheet" type="text/css" />
+	<link href="../css/control_panel.css" rel="stylesheet" type="text/css" />
+	<script type="text/javascript" src="../js/jquery.js"></script>
+	<script type="text/javascript" src="../js/dhtmlxslider.js"></script>
+	<script type="text/javascript" src="../js/control_panel.js"></script>
   </head>
   <body scroll="no">
-    <div class="main_form">
-      <p class="title">MSPhysics Control Panel</p>
-      <table>
-        <tr>
-          <td><input class="controller_name" type="text" tabindex="-1" readonly value="Servo01" /></td>
-          <td><input class="controller_value" type="text" tabindex="-1" readonly id="Servo01" /></td>
-          <td>
-            <input class="carpe-slider"
-              data-carpe-target="Servo01"
-              data-carpe-orientation="horizontal"
-              data-carpe-size="160"
-              data-carpe-decimals="2"
-              data-carpe-zerofill="yes"
-              min="0"
-              max="1"
-              step="0.01"
-              type="range"
-			  value="0" />
-          </td>
-        </tr>
-      </table>
-      <p class="credit">Powered by Carpe Slider 2</p>
-    </div>
+	<div class="main_form">
+	  <p align="center" class="title">MSPhysics Control Panel</p>
+	  <table class="struct_table" id="table-crs">
+	  </table>
+	  <div class="credit">Powered by dhtmlXSlider</div>
+	</div>
   </body>
 </html>

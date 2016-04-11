@@ -30,275 +30,183 @@ module MSPhysics
         @@instance ? true : false
       end
 
-      # Get all joints connected to a group/component.
+
+      # Get all connected and potentially connected joints.
       # @param [Sketchup::Group, Sketchup::ComponentInstance] body
-      # @return [Array] An array of joint data. Each joint data consists of two
-      #   elements. The first one is the joint component. The second one is the
-      #   parent group/component of the joint or nil if joint is a top level
-      #   component.
-      def get_connected_joints(body)
+      # @param [Boolean] consider_world Whether to consider if entities have a
+      #   body context.
+      # @return [Array] An array of two elements. The first element contains an
+      #   array of connected joints and their data. The second element contains
+      #   an array of potentially connected joints and their data. Each joint
+      #   data represents an array containing joint group, joint parent group,
+      #   and joint transformation in global space.
+      def get_connected_joints(body, consider_world = false)
+        data = [[], []]
+        sim_inst = MSPhysics::Simulation.instance
         ids = body.get_attribute('MSPhysics Body', 'Connected Joints')
-        cjoints = []
-        return cjoints if !ids.is_a?(Array)
+        return data if (!ids.is_a?(Array) ||
+          body.get_attribute('MSPhysics Body', 'Ignore', false) ||
+          (consider_world && (sim_inst.nil? || sim_inst.get_body_by_group(body).nil?)))
         ids = ids.grep(Fixnum)
-        Sketchup.active_model.entities.each { |ent|
-          next if !ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)
-          next if ent == body
-          type = ent.get_attribute('MSPhysics', 'Type', 'Body')
-          if type == 'Body'
-            next if ent.get_attribute('MSPhysics Body', 'Ignore', false)
-            cents = ent.is_a?(Sketchup::ComponentInstance) ? ent.definition.entities : ent.entities
-            cents.each { |cent|
-              next if !cent.is_a?(Sketchup::Group) && !cent.is_a?(Sketchup::ComponentInstance)
-              ctype = cent.get_attribute('MSPhysics', 'Type', 'Body')
-              next if ctype != 'Joint'
-              id = cent.get_attribute('MSPhysics Joint', 'ID')
-              cjoints << [cent, ent] if ids.include?(id)
+        if body.get_attribute('MSPhysics Body', 'Connect Closest Joints', MSPhysics::DEFAULT_BODY_SETTINGS[:connect_closest_joinst])
+          bbs = {}
+          Sketchup.active_model.entities.each { |ent|
+            next if ((!ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)) ||
+              ent.get_attribute('MSPhysics', 'Type', 'Body') != 'Body')
+            bbs[ent] = MSPhysics::Group.get_bounding_box_from_faces(ent, true, ent.transformation) { |e|
+              e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
             }
-          elsif type == 'Joint'
-            id = ent.get_attribute('MSPhysics Joint', 'ID')
-            cjoints << [ent, nil] if ids.include?(id)
-          end
-        }
-        cjoints
-      end
-
-      # Get all closest joints connected to a group/component.
-      # @param [Sketchup::Group, Sketchup::ComponentInstance] body
-      # @return [Array] An array of joint data. Each joint data consists of two
-      #   elements. The first one is the joint component. The second one is the
-      #   parent group/component of the joint or nil if joint is a top level
-      #   component.
-      def get_closest_connected_joints(body)
-        ids = body.get_attribute('MSPhysics Body', 'Connected Joints')
-        return [] if !ids.is_a?(Array)
-        cpoint = body.bounds.center
-        jdist = {}
-        jents = {}
-        ids = ids.grep(Fixnum)
-        Sketchup.active_model.entities.each { |ent|
-          next if !ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)
-          next if ent == body
-          type = ent.get_attribute('MSPhysics', 'Type', 'Body')
-          if type == 'Body'
-            next if ent.get_attribute('MSPhysics Body', 'Ignore', false)
-            ptra = ent.transformation
-            cents = ent.is_a?(Sketchup::ComponentInstance) ? ent.definition.entities : ent.entities
-            cents.each { |cent|
-              next if !cent.is_a?(Sketchup::Group) && !cent.is_a?(Sketchup::ComponentInstance)
-              ctype = cent.get_attribute('MSPhysics', 'Type', 'Body')
-              next if ctype != 'Joint'
-              id = cent.get_attribute('MSPhysics Joint', 'ID')
-              next if !ids.include?(id)
-              dist = cent.transformation.origin.transform(ptra).distance(cpoint)
-              dist = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist).to_f : dist.round(3)
-              if jdist[id].nil? || jdist[id] > dist
-                jdist[id] = dist
-                jents[id] = [[cent, ent]]
-              elsif jdist[id] == dist
-                jents[id] << [cent, ent]
-              end
-            }
-          elsif type == 'Joint'
-            id = ent.get_attribute('MSPhysics Joint', 'ID')
-            next if !ids.include?(id)
-            dist = ent.transformation.origin.distance(cpoint)
-            dist = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist).to_f : dist.round(3)
-            if jdist[id].nil? || jdist[id] > dist
-              jdist[id] = dist
-              jents[id] = [[ent, nil]]
-            elsif jdist[id] == dist
-              jents[id] << [ent, nil]
-            end
-          end
-        }
-        #if RUBY_VERSION =~ /1.8/
-          cjoints = []
-          jents.each { |id, jdatas| jdatas.each { |jdata|  cjoints << jdata } }
-          return cjoints
-        #else
-          return jents.values.flatten(1)
-        #end
-      end
-
-      # Get all or closest joints connected to a group/component, depending on
-      # the group's 'closest connect' attribute.
-      # @param [Sketchup::Group, Sketchup::ComponentInstance] body
-      # @return [Array] An array of joint data. Each joint data consists of two
-      #   elements. The first one is the joint component. The second one is the
-      #   parent group/component of the joint or nil if joint is a top level
-      #   component.
-      def get_connected_joints2(body)
-        if body.get_attribute('MSPhysics Body', 'Connect Closest Joints', false)
-          connected_joints = get_closest_connected_joints(body)
-          potential_joints = get_connected_joints(body) - connected_joints
-        else
-          connected_joints = get_connected_joints(body)
-          potential_joints = []
-        end
-        [connected_joints, potential_joints]
-      end
-
-      # Get all joints connected to a group/component.
-      # @param [Sketchup::Group, Sketchup::ComponentInstance] body
-      # @return [Hash<Fixnum, Hash<Numeric, Array<Array>>>] A hash of ids,
-      #   distances, and joint data. Each joint data consists of three elements.
-      #   The first one is the joint component. The second one is the parent
-      #   group/component of the joint or nil if joint is a top level component.
-      #   The third one is joint transformation in global space.
-      def get_connected_joints3(body)
-        ids = body.get_attribute('MSPhysics Body', 'Connected Joints')
-        cjoints = {}
-        return cjoints if !ids.is_a?(Array)
-        cpoint = body.bounds.center
-        ids = ids.grep(Fixnum)
-        Sketchup.active_model.entities.each { |ent|
-          next if !ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)
-          next if ent == body
-          type = ent.get_attribute('MSPhysics', 'Type', 'Body')
-          if type == 'Body'
-            next if ent.get_attribute('MSPhysics Body', 'Ignore', false)
-            ptra = ent.transformation
-            cents = ent.is_a?(Sketchup::ComponentInstance) ? ent.definition.entities : ent.entities
-            cents.each { |cent|
-              next if !cent.is_a?(Sketchup::Group) && !cent.is_a?(Sketchup::ComponentInstance)
-              ctype = cent.get_attribute('MSPhysics', 'Type', 'Body')
-              next if ctype != 'Joint'
-              id = cent.get_attribute('MSPhysics Joint', 'ID')
-              next unless ids.include?(id)
-              cjoints[id] = {} unless cjoints[id]
-              jtra = ptra * MSPhysics::Geometry.extract_matrix_scale(cent.transformation)
-              dist = jtra.origin.distance(cpoint)
-              dist = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist).to_f : dist.round(3)
-              cjoints[id][dist] = [] unless cjoints[id][dist]
-              cjoints[id][dist] << [cent, ent, jtra]
-            }
-          elsif type == 'Joint'
-            id = ent.get_attribute('MSPhysics Joint', 'ID')
-            next unless ids.include?(id)
-            cjoints[id] = {} unless cjoints[id]
-            jtra = MSPhysics::Geometry.extract_matrix_scale(ent.transformation)
-            dist = jtra.origin.distance(cpoint)
-            dist = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist).to_f : dist.round(3)
-            cjoints[id][dist] = [] unless cjoints[id][dist]
-            cjoints[id][dist] << [ent, nil, jtra]
-          end
-        }
-        cjoints
-      end
-
-      # Get closest joint(s) connected to a group/component.
-      # @param [Sketchup::Group, Sketchup::ComponentInstance] body
-      # @param [Fixnum] joint_id
-      # @return [Array] An array of joint data. Each joint data consists of two
-      #   elements. The first one is the joint component. The second one is the
-      #   parent group/component of the joint or nil if joint is a top level
-      #   component.
-      def get_closest_joints(body, joint_id)
-        cpoint = body.bounds.center
-        jdist = nil
-        jents = []
-        Sketchup.active_model.entities.each { |ent|
-          next if !ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)
-          next if ent == body
-          type = ent.get_attribute('MSPhysics', 'Type', 'Body')
-          if type == 'Body'
-            next if ent.get_attribute('MSPhysics Body', 'Ignore', false)
-            ptra = ent.transformation
-            cents = ent.is_a?(Sketchup::ComponentInstance) ? ent.definition.entities : ent.entities
-            cents.each { |cent|
-              if cent.is_a?(Sketchup::Group) || cent.is_a?(Sketchup::ComponentInstance)
-                ctype = cent.get_attribute('MSPhysics', 'Type', 'Body')
-                next if ctype != 'Joint'
+          }
+          body_center = bbs[body].center
+          Sketchup.active_model.entities.each { |ent|
+            next if (!ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)) || ent == body
+            type = ent.get_attribute('MSPhysics', 'Type', 'Body')
+            if type == 'Body'
+              next if (ent.get_attribute('MSPhysics Body', 'Ignore', false) ||
+                (consider_world && sim_inst.get_body_by_group(ent).nil?))
+              ptra = ent.transformation
+              cents = ent.is_a?(Sketchup::ComponentInstance) ? ent.definition.entities : ent.entities
+              cents.each { |cent|
+                next if ((!cent.is_a?(Sketchup::Group) && !cent.is_a?(Sketchup::ComponentInstance)) ||
+                  cent.get_attribute('MSPhysics', 'Type', 'Body') != 'Joint')
                 id = cent.get_attribute('MSPhysics Joint', 'ID')
-                next if id != joint_id
-                dist = cent.transformation.origin.transform(ptra).distance(cpoint)
+                next unless ids.include?(id)
+                jtra = ptra * MSPhysics::Geometry.extract_matrix_scale(cent.transformation)
+                dist = jtra.origin.distance(body_center)
                 dist = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist).to_f : dist.round(3)
-                if jdist.nil? || jdist > dist
-                  jdist = dist
-                  jents = [[cent, ent]]
-                elsif jdist == dist
-                  jents << [cent, ent]
+                jconnected = true
+                Sketchup.active_model.entities.each { |ent2|
+                  next if ((!ent2.is_a?(Sketchup::Group) && !ent2.is_a?(Sketchup::ComponentInstance)) ||
+                    ent2.get_attribute('MSPhysics', 'Type', 'Body') != 'Body' ||
+                    ent2.get_attribute('MSPhysics Body', 'Ignore', false) ||
+                    ent2 == ent ||
+                    ent2 == body ||
+                    (consider_world && sim_inst.get_body_by_group(ent2).nil?))
+                  ids2 = ent2.get_attribute('MSPhysics Body', 'Connected Joints')
+                  if ids2.is_a?(Array) && ids2.include?(id)
+                    dist2 = jtra.origin.distance(bbs[ent2].center)
+                    dist2 = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist2).to_f : dist2.round(3)
+                    if dist2 < dist
+                      jconnected = false
+                      break
+                    end
+                  end
+                }
+                data[jconnected ? 0 : 1] << [cent, ent, jtra]
+              }
+            elsif type == 'Joint'
+              id = ent.get_attribute('MSPhysics Joint', 'ID')
+              next unless ids.include?(id)
+              jtra = MSPhysics::Geometry.extract_matrix_scale(ent.transformation)
+              dist = jtra.origin.distance(body_center)
+              dist = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist).to_f : dist.round(3)
+              jconnected = true
+              Sketchup.active_model.entities.each { |ent2|
+                next if ((!ent2.is_a?(Sketchup::Group) && !ent2.is_a?(Sketchup::ComponentInstance)) ||
+                  ent2.get_attribute('MSPhysics', 'Type', 'Body') != 'Body' ||
+                  ent2.get_attribute('MSPhysics Body', 'Ignore', false) ||
+                  ent2 == body ||
+                  (consider_world && sim_inst.get_body_by_group(ent2).nil?))
+                ids2 = ent2.get_attribute('MSPhysics Body', 'Connected Joints')
+                if ids2.is_a?(Array) && ids2.include?(id)
+                  dist2 = jtra.origin.distance(bbs[ent2].center)
+                  dist2 = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist2).to_f : dist2.round(3)
+                  if dist2 < dist
+                    jconnected = false
+                    break
+                  end
                 end
-              end
-            }
-          elsif type == 'Joint'
-            id = ent.get_attribute('MSPhysics Joint', 'ID')
-            next if id != joint_id
-            dist = ent.transformation.origin.distance(cpoint)
-            dist = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist).to_f : dist.round(3)
-            if jdist.nil? || jdist > dist
-              jdist = dist
-              jents = [[ent, nil]]
-            elsif jdist == dist
-              jents << [ent, nil]
+              }
+              data[jconnected ? 0 : 1] << [ent, nil, jtra]
             end
+          }
+        else
+          Sketchup.active_model.entities.each { |ent|
+            next if (!ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)) || ent == body
+            type = ent.get_attribute('MSPhysics', 'Type', 'Body')
+            if type == 'Body'
+              next if (ent.get_attribute('MSPhysics Body', 'Ignore', false) ||
+                (consider_world && sim_inst.get_body_by_group(ent).nil?))
+              ptra = ent.transformation
+              cents = ent.is_a?(Sketchup::ComponentInstance) ? ent.definition.entities : ent.entities
+              cents.each { |cent|
+                next if ((!cent.is_a?(Sketchup::Group) && !cent.is_a?(Sketchup::ComponentInstance)) ||
+                  cent.get_attribute('MSPhysics', 'Type', 'Body') != 'Joint' ||
+                  !ids.include?(cent.get_attribute('MSPhysics Joint', 'ID')))
+                jtra = ptra * MSPhysics::Geometry.extract_matrix_scale(cent.transformation)
+                data[0] << [cent, ent, jtra]
+              }
+            elsif type == 'Joint'
+              next unless ids.include?(ent.get_attribute('MSPhysics Joint', 'ID'))
+              jtra = MSPhysics::Geometry.extract_matrix_scale(ent.transformation)
+              data[0] << [ent, nil, jtra]
+            end
+          }
+        end
+        data
+      end
+
+      # Get all connected and potentially connected bodies.
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] joint
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] jparent
+      # @param [Boolean] consider_world Whether to consider if entities have a
+      #   body context.
+      # @return [Array] An array of two elements. The first element contains an
+      #   array of connected bodies. The second element contains an array of
+      #   potentially connected bodies.
+      def get_connected_bodies(joint, jparent, consider_world = false)
+        data = [[], []]
+        sim_inst = MSPhysics::Simulation.instance
+        return data if consider_world && sim_inst.nil?
+        id = joint.get_attribute('MSPhysics Joint', 'ID', nil)
+        return data unless id.is_a?(Fixnum)
+        return data if (jparent &&
+          (jparent.get_attribute('MSPhysics Body', 'Ignore', false) ||
+          (consider_world && sim_inst.get_body_by_group(jparent).nil?)))
+        bodies = {}
+        jorigin = joint.transformation.origin
+        jorigin.transform!(jparent.transformation) if jparent
+        # Get all connected bodies.
+        Sketchup.active_model.entities.each { |ent|
+          next if ((!ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)) ||
+            ent.get_attribute('MSPhysics', 'Type', 'Body') != 'Body' ||
+            ent == jparent ||
+            ent.get_attribute('MSPhysics Body', 'Ignore', false) ||
+            (consider_world && sim_inst.get_body_by_group(ent).nil?))
+          ids = ent.get_attribute('MSPhysics Body', 'Connected Joints')
+          if ids.is_a?(Array) && ids.include?(id)
+            bb = MSPhysics::Group.get_bounding_box_from_faces(ent, true, ent.transformation) { |e|
+              e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
+            }
+            dist = jorigin.distance(bb.center)
+            bodies[ent] = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist).to_f : dist.round(3)
           end
         }
-        jents
-      end
-
-      # Get all groups/components connected to a joint.
-      # @param [Sketchup::Group, Sketchup::ComponentInstance] joint
-      # @param [Sketchup::Group, Sketchup::ComponentInstance] jparent
-      # @return [Array] An array of connected groups/components.
-      def get_connected_bodies(joint, jparent)
-        id = joint.get_attribute('MSPhysics Joint', 'ID', nil)
-        bodies = []
-        return bodies unless id.is_a?(Fixnum)
-        Sketchup.active_model.entities.each { |ent|
-          next if !ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)
-          next if ent == joint || ent == jparent
-          type = ent.get_attribute('MSPhysics', 'Type', 'Body')
-          next if type != 'Body' || ent.get_attribute('MSPhysics Body', 'Ignore', false)
-          cjoints = ent.get_attribute('MSPhysics Body', 'Connected Joints')
-          bodies << ent if cjoints.is_a?(Array) && cjoints.include?(id)
-        }
-        bodies
-      end
-
-      # Get all groups/components connected to a joint. This method considers
-      # whether body depends on closest joints.
-      # @param [Sketchup::Group, Sketchup::ComponentInstance] joint
-      # @param [Sketchup::Group, Sketchup::ComponentInstance] jparent
-      # @return [Array] An array of connected groups/components.
-      def get_connected_bodies2(joint, jparent)
-        id = joint.get_attribute('MSPhysics Joint', 'ID', nil)
-        connected_bodies = []
-        potential_bodies = []
-        return [connected_bodies, potential_bodies] unless id.is_a?(Fixnum)
-        Sketchup.active_model.entities.each { |ent|
-          next if !ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)
-          next if ent == joint || ent == jparent
-          type = ent.get_attribute('MSPhysics', 'Type', 'Body')
-          next if type != 'Body' || ent.get_attribute('MSPhysics Body', 'Ignore', false)
-          cjoints = ent.get_attribute('MSPhysics Body', 'Connected Joints')
-          next if !cjoints.is_a?(Array) || !cjoints.include?(id)
-          if ent.get_attribute('MSPhysics Body', 'Connect Closest Joints', false)
-            closest_joints = get_closest_joints(ent, id)
-            found = false
-            closest_joints.each { |closest_joint|
-              if closest_joint[0] == joint && closest_joint[1] == jparent
-                connected_bodies << ent
-                found = true
+        # Filter out closest bodies.
+        bodies.each { |ent, dist|
+          if ent.get_attribute('MSPhysics Body', 'Connect Closest Joints', MSPhysics::DEFAULT_BODY_SETTINGS[:connect_closest_joinst])
+            found_closer = false
+            bodies.each { |ent2, dist2|
+              if ent2 != ent && dist2 < dist
+                found_closer = true
                 break
               end
             }
-            unless found
-              potential_bodies << ent
-            end
+            data[found_closer ? 1 : 0] << ent
           else
-            connected_bodies << ent
+            data[0] << ent
           end
         }
-        [connected_bodies, potential_bodies]
+        data
       end
 
       # Get joint by its id.
       # @param [Fixnum] joint_id
-      # @return [Sketchup::Group, Sketchup::ComponentInstance] Joint component
+      # @return [Array] An array of joint data. Each joint data represents an
+      #   array of two elements. The first element of joint data is joint
+      #   entity. The second element of joint data is joint parent entity.
       def get_joints_by_id(joint_id)
-        joints = []
+        data = []
         Sketchup.active_model.entities.each { |ent|
           next if !ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)
           type = ent.get_attribute('MSPhysics', 'Type', 'Body')
@@ -307,17 +215,16 @@ module MSPhysics
             cents = ent.is_a?(Sketchup::ComponentInstance) ? ent.definition.entities : ent.entities
             cents.each { |cent|
               next if !cent.is_a?(Sketchup::Group) && !cent.is_a?(Sketchup::ComponentInstance)
-              ctype = cent.get_attribute('MSPhysics', 'Type', 'Body')
-              next if ctype != 'Joint'
+              next if cent.get_attribute('MSPhysics', 'Type', 'Body') != 'Joint'
               id = cent.get_attribute('MSPhysics Joint', 'ID')
-              joints << [cent, ent] if id == joint_id
+              data << [cent, ent] if id == joint_id
             }
           elsif type == 'Joint'
             id = ent.get_attribute('MSPhysics Joint', 'ID')
-            joints << [ent, nil] if id == joint_id
+            data << [ent, nil] if id == joint_id
           end
         }
-        joints
+        data
       end
 
       # Get all joint ids connected to a group/component.
@@ -413,17 +320,6 @@ module MSPhysics
     def refresh_viewport
       Sketchup.active_model.active_view.invalidate
       onSetCursor
-    end
-
-    def add_to_connected(ent)
-      case @cursor_id
-        when MSPhysics::CURSORS[:select_plus]
-          @connected << ent unless @connected.include?(ent)
-        when MSPhysics::CURSORS[:select_minus]
-          @connected.delete(ent)
-        when MSPhysics::CURSORS[:select_plus_minus]
-          @connected.include?(ent) ? @connected.delete(ent) : @connected << ent
-      end
     end
 
     def toggle_attach_joint(body, joint)
@@ -534,7 +430,7 @@ module MSPhysics
         view.line_width = @line_width[:connected]
         view.drawing_color = @color[:connected]
         view.line_stipple = @line_stipple[:connected]
-        @connected[0].each { |joint, jparent|
+        @connected[0].each { |joint, jparent, jtra|
           next if joint.deleted? || (jparent && jparent.deleted?)
           edges = []
           definition = joint.respond_to?(:definition) ? joint.definition : joint.entities[0].parent
@@ -559,7 +455,7 @@ module MSPhysics
         view.line_width = @line_width[:potential]
         view.drawing_color = @color[:potential]
         view.line_stipple = @line_stipple[:potential]
-        @connected[1].each { |joint, jparent|
+        @connected[1].each { |joint, jparent, jtra|
           next if joint.deleted? || (jparent && jparent.deleted?)
           edges = []
           definition = joint.respond_to?(:definition) ? joint.definition : joint.entities[0].parent
@@ -693,7 +589,7 @@ module MSPhysics
           end
           if to_connect
             toggle_attach_joint(@picked, to_connect)
-            @connected = JointConnectionTool.get_connected_joints2(@picked)
+            @connected = JointConnectionTool.get_connected_joints(@picked)
           else
             ::UI.beep
           end
@@ -707,7 +603,7 @@ module MSPhysics
             return
           end
           toggle_attach_joint(path[0], @picked)
-          @connected = JointConnectionTool.get_connected_bodies2(@picked, @parent)
+          @connected = JointConnectionTool.get_connected_bodies(@picked, @parent)
         end
       else
         @parent = nil
@@ -726,12 +622,12 @@ module MSPhysics
               if id.is_a?(Fixnum)
                 @identical_picked_joints = JointConnectionTool.get_joints_by_id(id)
               end
-              @connected = JointConnectionTool.get_connected_bodies2(@picked, @parent)
+              @connected = JointConnectionTool.get_connected_bodies(@picked, @parent)
             else
               @parent = nil
               @picked = path[0]
               @picked_type = 'Body'
-              @connected = JointConnectionTool.get_connected_joints2(@picked)
+              @connected = JointConnectionTool.get_connected_joints(@picked)
             end
           elsif type == 'Joint'
             @parent = nil
@@ -741,7 +637,7 @@ module MSPhysics
             if id.is_a?(Fixnum)
               @identical_picked_joints = JointConnectionTool.get_joints_by_id(id)
             end
-            @connected = JointConnectionTool.get_connected_bodies2(@picked, @parent)
+            @connected = JointConnectionTool.get_connected_bodies(@picked, @parent)
           else
             ::UI.beep
           end

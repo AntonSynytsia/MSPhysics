@@ -8,9 +8,10 @@
 
 const dFloat MSNewton::Spring::DEFAULT_MIN = -10.0f;
 const dFloat MSNewton::Spring::DEFAULT_MAX = 10.0f;
-const dFloat MSNewton::Spring::DEFAULT_STIFF = 40.0f;
+const dFloat MSNewton::Spring::DEFAULT_ACCEL = 40.0f;
 const dFloat MSNewton::Spring::DEFAULT_DAMP = 10.0f;
 const bool MSNewton::Spring::DEFAULT_LIMITS_ENABLED = false;
+const bool MSNewton::Spring::DEFAULT_STRONG_MODE_ENABLED = true;
 const dFloat MSNewton::Spring::DEFAULT_START_POSITION = 0.0f;
 const dFloat MSNewton::Spring::DEFAULT_CONTROLLER = 1.0f;
 
@@ -141,11 +142,15 @@ void MSNewton::Spring::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 		const dVector& s0 = matrix0.m_posit;
 		dVector s1(s0 + matrix1.m_right.Scale(-cur_pos));
 		NewtonUserJointAddLinearRow(joint, &s0[0], &s1[0], &matrix0.m_right[0]);
-		NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->stiff, cj_data->damp);
-		//dFloat accel = NewtonCalculateSpringDamperAcceleration(timestep, cj_data->stiff, cur_pos, cj_data->damp, cj_data->cur_vel);
-		//NewtonUserJointSetRowAcceleration(joint, accel);
-		dFloat den = timestep * cj_data->damp + timestep * timestep * cj_data->stiff;
-		NewtonUserJointSetRowStiffness(joint, -den * joint_data->stiffness * 100.0f);
+		if (cj_data->strong_mode_enabled) {
+			dFloat accel = NewtonCalculateSpringDamperAcceleration(timestep, cj_data->accel, cur_pos, cj_data->damp, cj_data->cur_vel);
+			NewtonUserJointSetRowAcceleration(joint, accel);
+			NewtonUserJointSetRowStiffness(joint, -joint_data->stiffness);
+		}
+		else {
+			NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+			NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->accel, cj_data->damp);
+		}
 	}
 }
 
@@ -210,9 +215,10 @@ VALUE MSNewton::Spring::create(VALUE self, VALUE v_joint) {
 	SpringData* cj_data = new SpringData;
 	cj_data->min = DEFAULT_MIN;
 	cj_data->max = DEFAULT_MAX;
-	cj_data->stiff = DEFAULT_STIFF;
+	cj_data->accel = DEFAULT_ACCEL;
 	cj_data->damp = DEFAULT_DAMP;
 	cj_data->limits_enabled = DEFAULT_LIMITS_ENABLED;
+	cj_data->strong_mode_enabled = DEFAULT_STRONG_MODE_ENABLED;
 	cj_data->cur_pos = 0.0f;
 	cj_data->cur_vel = 0.0f;
 	cj_data->cur_accel = 0.0f;
@@ -276,17 +282,30 @@ VALUE MSNewton::Spring::limits_enabled(VALUE self, VALUE v_joint) {
 	return Util::to_value(cj_data->limits_enabled);
 }
 
-VALUE MSNewton::Spring::get_stiff(VALUE self, VALUE v_joint) {
+VALUE MSNewton::Spring::enable_strong_mode(VALUE self, VALUE v_joint, VALUE v_state) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SPRING);
 	SpringData* cj_data = (SpringData*)joint_data->cj_data;
-	return Util::to_value(cj_data->stiff);
+	cj_data->strong_mode_enabled = Util::value_to_bool(v_state);
+	return Util::to_value(cj_data->strong_mode_enabled);
 }
 
-VALUE MSNewton::Spring::set_stiff(VALUE self, VALUE v_joint, VALUE v_stiff) {
+VALUE MSNewton::Spring::strong_mode_enabled(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SPRING);
 	SpringData* cj_data = (SpringData*)joint_data->cj_data;
-	cj_data->stiff = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_stiff), 0.0f);
-	return Util::to_value(cj_data->stiff);
+	return Util::to_value(cj_data->strong_mode_enabled);
+}
+
+VALUE MSNewton::Spring::get_accel(VALUE self, VALUE v_joint) {
+	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SPRING);
+	SpringData* cj_data = (SpringData*)joint_data->cj_data;
+	return Util::to_value(cj_data->accel);
+}
+
+VALUE MSNewton::Spring::set_accel(VALUE self, VALUE v_joint, VALUE v_accel) {
+	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SPRING);
+	SpringData* cj_data = (SpringData*)joint_data->cj_data;
+	cj_data->accel = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_accel), 0.0f);
+	return Util::to_value(cj_data->accel);
 }
 
 VALUE MSNewton::Spring::get_damp(VALUE self, VALUE v_joint) {
@@ -377,8 +396,10 @@ void Init_msp_spring(VALUE mNewton) {
 	rb_define_module_function(mSpring, "set_max", VALUEFUNC(MSNewton::Spring::set_max), 2);
 	rb_define_module_function(mSpring, "enable_limits", VALUEFUNC(MSNewton::Spring::enable_limits), 2);
 	rb_define_module_function(mSpring, "limits_enabled?", VALUEFUNC(MSNewton::Spring::limits_enabled), 1);
-	rb_define_module_function(mSpring, "get_stiff", VALUEFUNC(MSNewton::Spring::get_stiff), 1);
-	rb_define_module_function(mSpring, "set_stiff", VALUEFUNC(MSNewton::Spring::set_stiff), 2);
+	rb_define_module_function(mSpring, "enable_strong_mode", VALUEFUNC(MSNewton::Spring::enable_strong_mode), 2);
+	rb_define_module_function(mSpring, "strong_mode_enabled?", VALUEFUNC(MSNewton::Spring::strong_mode_enabled), 1);
+	rb_define_module_function(mSpring, "get_accel", VALUEFUNC(MSNewton::Spring::get_accel), 1);
+	rb_define_module_function(mSpring, "set_accel", VALUEFUNC(MSNewton::Spring::set_accel), 2);
 	rb_define_module_function(mSpring, "get_damp", VALUEFUNC(MSNewton::Spring::get_damp), 1);
 	rb_define_module_function(mSpring, "set_damp", VALUEFUNC(MSNewton::Spring::set_damp), 2);
 	rb_define_module_function(mSpring, "get_cur_position", VALUEFUNC(MSNewton::Spring::get_cur_position), 1);

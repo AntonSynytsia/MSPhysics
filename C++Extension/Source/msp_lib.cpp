@@ -2,8 +2,8 @@
 The C++ version of MSPhysics implements the following:
   - Newton Dynamics Physics SDK 3.14 by Juleo Jerez and Alain Suero.
   - V-HACD 2.2 by Khaled Mamou.
-  - SDL 1.2.15 / 2.0.4
-  - SDL_mixer 1.2.12 / 2.0.1
+  - SDL 2.0.4
+  - SDL_mixer 2.0.1
 
 Implementation by Anton Synytsia
 
@@ -14,22 +14,37 @@ Do the following when updating NewtonDynamics:
 	Change DG_MINIMUM_MASS to 1.0e-6f
 * File: dgBody.cpp, lines 496-498
 	~ Remove the clamping of inirtia values.
+* File: dgDynamicBody.h
+	Change DG_ErrTolerance to 1.0e-3f
 * File: dgCollisionBox.cpp, line 322
 	~ Change tiltAngle to 0.785398f. (45 degrees)
+* File: dgCollisionCompound.h
+	~ Change DG_COMPOUND_STACK_DEPTH to 4096
 * File: dgCollisionCompound.cpp
 	Change DG_MAX_MIN_VOLUME to 1.0e-6f
+	Change dgCollisionCompound::m_padding to 1.0e-6f
+* File: dgCollisionConvex.h
+	~ Change DG_CLIP_MAX_COUNT to 4096
+	~ Change DG_CLIP_MAX_POINT_COUNT to 256
+* File: dgCollisionMesh.h
+	~ Change DG_MAX_COLLIDING_FACES to 4096
+* File: dgBilateralConstraint.cpp
+	~ Change DG_VEL_DAMP to 100000
+	~ Change DG_POS_DAMP to 1500000
 * File: dgContact.h
-	~ Change DG_MAX_CONTATCS to 4096
+	~ Change DG_MAX_CONTATCS to 1024
 * File: dgBroadPhase.h
-	~ Change DG_BROADPHASE_MAX_STACK_DEPTH to 4096
+	Change DG_BROADPHASE_MAX_STACK_DEPTH to 1024
 * File: dgWorldDynamicUpdate.h
-	~ Change DG_MAX_SKELETON_JOINT_COUNT to 4096
+	Change DG_MAX_SKELETON_JOINT_COUNT to 4096
+	Change DG_FREEZZING_VELOCITY_DRAG to 0.5f
+	~ Change DG_SOLVER_MAX_ERROR to DG_FREEZE_MAG * dgFloat32(0.05f)
 * File: dgWorldDynamicUpdate.cpp
-	~ Change DG_PARALLEL_JOINT_COUNT_CUT_OFF to 4096
+	~ Change DG_PARALLEL_JOINT_COUNT_CUT_OFF to 1024
 * File: dgThread.h, line 27
 	Uncomment #define DG_USE_THREAD_EMULATION
 * File: Newton.cpp, line 2091
-	Change NewtonMaterialSetContactSoftness min/max to 0.01f and 1.00f
+	~ Change NewtonMaterialSetContactSoftness min/max to 0.01f and 1.00f
 * File: NewtonClass.h
 	Change min and max timestep to 1/30 and 1/1200
 
@@ -92,6 +107,7 @@ void Init_msp_lib() {
 	Init_msp_piston(mNewton);
 	Init_msp_spring(mNewton);
 	Init_msp_up_vector(mNewton);
+	Init_msp_universal(mNewton);
 
 	Init_msp_sdl(mMSPhysics);
 	Init_msp_sdl_mixer(mMSPhysics);

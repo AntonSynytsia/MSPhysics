@@ -8,12 +8,16 @@ module MSPhysics
     # @!visibility private
     @@_variables = {}
 
-    # Remove all variables created by {#set_var} or {#get_set_var} functions.
-    # @api private
-    # @return [void]
-    def clear_variables
-      @@_variables.clear
-    end
+    class << self
+
+      # Remove all variables created by {#set_var} or {#get_set_var} functions.
+      # @api private
+      # @return [void]
+      def clear_variables
+        @@_variables.clear
+      end
+
+    end # class << self
 
     # Get variable value.
     # @param [String, Symbol] name
@@ -83,7 +87,7 @@ module MSPhysics
       AMS::Keyboard.key(vk)
     end
 
-    # Create a new range slider, or get slider value if slider with specified
+    # Create a new range slider or get slider value if slider with the specified
     # name already exists.
     # @param [String] name Slider name.
     # @param [Numeric] default_value Starting value.
@@ -91,7 +95,12 @@ module MSPhysics
     # @param [Numeric] max Maximum value.
     # @param [Numeric] step Snap step.
     # @return [Numeric] Slider value.
-    def slider(name, default_value = 0, min = 0, max = 1, step = 0)
+    def slider(name, default_value = 0, min = 0, max = 1, step = 0.01)
+      unless MSPhysics::ControlPanel.slider_exists?(name)
+        MSPhysics::ControlPanel.show(true)
+        MSPhysics::ControlPanel.add_slider(name, default_value, min, max, step)
+      end
+      MSPhysics::ControlPanel.get_slider_value(name)
     end
 
   end # class Common

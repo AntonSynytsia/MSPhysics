@@ -190,7 +190,7 @@ module MSPhysics
       @camera
     end
 
-    # Enable/Disable axes transitioning for this scene.
+    # Enable/disable axes transitioning for this scene.
     # @param [Boolean] state
     def use_axes=(state)
       @use_axes = state ? true : false
@@ -202,7 +202,7 @@ module MSPhysics
       @use_axes
     end
 
-    # Enable/Disable hidden entities transitioning for this scene.
+    # Enable/disable hidden entities transitioning for this scene.
     # @param [Boolean] state
     def use_hidden_entities=(state)
       @use_hidden_entities = state ? true : false
@@ -214,7 +214,7 @@ module MSPhysics
       @use_hidden_entities
     end
 
-    # Enable/Disable hidden layers transitioning for this scene.
+    # Enable/disable hidden layers transitioning for this scene.
     # @param [Boolean] state
     def use_hidden_layers=(state)
       @use_hidden_layers = state ? true : false
@@ -226,7 +226,7 @@ module MSPhysics
       @use_hidden_layers
     end
 
-    # Enable/Disable rendering options transitioning for this scene.
+    # Enable/disable rendering options transitioning for this scene.
     # @param [Boolean] state
     def use_rendering_options=(state)
       @use_rendering_options = state ? true : false
@@ -238,7 +238,7 @@ module MSPhysics
       @use_rendering_options
     end
 
-    # Enable/Disable shadow transitioning for this scene.
+    # Enable/disable shadow transitioning for this scene.
     # @param [Boolean] state
     def use_shadow_info=(state)
       @use_shadow_info = state ? true : false
@@ -250,7 +250,7 @@ module MSPhysics
       @use_shadow_info
     end
 
-    # Enable/Disable style transitioning for this scene.
+    # Enable/disable style transitioning for this scene.
     # @param [Boolean] state
     def use_style=(state)
       @use_style = state ? true : false
@@ -262,7 +262,7 @@ module MSPhysics
       @use_style
     end
 
-    # Enable/Disable camera transitioning for this scene.
+    # Enable/disable camera transitioning for this scene.
     # @param [Boolean] state
     def use_camera=(state)
       @use_camera = state ? true : false

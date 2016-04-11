@@ -164,7 +164,7 @@ void dgBilateralConstraint::SetMotorAcceleration (dgInt32 index, dgFloat32 accel
 {
 	m_rowIsMotor[index] = -1;
 	m_motorAcceleration[index] = acceleration;
-	desc.m_flags[index].m_isMotor = 1;
+	desc.m_flags[index].m_isMotor = -1;
 	desc.m_flags[index].m_applyCorrection = 0;
 	desc.m_jointAccel[index] = acceleration;
 }
@@ -197,7 +197,7 @@ void dgBilateralConstraint::SetJacobianDerivative (dgInt32 index, dgContraintDes
 	m_rowIsMotor[index] = -1;
 	m_motorAcceleration[index] = dgFloat32 (0.0f);
 
-	desc.m_flags[index].m_isMotor = 1;
+	desc.m_flags[index].m_isMotor = -1;
 	desc.m_flags[index].m_applyCorrection = 0;
 	desc.m_restitution[index] = dgFloat32 (0.0f);
 	desc.m_jointAccel[index] = dgFloat32 (0.0f);
@@ -232,7 +232,7 @@ void dgBilateralConstraint::SetSpringDamperAcceleration (dgInt32 index, dgContra
 		dgFloat32 ksd = dt * ks;
 		dgFloat32 num = ks * relPosit + kd * relVeloc + ksd * relVeloc;
 		dgFloat32 den = dt * kd + dt * ksd;
-		float accel = num / (dgFloat32 (1.0f) + den);
+		dgFloat32 accel = num / (dgFloat32 (1.0f) + den);
 		SetMotorAcceleration (index, accel, desc);
 		desc.m_jointStiffness[index] = - den / DG_PSD_DAMP_TOL ;
 	}
@@ -286,7 +286,7 @@ void dgBilateralConstraint::CalculateAngularDerivative (dgInt32 index, dgContrai
 
 		desc.m_zeroRowAcceleration[index] = (jointAngle + omegaError * desc.m_timestep) * desc.m_invTimestep * desc.m_invTimestep;
 
-		desc.m_flags[index].m_applyCorrection = 1;
+		desc.m_flags[index].m_applyCorrection = -1;
 		desc.m_penetration[index] = jointAngle;
 		desc.m_jointAccel[index] = alphaError;
 		desc.m_restitution[index] = dgFloat32 (0.0f);
@@ -360,7 +360,7 @@ void dgBilateralConstraint::CalculatePointDerivative (dgInt32 index, dgContraint
 		dgFloat32 accelError = num / den;
 
 		desc.m_penetration[index] = relPosit;
-		desc.m_flags[index].m_applyCorrection = 1;
+		desc.m_flags[index].m_applyCorrection = -1;
 		desc.m_penetrationStiffness[index] = dgFloat32 (0.01f/4.0f);
 		desc.m_jointStiffness[index] = param.m_stiffness;
 		desc.m_jointAccel[index] = accelError + relCentr;

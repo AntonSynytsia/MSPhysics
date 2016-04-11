@@ -39,8 +39,8 @@ dMatrix dGetZeroMatrix ()
 
 dMatrix dGrammSchmidt(const dVector& dir)
 {
-	dVector up;
-	dVector right;
+	dVector up(0.0f);
+	dVector right(0.0f);
 	dVector front (dir); 
 
 	front = front.Scale(1.0f / dSqrt (front % front));
@@ -99,8 +99,11 @@ dMatrix dRollMatrix(dFloat ang)
 
 
 dMatrix::dMatrix (const dQuaternion &rotation, const dVector &position)
+	:m_front(0.0f)
+	,m_up(0.0f)
+	,m_right(0.0f)
+	,m_posit(0.0f)
 {
-
 	dFloat x2 = dFloat (2.0f) * rotation.m_q1 * rotation.m_q1;
 	dFloat y2 = dFloat (2.0f) * rotation.m_q2 * rotation.m_q2;
 	dFloat z2 = dFloat (2.0f) * rotation.m_q3 * rotation.m_q3;
@@ -290,12 +293,10 @@ dVector dMatrix::UnrotateVector (const dVector &v) const
 
 dVector dMatrix::RotateVector4x4 (const dVector &v) const
 {
-	dVector tmp;
-	const dMatrix& me = *this;
-	for (int i = 0; i < 4; i ++) {
-		tmp[i] = v[0] * me[0][i] + v[1] * me[1][i] +  v[2] * me[2][i] +  v[3] * me[3][i];
-	}
-	return tmp;
+	return dVector (v.m_x * m_front.m_x + v.m_y * m_up.m_x + v.m_z * m_right.m_x + v.m_w * m_posit.m_x,
+					v.m_x * m_front.m_y + v.m_y * m_up.m_y + v.m_z * m_right.m_y + v.m_w * m_posit.m_y,
+					v.m_x * m_front.m_z + v.m_y * m_up.m_z + v.m_z * m_right.m_z + v.m_w * m_posit.m_z,
+					v.m_x * m_front.m_w + v.m_y * m_up.m_w + v.m_z * m_right.m_w + v.m_w * m_posit.m_w);
 }
 
 
@@ -722,6 +723,10 @@ void dMatrix::PolarDecomposition (dMatrix& transformMatrix, dVector& scale, dMat
 }
 
 dMatrix::dMatrix (const dMatrix& transformMatrix, const dVector& scale, const dMatrix& stretchAxis)
+	:m_front(0.0f)
+	,m_up(0.0f)
+	,m_right(0.0f)
+	,m_posit(0.0f)
 {
 	dMatrix scaledAxis;
 	scaledAxis[0] = stretchAxis[0].Scale (scale[0]);
@@ -731,9 +736,3 @@ dMatrix::dMatrix (const dMatrix& transformMatrix, const dVector& scale, const dM
 
 	*this = stretchAxis.Transpose() * scaledAxis * transformMatrix;
 }
-
-
-
-
-
-

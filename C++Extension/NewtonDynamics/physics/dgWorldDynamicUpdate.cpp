@@ -39,7 +39,7 @@
 
 
 #define DG_CCD_EXTRA_CONTACT_COUNT			(8 * 3)
-#define DG_PARALLEL_JOINT_COUNT_CUT_OFF		(4096)
+#define DG_PARALLEL_JOINT_COUNT_CUT_OFF		(256)
 
 
 dgVector dgWorldDynamicUpdate::m_velocTol (dgFloat32 (1.0e-18f));

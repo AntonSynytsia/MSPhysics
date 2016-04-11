@@ -5,8 +5,8 @@ module MSPhysics
 
     DEFAULT_MIN_POSITION = -10.0
     DEFAULT_MAX_POSITION = 10.0
-    DEFAULT_MIN_ANGLE = -180.0
-    DEFAULT_MAX_ANGLE = 180.0
+    DEFAULT_MIN_ANGLE = -180.0.degrees
+    DEFAULT_MAX_ANGLE = 180.0.degrees
     DEFAULT_LINEAR_LIMITS_ENABLED = false
     DEFAULT_ANGULAR_LIMITS_ENABLED = false
     DEFAULT_LINEAR_FRICTION = 0.0
@@ -17,7 +17,7 @@ module MSPhysics
     # @param [MSPhysics::Body, nil] parent
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
     #   Of the given matrix, matrix origin should represent pin origin, and
-    #   matrix Z-AXIS should represent pin up.
+    #   matrix Z-axis should represent pin up.
     def initialize(world, parent, pin_tra)
       super(world, parent, pin_tra, 6)
       MSPhysics::Newton::Corkscrew.create(@address)
@@ -78,7 +78,7 @@ module MSPhysics
       MSPhysics::Newton::Corkscrew.linear_limits_enabled?(@address)
     end
 
-    # Enable/Disable min and max position limits.
+    # Enable/disable min and max position limits.
     # @param [Boolean] state
     def linear_limits_enabled=(state)
       MSPhysics::Newton::Corkscrew.enable_linear_limits(@address, state)
@@ -144,7 +144,7 @@ module MSPhysics
       MSPhysics::Newton::Corkscrew.angular_limits_enabled?(@address)
     end
 
-    # Enable/Disable min & max angle limits.
+    # Enable/disable min & max angle limits.
     # @param [Boolean] state
     def angular_limits_enabled=(state)
       MSPhysics::Newton::Corkscrew.enable_angular_limits(@address, state)

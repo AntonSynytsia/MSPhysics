@@ -36,13 +36,13 @@ const dFloat DEFAULT_SOFTNESS					= 0.10f;
 const dFloat DEFAULT_STATIC_FRICTION			= 0.90f;
 const dFloat DEFAULT_DYNAMIC_FRICTION			= 0.50f;
 const bool DEFAULT_ENABLE_FRICTION				= true;
-const long NON_COL_CONTACTS_CAPACITY			= 30;
+const long NON_COL_CONTACTS_CAPACITY			= 32;
 const int DEFAULT_SOLVER_MODEL					= 4;
 const int DEFAULT_FRICTION_MODEL				= 0;
-const int DEFAULT_CONVERGENCE_QUALITY			= 0;
+const int DEFAULT_CONVERGENCE_QUALITY			= 1;
 const dFloat DEFAULT_MATERIAL_THICKNESS			= 1.0f / 256.0f;
 const dFloat DEFAULT_CONTACT_MERGE_TOLERANCE	= 1.0e-3f;
-const dFloat MIN_TOUCH_DISTANCE					= 0.001f;
+const dFloat MIN_TOUCH_DISTANCE					= 0.005f;
 
 const dFloat MIN_MASS							= 1.0e-6f;
 const dFloat MAX_MASS							= 1.0e14f;
@@ -184,6 +184,7 @@ typedef struct BodyData
 	VALUE user_data;
 	dVector matrix_scale;
 	dVector default_collision_scale;
+	dVector collision_scale;
 	dVector default_collision_offset;
 	bool matrix_changed;
 	bool gravity_enabled;
@@ -465,6 +466,7 @@ void set_matrix_scale(dMatrix& matrix, const dVector& scale);
 void extract_matrix_scale(dMatrix& matrix);
 dMatrix matrix_from_pin_dir(const dVector& pos, const dVector& dir);
 dMatrix rotate_matrix_to_dir(const dMatrix& matrix, const dVector& dir);
+dVector rotate_vector(const dVector& vector, const dVector& normal, const dFloat& angle);
 
 bool is_world_valid(const NewtonWorld* address);
 bool is_body_valid(const NewtonBody* address);

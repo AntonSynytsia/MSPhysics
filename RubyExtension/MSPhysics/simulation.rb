@@ -111,7 +111,7 @@ module MSPhysics
         :show_edges     => nil,
         :show_profiles  => nil
       }
-      @axis = {
+      @axes = {
         :show           => false,
         :line_width     => 2,
         :line_stipple   => '',
@@ -142,6 +142,9 @@ module MSPhysics
       @scene_selected_time = nil
       @scene_transition_time = nil
       @cc_bodies = []
+      @particles = []
+      @particle_def2d = {}
+      @particle_def3d = {}
       @@instance = self
     end
 
@@ -291,8 +294,43 @@ module MSPhysics
       @cursor_pos.dup
     end
 
+    # Show/hide mouse cursor.
+    # @param [Boolean] state
+    # @return [Boolean] Whether visibility state changed.
+    def show_cursor(state)
+      AMS::Cursor.show(state)
+    end
+
+    # Determine whether cursor is visible.
+    # @return [Boolean]
+    def cursor_visible?
+      AMS::Cursor.is_visible?
+    end
+
     # @!endgroup
     # @!group Mode and Debug Draw Functions
+
+    # Set view full screen.
+    # @param [Boolean] state
+    # @return [void]
+    # @example
+    #   onStart {
+    #     simulation.view_full_screen(true)
+    #   }
+    #   onEnd {
+    #     simulation.view_full_screen(false)
+    #   }
+    def view_full_screen(state)
+      AMS::Sketchup.show_toolbar_container(5, !state, false)
+      AMS::Sketchup.show_scenes_bar(!state, false)
+      AMS::Sketchup.show_status_bar(!state, false)
+      AMS::Sketchup.set_viewport_border(!state)
+      r1 = AMS::Sketchup.set_menu_bar(!state)
+      r2 = AMS::Sketchup.switch_full_screen(state)
+      AMS::Sketchup.refresh unless r1 || r2
+      #~ AMS::Sketchup.show_dialogs(!state)
+      #~ AMS::Sketchup.show_toolbars(!state)
+    end
 
     # Enable/disable the drawing of collision contact points.
     # @param [Boolean] state
@@ -320,14 +358,14 @@ module MSPhysics
       @contact_forces[:show]
     end
 
-    # Enable/disable the drawing of body world axis aligned bounding box.
+    # Enable/disable the drawing of body world axes aligned bounding box.
     # @param [Boolean] state
     # @return [Boolean] The new state.
     def show_aabb(state)
       @aabb[:show] = state ? true : false
     end
 
-    # Determine if the drawing of body world axis aligned bounding box is
+    # Determine if the drawing of body world axes aligned bounding box is
     # enabled.
     # @return [Boolean]
     def aabb_visible?
@@ -359,17 +397,17 @@ module MSPhysics
       @collision_wireframe[:show]
     end
 
-    # Enable/disable the drawing of body centre of mass axis.
+    # Enable/disable the drawing of body centre of mass axes.
     # @param [Boolean] state
     # @return [Boolean] The new state.
-    def show_axis(state)
-      @axis[:show] = state ? true : false
+    def show_axes(state)
+      @axes[:show] = state ? true : false
     end
 
-    # Determine if the drawing of body centre of mass axis is enabled.
+    # Determine if the drawing of body centre of mass axes is enabled.
     # @return [Boolean]
-    def axis_visible?
-      @axis[:show]
+    def axes_visible?
+      @axes[:show]
     end
 
     # Get continuous collision state for all bodies. Continuous collision
@@ -977,28 +1015,6 @@ module MSPhysics
 
     # @!endgroup
 
-    # Set view full screen.
-    # @param [Boolean] state
-    # @return [void]
-    # @example
-    #   onStart {
-    #     simulation.view_full_screen(true)
-    #   }
-    #   onEnd {
-    #     simulation.view_full_screen(false)
-    #   }
-    def view_full_screen(state)
-      AMS::Sketchup.show_toolbar_container(5, !state, false)
-      AMS::Sketchup.show_scenes_bar(!state, false)
-      AMS::Sketchup.show_status_bar(!state, false)
-      AMS::Sketchup.set_viewport_border(!state)
-      r1 = AMS::Sketchup.set_menu_bar(!state)
-      r2 = AMS::Sketchup.switch_full_screen(state)
-      AMS::Sketchup.refresh unless r1 || r2
-      #~ AMS::Sketchup.show_dialogs(!state)
-      #~ AMS::Sketchup.show_toolbars(!state)
-    end
-
     # @!group Music, Sound, and MIDI Functions
 
     # Play embedded sound by name. This can load WAVE, AIFF, RIFF, OGG, and VOC
@@ -1228,7 +1244,202 @@ module MSPhysics
 
     # @!endgroup
 
+    # @!group Particle Effects
+
+    # Create a new particle.
+    # @param [Hash] opts Particle options.
+    # @options opts [Geom::Point3d, Array] :position ([0,0,0]) Starting position.
+    #   Position is altered by particle velocity and time.
+    # @options opts [Geom::Vector3d, Array] :velocity ([0,0,0]) Starting velocity
+    #   in inches per second.
+    # @options opts [Geom::Vector3d, Array] :gravity ([0,0,0]) Gravitational
+    #   acceleration in inches per second per second.
+    # @option opts [Numeric] :radius (1.0) Starting radius in inches, a value
+    #   between 0.01 and 10000. Radius alters depending on a scale parameter.
+    # @options opts [Numeric] :scale (1.01) Radius scale ratio per second, a
+    #   value between 0.001 and 1000. If radius becomes less than 0.01 or more
+    #   than 10000, the particle is automatically destroyed.
+    # @option opts [Sketchup::Color, Array, String, Fixnum] :color1 ('Gray')
+    #   Starting color.
+    # @option opts [Sketchup::Color, Array, String, Fixnum] :color2 (nil) Ending
+    #   color. Pass nil to have the ending color remain same as the starting
+    #   color.
+    # @option opts [Numeric] :alpha1 (1.0) Starting opacity, a value between 0.0
+    #   and 1.0.
+    # @option opts [Numeric] :alpha2 (0.0) Ending opacity, a value between 0.0
+    #   and 1.0.
+    # @option opts [Fixnum] :lifetime (100) Particle lifetime in frames, a value
+    #   greater than zero.
+    # @options opts [Fixnum] :num_seg (16) Number of segments the particle is to
+    #   consist of, a value between 3 and 100.
+    # @options opts [Numeric] :rot_angle (0.0) Rotate angle in degrees.
+    # @option opts [Fixnum] :type (1)
+    #   1. Defines a 2D circular particle that is drawn through view drawing
+    #      functions. This type is fast, but particle shade and shadow is not
+    #      present. Also, this particle doesn't blend quite well with other
+    #      particles of this type.
+    #   2. Defines a 2D circular particle that is created from SketchUp
+    #      geometry. This type is normal, and guarantees good, balanced results.
+    #   3. Defines a 3D spherical particle that is crated from SketchUp
+    #      geometry. This type is slow, but it guarantees best results.
+    # @return [Hash] A hash containing particle properties.
+    def create_particle(opts)
+      opts2 = {}
+      opts2[:position] = opts[:position] ? Geom::Point3d.new(opts[:position]) : Geom::Point3d.new(0, 0, 0)
+      opts2[:velocity] = opts[:velocity] ? Geom::Vector3d.new(opts[:velocity]) : Geom::Vector3d.new(0, 0, 0)
+      opts2[:gravity] =  opts[:gravity] ? Geom::Vector3d.new(opts[:gravity]) : Geom::Vector3d.new(0, 0, 0)
+      opts2[:radius] = opts[:radius] ? AMS.clamp(opts[:radius].to_f, 0.01, 10000) : 1.0
+      opts2[:scale] = opts[:scale] ? AMS.clamp(opts[:scale].to_f, 0.001, 1000) : 1.01
+      opts2[:color1] = opts[:color1] ? Sketchup::Color.new(opts[:color1]) : Sketchup::Color.new('Gray')
+      opts2[:color2] = opts[:color2] ? Sketchup::Color.new(opts[:color2]) :  Sketchup::Color.new(opts2[:color1])
+      opts2[:alpha1] = opts[:alpha1] ? AMS.clamp(opts[:alpha1].to_f, 0.0, 1.0) : 1.0
+      opts2[:alpha2] = opts[:alpha2] ? AMS.clamp(opts[:alpha2].to_f, 0.0, 1.0) : 0.0
+      opts2[:lifetime] = opts[:lifetime] ? AMS.clamp(opts[:lifetime].to_i, 1, nil) : 100
+      opts2[:num_seg] = opts[:num_seg] ? AMS.clamp(opts[:num_seg].to_i, 3, 100) : 16
+      opts2[:rot_angle] = opts[:rot_angle] ? opts[:rot_angle].to_f.degrees : 0.0
+      opts2[:type] = opts[:type] ? AMS.clamp(opts[:type].to_i, 1, 3) : 1
+
+      opts2[:color1].alpha = opts2[:alpha1]
+      opts2[:color2].alpha = opts2[:alpha2]
+
+      opts2[:life_start] = @frame
+      opts2[:life_end] = @frame + opts2[:lifetime]
+      opts2[:color] = Sketchup::Color.new(opts2[:color1])
+
+      @particles << opts2
+
+      return opts2 if opts2[:type] == 1
+
+      model = Sketchup.active_model
+      if opts2[:type] == 3 # 3D
+        if @particle_def3d[opts2[:num_seg]].nil? || @particle_def3d[opts2[:num_seg]].deleted?
+          @particle_def3d[opts2[:num_seg]] = model.definitions.add("AP3D_#{opts2[:num_seg]}")
+          e = @particle_def3d[opts2[:num_seg]].entities
+          c1 = e.add_circle(ORIGIN, X_AXIS, 1, opts2[:num_seg])
+          c2 = e.add_circle([0,0,-10], Z_AXIS, 1, opts2[:num_seg])
+          c1.each { |edge| edge.hidden = true }
+          f = e.add_face(c1)
+          f.followme(c2)
+          c2.each { |edge| edge.erase! }
+        end
+        cd = @particle_def3d[opts2[:num_seg]]
+        normal = Geom::Vector3d.new(Math.cos(opts2[:rot_angle]), Math.sin(opts2[:rot_angle]), 0)
+      else # 2D
+        if @particle_def2d[opts2[:num_seg]].nil? || @particle_def2d[opts2[:num_seg]].deleted?
+          @particle_def2d[opts2[:num_seg]] = model.definitions.add("MSP_P2D_#{opts2[:num_seg]}")
+          e = @particle_def2d[opts2[:num_seg]].entities
+          c = e.add_circle(ORIGIN, Z_AXIS, 1, opts2[:num_seg])
+          c.each { |edge| edge.hidden = true }
+          e.add_face(c)
+        end
+        cd = @particle_def2d[opts2[:num_seg]]
+        eye = model.active_view.camera.eye
+        normal = (eye == opts2[:position]) ? Z_AXIS : opts2[:position].vector_to(eye)
+      end
+      tra1 = Geom::Transformation.new(opts[:position], normal)
+      tra2 = Geom::Transformation.rotation(ORIGIN, Z_AXIS, opts[:rot_angle])
+      tra3 = Geom::Transformation.scaling(opts[:radius])
+      tra = tra1*tra2*tra3
+      opts2[:material] = model.materials.add('FX')
+      opts2[:material].color = opts2[:color]
+      opts2[:material].alpha = opts2[:color].alpha / 255.0
+      opts2[:group] = model.entities.add_instance(cd, tra)
+      opts2[:group].material = opts2[:material]
+
+      return opts2
+    end
+
+    # Get number of particles.
+    # @return [Fixnum]
+    def particles_size
+      @particles.size
+    end
+
+    # Remove all particles.
+    def clear_particles
+      model = Sketchup.active_model
+      mats = model.materials
+      @particles.each { |opts|
+        next true if opts[:type] == 1
+        if opts[:group].valid?
+          opts[:group].material = nil
+          opts[:group].erase!
+        end
+        mats.remove(opts[:material]) if mats.respond_to?(:remove)
+      }
+      @particles.clear
+    end
+
+    # @!endgroup
+
     private
+
+    def update_particles
+      model = Sketchup.active_model
+      mats = model.materials
+      eye = model.active_view.camera.eye
+      @particles.reject! { |opts|
+        opts[:radius] *= opts[:scale]
+        if (opts[:type] != 1 && (opts[:group].deleted? || opts[:material].deleted?)) || (opts[:radius] < 0.01 || opts[:radius] > 10000 || @frame >= opts[:life_end])
+          next true if opts[:type] == 1
+          if opts[:group].valid?
+            opts[:group].material = nil
+            opts[:group].erase!
+          end
+          mats.remove(opts[:material]) if mats.respond_to?(:remove)
+          next true
+        end
+        ratio = (@frame - opts[:life_start]) / opts[:lifetime].to_f
+        opts[:color] = MSPhysics.transition_color(opts[:color1], opts[:color2], ratio)
+        opts[:velocity].x += opts[:gravity].x * @update_timestep
+        opts[:velocity].y += opts[:gravity].y * @update_timestep
+        opts[:velocity].z += opts[:gravity].z * @update_timestep
+        opts[:position].x += opts[:velocity].x * @update_timestep
+        opts[:position].y += opts[:velocity].y * @update_timestep
+        opts[:position].z += opts[:velocity].z * @update_timestep
+        if opts[:type] != 1
+          opts[:material].color = opts[:color]
+          opts[:material].alpha = opts[:color].alpha / 255.0
+          if opts[:type] == 3
+            normal = Geom::Vector.new(Math.cos(opts[:rot_angle]), Math.sin(opts[:rot_angle]), 0)
+          else
+            normal = (eye == opts[:position]) ? Z_AXIS : opts[:position].vector_to(eye)
+          end
+          tra1 = Geom::Transformation.new(opts[:position], normal)
+          tra2 = Geom::Transformation.rotation(ORIGIN, Z_AXIS, opts[:rot_angle])
+          tra3 = Geom::Transformation.scaling(opts[:radius])
+          opts[:group].move!(tra1*tra2*tra3)
+        end
+        false
+      }
+    rescue Exception => e
+      puts "An exception occurred while updating particles.\n#{e.class}: #{e.message}"
+    end
+
+    def draw_particles(view, bb)
+      eye = view.camera.eye
+      fx = {}
+      @particles.each { |opts|
+        if opts[:type] == 1
+          dist = opts[:position].distance(eye)
+          fx[dist] = opts
+        else
+          bb.add(opts[:group].bounds) if opts[:group].valid?
+        end
+      }
+      keys = fx.keys
+      keys.sort! { |x,y| y <=> x }
+      keys.each { |dist|
+        opts = fx[dist]
+        normal = (eye == opts[:position]) ? Z_AXIS : opts[:position].vector_to(eye)
+        pts = MSPhysics.points_on_circle3d(opts[:position], opts[:radius], normal, opts[:num_seg], opts[:rot_angle].radians)
+        bb.add(opts[:position])
+        view.drawing_color = opts[:color]
+        view.draw(GL_POLYGON, pts)
+      }
+    rescue Exception => e
+      puts "An exception occurred while drawing particles.\n#{e.class}: #{e.message}"
+    end
 
     def do_on_update
       model = Sketchup.active_model
@@ -1349,8 +1560,15 @@ module MSPhysics
         joints.reject! { |joint| !joint.valid? }
         false
       }
-      @controlled_joints.reject! { |joint, controller|
+      @controlled_joints.reject! { |joint, data|
         next true if !joint.valid?
+        if data.is_a?(Array)
+          controller = data[0]
+          ratio = data[1]
+        else
+          controller = data
+          ratio = 1
+        end
         value = nil
         begin
           value = @controller_context.instance_eval(controller, CONTROLLER_NAME, 0)
@@ -1362,13 +1580,13 @@ module MSPhysics
         begin
           if joint.is_a?(Servo)
             if value.is_a?(Numeric)
-              joint.controller = joint.sp_mode_enabled? ? value : value.degrees
+              joint.controller = joint.sp_mode_enabled? ? value : value * ratio
             elsif value.nil?
               joint.controller = nil
             end
           elsif joint.is_a?(Piston)
             if value.is_a?(Numeric)
-              joint.controller = value
+              joint.controller = value * ratio
             elsif value.nil?
               joint.controller = nil
             end
@@ -1377,7 +1595,7 @@ module MSPhysics
               joint.set_pin_dir(value)
             end
           elsif value.is_a?(Numeric)
-            joint.controller = value
+            joint.controller = value * ratio
           end
         rescue Exception => e
           puts "An exception occurred while assigning joint controller!\nController:\n#{controller}\n#{e.class}:\n#{e.message}"
@@ -1444,6 +1662,8 @@ module MSPhysics
           return unless Simulation.is_active?
         end
       end
+      # Update particles
+      update_particles
       # Call onUpdate event
       call_event(:onUpdate)
       return unless Simulation.is_active?
@@ -1584,10 +1804,10 @@ module MSPhysics
       MSPhysics::Newton.enable_object_validation(ovs)
     end
 
-    def draw_axis(view)
-      return unless @axis[:show]
-      view.line_width = @axis[:line_width]
-      view.line_stipple = @axis[:line_stipple]
+    def draw_axes(view)
+      return unless @axes[:show]
+      view.line_width = @axes[:line_width]
+      view.line_stipple = @axes[:line_stipple]
       world_address = @world.get_address
       ovs = MSPhysics::Newton.is_object_validation_enabled?
       MSPhysics::Newton.enable_object_validation(false)
@@ -1597,21 +1817,21 @@ module MSPhysics
         tra = MSPhysics::Newton::Body.get_matrix(body_address)
         # Draw xaxis
         l = tra.xaxis
-        l.length = @axis[:size]
+        l.length = @axes[:size]
         pt = pos + l
-        view.drawing_color = @axis[:xaxis]
+        view.drawing_color = @axes[:xaxis]
         view.draw_line(pos, pt)
         # Draw yaxis
         l = tra.yaxis
-        l.length = @axis[:size]
+        l.length = @axes[:size]
         pt = pos + l
-        view.drawing_color = @axis[:yaxis]
+        view.drawing_color = @axes[:yaxis]
         view.draw_line(pos, pt)
         # Draw zaxis
         l = tra.zaxis
-        l.length = @axis[:size]
+        l.length = @axes[:size]
         pt = pos + l
-        view.drawing_color = @axis[:zaxis]
+        view.drawing_color = @axes[:zaxis]
         view.draw_line(pos, pt)
         # Get next body
         body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
@@ -1711,27 +1931,52 @@ module MSPhysics
     def init_joint(joint_ent, parent_body, child_body, pin_matrix)
       jdict = 'MSPhysics Joint'
       jtype = joint_ent.get_attribute(jdict, 'Type')
+      attr = joint_ent.get_attribute(jdict, 'Angle Units', MSPhysics::DEFAULT_ANGLE_UNITS)
+      ang_ratio = attr == 'deg' ? 1.degrees : 1
+      iang_ratio = 1.0 / ang_ratio
+      attr = joint_ent.get_attribute(jdict, 'Position Units', MSPhysics::DEFAULT_POSITION_UNITS)
+      pos_ratio = case attr
+        when 'mm'
+          0.001
+        when 'cm'
+          0.01
+        when 'dm'
+          0.1
+        when 'm'
+          1.0
+        when 'in'
+          0.0254
+        when 'ft'
+          0.3048
+        when 'yd'
+          0.9144
+        else
+          1.0
+      end
+      ipos_ratio = 1.0 / pos_ratio
       case jtype
       when 'Fixed'
         joint = MSPhysics::Fixed.new(@world, parent_body, pin_matrix)
       when 'Hinge'
         joint = MSPhysics::Hinge.new(@world, parent_body, pin_matrix)
-        attr = joint_ent.get_attribute(jdict, 'Min', MSPhysics::Hinge::DEFAULT_MIN)
-        joint.min = attr.to_f.degrees
-        attr = joint_ent.get_attribute(jdict, 'Max', MSPhysics::Hinge::DEFAULT_MAX)
-        joint.max = attr.to_f.degrees
+        attr = joint_ent.get_attribute(jdict, 'Min', MSPhysics::Hinge::DEFAULT_MIN * iang_ratio)
+        joint.min = attr.to_f * ang_ratio
+        attr = joint_ent.get_attribute(jdict, 'Max', MSPhysics::Hinge::DEFAULT_MAX * iang_ratio)
+        joint.max = attr.to_f * ang_ratio
         attr = joint_ent.get_attribute(jdict, 'Enable Limits', MSPhysics::Hinge::DEFAULT_LIMITS_ENABLED)
         joint.limits_enabled = attr
         attr = joint_ent.get_attribute(jdict, 'Friction', MSPhysics::Hinge::DEFAULT_FRICTION)
         joint.friction = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Stiff', MSPhysics::Hinge::DEFAULT_STIFF)
-        joint.stiff = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Accel', MSPhysics::Hinge::DEFAULT_ACCEL)
+        joint.accel = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Damp', MSPhysics::Hinge::DEFAULT_DAMP)
         joint.damp = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Enable Rotate Back', MSPhysics::Hinge::DEFAULT_ROTATE_BACK_ENABLED)
         joint.rotate_back_enabled = attr
-        attr = joint_ent.get_attribute(jdict, 'Start Angle', MSPhysics::Hinge::DEFAULT_START_ANGLE)
-        joint.start_angle = attr.to_f.degrees
+        attr = joint_ent.get_attribute(jdict, 'Enable Strong Mode', MSPhysics::Hinge::DEFAULT_STRONG_MODE_ENABLED)
+        joint.strong_mode_enabled = attr
+        attr = joint_ent.get_attribute(jdict, 'Start Angle', MSPhysics::Hinge::DEFAULT_START_ANGLE * iang_ratio)
+        joint.start_angle = attr.to_f * ang_ratio
         controller = joint_ent.get_attribute(jdict, 'Controller')
         if controller.is_a?(String) && !controller.empty?
           @controlled_joints[joint] = controller
@@ -1750,10 +1995,10 @@ module MSPhysics
         end
       when 'Servo'
         joint = MSPhysics::Servo.new(@world, parent_body, pin_matrix)
-        attr = joint_ent.get_attribute(jdict, 'Min', MSPhysics::Servo::DEFAULT_MIN)
-        joint.min = attr.to_f.degrees
-        attr = joint_ent.get_attribute(jdict, 'Max', MSPhysics::Servo::DEFAULT_MAX)
-        joint.max = attr.to_f.degrees
+        attr = joint_ent.get_attribute(jdict, 'Min', MSPhysics::Servo::DEFAULT_MIN * iang_ratio)
+        joint.min = attr.to_f * ang_ratio
+        attr = joint_ent.get_attribute(jdict, 'Max', MSPhysics::Servo::DEFAULT_MAX * iang_ratio)
+        joint.max = attr.to_f * ang_ratio
         attr = joint_ent.get_attribute(jdict, 'Enable Limits', MSPhysics::Servo::DEFAULT_LIMITS_ENABLED)
         joint.limits_enabled = attr
         attr = joint_ent.get_attribute(jdict, 'Accel', MSPhysics::Servo::DEFAULT_ACCEL)
@@ -1766,14 +2011,14 @@ module MSPhysics
         joint.sp_mode_enabled = attr
         controller = joint_ent.get_attribute(jdict, 'Controller')
         if controller.is_a?(String) && !controller.empty?
-          @controlled_joints[joint] = controller
+          @controlled_joints[joint] = [controller, ang_ratio]
         end
       when 'Slider'
         joint = MSPhysics::Slider.new(@world, parent_body, pin_matrix)
-        attr = joint_ent.get_attribute(jdict, 'Min', MSPhysics::Slider::DEFAULT_MIN)
-        joint.min = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Max', MSPhysics::Slider::DEFAULT_MAX)
-        joint.max = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Min', MSPhysics::Slider::DEFAULT_MIN * ipos_ratio)
+        joint.min = attr.to_f * pos_ratio
+        attr = joint_ent.get_attribute(jdict, 'Max', MSPhysics::Slider::DEFAULT_MAX * ipos_ratio)
+        joint.max = attr.to_f * pos_ratio
         attr = joint_ent.get_attribute(jdict, 'Enable Limits', MSPhysics::Slider::DEFAULT_LIMITS_ENABLED)
         joint.limits_enabled = attr
         attr = joint_ent.get_attribute(jdict, 'Friction', MSPhysics::Slider::DEFAULT_FRICTION)
@@ -1784,44 +2029,46 @@ module MSPhysics
         end
       when 'Piston'
         joint = MSPhysics::Piston.new(@world, parent_body, pin_matrix)
-        attr = joint_ent.get_attribute(jdict, 'Min', MSPhysics::Piston::DEFAULT_MIN)
-        joint.min = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Max', MSPhysics::Piston::DEFAULT_MAX)
-        joint.max = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Min', MSPhysics::Piston::DEFAULT_MIN * ipos_ratio)
+        joint.min = attr.to_f * pos_ratio
+        attr = joint_ent.get_attribute(jdict, 'Max', MSPhysics::Piston::DEFAULT_MAX * ipos_ratio)
+        joint.max = attr.to_f * pos_ratio
         attr = joint_ent.get_attribute(jdict, 'Enable Limits', MSPhysics::Piston::DEFAULT_LIMITS_ENABLED)
         joint.limits_enabled = attr
-        attr = joint_ent.get_attribute(jdict, 'Linear Rate', MSPhysics::Piston::DEFAULT_LINEAR_RATE)
-        joint.linear_rate = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Linear Rate', MSPhysics::Piston::DEFAULT_LINEAR_RATE * ipos_ratio)
+        joint.linear_rate = attr.to_f * pos_ratio
         attr = joint_ent.get_attribute(jdict, 'Strength', MSPhysics::Piston::DEFAULT_STRENGTH)
         joint.strength = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Reduction Ratio', MSPhysics::Piston::DEFAULT_REDUCTION_RATIO)
         joint.reduction_ratio = attr.to_f
         controller = joint_ent.get_attribute(jdict, 'Controller')
         if controller.is_a?(String) && !controller.empty?
-          @controlled_joints[joint] = controller
+          @controlled_joints[joint] = [controller, pos_ratio]
         end
       when 'Spring'
         joint = MSPhysics::Spring.new(@world, parent_body, pin_matrix)
-        attr = joint_ent.get_attribute(jdict, 'Min', MSPhysics::Spring::DEFAULT_MIN)
-        joint.min = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Max', MSPhysics::Spring::DEFAULT_MAX)
-        joint.max = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Stiff', MSPhysics::Spring::DEFAULT_STIFF)
-        joint.stiff = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Min', MSPhysics::Spring::DEFAULT_MIN * ipos_ratio)
+        joint.min = attr.to_f * pos_ratio
+        attr = joint_ent.get_attribute(jdict, 'Max', MSPhysics::Spring::DEFAULT_MAX * ipos_ratio)
+        joint.max = attr.to_f * pos_ratio
+        attr = joint_ent.get_attribute(jdict, 'Accel', MSPhysics::Spring::DEFAULT_ACCEL)
+        joint.accel = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Damp', MSPhysics::Spring::DEFAULT_DAMP)
         joint.damp = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Enable Limits', MSPhysics::Spring::DEFAULT_LIMITS_ENABLED)
         joint.limits_enabled = attr
-        attr = joint_ent.get_attribute(jdict, 'Start Position', MSPhysics::Spring::DEFAULT_START_POSITION)
-        joint.start_position = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Enable Strong Mode', MSPhysics::Spring::DEFAULT_STRONG_MODE_ENABLED)
+        joint.strong_mode_enabled = attr
+        attr = joint_ent.get_attribute(jdict, 'Start Position', MSPhysics::Spring::DEFAULT_START_POSITION * ipos_ratio)
+        joint.start_position = attr.to_f * pos_ratio
         controller = joint_ent.get_attribute(jdict, 'Controller')
         if controller.is_a?(String) && !controller.empty?
           @controlled_joints[joint] = controller
         end
       when 'UpVector'
         joint = MSPhysics::UpVector.new(@world, parent_body, pin_matrix)
-        attr = joint_ent.get_attribute(jdict, 'Stiff', MSPhysics::UpVector::DEFAULT_STIFF)
-        joint.stiff = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Accel', MSPhysics::UpVector::DEFAULT_ACCEL)
+        joint.accel = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Damp', MSPhysics::UpVector::DEFAULT_DAMP)
         joint.damp = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Enable Damper', MSPhysics::UpVector::DEFAULT_DAMPER_ENABLED)
@@ -1832,41 +2079,60 @@ module MSPhysics
         end
       when 'Corkscrew'
         joint = MSPhysics::Corkscrew.new(@world, parent_body, pin_matrix)
-        attr = joint_ent.get_attribute(jdict, 'Min Position', MSPhysics::Corkscrew::DEFAULT_MIN_POSITION)
-        joint.min_position = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Max Position', MSPhysics::Corkscrew::DEFAULT_MAX_POSITION)
-        joint.max_position = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Min Position', MSPhysics::Corkscrew::DEFAULT_MIN_POSITION * ipos_ratio)
+        joint.min_position = attr.to_f * pos_ratio
+        attr = joint_ent.get_attribute(jdict, 'Max Position', MSPhysics::Corkscrew::DEFAULT_MAX_POSITION * ipos_ratio)
+        joint.max_position = attr.to_f * pos_ratio
         attr = joint_ent.get_attribute(jdict, 'Enable Linear Limits', MSPhysics::Corkscrew::DEFAULT_LINEAR_LIMITS_ENABLED)
         joint.linear_limits_enabled = attr
         attr = joint_ent.get_attribute(jdict, 'Linear Friction', MSPhysics::Corkscrew::DEFAULT_LINEAR_FRICTION)
         joint.linear_friction = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Min Angle', MSPhysics::Corkscrew::DEFAULT_MIN_ANGLE)
-        joint.min_angle = attr.to_f.degrees
-        attr = joint_ent.get_attribute(jdict, 'Max Angle', MSPhysics::Corkscrew::DEFAULT_MAX_ANGLE)
-        joint.max_angle = attr.to_f.degrees
+        attr = joint_ent.get_attribute(jdict, 'Min Angle', MSPhysics::Corkscrew::DEFAULT_MIN_ANGLE * iang_ratio)
+        joint.min_angle = attr.to_f * ang_ratio
+        attr = joint_ent.get_attribute(jdict, 'Max Angle', MSPhysics::Corkscrew::DEFAULT_MAX_ANGLE * iang_ratio)
+        joint.max_angle = attr.to_f * ang_ratio
         attr = joint_ent.get_attribute(jdict, 'Enable Angular Limits', MSPhysics::Corkscrew::DEFAULT_ANGULAR_LIMITS_ENABLED)
         joint.angular_limits_enabled = attr
         attr = joint_ent.get_attribute(jdict, 'Angular Friction', MSPhysics::Corkscrew::DEFAULT_ANGULAR_FRICTION)
         joint.angular_friction = attr.to_f
-    when 'Universal'
       when 'BallAndSocket'
         joint = MSPhysics::BallAndSocket.new(@world, parent_body, pin_matrix)
-        attr = joint_ent.get_attribute(jdict, 'Stiff', MSPhysics::BallAndSocket::DEFAULT_STIFF)
-        joint.stiff = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Damp', MSPhysics::BallAndSocket::DEFAULT_DAMP)
-        joint.damp = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Enable Damper', MSPhysics::BallAndSocket::DEFAULT_DAMPER_ENABLED)
-        joint.damper_enabled = attr
-        attr = joint_ent.get_attribute(jdict, 'Max Cone Angle', MSPhysics::BallAndSocket::DEFAULT_MAX_CONE_ANGLE)
-        joint.max_cone_angle = attr.to_f.degrees
+        attr = joint_ent.get_attribute(jdict, 'Max Cone Angle', MSPhysics::BallAndSocket::DEFAULT_MAX_CONE_ANGLE * iang_ratio)
+        joint.max_cone_angle = attr.to_f * ang_ratio
         attr = joint_ent.get_attribute(jdict, 'Enable Cone Limits', MSPhysics::BallAndSocket::DEFAULT_CONE_LIMITS_ENABLED)
         joint.cone_limits_enabled = attr
-        attr = joint_ent.get_attribute(jdict, 'Min Twist Angle', MSPhysics::BallAndSocket::DEFAULT_MIN_TWIST_ANGLE)
-        joint.min_twist_angle = attr.to_f.degrees
-        attr = joint_ent.get_attribute(jdict, 'Max Twist Angle', MSPhysics::BallAndSocket::DEFAULT_MAX_TWIST_ANGLE)
-        joint.max_twist_angle = attr.to_f.degrees
+        attr = joint_ent.get_attribute(jdict, 'Min Twist Angle', MSPhysics::BallAndSocket::DEFAULT_MIN_TWIST_ANGLE * iang_ratio)
+        joint.min_twist_angle = attr.to_f * ang_ratio
+        attr = joint_ent.get_attribute(jdict, 'Max Twist Angle', MSPhysics::BallAndSocket::DEFAULT_MAX_TWIST_ANGLE * iang_ratio)
+        joint.max_twist_angle = attr.to_f * ang_ratio
         attr = joint_ent.get_attribute(jdict, 'Enable Twist Limits', MSPhysics::BallAndSocket::DEFAULT_TWIST_LIMITS_ENABLED)
         joint.twist_limits_enabled = attr
+        attr = joint_ent.get_attribute(jdict, 'Friction', MSPhysics::BallAndSocket::DEFAULT_FRICTION)
+        joint.friction = attr.to_f
+        controller = joint_ent.get_attribute(jdict, 'Controller')
+        if controller.is_a?(String) && !controller.empty?
+          @controlled_joints[joint] = controller
+        end
+      when 'Universal'
+        joint = MSPhysics::Universal.new(@world, parent_body, pin_matrix)
+        attr = joint_ent.get_attribute(jdict, 'Min1', MSPhysics::Universal::DEFAULT_MIN * iang_ratio)
+        joint.min1 = attr.to_f * ang_ratio
+        attr = joint_ent.get_attribute(jdict, 'Max1', MSPhysics::Universal::DEFAULT_MAX * iang_ratio)
+        joint.max1 = attr.to_f * ang_ratio
+        attr = joint_ent.get_attribute(jdict, 'Enable Limits1', MSPhysics::Universal::DEFAULT_LIMITS_ENABLED)
+        joint.limits_enabled1 = attr
+        attr = joint_ent.get_attribute(jdict, 'Min2', MSPhysics::Universal::DEFAULT_MIN * iang_ratio)
+        joint.min2 = attr.to_f * ang_ratio
+        attr = joint_ent.get_attribute(jdict, 'Max2', MSPhysics::Universal::DEFAULT_MAX * iang_ratio)
+        joint.max2 = attr.to_f * ang_ratio
+        attr = joint_ent.get_attribute(jdict, 'Enable Limits2', MSPhysics::Universal::DEFAULT_LIMITS_ENABLED)
+        joint.limits_enabled2 = attr
+        attr = joint_ent.get_attribute(jdict, 'Friction', MSPhysics::Universal::DEFAULT_FRICTION)
+        joint.friction = attr.to_f
+        controller = joint_ent.get_attribute(jdict, 'Controller')
+        if controller.is_a?(String) && !controller.empty?
+          @controlled_joints[joint] = controller
+        end
       else
         return
       end
@@ -1894,44 +2160,54 @@ module MSPhysics
     def init_joints
       Sketchup.active_model.entities.each { |ent|
         next if !ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)
+        type = ent.get_attribute('MSPhysics', 'Type', 'Body')
+        if type == 'Body'
+          next if ent.get_attribute('MSPhysics Body', 'Ignore', false) || get_body_by_group(ent).nil?
+          cents = ent.is_a?(Sketchup::ComponentInstance) ? ent.definition.entities : ent.entities
+          parent_body = get_body_by_group(ent)
+          ptra = ent.transformation
+          cents.each { |cent|
+            next if ((!cent.is_a?(Sketchup::Group) && !cent.is_a?(Sketchup::ComponentInstance)) ||
+              cent.get_attribute('MSPhysics', 'Type', 'Body') != 'Joint')
+            jtra = ptra * MSPhysics::Geometry.extract_matrix_scale(cent.transformation)
+            MSPhysics::JointConnectionTool.get_connected_bodies(cent, ent, true)[0].each { |child_ent|
+              child_body = get_body_by_group(child_ent)
+              begin
+                init_joint(cent, parent_body, child_body, jtra)
+              rescue Exception => e
+                puts "An exception occurred while creating a joint from #{cent}!\n#{e.class}:\n#{e.message}\nLocation:\n#{e.backtrace.join("\n")}"
+              end
+            }
+          }
+        elsif type == 'Joint'
+          jtra = MSPhysics::Geometry.extract_matrix_scale(ent.transformation)
+          MSPhysics::JointConnectionTool.get_connected_bodies(ent, nil, true)[0].each { |child_ent|
+            child_body = get_body_by_group(child_ent)
+            begin
+              init_joint(ent, nil, child_body, jtra)
+            rescue Exception => e
+              puts "An exception occurred while creating a joint from #{ent}!\n#{e.class}:\n#{e.message}\nLocation:\n#{e.backtrace.join("\n")}"
+            end
+          }
+        end
+      }
+=begin
+      Sketchup.active_model.entities.each { |ent|
+        next if !ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)
         next if ent.get_attribute('MSPhysics', 'Type', 'Body') != 'Body'
         body = get_body_by_group(ent)
         next unless body
-        joints = MSPhysics::JointConnectionTool.get_connected_joints3(ent)
-        connect_closest = ent.get_attribute('MSPhysics Body', 'Connect Closest Joints', false)
-        joints.each { |joint_id, cjoints|
-          if connect_closest
-            cjoints.keys.sort.each { |dist|
-              cjoints[dist].each { |jdata|
-                if jdata[1]
-                  jparent_body = get_body_by_group(jdata[1])
-                  next unless jparent_body
-                end
-                begin
-                  init_joint(jdata[0], jparent_body, body, jdata[2])
-                rescue Exception => e
-                  puts "An exception occurred while creating a joint from #{jdata[0]}!\n#{e.class}:\n#{e.message}\nLocation:\n#{e.backtrace.join("\n")}"
-                end
-              }
-              break
-            }
-          else
-            cjoints.each { |dist, jdatas|
-              jdatas.each { |jdata|
-                if jdata[1]
-                  jparent_body = get_body_by_group(jdata[1])
-                  next unless jparent_body
-                end
-                begin
-                  init_joint(jdata[0], jparent_body, body, jdata[2])
-                rescue Exception => e
-                  puts "An exception occurred while creating a joint from #{jdata[0]}!\n#{e.class}:\n#{e.message}\nLocation:\n#{e.backtrace.join("\n")}"
-                end
-              }
-            }
+        jdata = MSPhysics::JointConnectionTool.get_connected_joints(ent, true)[0]
+        jdata.each { |jent, jparent_ent, jtra|
+          begin
+            jparent_body = jparent_ent ? get_body_by_group(jparent_ent) : nil
+            init_joint(jent, jparent_body, body, jtra)
+          rescue Exception => e
+            puts "An exception occurred while creating a joint from #{jent}!\n#{e.class}:\n#{e.message}\nLocation:\n#{e.backtrace.join("\n")}"
           end
         }
       }
+=end
     end
 
     public
@@ -2125,10 +2401,22 @@ module MSPhysics
         e.visible = true if e.valid?
       }
       @hidden_entities.clear
+      # Remove particles
+      clear_particles
       # Undo changed style made by the show collision function
       show_collision_wireframe(false)
+      # Show cursor if hidden
+      AMS::Cursor.show(true)
+      # Close control panel
+      MSPhysics::ControlPanel.show(false)
+      MSPhysics::ControlPanel.remove_sliders
+      # Clear variables of the common context
+      MSPhysics::Common.clear_variables
       # Remove observer
       AMS::Sketchup.remove_observer(self)
+      # Purge unused
+      model.definitions.purge_unused
+      #~ model.materials.purge_unused
       # Finish all operations
       model.commit_operation
       # Reset selected page
@@ -2184,6 +2472,9 @@ module MSPhysics
       @scene_selected_time = nil
       @scene_transition_time = nil
       @cc_bodies.clear
+      @particles.clear
+      @particle_def2d.clear
+      @particle_def3d.clear
       @@instance = nil
       # Show info
       if @error
@@ -2483,7 +2774,7 @@ module MSPhysics
       draw_contact_points(view)
       draw_contact_forces(view)
       draw_collision_wireframe(view)
-      draw_axis(view)
+      draw_axes(view)
       draw_aabb(view)
       draw_pick_and_drag(view)
       draw_queues(view)

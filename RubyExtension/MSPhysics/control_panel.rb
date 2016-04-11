@@ -5,22 +5,29 @@ module MSPhysics
     @handle = nil
     @title = 'MSPhysics Control Panel'
     @size = [0,0]
+    @sliders = {}
 
     class << self
 
-      # Open/Close MSPhysics control panel.
+      # Open/close MSPhysics control panel.
       # @param [Boolean] state
       # @return [Boolean] success
       def show(state)
         return false if (state ? true : false) == is_visible?
         if state
           @dialog = ::UI::WebDialog.new(@title, false, nil, 300, 300, 800, 600, false)
+          update_size = true
           # Callbacks
           @dialog.add_action_callback('init'){ |dlg, params|
+            update_size = false
+            @sliders.each { |name, data|
+              generate_slider_html(name)
+            }
+            update_size = true
           }
           @dialog.add_action_callback('size_changed'){ |dlg, params|
             @size = eval(params)
-            update_placement
+            update_placement if update_size
           }
           @dialog.set_on_close {
             @dialog = nil
@@ -55,35 +62,110 @@ module MSPhysics
         true
       end
 
-      # Determine if control panel is visible.
+      # Determine whether control panel is visible.
       # @return [Boolean]
       def is_visible?
         @dialog ? true : false
       end
 
       # Create a range slider.
-      # @note All sliders are removed once the dialog is closed.
       # @param [String] name Slider name.
-      # @param [Numeric] starting_value Starting value.
+      # @param [Numeric] default_value Starting value.
       # @param [Numeric] min Minimum value.
       # @param [Numeric] max Maximum value.
       # @param [Numeric] step Snap step.
-      # @return [Numeric] Slider value.
-      # @raise [TypeError] if slider with given name already exists.
-      # @raise [TypeError] if dialog is closed.
-      def add_slider(name, starting_value = 0, min = 0, max = 1, step = 0)
+      # @return [Boolean] success
+      def add_slider(name, default_value = 0, min = 0, max = 1, step = 0.01)
+        cname = name.to_s.inspect[1...-1]
+        return false if @sliders[cname] != nil
+        @sliders[cname] = {
+          :default_value => default_value.to_f,
+          :min => min.to_f,
+          :max => max.to_f,
+          :step => step.to_f < 1.0e-3 ? 1.0e-3 : step.to_f
+        }
+        generate_slider_html(name)
+        true
+      end
+
+      # Destroy a range slider.
+      # @param [String] name Slider name.
+      # @return [Boolean] success
+      def remove_slider(name)
+        return false if @sliders[name.to_s].nil?
+        degenerate_slider_html(name.to_s)
+        @sliders.delete(name.to_s)
+        true
+      end
+
+      # Destroy all range sliders.
+      # @return [Fixnum] Number of sliders removed.
+      def remove_sliders
+        size = @sliders.size
+        @sliders.clear
+        @dialog.execute_script("remove_sliders(); size_changed();") if @dialog
+        size
+      end
+
+      # Determine whether a range slider with a particular name already exists.
+      # @param [String] name
+      # @return [Boolean]
+      def slider_exists?(name)
+        @sliders[name] ? true : false
       end
 
       # Get slider value.
       # @param [String] name Slider name.
-      # @return [Numeric, nil] Slider value or nil if slider with given name
+      # @return [Numeric, nil] Slider value or nil if slider with the given name
       #   doesn't exist.
-      # @raise [TypeError] if dialog is closed.
       def get_slider_value(name)
+        return unless @dialog
+        cname = name.to_s.inspect[1...-1]
+        data = @sliders[cname]
+        return unless data
+        res = @dialog.get_element_value("lcrs-" + cname)
+        res.empty? ? data[:default_value] : res.to_f
+      end
+
+      # Set slider value.
+      # @param [String] name Slider name.
+      # @param [Numeric] value
+      # @return [Boolean] success
+      def set_slider_value(name, value)
+        return false unless @dialog
+        cname = name.to_s.inspect[1...-1]
+        data = @sliders[cname]
+        return false unless data
+        return false if @dialog.get_element_value("lcrs-" + cname).empty?
+        cmd = "sliders[\"#{cname}\"].setValue(#{value.to_f});"
+        @dialog.execute_script(cmd)
+        true
       end
 
       # @!visibility private
 
+
+      def generate_slider_html(name)
+        return false unless @dialog
+        cname = name.to_s.inspect[1...-1]
+        data = @sliders[cname]
+        return false unless data
+        return false unless @dialog.get_element_value("lcrs-" + cname).empty?
+        cmd = "add_slider(\"#{cname}\", #{data[:default_value]}, #{data[:min]}, #{data[:max]}, #{data[:step]});"
+        cmd << "size_changed();"
+        @dialog.execute_script(cmd)
+        true
+      end
+
+      def degenerate_slider_html(name)
+        return false unless @dialog
+        cname = name.to_s.inspect[1...-1]
+        return false if @dialog.get_element_value("lcrs-" + cname).empty?
+        cmd = "remove_slider(\"#{cname}\");"
+        cmd << "size_changed();"
+        @dialog.execute_script(cmd)
+        true
+      end
 
       def update_placement
         return false unless @dialog

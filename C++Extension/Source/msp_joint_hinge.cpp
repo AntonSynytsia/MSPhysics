@@ -9,8 +9,9 @@
 const dFloat MSNewton::Hinge::DEFAULT_MIN = -180.0f * DEG_TO_RAD;
 const dFloat MSNewton::Hinge::DEFAULT_MAX = 180.0f * DEG_TO_RAD;
 const bool MSNewton::Hinge::DEFAULT_LIMITS_ENABLED = false;
+const bool MSNewton::Hinge::DEFAULT_STRONG_MODE_ENABLED = true;
 const dFloat MSNewton::Hinge::DEFAULT_FRICTION = 0.0f;
-const dFloat MSNewton::Hinge::DEFAULT_STIFF = 40.0f;
+const dFloat MSNewton::Hinge::DEFAULT_ACCEL = 40.0f;
 const dFloat MSNewton::Hinge::DEFAULT_DAMP = 10.0f;
 const bool MSNewton::Hinge::DEFAULT_ROTATE_BACK_ENABLED = false;
 const dFloat MSNewton::Hinge::DEFAULT_START_ANGLE = 0.0f;
@@ -141,17 +142,19 @@ void MSNewton::Hinge::submit_constraints(const NewtonJoint* joint, dgFloat32 tim
 	}
 	else if (cj_data->rotate_back_enabled) {
 		NewtonUserJointAddAngularRow(joint, -cur_angle, &matrix0.m_right[0]);
-		//NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->stiff, cj_data->damp);
-		/*dFloat rel_omega = (omega0 - omega1) % matrix0.m_right;
-		dFloat rel_accel = -cur_angle / timestep * cj_data->stiff - cj_data->damp * rel_omega;
-		NewtonUserJointSetRowAcceleration(joint, rel_accel);*/
-		dFloat accel = NewtonCalculateSpringDamperAcceleration(timestep, cj_data->stiff, cur_angle, cj_data->damp, cj_data->cur_omega);
-		NewtonUserJointSetRowAcceleration(joint, accel);
-		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness * Joint::STIFFNESS_RATIO);
+		if (cj_data->strong_mode_enabled) {
+			dFloat accel = NewtonCalculateSpringDamperAcceleration(timestep, cj_data->accel, cur_angle, cj_data->damp, cj_data->cur_omega);
+			NewtonUserJointSetRowAcceleration(joint, accel);
+			NewtonUserJointSetRowStiffness(joint, -joint_data->stiffness);
+		}
+		else {
+			NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
+			NewtonUserJointSetRowSpringDamperAcceleration(joint, cj_data->accel, cj_data->damp);
+		}
 	}
 	else {
 		NewtonUserJointAddAngularRow(joint, 0.0f, &matrix0.m_right[0]);
-		dFloat power = cj_data->friction * dAbs(cj_data->controller) * DEG_TO_RAD;
+		dFloat power = cj_data->friction * dAbs(cj_data->controller);
 		BodyData* cbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
 		if (cbody_data->bstatic == false && cbody_data->mass >= MIN_MASS)
 			power *= cbody_data->mass;
@@ -234,8 +237,9 @@ VALUE MSNewton::Hinge::create(VALUE self, VALUE v_joint) {
 	cj_data->min = DEFAULT_MIN;
 	cj_data->max = DEFAULT_MAX;
 	cj_data->limits_enabled = DEFAULT_LIMITS_ENABLED;
+	cj_data->strong_mode_enabled = DEFAULT_STRONG_MODE_ENABLED;
 	cj_data->friction = DEFAULT_FRICTION;
-	cj_data->stiff = DEFAULT_STIFF;
+	cj_data->accel = DEFAULT_ACCEL;
 	cj_data->damp = DEFAULT_DAMP;
 	cj_data->rotate_back_enabled = DEFAULT_ROTATE_BACK_ENABLED;
 	cj_data->start_angle = DEFAULT_START_ANGLE;
@@ -312,6 +316,19 @@ VALUE MSNewton::Hinge::limits_enabled(VALUE self, VALUE v_joint) {
 	return Util::to_value(cj_data->limits_enabled);
 }
 
+VALUE MSNewton::Hinge::enable_strong_mode(VALUE self, VALUE v_joint, VALUE v_state) {
+	JointData* joint_data = Util::value_to_joint2(v_joint, JT_HINGE);
+	HingeData* cj_data = (HingeData*)joint_data->cj_data;
+	cj_data->strong_mode_enabled = Util::value_to_bool(v_state);
+	return Util::to_value(cj_data->strong_mode_enabled);
+}
+
+VALUE MSNewton::Hinge::strong_mode_enabled(VALUE self, VALUE v_joint) {
+	JointData* joint_data = Util::value_to_joint2(v_joint, JT_HINGE);
+	HingeData* cj_data = (HingeData*)joint_data->cj_data;
+	return Util::to_value(cj_data->strong_mode_enabled);
+}
+
 VALUE MSNewton::Hinge::get_friction(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_HINGE);
 	HingeData* cj_data = (HingeData*)joint_data->cj_data;
@@ -325,17 +342,17 @@ VALUE MSNewton::Hinge::set_friction(VALUE self, VALUE v_joint, VALUE v_friction)
 	return Util::to_value(cj_data->friction);
 }
 
-VALUE MSNewton::Hinge::get_stiff(VALUE self, VALUE v_joint) {
+VALUE MSNewton::Hinge::get_accel(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_HINGE);
 	HingeData* cj_data = (HingeData*)joint_data->cj_data;
-	return Util::to_value(cj_data->stiff);
+	return Util::to_value(cj_data->accel);
 }
 
-VALUE MSNewton::Hinge::set_stiff(VALUE self, VALUE v_joint, VALUE v_stiff) {
+VALUE MSNewton::Hinge::set_accel(VALUE self, VALUE v_joint, VALUE v_accel) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_HINGE);
 	HingeData* cj_data = (HingeData*)joint_data->cj_data;
-	cj_data->stiff = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_stiff), 0.0f);
-	return Util::to_value(cj_data->stiff);
+	cj_data->accel = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_accel), 0.0f);
+	return Util::to_value(cj_data->accel);
 }
 
 VALUE MSNewton::Hinge::get_damp(VALUE self, VALUE v_joint) {
@@ -419,10 +436,12 @@ void Init_msp_hinge(VALUE mNewton) {
 	rb_define_module_function(mHinge, "set_max", VALUEFUNC(MSNewton::Hinge::set_max), 2);
 	rb_define_module_function(mHinge, "enable_limits", VALUEFUNC(MSNewton::Hinge::enable_limits), 2);
 	rb_define_module_function(mHinge, "limits_enabled?", VALUEFUNC(MSNewton::Hinge::limits_enabled), 1);
+	rb_define_module_function(mHinge, "enable_strong_mode", VALUEFUNC(MSNewton::Hinge::enable_strong_mode), 2);
+	rb_define_module_function(mHinge, "strong_mode_enabled?", VALUEFUNC(MSNewton::Hinge::strong_mode_enabled), 1);
 	rb_define_module_function(mHinge, "get_friction", VALUEFUNC(MSNewton::Hinge::get_friction), 1);
 	rb_define_module_function(mHinge, "set_friction", VALUEFUNC(MSNewton::Hinge::set_friction), 2);
-	rb_define_module_function(mHinge, "get_stiff", VALUEFUNC(MSNewton::Hinge::get_stiff), 1);
-	rb_define_module_function(mHinge, "set_stiff", VALUEFUNC(MSNewton::Hinge::set_stiff), 2);
+	rb_define_module_function(mHinge, "get_accel", VALUEFUNC(MSNewton::Hinge::get_accel), 1);
+	rb_define_module_function(mHinge, "set_accel", VALUEFUNC(MSNewton::Hinge::set_accel), 2);
 	rb_define_module_function(mHinge, "get_damp", VALUEFUNC(MSNewton::Hinge::get_damp), 1);
 	rb_define_module_function(mHinge, "set_damp", VALUEFUNC(MSNewton::Hinge::set_damp), 2);
 	rb_define_module_function(mHinge, "enable_rotate_back", VALUEFUNC(MSNewton::Hinge::enable_rotate_back), 2);

@@ -3,14 +3,15 @@ module MSPhysics
   # @since 1.0.0
   class Hinge < Joint
 
-    DEFAULT_MIN = -180.0
-    DEFAULT_MAX = 180.0
+    DEFAULT_MIN = -180.0.degrees
+    DEFAULT_MAX = 180.0.degrees
     DEFAULT_LIMITS_ENABLED = false
+    DEFAULT_STRONG_MODE_ENABLED = true
     DEFAULT_FRICTION = 0.0
-    DEFAULT_STIFF = 40.0
+    DEFAULT_ACCEL = 40.0
     DEFAULT_DAMP = 10.0
     DEFAULT_ROTATE_BACK_ENABLED = false
-    DEFAULT_START_ANGLE = 0.0
+    DEFAULT_START_ANGLE = 0.0.degrees
     DEFAULT_CONTROLLER = 1.0
 
     # Create a hinge joint.
@@ -18,18 +19,19 @@ module MSPhysics
     # @param [MSPhysics::Body, nil] parent
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
     #   Of the given matrix, matrix origin should represent pin origin, and
-    #   matrix Z-AXIS should represent pin up.
+    #   matrix Z-axis should represent pin up.
     def initialize(world, parent, pin_tra)
       super(world, parent, pin_tra, 8)
       MSPhysics::Newton::Hinge.create(@address)
-      MSPhysics::Newton::Hinge.set_min(@address, DEFAULT_MIN.degrees)
-      MSPhysics::Newton::Hinge.set_max(@address, DEFAULT_MAX.degrees)
+      MSPhysics::Newton::Hinge.set_min(@address, DEFAULT_MIN)
+      MSPhysics::Newton::Hinge.set_max(@address, DEFAULT_MAX)
       MSPhysics::Newton::Hinge.enable_limits(@address, DEFAULT_LIMITS_ENABLED)
+      MSPhysics::Newton::Hinge.enable_strong_mode(@address, DEFAULT_STRONG_MODE_ENABLED)
       MSPhysics::Newton::Hinge.set_friction(@address, DEFAULT_FRICTION)
-      MSPhysics::Newton::Hinge.set_stiff(@address, DEFAULT_STIFF)
+      MSPhysics::Newton::Hinge.set_accel(@address, DEFAULT_ACCEL)
       MSPhysics::Newton::Hinge.set_damp(@address, DEFAULT_DAMP)
       MSPhysics::Newton::Hinge.enable_rotate_back(@address, DEFAULT_ROTATE_BACK_ENABLED)
-      MSPhysics::Newton::Hinge.set_start_angle(@address, DEFAULT_START_ANGLE.degrees)
+      MSPhysics::Newton::Hinge.set_start_angle(@address, DEFAULT_START_ANGLE)
       MSPhysics::Newton::Hinge.set_controller(@address, DEFAULT_CONTROLLER)
     end
 
@@ -81,10 +83,24 @@ module MSPhysics
       MSPhysics::Newton::Hinge.limits_enabled?(@address)
     end
 
-    # Enable/Disable min & max angle limits.
+    # Enable/disable min & max angle limits.
     # @param [Boolean] state
     def limits_enabled=(state)
       MSPhysics::Newton::Hinge.enable_limits(@address, state)
+    end
+
+    # Determine whether strong mode for angular spring is enabled.
+    # @note This feature has an effect only if "rotate-back" is enabled.
+    # @return [Boolean]
+    def strong_mode_enabled?
+      MSPhysics::Newton::Hinge.strong_mode_enabled?(@address)
+    end
+
+    # Enable/disable strong mode for angular spring.
+    # @note This feature has an effect only if "rotate-back" is enabled.
+    # @param [Boolean] state
+    def strong_mode_enabled=(state)
+      MSPhysics::Newton::Hinge.enable_strong_mode(@address, state)
     end
 
     # Get rotational friction.
@@ -103,28 +119,32 @@ module MSPhysics
       MSPhysics::Newton::Hinge.set_friction(@address, value)
     end
 
-    # Get rotational stiffness. Higher stiffness makes rotation stronger.
+    # Get rotational acceleration.
+    # @note Higher acceleration makes rotation faster.
     # @note This feature has an effect only if "rotate back" is enabled.
     # @return [Numeric] A value greater than or equal to zero.
-    def stiff
-      MSPhysics::Newton::Hinge.get_stiff(@address)
+    def accel
+      MSPhysics::Newton::Hinge.get_accel(@address)
     end
 
-    # Set rotational stiffness. Higher stiffness makes rotation stronger.
+    # Set rotational acceleration.
+    # @note Higher acceleration makes rotation faster.
     # @note This feature has an effect only if "rotate back" is enabled.
     # @param [Numeric] value A value greater than or equal to zero.
-    def stiff=(value)
-      MSPhysics::Newton::Hinge.set_stiff(@address, value)
+    def accel=(value)
+      MSPhysics::Newton::Hinge.set_accel(@address, value)
     end
 
-    # Get rotational damper. Higher damper makes rotation slower.
+    # Get rotational damper.
+    # @note Higher damper makes rotation stronger.
     # @note This feature has an effect only if "rotate back" is enabled.
     # @return [Numeric] A value greater than or equal to zero.
     def damp
       MSPhysics::Newton::Hinge.get_damp(@address)
     end
 
-    # Set rotational damper. Higher damper makes rotation slower.
+    # Set rotational damper.
+    # @note Higher damper makes rotation stronger.
     # @note This feature has an effect only if "rotate back" is enabled.
     # @param [Numeric] value A value greater than or equal to zero.
     def damp=(value)
@@ -137,7 +157,7 @@ module MSPhysics
       MSPhysics::Newton::Hinge.rotate_back_enabled?(@address)
     end
 
-    # Enable/Disable a feature to rotate back to a starting angle.
+    # Enable/disable a feature to rotate back to a starting angle.
     # @param [Boolean] state
     def rotate_back_enabled=(state)
       MSPhysics::Newton::Hinge.enable_rotate_back(@address, state)

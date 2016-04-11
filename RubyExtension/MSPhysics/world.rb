@@ -194,9 +194,9 @@ module MSPhysics
     #     acceleration vector. The magnitude of the vector is assumed in meters
     #     per second per second (m/s/s).
     # @overload set_gravity(ax, ay, az)
-    #   @param [Numeric] ax Acceleration along xaxis in m/s/s.
-    #   @param [Numeric] ay Acceleration along yaxis in m/s/s.
-    #   @param [Numeric] az Acceleration along zaxis in m/s/s.
+    #   @param [Numeric] ax Acceleration along X-axis in m/s/s.
+    #   @param [Numeric] ay Acceleration along Y-axis in m/s/s.
+    #   @param [Numeric] az Acceleration along Z-axis in m/s/s.
     # @return [Geom::Vector3d] The newly assigned gravity.
     def set_gravity(*args)
       World.validate(self)
@@ -372,7 +372,7 @@ module MSPhysics
       MSPhysics::Newton::World.add_explosion(@address, center_point, blast_radius.to_f, blast_force.to_f)
     end
 
-    # Get world axis aligned bounding box, a bounding box in which all the
+    # Get world axes aligned bounding box, a bounding box in which all the
     # bodies are included.
     # @return [Geom::BoundingBox, nil] A bounding box object, containing the
     #   minimum and maximum points of the world bounding box. Nil is returned if

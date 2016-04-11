@@ -76,7 +76,7 @@ Use <tt>MSPhysics::Simulation.reset</tt> in any scope.
 
 
 ## Shape Notes
-* Entity's transformation x-axis is used as an up vector for collision shapes
+* Entity's transformation X-axis is used as an up vector for collision shapes
   like cone and cylinder.
 * A bounding box, which is used to determine dimensions for many collision
   shapes, is not the actual group's/component's bounding box, but rather a

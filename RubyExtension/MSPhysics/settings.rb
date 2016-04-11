@@ -4,7 +4,7 @@ module MSPhysics
   module Settings
 
     @debug_collision = false
-    @debug_axis = false
+    @debug_axes = false
     @debug_aabb = false
     @debug_contact_points = false
     @debug_contact_forces = false
@@ -181,23 +181,23 @@ module MSPhysics
         @debug_collision
       end
 
-      # Show/hide body centre of mass axis.
+      # Show/hide body centre of mass axes.
       # @param [Boolean] state
       # @return [Boolean] The new state.
-      def show_axis(state)
-        @debug_axis = state ? true : false
+      def show_axes(state)
+        @debug_axes = state ? true : false
         sim = MSPhysics::Simulation.instance
-        sim.show_axis(@debug_axis) if sim
-        @debug_axis
+        sim.show_axes(@debug_axes) if sim
+        @debug_axes
       end
 
-      # Determine if body centre of mass axis is visible.
+      # Determine if body centre of mass axes are visible.
       # @return [Boolean]
-      def axis_visible?
-        @debug_axis
+      def axes_visible?
+        @debug_axes
       end
 
-      # Show/hide body axis aligned bounding box (AABB).
+      # Show/hide body axes aligned bounding box (AABB).
       # @param [Boolean] state
       # @return [Boolean] The new state.
       def show_aabb(state)
@@ -207,7 +207,7 @@ module MSPhysics
         @debug_aabb
       end
 
-      # Determine if body axis aligned bonding box (AABB) is visible.
+      # Determine if body axes aligned bonding box (AABB) is visible.
       # @return [Boolean]
       def aabb_visible?
         @debug_aabb
@@ -275,7 +275,7 @@ module MSPhysics
         set_world_scale( get_world_scale )
         set_update_rate( get_update_rate )
         show_collision_wireframe( collision_wireframe_visible? )
-        show_axis( axis_visible? )
+        show_axes( axes_visible? )
         show_aabb( aabb_visible? )
         show_contact_points( contact_points_visible? )
         show_contact_forces( contact_forces_visible? )

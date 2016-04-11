@@ -36,13 +36,13 @@
 #   - AMS Library 3.2.0 or later.
 #
 # Version
-#   - MSPhysics 0.5.0
+#   - MSPhysics 0.6.0
 #   - NewtonDynamics 3.14
 #   - SDL 2.0.4
 #   - SDL_mixer 2.0.1
 #
 # Release Date
-#   March 22, 2016
+#   April 11, 2016
 #
 # Licence
 #   MIT © 2015 - 2016, Anton Synytsia
@@ -101,8 +101,8 @@ if load_me
   module MSPhysics
 
     NAME         = 'MSPhysics'.freeze
-    VERSION      = '0.5.0'.freeze
-    RELEASE_DATE = 'March 22, 2016'.freeze
+    VERSION      = '0.6.0'.freeze
+    RELEASE_DATE = 'April 11, 2016'.freeze
 
     # Create the extension.
     @extension = SketchupExtension.new NAME, 'MSPhysics/main.rb'

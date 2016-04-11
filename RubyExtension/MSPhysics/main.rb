@@ -29,7 +29,6 @@ require File.join(dir, 'collision.rb')
 require File.join(dir, 'contact.rb')
 require File.join(dir, 'hit.rb')
 require File.join(dir, 'script_exception.rb')
-require File.join(dir, 'slider_controller.rb')
 require File.join(dir, 'common.rb')
 require File.join(dir, 'controller.rb')
 require File.join(dir, 'body.rb')
@@ -97,7 +96,8 @@ module MSPhysics
     :emitter_rate           => 10,
     :emitter_lifetime       => 100,
     :enable_emitter         => true,
-    :enable_gravity         => true
+    :enable_gravity         => true,
+    :connect_closest_joints => false
   }
 
   DEFAULT_BUOYANCY_PLANE_SETTINGS = {
@@ -159,6 +159,9 @@ module MSPhysics
 
   WATERMARK_COLOR = Sketchup::Color.new(126, 42, 168)
 
+  DEFAULT_ANGLE_UNITS = 'deg'
+  DEFAULT_POSITION_UNITS = 'cm'
+
   EPSILON = 1.0e-6
 
   class << self
@@ -217,9 +220,12 @@ module MSPhysics
         e.delete_attribute('MSPhysics') if e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body'
         e.delete_attribute('MSPhysics Body')
         #~ e.delete_attribute('MSPhysics Joint')
-        e.attribute_dictionary('MSPhysics Joint').keys.each { k|
-          e.delete_attribute('MSPhysics Joint', k) if k != 'Type'
-        }
+        dict = e.attribute_dictionary('MSPhysics Joint')
+        if dict
+          dict.keys.each { k|
+            e.delete_attribute('MSPhysics Joint', k) if k != 'Type'
+          }
+        end
         e.delete_attribute('MSPhysics Script')
         e.delete_attribute('MSPhysics Buoyancy Plane')
       }
@@ -417,6 +423,50 @@ module MSPhysics
       n1 + (n2 - n1) * AMS.clamp(ratio.to_f, 0.0, 1.0)
     end
 
+    # Get points on circle in 2D.
+    # @param [Array<Numeric>] origin
+    # @param [Numeric] radius
+    # @param [Fixnum] num_seg Number of segments.
+    # @param [Numeric] rot_angle Rotate angle in degrees.
+    # @return [Array<Geom::Point3d>] An array of points on circle.
+    def points_on_circle2d(origin, radius, num_seg = 16, rot_angle = 0)
+      ra = rot_angle.degrees
+      offset = Math::PI*2/num_seg.to_i
+      pts = []
+      for n in 0...num_seg.to_i
+        angle = ra + (n*offset)
+        pts << Geom::Point3d.new(Math.cos(angle)*radius + origin.x, Math.sin(angle)*radius + origin.y, 0)
+      end
+      pts
+    end
+
+    # Get points on circle in 3D.
+    # @param [Array<Numeric>, Geom::Point3d] origin
+    # @param [Array<Numeric>, Geom::Vector3d] normal
+    # @param [Numeric] radius
+    # @param [Fixnum] num_seg Number of segments.
+    # @param [Numeric] rot_angle Rotate angle in degrees.
+    # @return [Array<Geom::Point3d>] An array of points on circle.
+    def points_on_circle3d(origin, radius, normal = [0,0,1], num_seg = 16, rot_angle = 0)
+      # Get the x and y axes
+      origin = Geom::Point3d.new(origin) unless origin.is_a?(Geom::Point3d)
+      normal = Geom::Vector3d.new(normal) unless normal.is_a?(Geom::Vector3d)
+      xaxis = normal.axes[0]
+      yaxis = normal.axes[1]
+      xaxis.length = radius
+      yaxis.length = radius
+      # Compute points
+      ra = rot_angle.degrees
+      offset = Math::PI*2/num_seg.to_i
+      pts = []
+      for n in 0...num_seg.to_i
+        angle = ra + (n*offset)
+        vec = Geom.linear_combination(Math.cos(angle)*radius, xaxis, Math.sin(angle)*radius, yaxis)
+        pts << origin + vec
+      end
+      pts
+    end
+
     # Create a watermark text.
     # @param [Fixnum] x X position on screen.
     # @param [Fixnum] y Y position on screen.
@@ -495,6 +545,23 @@ module MSPhysics
       texts
     end
 
+    # Round number up to a particular decimal point.
+    # @param [Numeric] number
+    # @param [Fixnum] precision
+    # @return [Numeric]
+    def round(number, precision = 0)
+      if RUBY_VERSION =~ /1.8/
+        if precision.to_i == 0
+          number.round
+        else
+          mag = 10**precision.to_i
+          (number * mag).round / mag
+        end
+      else
+        number.round(precision.to_i)
+      end
+    end
+
     private
 
     def scale_joints(scale, entities = Sketchup.active_model.entities)
@@ -567,7 +634,7 @@ unless file_loaded?(__FILE__)
     ['Ice', 916, 0.01, 0.01, 0.10, 0.01],
     ['Nickel', 8900, 0.53, 0.44, 0.60, 0.01],
     ['Plastic', 1000, 0.35, 0.30, 0.69, 0.01],
-    ['Rubber', 1100, 1.16, 1.16, 0.90, 0.01],
+    ['Rubber', 1100, 1.16, 1.16, 0.01, 0.01],
     ['Silver', 10500, 0.50, 0.40, 0.60, 0.01],
     ['Steel', 8050, 0.31, 0.23, 0.60, 0.01],
     ['Teflon', 2170, 0.04, 0.03, 0.10, 0.01],
@@ -582,6 +649,13 @@ unless file_loaded?(__FILE__)
   }
 
   # Create MSPhysics Simulation Toolbar
+  if Sketchup.version.to_i > 13
+    simg_path = 'images/icons/'
+    limg_path = 'images/icons/'
+  else
+    simg_path = 'images/small/'
+    limg_path = 'images/large/'
+  end
   sim = MSPhysics::Simulation
   sim_toolbar = UI::Toolbar.new 'MSPhysics'
 
@@ -593,8 +667,8 @@ unless file_loaded?(__FILE__)
   }
   cmd.menu_text = cmd.tooltip = 'Toggle UI'
   cmd.status_bar_text = 'Show/Hide MSPhysics UI.'
-  cmd.small_icon = 'images/small/ui.png'
-  cmd.large_icon = 'images/large/ui.png'
+  cmd.small_icon = simg_path + 'ui.png'
+  cmd.large_icon = limg_path + 'ui.png'
   sim_toolbar.add_item(cmd)
 
   cmd = UI::Command.new('Toggle Play'){
@@ -609,8 +683,8 @@ unless file_loaded?(__FILE__)
   }
   cmd.menu_text = cmd.tooltip = 'Toggle Play'
   cmd.status_bar_text = 'Play/Pause simulation.'
-  cmd.small_icon = 'images/small/toggle_play.png'
-  cmd.large_icon = 'images/large/toggle_play.png'
+  cmd.small_icon = simg_path + 'toggle_play.png'
+  cmd.large_icon = limg_path + 'toggle_play.png'
   sim_toolbar.add_item(cmd)
 
   cmd = UI::Command.new('Reset'){
@@ -621,8 +695,8 @@ unless file_loaded?(__FILE__)
   }
   cmd.menu_text = cmd.tooltip = 'Reset'
   cmd.status_bar_text = 'Reset simulation.'
-  cmd.small_icon = 'images/small/reset.png'
-  cmd.large_icon = 'images/large/reset.png'
+  cmd.small_icon = simg_path + 'reset.png'
+  cmd.large_icon = limg_path + 'reset.png'
   sim_toolbar.add_item(cmd)
 
   sim_toolbar.show
@@ -640,8 +714,8 @@ unless file_loaded?(__FILE__)
   cmd.set_validation_proc {
     MSPhysics::JointConnectionTool.is_active? ? MF_CHECKED : MF_UNCHECKED
   }
-  cmd.small_icon = 'images/small/toggle_connect.png'
-  cmd.large_icon = 'images/large/toggle_connect.png'
+  cmd.small_icon = simg_path + 'toggle_connect.png'
+  cmd.large_icon = limg_path + 'toggle_connect.png'
   joints_toolbar.add_item(cmd)
 
   cmd = UI::Command.new('Scale MSPhysics Joints'){
@@ -657,8 +731,8 @@ unless file_loaded?(__FILE__)
   }
   cmd.menu_text = cmd.tooltip = 'Edit Joints Scale'
   cmd.status_bar_text = 'Change scale of MSPhysics joints.'
-  cmd.small_icon = 'images/small/scale_joints.png'
-  cmd.large_icon = 'images/large/scale_joints.png'
+  cmd.small_icon = simg_path + 'scale_joints.png'
+  cmd.large_icon = limg_path + 'scale_joints.png'
   joints_toolbar.add_item(cmd)
 
   joints_toolbar.add_separator
@@ -676,8 +750,8 @@ unless file_loaded?(__FILE__)
     }
     cmd.menu_text = cmd.tooltip = ename
     cmd.status_bar_text = "Add #{ename} joint."
-    cmd.small_icon = "images/small/#{name}.png"
-    cmd.large_icon = "images/large/#{name}.png"
+    cmd.small_icon = simg_path + name + '.png'
+    cmd.large_icon = limg_path + name + '.png'
     joints_toolbar.add_item(cmd)
   }
 
@@ -694,9 +768,9 @@ unless file_loaded?(__FILE__)
     MSPhysics::Replay.record_enabled? ? MF_CHECKED : MF_UNCHECKED
   }
   cmd.menu_text = cmd.tooltip = 'Toggle Record'
-  cmd.status_bar_text = 'Enable/Disable replay animation recording.'
-  cmd.small_icon = 'images/small/replay_record.png'
-  cmd.large_icon = 'images/large/replay_record.png'
+  cmd.status_bar_text = 'Enable/disable replay animation recording.'
+  cmd.small_icon = simg_path + 'replay_record.png'
+  cmd.large_icon = limg_path + 'replay_record.png'
   replay_toolbar.add_item(cmd)
 
   cmd = UI::Command.new('Toggle Camera Replay'){
@@ -706,9 +780,9 @@ unless file_loaded?(__FILE__)
     MSPhysics::Replay.camera_replay_enabled? ? MF_CHECKED : MF_UNCHECKED
   }
   cmd.menu_text = cmd.tooltip = 'Toggle Camera Replay'
-  cmd.status_bar_text = 'Enable/Disable camera replay.'
-  cmd.small_icon = 'images/small/replay_camera.png'
-  cmd.large_icon = 'images/large/replay_camera.png'
+  cmd.status_bar_text = 'Enable/disable camera replay.'
+  cmd.small_icon = simg_path + 'replay_camera.png'
+  cmd.large_icon = limg_path + 'replay_camera.png'
   replay_toolbar.add_item(cmd)
 
   cmd = UI::Command.new('Play'){
@@ -726,8 +800,8 @@ unless file_loaded?(__FILE__)
   }
   cmd.menu_text = cmd.tooltip = 'Play'
   cmd.status_bar_text = 'Play replay animation forward.'
-  cmd.small_icon = 'images/small/replay_play.png'
-  cmd.large_icon = 'images/large/replay_play.png'
+  cmd.small_icon = simg_path + 'replay_play.png'
+  cmd.large_icon = limg_path + 'replay_play.png'
   replay_toolbar.add_item(cmd)
 
   cmd = UI::Command.new('Reverse'){
@@ -745,8 +819,8 @@ unless file_loaded?(__FILE__)
   }
   cmd.menu_text = cmd.tooltip = 'Reverse'
   cmd.status_bar_text = 'Play replay animation backward.'
-  cmd.small_icon = 'images/small/replay_reverse.png'
-  cmd.large_icon = 'images/large/replay_reverse.png'
+  cmd.small_icon = simg_path + 'replay_reverse.png'
+  cmd.large_icon = limg_path + 'replay_reverse.png'
   replay_toolbar.add_item(cmd)
 
   cmd = UI::Command.new('Pause'){
@@ -762,8 +836,8 @@ unless file_loaded?(__FILE__)
   }
   cmd.menu_text = cmd.tooltip = 'Pause'
   cmd.status_bar_text = 'Pause replay animation.'
-  cmd.small_icon = 'images/small/replay_pause.png'
-  cmd.large_icon = 'images/large/replay_pause.png'
+  cmd.small_icon = simg_path + 'replay_pause.png'
+  cmd.large_icon = limg_path + 'replay_pause.png'
   replay_toolbar.add_item(cmd)
 
   cmd = UI::Command.new('Reset'){
@@ -774,8 +848,8 @@ unless file_loaded?(__FILE__)
   }
   cmd.menu_text = cmd.tooltip = 'Reset'
   cmd.status_bar_text = 'Stop replay animation and reset positions.'
-  cmd.small_icon = 'images/small/replay_reset.png'
-  cmd.large_icon = 'images/large/replay_reset.png'
+  cmd.small_icon = simg_path + 'replay_reset.png'
+  cmd.large_icon = limg_path + 'replay_reset.png'
   replay_toolbar.add_item(cmd)
 
   cmd = UI::Command.new('Stop'){
@@ -786,8 +860,8 @@ unless file_loaded?(__FILE__)
   }
   cmd.menu_text = cmd.tooltip = 'Stop'
   cmd.status_bar_text = 'Stop replay animation, but avoid resetting positions.'
-  cmd.small_icon = 'images/small/replay_stop.png'
-  cmd.large_icon = 'images/large/replay_stop.png'
+  cmd.small_icon = simg_path + 'replay_stop.png'
+  cmd.large_icon = limg_path + 'replay_stop.png'
   replay_toolbar.add_item(cmd)
 
   inc_spd_cmd = UI::Command.new('Increase Speed'){
@@ -800,8 +874,8 @@ unless file_loaded?(__FILE__)
   }
   inc_spd_cmd.menu_text = inc_spd_cmd.tooltip = 'Increase Speed'
   inc_spd_cmd.status_bar_text = "Increase replay animation speed.    Speed: #{sprintf("%.2f", MSPhysics::Replay.speed)}"
-  inc_spd_cmd.small_icon = 'images/small/replay_increase_speed.png'
-  inc_spd_cmd.large_icon = 'images/large/replay_increase_speed.png'
+  inc_spd_cmd.small_icon = simg_path + 'replay_increase_speed.png'
+  inc_spd_cmd.large_icon = limg_path + 'replay_increase_speed.png'
   replay_toolbar.add_item(inc_spd_cmd)
 
   dec_spd_cmd = UI::Command.new('Decrease Speed'){
@@ -814,8 +888,8 @@ unless file_loaded?(__FILE__)
   }
   dec_spd_cmd.menu_text = dec_spd_cmd.tooltip = 'Decrease Speed'
   dec_spd_cmd.status_bar_text = "Decrease replay animation speed.    Speed: #{sprintf("%.2f", MSPhysics::Replay.speed)}"
-  dec_spd_cmd.small_icon = 'images/small/replay_decrease_speed.png'
-  dec_spd_cmd.large_icon = 'images/large/replay_decrease_speed.png'
+  dec_spd_cmd.small_icon = simg_path + 'replay_decrease_speed.png'
+  dec_spd_cmd.large_icon = limg_path + 'replay_decrease_speed.png'
   replay_toolbar.add_item(dec_spd_cmd)
 
   cmd = UI::Command.new('Clear Data') {
@@ -826,8 +900,8 @@ unless file_loaded?(__FILE__)
   }
   cmd.menu_text = cmd.tooltip = 'Clear Data'
   cmd.status_bar_text = 'Clear recorded data.'
-  cmd.small_icon = 'images/small/replay_destroy.png'
-  cmd.large_icon = 'images/large/replay_destroy.png'
+  cmd.small_icon = simg_path + 'replay_destroy.png'
+  cmd.large_icon = limg_path + 'replay_destroy.png'
   replay_toolbar.add_item(cmd)
 
   replay_toolbar.show
@@ -853,12 +927,18 @@ unless file_loaded?(__FILE__)
     next if bodies.empty? && joints.empty? && buoyancy_planes.empty?
     msp_menu = menu.add_submenu('MSPhysics')
     if bodies.size > 0
-      text = bodies.size > 1 ? "#{bodies.size} Bodies" : "Body"
-      body_menu = msp_menu.add_submenu(text)
+      if joints.empty? && buoyancy_planes.empty?
+        body_menu = msp_menu
+      else
+        text = bodies.size > 1 ? "#{bodies.size} Bodies" : "Body"
+        body_menu = msp_menu.add_submenu(text)
+      end
       state_menu = body_menu.add_submenu('State')
-      state_options = ['Ignore']
+      state_opts = ['Ignore']
+      con_state_opts = ['Clear Ignore Flag']
       if model.active_entities == model.entities
-        state_options.concat ['Static', 'Frozen', 'Magnetic', 'Collidable', 'Auto Sleep', 'Continuous Collision', 'Enable Friction', 'Enable Script', 'Enable Gravity', 'Enable Thruster', 'Enable Emitter']
+        state_opts.concat ['Static', 'Frozen', 'Magnetic', 'Collidable', 'Auto Sleep', 'Continuous Collision', 'Enable Friction', 'Enable Script', 'Enable Gravity', 'Enable Thruster', 'Enable Emitter', 'Connect Closest Joints']
+        con_state_opts.concat ['Movable', 'Non-Frozen', 'Non-Magnetic', 'Non-Collidable', 'No Auto Sleep', 'No Continuous Collision', 'Disable Friction', 'Disable Script', 'Disable Gravity', 'Disable Thruster', 'Disable Emitter', 'Connect All Joints']
 
         shape_menu = body_menu.add_submenu('Shape')
         default_shape = MSPhysics::DEFAULT_BODY_SETTINGS[:shape]
@@ -868,7 +948,7 @@ unless file_loaded?(__FILE__)
             Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
             MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Shape', shape)
             model.commit_operation
-            MSPhysics::Dialog.update_state
+            MSPhysics::Dialog.update_body_state
           }
           shape_menu.set_validation_proc(item){
             MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Shape', default_shape) == shape ? MF_CHECKED : MF_UNCHECKED
@@ -884,7 +964,7 @@ unless file_loaded?(__FILE__)
             MSPhysics.delete_attribute(bodies, 'MSPhysics Body', option)
           }
           model.commit_operation
-          MSPhysics::Dialog.update_state
+          MSPhysics::Dialog.update_body_state
         }
         mat_menu.set_validation_proc(item){
           MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Material', default_mat) == default_mat ? MF_CHECKED : MF_UNCHECKED
@@ -894,7 +974,7 @@ unless file_loaded?(__FILE__)
           Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
           MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Material', 'Custom')
           model.commit_operation
-          MSPhysics::Dialog.update_state
+          MSPhysics::Dialog.update_body_state
         }
         mat_menu.set_validation_proc(item){
           MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Material', default_mat) == 'Custom' ? MF_CHECKED : MF_UNCHECKED
@@ -913,37 +993,48 @@ unless file_loaded?(__FILE__)
             MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Elasticity', material.get_elasticity)
             MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Softness', material.get_softness)
             model.commit_operation
-            MSPhysics::Dialog.update_state
+            MSPhysics::Dialog.update_body_state
           }
           mat_menu.set_validation_proc(item){
             MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Material', default_mat) == material.get_name ? MF_CHECKED : MF_UNCHECKED
           }
         }
       end
-      state_options.each { |option|
-        default_state = MSPhysics::DEFAULT_BODY_SETTINGS[option.downcase.gsub(' ', '_').to_sym]
-        item = state_menu.add_item(option){
-          op = 'MSPhysics Body - Change State'
-          Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
-          state = MSPhysics.get_attribute(bodies, 'MSPhysics Body', option, default_state) ? true : false
-          MSPhysics.set_attribute(bodies, 'MSPhysics Body', option, !state)
-          model.commit_operation
-          MSPhysics::Dialog.update_state
+      if (bodies.size == 1)
+        state_opts.each { |option|
+          default_state = MSPhysics::DEFAULT_BODY_SETTINGS[option.downcase.gsub(' ', '_').to_sym]
+          item = state_menu.add_item(option) {
+            op = 'MSPhysics Body - Change State'
+            Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+            state = MSPhysics.get_attribute(bodies, 'MSPhysics Body', option, default_state) ? true : false
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', option, !state)
+            model.commit_operation
+            MSPhysics::Dialog.update_body_state
+          }
+          state_menu.set_validation_proc(item) {
+            MSPhysics.get_attribute(bodies, 'MSPhysics Body', option, default_state) ? MF_CHECKED : MF_UNCHECKED
+          }
         }
-        state_menu.set_validation_proc(item){
-          MSPhysics.get_attribute(bodies, 'MSPhysics Body', option, default_state) ? MF_CHECKED : MF_UNCHECKED
+      else
+        (0...state_opts.length).each { |i|
+          option = state_opts[i]
+          con_option = con_state_opts[i]
+          state_menu.add_item(option) {
+            op = 'MSPhysics Body - Change State'
+            Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', option, true)
+            model.commit_operation
+            MSPhysics::Dialog.update_body_state
+          }
+          state_menu.add_item(con_option) {
+            op = 'MSPhysics Body - Change State'
+            Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', option, false)
+            model.commit_operation
+            MSPhysics::Dialog.update_body_state
+          }
         }
-      }
-      connect_closest = MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Connect Closest Joints', false) ? true : false
-      item = body_menu.add_item('Connect Closest Joints') {
-        op = 'MSPhysics Body - Connect Closest Joints'
-        Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
-        MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Connect Closest Joints', !connect_closest)
-        model.commit_operation
-      }
-      body_menu.set_validation_proc(item) {
-        connect_closest ? MF_CHECKED : MF_UNCHECKED
-      }
+      end
       body_menu.add_item('Clear Connected Joints') {
         op = 'MSPhysics Body - Clear Connected Joints'
         Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
@@ -954,13 +1045,31 @@ unless file_loaded?(__FILE__)
         op = 'MSPhysics Body - Reset Properties'
         Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
         MSPhysics.delete_attribute(bodies, 'MSPhysics')
-        MSPhysics.delete_attribute(bodies, 'MSPhysics Body')
+        bodies.each { |e|
+          dict = e.attribute_dictionary('MSPhysics Body')
+          if dict
+            dict.keys.each { |k|
+              next if k == 'Connect Closest Joints' || k == 'Connected Joints'
+              e.delete_attribute('MSPhysics Body', k)
+            }
+          end
+        }
+        model.commit_operation
+      }
+      body_menu.add_item('Clear Script') {
+        op = 'MSPhysics Body - Clear Script'
+        Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
+        MSPhysics.delete_attribute(bodies, 'MSPhysics Script')
         model.commit_operation
       }
     end
     if joints.size > 0
-      text = joints.size > 1 ? "#{joints.size} Joints" : "Joint"
-      joint_menu = msp_menu.add_submenu(text)
+      if bodies.empty? && buoyancy_planes.empty?
+        joint_menu = msp_menu
+      else
+        text = joints.size > 1 ? "#{joints.size} Joints" : "Joint"
+        joint_menu = msp_menu.add_submenu(text)
+      end
       joint_menu.add_item('Make Unique ID') {
         op = 'MSPhysics Joint - Make Unique ID'
         Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
@@ -1016,8 +1125,12 @@ unless file_loaded?(__FILE__)
       }
     end
     if buoyancy_planes.size > 0
-      text = buoyancy_planes.size > 1 ? "#{buoyancy_planes.size} Buoyancy Planes" : "Buoyancy Plane"
-      bp_menu = msp_menu.add_submenu(text)
+      if bodies.empty? && joints.empty?
+        bp_menu = msp_menu
+      else
+        text = buoyancy_planes.size > 1 ? "#{buoyancy_planes.size} Buoyancy Planes" : "Buoyancy Plane"
+        bp_menu = msp_menu.add_submenu(text)
+      end
       bp_menu.add_item("Properties"){
         default = MSPhysics::DEFAULT_BUOYANCY_PLANE_SETTINGS
         prompts = ['Density (kg/m³)', 'Viscosity (0.0 - 1.0)', 'Current X', 'Current Y', 'Current Z']
@@ -1151,7 +1264,7 @@ unless file_loaded?(__FILE__)
     }
   }
   plugin_menu.add_item('Delete All Attributes'){
-    msg = "This option removes all MSPhysics assigned properties and scripts.\n"
+    msg = "This option removes all MSPhysics assigned properties, scripts, and record of connected joints.\n"
     msg << "Do you want to proceed?"
     choice = UI.messagebox(msg, MB_YESNO)
     if choice == IDYES

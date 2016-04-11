@@ -3,7 +3,7 @@ module MSPhysics
   # @since 1.0.0
   class UpVector < Joint
 
-    DEFAULT_STIFF = 40.0
+    DEFAULT_ACCEL = 40.0
     DEFAULT_DAMP = 10.0
     DEFAULT_DAMPER_ENABLED = false
     DEFAULT_PIN_DIR = Z_AXIS
@@ -13,35 +13,39 @@ module MSPhysics
     # @param [MSPhysics::Body, nil] parent
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
     #   Of the given matrix, matrix origin should represent pin origin, and
-    #   matrix Z-AXIS should represent pin up.
+    #   matrix Z-axis should represent pin up.
     def initialize(world, parent, pin_tra)
       super(world, parent, pin_tra, 6)
       MSPhysics::Newton::UpVector.create(@address)
-      MSPhysics::Newton::UpVector.set_stiff(@address, DEFAULT_STIFF)
+      MSPhysics::Newton::UpVector.set_accel(@address, DEFAULT_ACCEL)
       MSPhysics::Newton::UpVector.set_damp(@address, DEFAULT_DAMP)
       MSPhysics::Newton::UpVector.enable_damper(@address, DEFAULT_DAMPER_ENABLED)
       MSPhysics::Newton::UpVector.set_pin_dir(@address, DEFAULT_PIN_DIR)
     end
 
-    # Get rotation stiffness. Higher stiffness makes rotation stronger.
+    # Get angular acceleration.
+    # @note Higher acceleration makes rotation faster.
     # @return [Numeric]
-    def stiff
-      MSPhysics::Newton::UpVector.get_stiff(@address)
+    def accel
+      MSPhysics::Newton::UpVector.get_accel(@address)
     end
 
-    # Set rotation stiffness. Higher stiffness makes rotation stronger.
+    # Set angular acceleration.
+    # @note Higher acceleration makes rotation faster.
     # @param [Numeric] value A value greater than or equal to zero.
-    def stiff=(value)
-      MSPhysics::Newton::UpVector.set_stiff(@address, value)
+    def accel=(value)
+      MSPhysics::Newton::UpVector.set_accel(@address, value)
     end
 
-    # Get rotation damper. Higher damper makes rotation slower.
+    # Get rotation damper.
+    # @note Higher damper makes rotation stronger.
     # @return [Numeric]
     def damp
       MSPhysics::Newton::UpVector.get_damp(@address)
     end
 
-    # Set rotation damper. Higher damper makes rotation slower.
+    # Set rotation damper.
+    # @note Higher damper makes rotation stronger.
     # @param [Numeric] value A value greater than or equal to zero.
     def damp=(value)
       MSPhysics::Newton::UpVector.set_damp(@address, value)
@@ -53,7 +57,7 @@ module MSPhysics
       MSPhysics::Newton::UpVector.is_damper_enabled?(@address)
     end
 
-    # Enable/Disable rotation stiff & damp parameters.
+    # Enable/disable rotation stiff & damp parameters.
     # @param [Boolean] state
     def damper_enabled=(state)
       MSPhysics::Newton::UpVector.enable_damper(@address, state)

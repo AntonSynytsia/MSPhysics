@@ -114,7 +114,7 @@ void MSNewton::Slider::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 		NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
 		if (joint_data->ctype == CT_FLEXIBLE)
 			NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
-		else //if (joint_data->ctype == CT_ROBUST)
+		else if (joint_data->ctype == CT_ROBUST)
 			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
@@ -125,7 +125,7 @@ void MSNewton::Slider::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 		NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
 		if (joint_data->ctype == CT_FLEXIBLE)
 			NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
-		else //if (joint_data->ctype == CT_ROBUST)
+		else if (joint_data->ctype == CT_ROBUST)
 			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
