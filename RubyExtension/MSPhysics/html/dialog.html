@@ -215,9 +215,20 @@
                 <td>
                   <table class="struct_table">
                     <tr><td colspan="2"><p class="heading">Properties</p></td></tr>
-                    <tr title="Set body density in kilograms per cubic meter (kg/m³).">
+                    <tr>
+                      <td><label class="spacing_tab" for="body-weight_control">Weight Control</label></td>
+                      <td><select id="body-weight_control" data-placeholder="Weight Control" class="chosen-select-no-single drop-down" style="width: 114px;">
+                        <option value="Density">Density</option>
+                        <option value="Mass">Mass</option>
+                        </select></td>
+                    </tr>
+                    <tr id="body-density_control" title="Set body density in kilograms per cubic meter (kg/m³).">
                       <td><label class="spacing_tab" for="body-density">Density</label></td>
                       <td><input id="body-density" class="custom-text numeric-input" type="text"></input></td>
+                    </tr>
+                    <tr id="body-mass_control" style="display: none;" title="Set body mass in kilograms.">
+                      <td><label class="spacing_tab" for="body-mass">Mass</label></td>
+                      <td><input id="body-mass" class="custom-text numeric-input" type="text"></input></td>
                     </tr>
                     <tr class="vertical_spacing"></tr>
                     <tr title="Set body static friction coefficient, a value between 0.01 and 2.00.">
@@ -291,6 +302,20 @@
                 <td><input id="body-emitter_lock_axis" type="checkbox"></input></td>
                 </tr>
             </table>
+            <div id="body-internal_joints_div" style="display: none;">
+              <p class="description"><em7>Internal Joints</em7></p>
+              <div class="spacing_tab">
+                <table class="struct_table" id="body-internal_joints_table">
+                </table>
+              </div>
+            </div>
+            <div id="body-connected_joints_div" style="display: none;">
+              <p class="description"><em7>Connected Joints</em7></p>
+              <div class="spacing_tab">
+                <table class="struct_table" id="body-connected_joints_table">
+                </table>
+              </div>
+            </div>
           </div>
           <div id="tab2-content2" style="display: none;">
             <table class="struct_table" style="width:50%;">
@@ -310,95 +335,108 @@
             <p>Body script cannot be edited while simulation is running.</p>
           </div>
           <div id="tab3-content" style="display: none;">
-            <div align="center">
-              <table class="opts_table">
+            <div>
+              <table class="struct_table">
                 <tr>
-                  <td><p>Theme</p></td>
-                  <td><select id="editor-theme" data-placeholder="Theme" class="chosen-select-no-single drop-down" style="width: 186px;">
-                    <optgroup label="Light">
-                      <option value="chrome">Chrome</option>
-                      <option value="clouds">Clouds</option>
-                      <option value="crimson_editor">Crimson Editor</option>
-                      <option value="dawn">Dawn</option>
-                      <option value="dreamweaver">Dreamweaver</option>
-                      <option value="eclipse">Eclipse</option>
-                      <option value="github">Github</option>
-                      <option value="iplastic">iPlastic</option>
-                      <option value="katzenmilch">KatzenMilch</option>
-                      <option value="kuroir">Kuroir</option>
-                      <option value="msphysics_light">MSPhysics Light</option>
-                      <option value="pastel_on_light">Pastel on Light</option>
-                      <option value="solarized_light">Solarized Light</option>
-                      <option value="sqlserver">SQL Server</option>
-                      <option value="textmate">Textmate</option>
-                      <option value="tomorrow">Tomorrow</option>
-                      <option value="xcode">Xcode</option>
-                    </optgroup>
-                    <optgroup label="Dark">
-                      <option value="ambiance">Ambiance</option>
-                      <option value="chaos">Chaos</option>
-                      <option value="clouds_midnight">Clouds Midnight</option>
-                      <option value="cobalt">Cobalt</option>
-                      <option value="idle_fingers">Idle Fingers</option>
-                      <option value="kr_theme">KR Theme</option>
-                      <option value="merbivore">Merbivore</option>
-                      <option value="merbivore_soft">Merbivore Soft</option>
-                      <option value="mono_industrial">Mono Industrial</option>
-                      <option value="monokai">Monokai</option>
-                      <option value="msphysics_dark">MSPhysics Dark</option>
-                      <option value="pastel_on_dark">Pastel on Dark</option>
-                      <option value="solarized_dark">Solarized Dark</option>
-                      <option value="terminal">Terminal</option>
-                      <option value="tomorrow_night">Tomorrow Night</option>
-                      <option value="tomorrow_night_blue">Tomorrow Night Blue</option>
-                      <option value="tomorrow_night_bright">Tomorrow Night Bright</option>
-                      <option value="tomorrow_night_eighties">Tomorrow Night 80s</option>
-                      <option value="twilight">Twilight</option>
-                      <option value="vibrant_ink">Vibrant Ink</option>
-                    </optgroup>
-                  </select></td>
-                  <td class="horizontal_spacing" />
-                  <td><p>Soft Wrap</p></td>
-                  <td><select id="editor-wrap" data-placeholder="Wrap" class="chosen-select-no-single drop-down" style="width: 70px;">
-                    <option value="off">Off</option>
-                    <option value="40">40</option>
-                    <option value="80">80</option>
-                    <option value="120">120</option>
-                    <option value="free">Free</option>
-                  </select></td>
-                  <td class="horizontal_spacing" />
-                  <td><p>Font Size</p></td>
-                  <td><select id="editor-font" data-placeholder="Font" class="chosen-select-no-single drop-down" style="width: 70px;">
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="10">10</option>
-                    <option value="11">11</option>
-                    <option value="12">12</option>
-                    <option value="13">13</option>
-                    <option value="14">14</option>
-                    <option value="16">16</option>
-                    <option value="18">18</option>
-                    <option value="20">20</option>
-                    <option value="22">22</option>
-                    <option value="24">24</option>
-                    <option value="26">26</option>
-                    <option value="28">28</option>
-                    <option value="36">36</option>
-                    <option value="48">48</option>
-                    <option value="72">72</option>
-                  </select></td>
-                  <td class="horizontal_spacing" />
-                  <td><label for="editor-read_only">Read Only</label></td>
-                  <td><input id="editor-read_only" type="checkbox"></input></td>
+                  <td><label class="expander description"><em5>Options</em5></label></td>
+                  <td colspan="4"><pre class="center"><a href="http://www.rubydoc.info/github/AntonSynytsia/MSPhysics/master/index" target="_blank">MSPhysics</a> | <a href="http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/index" target="_blank">AMS Library</a> | <a href="http://www.sketchup.com/intl/en/developer/" target="_blank">SketchUp API</a> | <a href="ruby_core" target="_blank">Ruby Core</a></pre></td>
+                  <td colspan="2"><pre><label class="description">Entity ID: </label><input id="body-entity_id" class="labeled-text" type="text" unselectable="on" onselectstart="return false;" onmousedown="return false;" readonly></input><label class="description">Index: </label><input id="body-entity_index" class="labeled-text" type="text" unselectable="on" onselectstart="return false;" onmousedown="return false;" readonly></input></pre></td>
                 </tr>
               </table>
+              <div class="content spacing_tab">
+                <div align="center">
+                  <table class="opts_table">
+                    <tr>
+                      <td><p>Theme</p></td>
+                      <td colspan="2"><select id="editor-theme" data-placeholder="Theme" class="chosen-select-no-single drop-down" style="width: 186px;">
+                        <optgroup label="Light">
+                          <option value="chrome">Chrome</option>
+                          <option value="clouds">Clouds</option>
+                          <option value="crimson_editor">Crimson Editor</option>
+                          <option value="dawn">Dawn</option>
+                          <option value="dreamweaver">Dreamweaver</option>
+                          <option value="eclipse">Eclipse</option>
+                          <option value="github">Github</option>
+                          <option value="iplastic">iPlastic</option>
+                          <option value="katzenmilch">KatzenMilch</option>
+                          <option value="kuroir">Kuroir</option>
+                          <option value="msphysics_light">MSPhysics Light</option>
+                          <option value="pastel_on_light">Pastel on Light</option>
+                          <option value="solarized_light">Solarized Light</option>
+                          <option value="sqlserver">SQL Server</option>
+                          <option value="textmate">Textmate</option>
+                          <option value="tomorrow">Tomorrow</option>
+                          <option value="xcode">Xcode</option>
+                        </optgroup>
+                        <optgroup label="Dark">
+                          <option value="ambiance">Ambiance</option>
+                          <option value="chaos">Chaos</option>
+                          <option value="clouds_midnight">Clouds Midnight</option>
+                          <option value="cobalt">Cobalt</option>
+                          <option value="idle_fingers">Idle Fingers</option>
+                          <option value="kr_theme">KR Theme</option>
+                          <option value="merbivore">Merbivore</option>
+                          <option value="merbivore_soft">Merbivore Soft</option>
+                          <option value="mono_industrial">Mono Industrial</option>
+                          <option value="monokai">Monokai</option>
+                          <option value="msphysics_dark">MSPhysics Dark</option>
+                          <option value="pastel_on_dark">Pastel on Dark</option>
+                          <option value="solarized_dark">Solarized Dark</option>
+                          <option value="terminal">Terminal</option>
+                          <option value="tomorrow_night">Tomorrow Night</option>
+                          <option value="tomorrow_night_blue">Tomorrow Night Blue</option>
+                          <option value="tomorrow_night_bright">Tomorrow Night Bright</option>
+                          <option value="tomorrow_night_eighties">Tomorrow Night 80s</option>
+                          <option value="twilight">Twilight</option>
+                          <option value="vibrant_ink">Vibrant Ink</option>
+                        </optgroup>
+                      </select></td>
+                      <td class="horizontal_spacing" />
+                      <td><p>Soft Wrap</p></td>
+                      <td><select id="editor-wrap" data-placeholder="Wrap" class="chosen-select-no-single drop-down" style="width: 70px;">
+                        <option value="off">Off</option>
+                        <option value="40">40</option>
+                        <option value="80">80</option>
+                        <option value="120">120</option>
+                        <option value="free">Free</option>
+                      </select></td>
+                      <td class="horizontal_spacing" />
+                      <td><p>Font Size</p></td>
+                      <td><select id="editor-font" data-placeholder="Font" class="chosen-select-no-single drop-down" style="width: 70px;">
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                        <option value="16">16</option>
+                        <option value="18">18</option>
+                        <option value="20">20</option>
+                        <option value="22">22</option>
+                        <option value="24">24</option>
+                        <option value="26">26</option>
+                        <option value="28">28</option>
+                        <option value="36">36</option>
+                        <option value="48">48</option>
+                        <option value="72">72</option>
+                      </select></td>
+                      <td class="horizontal_spacing" />
+                      <td><label for="editor-print_margin">Print Margin</label></td>
+                      <td><input id="editor-print_margin" type="checkbox"></input></td>
+                      <td class="horizontal_spacing" />
+                      <td><label for="editor-read_only">Read Only</label></td>
+                      <td><input id="editor-read_only" type="checkbox"></input></td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
             </div>
-            <pre class="center"><a href="http://www.rubydoc.info/github/AntonSynytsia/MSPhysics/master/index" target="_blank">MSPhysics</a> | <a href="http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/index" target="_blank">AMS Library</a> | <a href="http://www.sketchup.com/intl/en/developer/" target="_blank">SketchUp API</a> | <a href="ruby_core" target="_blank">Ruby Core</a></pre>
             <textarea id="temp_script_area" rows="1" cols="20" style="display: none;"></textarea>
             <div id="editor"></div>
-            <pre id="status-bar">Powered by <a href="http://ace.c9.io/#nav=about" target="_blank">Ace</a>    Display Shortcuts: Ctrl+Alt+H</pre>
+            <div><pre id="status-bar">Powered by <a href="http://ace.c9.io/#nav=about" target="_blank">Ace</a>    Display Shortcuts: Ctrl+Alt+H</pre></div>
           </div>
         </div>
 
@@ -567,6 +605,9 @@
                   <td><label for="motor-controller">Controller</label></td>
                   <td><input id="motor-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
+                <tr>
+                  <td colspan="2"><button id="motor-generate_slider" title="Generate slider controller based on the current parameters.">Generate Slider Controller</button></td>
+                </tr>
               </table>
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
@@ -619,6 +660,9 @@
                 <tr title="Control the angle in preset angle units or the ratio between min and max limits, depending on the mode. Pass nil to 'turn off' the servo.">
                   <td><label for="servo-controller">Controller</label></td>
                   <td><input id="servo-controller" class="custom-text controller-input" type="text"></input></td>
+                </tr>
+                <tr>
+                  <td colspan="2"><button id="servo-generate_slider" title="Generate slider controller based on the current parameters.">Generate Slider Controller</button></td>
                 </tr>
               </table>
               <div>
@@ -738,6 +782,9 @@
                 <tr title="Control desired position in preset units. Pass nil to 'turn off' the piston.">
                   <td><label for="piston-controller">Controller</label></td>
                   <td><input id="piston-controller" class="custom-text controller-input" type="text"></input></td>
+                </tr>
+                <tr>
+                  <td colspan="2"><button id="piston-generate_slider" title="Generate slider controller based on the current parameters.">Generate Slider Controller</button></td>
                 </tr>
               </table>
             </div>

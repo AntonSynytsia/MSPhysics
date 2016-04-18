@@ -1,6 +1,7 @@
 var last_cursor = [1,0];
 var active_tab_id = 1;
 var size_updating = false;
+var editor_size_offset = 3;
 
 String.prototype.contains = function(it) { return this.indexOf(it) != -1; };
 
@@ -65,14 +66,14 @@ function update_size() {
   //var id = '#tab' + active_tab_id;
   var w = 462; // 11px * 48em
   var h = $('#body').outerHeight(true);
-  var value = $(window).height() - h + $('#editor').innerHeight();
+  var value = $(window).height() - h + $('#editor').innerHeight() + editor_size_offset;
   if (value < 0) value = 0;
   document.getElementById('editor').style.height = value + 'px';
   var data = '['+w+','+h+']';
   callback('update_size', data);
   // Repeat because it doesn't always work.
   var h = $('#body').outerHeight(true);
-  var value = $(window).height() - h + $('#editor').innerHeight();
+  var value = $(window).height() - h + $('#editor').innerHeight() + editor_size_offset;
   if (value < 0) value = 0;
   document.getElementById('editor').style.height = value + 'px';
   window.aceEditor.resize();
@@ -86,12 +87,27 @@ function update_size2() {
   //var id = '#tab' + active_tab_id;
   var w = 462; // 11px * 48em
   var h = $('#body').outerHeight(true);
-  var value = $(window).height() - h + $('#editor').innerHeight();
+  var value = $(window).height() - h + $('#editor').innerHeight() + editor_size_offset;
   if (value < 0) value = 0;
   document.getElementById('editor').style.height = value + 'px';
   var data = '['+w+','+h+']';
   callback('update_size', data);
   size_updating = false;
+}
+
+function assign_joint_click_event() {
+  var last_selected_joint_label = 0;
+  $('.joint-label').off();
+  $('.joint-label').on("click", function() {
+    if (last_selected_joint_label != 0) {
+      last_selected_joint_label.removeClass('joint-label-selected');
+      last_selected_joint_label.addClass('joint-label');
+    }
+    $(this).removeClass('joint-label');
+    $(this).addClass('joint-label-selected');
+    last_selected_joint_label = $(this);
+    callback('joint_label_selected', this.id);
+  });
 }
 
 $(document).ready( function() {
@@ -217,10 +233,11 @@ $(document).ready( function() {
   // Resize editor
   $( window ).resize( function() {
     if (active_tab_id == 3 && size_updating == false) {
-      value = $(window).height() - $('#body').outerHeight(true) + $('#editor').innerHeight();
+      value = $(window).height() - $('#body').outerHeight(true) + $('#editor').innerHeight() + editor_size_offset;
       if (value < 0) value = 0;
       container.style.height = value + 'px';
       editor.resize();
+      callback('editor_size_changed');
     }
   });
 
@@ -279,7 +296,12 @@ $(document).ready( function() {
 
   // Process checkbox and radio input triggers.
   $('input[type=checkbox], input[type=radio]').change( function() {
-    if (this.id == 'editor-read_only') editor.setReadOnly(this.checked);
+    if (this.id == 'editor-read_only') {
+      editor.setReadOnly(this.checked)
+    }
+    else if (this.id == 'editor-print_margin') {
+      editor.setShowPrintMargin(this.checked)
+    }
     var data = '["'+this.id+'",'+this.checked+']';
     callback('check_input_changed', data);
   });
@@ -293,6 +315,16 @@ $(document).ready( function() {
     }
     else if (this.id == 'editor-wrap') {
       editor.setOption('wrap', params.selected);
+    }
+    else if (this.id == 'body-weight_control') {
+      if (params.selected == 'Mass') {
+        $('#body-density_control').css('display', 'none');
+        $('#body-mass_control').css('display', 'table-row');
+      }
+      else {
+        $('#body-density_control').css('display', 'table-row');
+        $('#body-mass_control').css('display', 'none');
+      }
     }
     var data = '["'+this.id+'","'+params.selected+'"]';
     callback('select_input_changed', data);

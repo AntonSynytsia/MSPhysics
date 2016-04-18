@@ -220,6 +220,23 @@ table {
   width: 100%;
 }
 
+.labeled-text {
+  border: none;
+  background: none;
+  font-size: 1.0em !important;
+  color: #FA8000;
+  cursor: auto;
+  outline: none;
+  width: 6em;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -ms-high-contrast-adjust: none;
+}
+
 .main-wrap {
   /* overflow to handle inner floating block */
   overflow: hidden;
@@ -237,8 +254,8 @@ table {
 #editor {
   position: relative !important;
   border: 1px solid lightgray;
-  padding: 0px;
-  margin: 4px auto;
+  padding: none;
+  margin: 0px auto 4px auto;
   height: auto;
 }
 
@@ -307,6 +324,15 @@ table {
   color: #606060;
 }
 
+.description em6 {
+  color: #FFB01F;
+}
+
+.description em7 {
+  color: #3823C2;
+  font-weight: bold;
+}
+
 .description tt {
   color: #170E80;
 }
@@ -360,4 +386,33 @@ table.struct_table input[type=checkbox] {
 
 .spacing_tab {
   padding-left: 1em;
+}
+
+label.joint-label {
+  padding: 0.15em;
+  color: #0036C9;
+  background-color: none;
+  font-size: 1.0em !important;
+  font-family: "Courier New";
+  font-weight: normal;
+  transition: all 0.1s ease-in-out;
+  -webkit-transition: all 0.1s ease-in-out;
+  -moz-transition: all 0.1s ease-in-out;
+}
+
+label.joint-label:hover {
+  padding: 0.15em;
+  background-color: rgba(255, 255, 120, 0.5);
+}
+
+label.joint-label-selected {
+  padding: 0.15em;
+  color: #0036C9;
+  background-color: rgba(255, 255, 120, 1.0);
+  font-size: 1.0em !important;
+  font-family: "Courier New";
+  font-weight: normal;
+  transition: all 0.1s ease-in-out;
+  -webkit-transition: all 0.1s ease-in-out;
+  -moz-transition: all 0.1s ease-in-out;
 }

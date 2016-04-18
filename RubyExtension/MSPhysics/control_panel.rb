@@ -30,6 +30,7 @@ module MSPhysics
             update_placement if update_size
           }
           @dialog.set_on_close {
+            AMS::Sketchup.include_dialog(@handle)
             @dialog = nil
             @handle = nil
             AMS::Sketchup.remove_observer(self)
@@ -48,13 +49,15 @@ module MSPhysics
             # Remove dialog caption and borders
             layered = AMS::System.get_windows_version < 6.0 ? 0 : 0x00080000
             style_ex = 0x00010000 | layered # WS_EX_CONTROLPARENT | WS_EX_LAYERED
-            style = 0x94000000 # WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS
+            style = 0x54000000 # WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
+            #~ style = 0x94000000 # WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS
             AMS::Window.lock_update(@handle)
             AMS::Window.set_long(@handle, -20, style_ex)
             AMS::Window.set_long(@handle, -16, style)
             AMS::Window.lock_update(nil)
             AMS::Window.set_pos(@handle, 0, 0, 0, 0, 0, 0x0267)
-            AMS::Window.set_layered_attributes(@handle, 0, 220, 2)
+            AMS::Window.set_layered_attributes(@handle, 0, 200, 2)
+            AMS::Sketchup.ignore_dialog(@handle)
           end
         else
           @dialog.close

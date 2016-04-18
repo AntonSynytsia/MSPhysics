@@ -1,24 +1,18 @@
 - Create an installer that would automatically install AMS Library and MSPhysics into desired plugins folder.
 - Make compatible with Mac OS X.
-- Implement newton cloth and soft bodies interface.
+- Implement cloth and soft bodies interface.
 - Implement user mesh collision interface.
-- Implement newton vehicle interface.
+- Implement vehicle interface.
 - Implement fractured compound interface.
 - Add geared joints interface.
 - Add differential joint.
-- Add an option to the dialog to control body mass.
-- Check which functions to add from LazyScript.
-- Add MSPhysics functions to Ace text editor if possible.
+- Add MSPhysics functions to Ace text editor.
 - Add advanced explosion function.
-- Add camera follow in scene.
 - Add serial port.
-- Make replay compatible with LightUp, Vray, Twilight, and Thea Render
+- Make replay compatible with LightUp, Vray, Twilight, and Thea Render.
 - Save replay data into model info.
-- ~Separate simulation and simulation tool into separate classes.
-- Make the joints dialog to display connected joints and bodies.
-- Add curve joint
-- Add plane joint
+- Add curve joint.
+- Add plane joint.
+- Revamp joint acceleration and damper parameters.
 - Add joystick controller.
-- Add curve functions similar to those in SketchyPhysics.
-- Add particle effects functions
-- Make particular joints be controlled by sliders by default.
+- Add fracture/split functions.

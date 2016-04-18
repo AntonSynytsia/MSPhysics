@@ -401,7 +401,7 @@ module MSPhysics
         point = [args[0], args[1], args[2]]
       elsif args.size == 2
         point = args[0]
-        mode = args[3]
+        mode = args[1]
       elsif args.size == 1
         point = args[0]
       else
@@ -519,7 +519,7 @@ module MSPhysics
     # @example Getting centre of mass in global space.
     #   centre = body.get_cetre_of_mass.transform( body.get_matrix )
     # @return [Geom::Point3d]
-    # @see {#get_position}
+    # @see #get_position
     def get_centre_of_mass
       Body.validate(self)
       MSPhysics::Newton::Body.get_centre_of_mass(@_address)
@@ -987,7 +987,7 @@ module MSPhysics
     #   @param [Numeric] fy
     #   @param [Numeric] fz
     # @return [Boolean] success
-    # @see {#add_force2}
+    # @see #add_force2
     def add_force(*args)
       Body.validate(self)
       if args.size == 3
@@ -1016,7 +1016,7 @@ module MSPhysics
     #   @param [Numeric] fy
     #   @param [Numeric] fz
     # @return [Boolean] success
-    # @see {#add_force}
+    # @see #add_force
     def add_force2(*args)
       Body.validate(self)
       if args.size == 3
@@ -1045,7 +1045,7 @@ module MSPhysics
     #   @param [Numeric] fy
     #   @param [Numeric] fz
     # @return [Boolean] success
-    # @see {#set_force2}
+    # @see #set_force2
     def set_force(*args)
       Body.validate(self)
       if args.size == 3
@@ -1074,7 +1074,7 @@ module MSPhysics
     #   @param [Numeric] fy
     #   @param [Numeric] fz
     # @return [Boolean] success
-    # @see {#set_force}
+    # @see #set_force
     def set_force2(*args)
       Body.validate(self)
       if args.size == 3
@@ -1119,7 +1119,7 @@ module MSPhysics
     #   @param [Numeric] ty
     #   @param [Numeric] tz
     # @return [Boolean] success
-    # @see {#add_torque2}
+    # @see #add_torque2
     def add_torque(*args)
       Body.validate(self)
       if args.size == 3
@@ -1148,7 +1148,7 @@ module MSPhysics
     #   @param [Numeric] ty
     #   @param [Numeric] tz
     # @return [Boolean] success
-    # @see {#add_torque}
+    # @see #add_torque
     def add_torque2(*args)
       Body.validate(self)
       if args.size == 3
@@ -1177,7 +1177,7 @@ module MSPhysics
     #   @param [Numeric] ty
     #   @param [Numeric] tz
     # @return [Boolean] success
-    # @see {#set_torque2}
+    # @see #set_torque2
     def set_torque(*args)
       Body.validate(self)
       if args.size == 3
@@ -1206,7 +1206,7 @@ module MSPhysics
     #   @param [Numeric] ty
     #   @param [Numeric] tz
     # @return [Boolean] success
-    # @see {#set_torque}
+    # @see #set_torque
     def set_torque2(*args)
       Body.validate(self)
       if args.size == 3
@@ -1496,7 +1496,7 @@ module MSPhysics
     # Make the body's Z-axis to look in a particular direction.
     # @param [Geom::Vector3d, nil] pin_dir Direction in global space. Pass nil
     #   to disable the look at constraint.
-    # @param [Numeric] stiff Rotational stiffness.
+    # @param [Numeric] accel Rotational acceleration.
     # @param [Numeric] damp Rotational damper.
     # @return [void]
     # @example
@@ -1507,7 +1507,7 @@ module MSPhysics
     #       look_at(nil)
     #     end
     #   }
-    def look_at(pin_dir, stiff = 1500, damp = 200)
+    def look_at(pin_dir, accel = 1500, damp = 200)
       Body.validate(self)
       if pin_dir.nil?
         if @_look_at_constraint && @_look_at_constraint.valid?
@@ -1522,7 +1522,7 @@ module MSPhysics
         @_look_at_constraint.connect(self)
       end
       @_look_at_constraint.set_pin_dir(pin_dir.transform(@_look_at_constraint.get_pin_matrix.inverse))
-      @_look_at_constraint.stiff = stiff
+      @_look_at_constraint.accel = accel
       @_look_at_constraint.damp = damp
       @_look_at_constraint.damper_enabled = true
     end

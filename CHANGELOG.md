@@ -1,3 +1,14 @@
+## 0.7.0 - Apr 18, 2016
+- Added particle interface.
+- Control panel no longer steals keyboard focus.
+- Fixed look_at function. Thanks to PituPhysics for report.
+- Added a feature to automatically generate slider controller for particular joints.
+- Added an option to control body mass via the properties tab.
+- Added curve functions similar to SketchyPhysics.
+- Added a feature to follow/track from scene data, just like in SketchyPhysics.
+- Added more options to the script tab of the dialog.
+- Body properties tab now displays internal and connected joints.
+
 ## 0.6.0 - Apr 11, 2016
 - Added strong mode to linear and angular springs.
 - Added a feature to allow customizing angle and distance units for joints.

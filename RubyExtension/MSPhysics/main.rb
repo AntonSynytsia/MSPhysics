@@ -65,7 +65,7 @@ module MSPhysics
     :update_rate            => 2,
     :update_timestep        => 1/60.0,
     :gravity                => [0.0, 0.0, -9.8],
-    :material_thickness     => 0.001,
+    :material_thickness     => 0.0001,
     :contact_merge_tolerance=> 0.001,
     :world_scale            => 1
   }
@@ -74,6 +74,7 @@ module MSPhysics
     :shape                  => 'Compound',
     :material_name          => 'Default',
     :density                => 700,
+    :mass                   => 1.0,
     :static_friction        => 0.90,
     :dynamic_friction       => 0.50,
     :enable_friction        => true,
@@ -648,14 +649,16 @@ unless file_loaded?(__FILE__)
     MSPhysics::Materials.add(mat)
   }
 
-  # Create MSPhysics Simulation Toolbar
-  if Sketchup.version.to_i > 13
+  use_orig = Sketchup.read_default('MSPhysics', 'Use Original Icons', false) ? true : false
+  if Sketchup.version.to_i > 13 && !use_orig
     simg_path = 'images/icons/'
     limg_path = 'images/icons/'
   else
     simg_path = 'images/small/'
     limg_path = 'images/large/'
   end
+
+  # Create MSPhysics Simulation Toolbar
   sim = MSPhysics::Simulation
   sim_toolbar = UI::Toolbar.new 'MSPhysics'
 
@@ -913,21 +916,25 @@ unless file_loaded?(__FILE__)
     bodies = []
     joints = []
     buoyancy_planes = []
+    curves = []
     model.selection.each { |e|
-      next unless e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)
-      case e.get_attribute('MSPhysics', 'Type', 'Body')
-      when 'Body'
-        bodies << e
-      when 'Joint'
-        joints << e
-      when 'Buoyancy Plane'
-        buoyancy_planes << e
+      if e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)
+        case e.get_attribute('MSPhysics', 'Type', 'Body')
+        when 'Body'
+          bodies << e
+        when 'Joint'
+          joints << e
+        when 'Buoyancy Plane'
+          buoyancy_planes << e
+        end
+      elsif e.is_a?(Sketchup::Edge) && e.curve != nil && !curves.include?(e.curve)
+        curves << e.curve
       end
     }
-    next if bodies.empty? && joints.empty? && buoyancy_planes.empty?
+    next if bodies.empty? && joints.empty? && buoyancy_planes.empty? && curves.size != 1
     msp_menu = menu.add_submenu('MSPhysics')
     if bodies.size > 0
-      if joints.empty? && buoyancy_planes.empty?
+      if joints.empty? && buoyancy_planes.empty? && curves.empty?
         body_menu = msp_menu
       else
         text = bodies.size > 1 ? "#{bodies.size} Bodies" : "Body"
@@ -1064,7 +1071,7 @@ unless file_loaded?(__FILE__)
       }
     end
     if joints.size > 0
-      if bodies.empty? && buoyancy_planes.empty?
+      if bodies.empty? && buoyancy_planes.empty? && curves.empty?
         joint_menu = msp_menu
       else
         text = joints.size > 1 ? "#{joints.size} Joints" : "Joint"
@@ -1125,7 +1132,7 @@ unless file_loaded?(__FILE__)
       }
     end
     if buoyancy_planes.size > 0
-      if bodies.empty? && joints.empty?
+      if bodies.empty? && joints.empty? && curves.empty?
         bp_menu = msp_menu
       else
         text = buoyancy_planes.size > 1 ? "#{buoyancy_planes.size} Buoyancy Planes" : "Buoyancy Plane"
@@ -1156,6 +1163,25 @@ unless file_loaded?(__FILE__)
         MSPhysics.set_attribute(buoyancy_planes, dict, 'Current Y', current_y)
         MSPhysics.set_attribute(buoyancy_planes, dict, 'Current Z', current_z)
         model.commit_operation
+      }
+    end
+    if curves.size == 1
+      curve_name = curves[0].get_attribute('MSPhysics Curve', 'Name')
+      text = curve_name.is_a?(String) ? "Curve: #{curve_name}" : "Curve"
+      c_menu = msp_menu.add_submenu(text)
+      c_menu.add_item("Name Curve") {
+        promts = ['Name']
+        defaults = [curve_name.to_s]
+        input = UI.inputbox(promts, defaults, 'Curve Name')
+        next unless input
+        if input[0].empty?
+          curves[0].delete_attribute('MSPhysics Curve')
+        else
+          curves[0].set_attribute('MSPhysics Curve', 'Name', input[0])
+        end
+      }
+      c_menu.add_item("Unname Curve") {
+        curves[0].delete_attribute('MSPhysics Curve')
       }
     end
   }
@@ -1286,6 +1312,17 @@ unless file_loaded?(__FILE__)
     model.styles.purge_unused
     model.commit_operation
   }
+
+  if Sketchup.version.to_i > 13
+    item = plugin_menu.add_item('Use Original Icons') {
+      use_orig = Sketchup.read_default('MSPhysics', 'Use Original Icons', false) ? true : false
+      Sketchup.write_default('MSPhysics', 'Use Original Icons', !use_orig)
+      UI.messagebox('The change will take place when SketchUp is re-launched.', MB_OK)
+    }
+    plugin_menu.set_validation_proc(item) {
+      Sketchup.read_default('MSPhysics', 'Use Original Icons', false) ? MF_CHECKED : MF_UNCHECKED
+    }
+  end
 
   plugin_menu.add_item('About'){
     msg = "MSPhysics #{MSPhysics::VERSION} -- #{MSPhysics::RELEASE_DATE}\n"

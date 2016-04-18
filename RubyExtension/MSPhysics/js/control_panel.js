@@ -14,6 +14,7 @@ function size_changed() {
 
 function add_slider(v_name, v_default_value, v_min, v_max, v_step) {
   if (v_name in sliders) return false;
+  //var v_name2 = v_name.replace(/\s+/g, '_');
   var text = "<tr id=\"tcrs-" + v_name + "\">"
   text += "<td><div class=\"controller_name\">" + v_name + "</div></td>"
   text += "<td><div class=\"spacing_tab\"></div></td>"
@@ -33,16 +34,18 @@ function add_slider(v_name, v_default_value, v_min, v_max, v_step) {
     linkTo: "lcrs-" + v_name
   });
   slider.setSkin('dhx_terrace');
+  var i_id = "[id=\"icrs-" + v_name + "\"]";
+  var l_id = "[id=\"lcrs-" + v_name + "\"]";
   slider.attachEvent("onChange", function(value) {
-    $( "#icrs-" + v_name ).val( $( "#lcrs-" + v_name ).val() );
+    $( i_id ).val( $( l_id ).val() );
   });
-  $( "#icrs-" + v_name ).on("change", function() {
+  $( i_id ).on("change", function() {
     var res = parseFloat( $(this).val() );
     if (isNaN(res)) res = 0;
     slider.setValue(res);
-    $( this ).val( $("#lcrs-" + v_name ).val());
+    $( this ).val( $( l_id ).val());
   });
-  $( "#icrs-" + v_name ).val( $( "#lcrs-" + v_name ).val() );
+  $( i_id ).val( $( l_id ).val() );
   sliders[v_name] = slider;
   return true;
 }
@@ -51,8 +54,10 @@ function remove_slider(v_name) {
   if (!(v_name in sliders)) return false;
   sliders[v_name].unload();
   delete sliders[v_name];
-  $( "#tcrs-" + v_name ).empty();
-  $( '#table-crs' ).remove("#tcrs-" + v_name);
+  //var v_name2 = v_name.replace(/\s+/g, '_');
+  var t_id = "[id=\"tcrs-" + v_name + "\"]";
+  $( t_id ).empty();
+  $( '#table-crs' ).remove( t_id );
   return true;
 }
 

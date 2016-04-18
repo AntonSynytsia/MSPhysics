@@ -145,6 +145,8 @@ module MSPhysics
       @particles = []
       @particle_def2d = {}
       @particle_def3d = {}
+      @particles_visible = true
+      @curves = {}
       @@instance = self
     end
 
@@ -328,8 +330,8 @@ module MSPhysics
       r1 = AMS::Sketchup.set_menu_bar(!state)
       r2 = AMS::Sketchup.switch_full_screen(state)
       AMS::Sketchup.refresh unless r1 || r2
-      #~ AMS::Sketchup.show_dialogs(!state)
-      #~ AMS::Sketchup.show_toolbars(!state)
+      AMS::Sketchup.show_dialogs(!state)
+      AMS::Sketchup.show_toolbars(!state)
     end
 
     # Enable/disable the drawing of collision contact points.
@@ -637,31 +639,35 @@ module MSPhysics
       end
 
       default = MSPhysics::DEFAULT_BODY_SETTINGS
-      handle = 'MSPhysics Body'
+      bdict = 'MSPhysics Body'
 
-      shape = group.get_attribute(handle, 'Shape', default[:shape])
+      shape = group.get_attribute(bdict, 'Shape', default[:shape])
       body = MSPhysics::Body.new(@world, group, shape)
 
-      body.set_density group.get_attribute(handle, 'Density', default[:density])
-      body.set_static_friction group.get_attribute(handle, 'Static Friction', default[:static_friction])
-      body.set_dynamic_friction group.get_attribute(handle, 'Dynamic Friction', default[:dynamic_friction])
-      body.set_elasticity group.get_attribute(handle, 'Elasticity', default[:elasticity])
-      body.set_softness group.get_attribute(handle, 'Softness', default[:softness])
-      body.set_friction_state group.get_attribute(handle, 'Enable Friction', default[:enable_friction])
-      body.set_magnet_force group.get_attribute(handle, 'Magnet Force', default[:magnet_force])
-      body.set_magnet_range group.get_attribute(handle, 'Magnet Range', default[:magnet_range])
-      body.set_static group.get_attribute(handle, 'Static', default[:static])
-      body.set_frozen group.get_attribute(handle, 'Frozen', default[:frozen])
-      body.set_magnetic group.get_attribute(handle, 'Magnetic', default[:magnetic])
-      body.set_collidable group.get_attribute(handle, 'Collidable', default[:collidable])
-      body.set_auto_sleep_state group.get_attribute(handle, 'Auto Sleep', default[:auto_sleep])
-      body.set_continuous_collision_state group.get_attribute(handle, 'Continuous Collision', default[:continuous_collision])
-      body.set_linear_damping group.get_attribute(handle, 'Linear Damping', default[:linear_damping])
-      ad = group.get_attribute(handle, 'Angular Damping', default[:angular_damping])
+      if group.get_attribute(bdict, 'Weight Control') == 'Mass'
+        body.set_mass group.get_attribute(bdict, 'Mass', default[:mass])
+      else
+        body.set_density group.get_attribute(bdict, 'Density', default[:density])
+      end
+      body.set_static_friction group.get_attribute(bdict, 'Static Friction', default[:static_friction])
+      body.set_dynamic_friction group.get_attribute(bdict, 'Dynamic Friction', default[:dynamic_friction])
+      body.set_elasticity group.get_attribute(bdict, 'Elasticity', default[:elasticity])
+      body.set_softness group.get_attribute(bdict, 'Softness', default[:softness])
+      body.set_friction_state group.get_attribute(bdict, 'Enable Friction', default[:enable_friction])
+      body.set_magnet_force group.get_attribute(bdict, 'Magnet Force', default[:magnet_force])
+      body.set_magnet_range group.get_attribute(bdict, 'Magnet Range', default[:magnet_range])
+      body.set_static group.get_attribute(bdict, 'Static', default[:static])
+      body.set_frozen group.get_attribute(bdict, 'Frozen', default[:frozen])
+      body.set_magnetic group.get_attribute(bdict, 'Magnetic', default[:magnetic])
+      body.set_collidable group.get_attribute(bdict, 'Collidable', default[:collidable])
+      body.set_auto_sleep_state group.get_attribute(bdict, 'Auto Sleep', default[:auto_sleep])
+      body.set_continuous_collision_state group.get_attribute(bdict, 'Continuous Collision', default[:continuous_collision])
+      body.set_linear_damping group.get_attribute(bdict, 'Linear Damping', default[:linear_damping])
+      ad = group.get_attribute(bdict, 'Angular Damping', default[:angular_damping])
       body.set_angular_damping([ad,ad,ad])
-      body.enable_gravity group.get_attribute(handle, 'Enable Gravity', default[:enable_gravity])
+      body.enable_gravity group.get_attribute(bdict, 'Enable Gravity', default[:enable_gravity])
 
-      if group.get_attribute(handle, 'Enable Script', default[:enable_script])
+      if group.get_attribute(bdict, 'Enable Script', default[:enable_script])
         script = group.get_attribute('MSPhysics Script', 'Value')
         begin
           #Kernel.eval(script, body.get_binding, MSPhysics::SCRIPT_NAME, 1)
@@ -682,20 +688,20 @@ module MSPhysics
         end if script.is_a?(String)
       end
 
-      if group.get_attribute(handle, 'Enable Thruster', default[:enable_thruster])
-        controller = group.get_attribute(handle, 'Thruster Controller')
+      if group.get_attribute(bdict, 'Enable Thruster', default[:enable_thruster])
+        controller = group.get_attribute(bdict, 'Thruster Controller')
         if controller.is_a?(String) && !controller.empty?
-          lock_axis = group.get_attribute(handle, 'Thruster Lock Axis', default[:thruster_lock_axis])
+          lock_axis = group.get_attribute(bdict, 'Thruster Lock Axis', default[:thruster_lock_axis])
           @thrusters[body] = { :controller => controller, :lock_axis => lock_axis }
         end
       end
 
-      if group.get_attribute(handle, 'Enable Emitter', default[:enable_emitter])
-        controller = group.get_attribute(handle, 'Emitter Controller')
+      if group.get_attribute(bdict, 'Enable Emitter', default[:enable_emitter])
+        controller = group.get_attribute(bdict, 'Emitter Controller')
         if controller.is_a?(String) && !controller.empty?
-          lock_axis = group.get_attribute(handle, 'Emitter Lock Axis', default[:emitter_lock_axis])
-          rate = AMS.clamp(group.get_attribute(handle, 'Emitter Rate', default[:emitter_rate]).to_i, 1, nil)
-          lifetime = AMS.clamp(group.get_attribute(handle, 'Emitter Lifetime', default[:emitter_lifetime]).to_i, 0, nil)
+          lock_axis = group.get_attribute(bdict, 'Emitter Lock Axis', default[:emitter_lock_axis])
+          rate = AMS.clamp(group.get_attribute(bdict, 'Emitter Rate', default[:emitter_rate]).to_i, 1, nil)
+          lifetime = AMS.clamp(group.get_attribute(bdict, 'Emitter Lifetime', default[:emitter_lifetime]).to_i, 0, nil)
           @emitters[body] = { :controller => controller, :lock_axis => lock_axis, :rate => rate, :lifetime => lifetime }
         end
       end
@@ -1243,20 +1249,22 @@ module MSPhysics
     end
 
     # @!endgroup
-
     # @!group Particle Effects
 
     # Create a new particle.
     # @param [Hash] opts Particle options.
-    # @options opts [Geom::Point3d, Array] :position ([0,0,0]) Starting position.
+    # @option opts [Geom::Point3d, Array] :position (ORIGIN) Starting position.
     #   Position is altered by particle velocity and time.
-    # @options opts [Geom::Vector3d, Array] :velocity ([0,0,0]) Starting velocity
-    #   in inches per second.
-    # @options opts [Geom::Vector3d, Array] :gravity ([0,0,0]) Gravitational
-    #   acceleration in inches per second per second.
+    # @option opts [Geom::Vector3d, Array] :velocity (nil) Starting velocity
+    #   in inches per second. Pass nil if velocity is not necessary.
+    # @option opts [Numeric] :velocity_damp (0.0) Velocity damping,
+    #   a value between 0.0 and 1.0.
+    # @option opts [Geom::Vector3d, Array] :gravity (nil) Gravitational
+    #   acceleration in inches per second per second. Pass nil if gravity is not
+    #   necessary.
     # @option opts [Numeric] :radius (1.0) Starting radius in inches, a value
     #   between 0.01 and 10000. Radius alters depending on a scale parameter.
-    # @options opts [Numeric] :scale (1.01) Radius scale ratio per second, a
+    # @option opts [Numeric] :scale (1.01) Radius scale ratio per second, a
     #   value between 0.001 and 1000. If radius becomes less than 0.01 or more
     #   than 10000, the particle is automatically destroyed.
     # @option opts [Sketchup::Color, Array, String, Fixnum] :color1 ('Gray')
@@ -1264,15 +1272,19 @@ module MSPhysics
     # @option opts [Sketchup::Color, Array, String, Fixnum] :color2 (nil) Ending
     #   color. Pass nil to have the ending color remain same as the starting
     #   color.
-    # @option opts [Numeric] :alpha1 (1.0) Starting opacity, a value between 0.0
-    #   and 1.0.
-    # @option opts [Numeric] :alpha2 (0.0) Ending opacity, a value between 0.0
-    #   and 1.0.
+    # @option opts [Numeric] :alpha1 (1.0) Starting opacity, a value between
+    #   0.0 and 1.0.
+    # @option opts [Numeric] :alpha2 (nil) Ending opacity, a value between 0.0
+    #   and 1.0. Pass nil if ending opacity is ought to be the same as the
+    #   starting opacity.
+    # @option opts [Numeric] :fade (0.0) A time ratio it should take the effect
+    #   to fade into the starting opacity and fade out from the ending opacity,
+    #   a value between 0.0 and 1.0.
     # @option opts [Fixnum] :lifetime (100) Particle lifetime in frames, a value
     #   greater than zero.
-    # @options opts [Fixnum] :num_seg (16) Number of segments the particle is to
+    # @option opts [Fixnum] :num_seg (16) Number of segments the particle is to
     #   consist of, a value between 3 and 100.
-    # @options opts [Numeric] :rot_angle (0.0) Rotate angle in degrees.
+    # @option opts [Numeric] :rot_angle (0.0) Rotate angle in degrees.
     # @option opts [Fixnum] :type (1)
     #   1. Defines a 2D circular particle that is drawn through view drawing
     #      functions. This type is fast, but particle shade and shadow is not
@@ -1284,34 +1296,32 @@ module MSPhysics
     #      geometry. This type is slow, but it guarantees best results.
     # @return [Hash] A hash containing particle properties.
     def create_particle(opts)
-      opts2 = {}
-      opts2[:position] = opts[:position] ? Geom::Point3d.new(opts[:position]) : Geom::Point3d.new(0, 0, 0)
-      opts2[:velocity] = opts[:velocity] ? Geom::Vector3d.new(opts[:velocity]) : Geom::Vector3d.new(0, 0, 0)
-      opts2[:gravity] =  opts[:gravity] ? Geom::Vector3d.new(opts[:gravity]) : Geom::Vector3d.new(0, 0, 0)
-      opts2[:radius] = opts[:radius] ? AMS.clamp(opts[:radius].to_f, 0.01, 10000) : 1.0
-      opts2[:scale] = opts[:scale] ? AMS.clamp(opts[:scale].to_f, 0.001, 1000) : 1.01
-      opts2[:color1] = opts[:color1] ? Sketchup::Color.new(opts[:color1]) : Sketchup::Color.new('Gray')
-      opts2[:color2] = opts[:color2] ? Sketchup::Color.new(opts[:color2]) :  Sketchup::Color.new(opts2[:color1])
-      opts2[:alpha1] = opts[:alpha1] ? AMS.clamp(opts[:alpha1].to_f, 0.0, 1.0) : 1.0
-      opts2[:alpha2] = opts[:alpha2] ? AMS.clamp(opts[:alpha2].to_f, 0.0, 1.0) : 0.0
-      opts2[:lifetime] = opts[:lifetime] ? AMS.clamp(opts[:lifetime].to_i, 1, nil) : 100
-      opts2[:num_seg] = opts[:num_seg] ? AMS.clamp(opts[:num_seg].to_i, 3, 100) : 16
-      opts2[:rot_angle] = opts[:rot_angle] ? opts[:rot_angle].to_f.degrees : 0.0
-      opts2[:type] = opts[:type] ? AMS.clamp(opts[:type].to_i, 1, 3) : 1
-
-      opts2[:color1].alpha = opts2[:alpha1]
-      opts2[:color2].alpha = opts2[:alpha2]
-
+      opts2 = {
+        :position       => opts[:position] ? Geom::Point3d.new(opts[:position]) : Geom::Point3d.new(0, 0, 0),
+        :velocity       => opts[:velocity] ? Geom::Vector3d.new(opts[:velocity]) : nil,
+        :velocity_damp  => opts[:velocity_damp] ? AMS.clamp(opts[:velocity_damp].to_f, 0.0, 1.0) : 0.0,
+        :gravity        => opts[:gravity] ? Geom::Vector3d.new(opts[:gravity]) : nil,
+        :radius         => opts[:radius] ? AMS.clamp(opts[:radius].to_f, 0.01, 10000) : 1.0,
+        :scale          => opts[:scale] ? AMS.clamp(opts[:scale].to_f, 0.001, 1000) : 1.01,
+        :color1         => opts[:color1] ? Sketchup::Color.new(opts[:color1]) : Sketchup::Color.new('Gray'),
+        :color2         => opts[:color2] ? Sketchup::Color.new(opts[:color2]) : nil,
+        :alpha1         => opts[:alpha1] ? AMS.clamp(opts[:alpha1].to_f, 0.0, 1.0) : 1.0,
+        :alpha2         => opts[:alpha2] ? AMS.clamp(opts[:alpha2].to_f, 0.0, 1.0) : nil,
+        :fade           => opts[:fade] ? AMS.clamp(opts[:fade].to_f, 0.0, 1.0) : 0.0,
+        :lifetime       => opts[:lifetime] ? AMS.clamp(opts[:lifetime].to_i, 1, nil) : 100,
+        :num_seg        => opts[:num_seg] ? AMS.clamp(opts[:num_seg].to_i, 3, 100) : 16,
+        :rot_angle      => opts[:rot_angle] ? opts[:rot_angle].to_f.degrees : 0.0,
+        :type           => opts[:type] ? AMS.clamp(opts[:type].to_i, 1, 3) : 1
+      }
       opts2[:life_start] = @frame
       opts2[:life_end] = @frame + opts2[:lifetime]
       opts2[:color] = Sketchup::Color.new(opts2[:color1])
-
+      opts2[:color].alpha = opts2[:fade].zero? ? opts2[:alpha1] : 0.0
       @particles << opts2
-
       return opts2 if opts2[:type] == 1
 
       model = Sketchup.active_model
-      if opts2[:type] == 3 # 3D
+      if opts2[:type] == 3 # 3D entity
         if @particle_def3d[opts2[:num_seg]].nil? || @particle_def3d[opts2[:num_seg]].deleted?
           @particle_def3d[opts2[:num_seg]] = model.definitions.add("AP3D_#{opts2[:num_seg]}")
           e = @particle_def3d[opts2[:num_seg]].entities
@@ -1324,7 +1334,7 @@ module MSPhysics
         end
         cd = @particle_def3d[opts2[:num_seg]]
         normal = Geom::Vector3d.new(Math.cos(opts2[:rot_angle]), Math.sin(opts2[:rot_angle]), 0)
-      else # 2D
+      else # 2D entity
         if @particle_def2d[opts2[:num_seg]].nil? || @particle_def2d[opts2[:num_seg]].deleted?
           @particle_def2d[opts2[:num_seg]] = model.definitions.add("MSP_P2D_#{opts2[:num_seg]}")
           e = @particle_def2d[opts2[:num_seg]].entities
@@ -1345,6 +1355,7 @@ module MSPhysics
       opts2[:material].alpha = opts2[:color].alpha / 255.0
       opts2[:group] = model.entities.add_instance(cd, tra)
       opts2[:group].material = opts2[:material]
+      opts2[:group].visible = false unless @particles_visible
 
       return opts2
     end
@@ -1370,17 +1381,142 @@ module MSPhysics
       @particles.clear
     end
 
+    # Show/hide particles.
+    # @param [Boolean] state
+    # @return [Boolean] success
+    def show_particles(state)
+      state = state ? true : false
+      return false if @particles_visible == state
+      @particles_visible = state
+      @particles.each { |opts|
+        next true if opts[:type] == 1
+        opts[:group].visible = state if opts[:group].valid? && opts[:group].visible? != state
+      }
+      true
+    end
+
+    # Determine whether particles are visible.
+    # @return [Boolean]
+    def particles_visible?
+      @particles_visible
+    end
+
+    # @!endgroup
+    # @!group Curve Interface
+
+    # Get point and vector on curve.
+    # @param [String] name Curve name.
+    # @param [Numeric] dist Distance on curve in inches.
+    # @param [Numeric] loop Whether to loop if given distance extends curve length.
+    # @return [Array<(Geom::Point3d, Geom::Vector3d)>] An array of two
+    #   values. The first element resembles a point on curve. The second element
+    #   resembles a direction on curve.
+    # @raise [NameError] if curve with particular name doesn't exist.
+    # @example Moving body along curve.
+    #   # Assuming that curve named 'CurveA' exists.
+    #   onStart {
+    #     this.set_static(true)
+    #   }
+    #   onUpdate {
+    #     point, vector = simulation.eval_curve_abs('CurveA', frame * 0.1, true)
+    #     this.set_position(point, 1)
+    #   }
+    def eval_curve_abs(name, dist, loop = true)
+      raise(NameError, "Curve named, '#{name}', doesn't exist!", caller) unless curve_exists?(name)
+      curve = @curves[name.to_s]
+      pts = curve.vertices.map { |x| x.position }
+      curve_len = 0.0
+      curve.edges.each { |e| curve_len += e.length }
+      if loop
+        if pts.first != pts.last
+          curve_len += pts.first.distance(pts.last)
+          pts << pts.first
+        end
+        dist = dist % curve_len
+      else
+        if dist > curve_len
+          dist = curve_len
+        elsif dist < -curve_len
+          dist = -curve_len
+        end
+        dist += curve_len if dist < 0
+      end
+      cur_dist = 0
+      last_dist = 0
+      last_pt = pts.first
+      for i in 0...pts.length
+        cur_dist += last_pt.distance(pts[i])
+        if (cur_dist - dist).abs < 1.0e-6
+          point = pts[i]
+          if loop
+            j = i
+            k = i == pts.length - 1 ? 1 : i + 1
+          else
+            j = i == pts.length - 1 ? i - 1 : i
+            k = j + 1
+          end
+          vector = pts[j].vector_to(pts[k]).normalize
+          return [point, vector]
+        elsif cur_dist > dist
+          dir = last_pt.vector_to(pts[i])
+          dir.length = dist - last_dist
+          point = last_pt + dir
+          return [point, last_pt.vector_to(pts[i]).normalize]
+        end
+        last_pt = pts[i]
+        last_dist = cur_dist
+      end
+      nil
+    end
+
+    # Get curve length.
+    # @param [String] name Curve name.
+    # @return [Numeric] Curve length.
+    # @raise [NameError] if curve with particular name doesn't exist.
+    def curve_length(name)
+      raise(NameError, "Curve named, '#{name}', doesn't exist!", caller) unless curve_exists?(name)
+      curve = @curves[name.to_s]
+      curve_len = 0.0
+      curve.edges.each { |e| curve_len += e.length }
+      curve_len
+    end
+
+    # Determine whether curve with a particular name exists.
+    # @param [String] name Curve name.
+    # @return [Boolean]
+    def curve_exists?(name)
+      if @curves[name.to_s] && @curves[name.to_s].valid?
+        true
+      else
+        load_curves
+        @curves[name.to_s] ? true : false
+      end
+    end
+
     # @!endgroup
 
     private
+
+    def load_curves
+      @curves.clear
+      Sketchup.active_model.entities.grep(Sketchup::Edge).each { |e|
+        curve = e.curve
+        next if curve.nil?
+        name = curve.get_attribute('MSPhysics Curve', 'Name')
+        next if !name.is_a?(String) || @curves[name]
+        @curves[name] = curve
+      }
+    end
 
     def update_particles
       model = Sketchup.active_model
       mats = model.materials
       eye = model.active_view.camera.eye
       @particles.reject! { |opts|
+        # Control radius
         opts[:radius] *= opts[:scale]
-        if (opts[:type] != 1 && (opts[:group].deleted? || opts[:material].deleted?)) || (opts[:radius] < 0.01 || opts[:radius] > 10000 || @frame >= opts[:life_end])
+        # Check if need to delete the particle
+        if (opts[:type] != 1 && (opts[:group].deleted? || opts[:material].deleted?)) || (opts[:radius] < 0.01 || opts[:radius] > 10000 || @frame >= opts[:life_end] || @frame < opts[:life_start])
           next true if opts[:type] == 1
           if opts[:group].valid?
             opts[:group].material = nil
@@ -1389,23 +1525,79 @@ module MSPhysics
           mats.remove(opts[:material]) if mats.respond_to?(:remove)
           next true
         end
+        # Transition color
         ratio = (@frame - opts[:life_start]) / opts[:lifetime].to_f
-        opts[:color] = MSPhysics.transition_color(opts[:color1], opts[:color2], ratio)
-        opts[:velocity].x += opts[:gravity].x * @update_timestep
-        opts[:velocity].y += opts[:gravity].y * @update_timestep
-        opts[:velocity].z += opts[:gravity].z * @update_timestep
-        opts[:position].x += opts[:velocity].x * @update_timestep
-        opts[:position].y += opts[:velocity].y * @update_timestep
-        opts[:position].z += opts[:velocity].z * @update_timestep
+        if opts[:color2]
+          c = opts[:color]
+          c1 = opts[:color1]
+          c2 = opts[:color2]
+          c.red = c1.red + ((c2.red - c1.red) * ratio).to_i
+          c.green = c1.green + ((c2.green - c1.green) * ratio).to_i
+          c.blue = c1.blue + ((c2.blue - c1.blue) * ratio).to_i
+        end
+        # Transition opacity
+        if opts[:alpha2]
+          if opts[:fade].zero?
+            opts[:color].alpha = opts[:alpha1] + (opts[:alpha2] - opts[:alpha1]) * ratio
+          else
+            f = opts[:fade] * 0.5
+            if ratio < f
+              r = (@frame - opts[:life_start]) / (opts[:lifetime] * f).to_f
+              opts[:color].alpha = opts[:alpha1] * r
+            elsif ratio > (1.0 - f)
+              r = (opts[:life_end] - @frame) / (opts[:lifetime] * f).to_f
+              opts[:color].alpha = opts[:alpha2] * r
+            else
+              fl = opts[:lifetime] * opts[:fade]
+              r = (@frame - opts[:life_start] - fl * 0.5) / (opts[:lifetime] - fl).to_f
+              opts[:color].alpha = opts[:alpha1] + (opts[:alpha2] - opts[:alpha1]) * r
+            end
+          end
+        else
+          if opts[:fade].zero?
+            opts[:color].alpha = opts[:alpha1]
+          else
+            f = opts[:fade] * 0.5
+            if ratio < f
+              r = (@frame - opts[:life_start]) / (opts[:lifetime] * f).to_f
+              opts[:color].alpha = opts[:alpha1] * r
+            elsif ratio > (1.0 - f)
+              r = (opts[:life_end] - @frame) / (opts[:lifetime] * f).to_f
+              opts[:color].alpha = opts[:alpha1] * r
+            else
+              opts[:color].alpha = opts[:alpha1]
+            end
+          end
+        end
+        # Control velocity and position
+        pos = opts[:position]
+        vel = opts[:velocity]
+        if vel
+          gra = opts[:gravity]
+          if gra
+            vel.x += gra.x * @update_timestep
+            vel.y += gra.y * @update_timestep
+            vel.z += gra.z * @update_timestep
+          end
+          if opts[:velocity_damp] != 0
+            s = 1.0 - opts[:velocity_damp]
+            vel.x *= s
+            vel.y *= s
+            vel.z *= s
+          end
+          pos.x += vel.x * @update_timestep
+          pos.y += vel.y * @update_timestep
+          pos.z += vel.z * @update_timestep
+        end
         if opts[:type] != 1
           opts[:material].color = opts[:color]
           opts[:material].alpha = opts[:color].alpha / 255.0
           if opts[:type] == 3
-            normal = Geom::Vector.new(Math.cos(opts[:rot_angle]), Math.sin(opts[:rot_angle]), 0)
+            normal = Geom::Vector3d.new(Math.cos(opts[:rot_angle]), Math.sin(opts[:rot_angle]), 0)
           else
-            normal = (eye == opts[:position]) ? Z_AXIS : opts[:position].vector_to(eye)
+            normal = (eye == pos) ? Z_AXIS : pos.vector_to(eye)
           end
-          tra1 = Geom::Transformation.new(opts[:position], normal)
+          tra1 = Geom::Transformation.new(pos, normal)
           tra2 = Geom::Transformation.rotation(ORIGIN, Z_AXIS, opts[:rot_angle])
           tra3 = Geom::Transformation.scaling(opts[:radius])
           opts[:group].move!(tra1*tra2*tra3)
@@ -1417,6 +1609,7 @@ module MSPhysics
     end
 
     def draw_particles(view, bb)
+      return unless @particles_visible
       eye = view.camera.eye
       fx = {}
       @particles.each { |opts|
@@ -1442,6 +1635,10 @@ module MSPhysics
     end
 
     def do_on_update
+      if @error
+        Simulation.reset
+        return
+      end
       model = Sketchup.active_model
       view = model.active_view
       cam = view.camera
@@ -1923,6 +2120,17 @@ module MSPhysics
       abort(e)
     end
 
+    def call_event2(evt, *args)
+      return if @world.nil? || !@world.is_valid?
+      @world.get_bodies.each { |body|
+        next if !body.is_valid?
+        body.call_event(evt, *args)
+        return if @world.nil? || !@world.is_valid?
+      }
+    rescue Exception => e
+      @error = e
+    end
+
     def abort(e)
       @error = e
       Simulation.reset
@@ -2341,12 +2549,33 @@ module MSPhysics
       @time_info[:last] = Time.now
       @fps_info[:last] = Time.now
       @timers_started = true
+      # Camera follow and track from scenes
+      page = model.pages.selected_page
+      if page
+        desc = page.description.downcase
+        sentences = desc.split('.')
+        sentences.each { |sentence|
+          words = sentence.split(' ')
+          if words.size >= 3 && words[0] == 'camera'
+            if words[1] == 'follow'
+              ent = get_group_by_name(words[2])
+              if ent
+                @camera[:follow] = ent
+                @camera[:offset] = view.camera.eye - ent.bounds.center
+              end
+            elsif words[1] == 'track'
+              ent = get_group_by_name(words[2])
+              @camera[:target] = ent if ent
+            end
+          end
+        }
+      end
       # Call onStart event
       call_event(:onStart)
       # Refresh view
       view.invalidate
+      # Start the update timer
       if Simulation.is_active?
-        # Start the update timer
         #@update_timer = AMS::Timer.start(0, true){ do_on_update }
         @update_timer = ::UI.start_timer(0, true) { do_on_update }
       end
@@ -2475,6 +2704,7 @@ module MSPhysics
       @particles.clear
       @particle_def2d.clear
       @particle_def3d.clear
+      @curves.clear
       @@instance = nil
       # Show info
       if @error
@@ -2770,6 +3000,7 @@ module MSPhysics
     end
 
     def draw(view)
+      return if @error
       @bb.clear
       draw_contact_points(view)
       draw_contact_forces(view)
@@ -2777,12 +3008,13 @@ module MSPhysics
       draw_axes(view)
       draw_aabb(view)
       draw_pick_and_drag(view)
+      draw_particles(view, @bb)
       draw_queues(view)
       return unless Simulation.is_active?
       view.drawing_color = 'black'
       view.line_width = 5
       view.line_stipple = ''
-      call_event(:onDraw, view, @bb)
+      call_event2(:onDraw, view, @bb)
     end
 
     # AMS SketchUp Observer
