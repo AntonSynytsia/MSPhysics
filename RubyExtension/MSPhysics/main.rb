@@ -9,19 +9,23 @@ dir = File.dirname(__FILE__)
 ops = (RUBY_PLATFORM =~ /mswin|mingw/i) ? 'win' : 'mac'
 bit = (Sketchup.respond_to?('is_64bit?') && Sketchup.is_64bit?) ? '64' : '32'
 ver = (RUBY_VERSION =~ /1.8/) ? '1.8' : '2.0'
+ext = (RUBY_PLATFORM =~ /mswin|mingw/i) ? '.so' : '.a'
 
 # Load SDL and SDL Mixer DLLs
+use_sdl = true
 libraries = %w(libogg libvorbis libogg-0 libvorbis-0 libvorbisfile-3 libmikmod-2 libmodplug-1 SDL2 SDL2_mixer smpeg2 libFLAC-8)
 info = ""
 libraries.each { |name|
   path = File.join(dir, ops+bit, name + '.dll')
   res = AMS::DLL.load_library(path)
+  use_sdl = false if res == nil || res == 0
   info << "#{name} - #{res}\n"
 }
 #UI.messagebox info
 
 # Load MSPhysics Library
-require File.join(dir, ops+bit, ver, 'msp_lib')
+
+require File.join(dir, ops+bit, ver, use_sdl ? 'msp_lib' : 'msp_lib_no_sdl' + ext)
 
 require File.join(dir, 'geometry.rb')
 require File.join(dir, 'group.rb')
@@ -448,7 +452,7 @@ module MSPhysics
     # @param [Fixnum] num_seg Number of segments.
     # @param [Numeric] rot_angle Rotate angle in degrees.
     # @return [Array<Geom::Point3d>] An array of points on circle.
-    def points_on_circle3d(origin, radius, normal = [0,0,1], num_seg = 16, rot_angle = 0)
+    def points_on_circle3d(origin, radius, normal = Z_AXIS, num_seg = 16, rot_angle = 0)
       # Get the x and y axes
       origin = Geom::Point3d.new(origin) unless origin.is_a?(Geom::Point3d)
       normal = Geom::Vector3d.new(normal) unless normal.is_a?(Geom::Vector3d)
@@ -466,6 +470,29 @@ module MSPhysics
         pts << origin + vec
       end
       pts
+    end
+
+    # Blend colors.
+    # @param [Numeric] ratio between 0.0 and 1.0.
+    # @param [Array<Sketchup::Color, String, Array>] colors An array of colors to blend.
+    # @return [Sketchup::Color]
+    def blend_colors(ratio, colors = ['white', 'black'])
+      if colors.empty?
+        raise(TypeError, 'Expected at least one color, but got none.', caller)
+      end
+      return Sketchup::Color.new(colors[0]) if colors.size == 1
+      ratio = MSPhysics.clamp(ratio, 0, 1)
+      cr = (colors.length-1)*ratio
+      dec = cr-cr.to_i
+      if dec == 0
+        Sketchup::Color.new(colors[cr])
+      else
+        a = colors[cr.to_i].to_a
+        b = colors[cr.ceil].to_a
+        a[3] = 255 unless a[3]
+        b[3] = 255 unless b[3]
+        Sketchup::Color.new(((b[0]-a[0])*dec+a[0]).to_i, ((b[1]-a[1])*dec+a[1]).to_i, ((b[2]-a[2])*dec+a[2]).to_i, ((b[3]-a[3])*dec+a[3]).to_i)
+      end
     end
 
     # Create a watermark text.
@@ -563,6 +590,38 @@ module MSPhysics
       end
     end
 
+    # Get component definition by entity ID.
+    # @param [Fixnum] id
+    # @return [Sketchup::ComponentDefinition, nil]
+    def get_definition_by_id(id)
+      Sketchup.active_model.definitions.each { |d|
+        return d if d.entityId == id
+      }
+      nil
+    end
+
+    # Get group/component by entity ID.
+    # @param [Fixnum] id
+    # @return [Sketchup::Group, Sketchup::ComponentInstance, nil]
+    def get_group_by_id(id)
+      Sketchup.active_model.definitions.each { |d|
+        d.instances.each { |i|
+          return i if i.entityId == id
+        }
+      }
+      nil
+    end
+
+    # Get material by entity ID.
+    # @param [Fixnum] id
+    # @return [Sketchup::Material, nil]
+    def get_material_by_id(id)
+      Sketchup.active_model.materials.each { |m|
+        return m if m.entityId == id
+      }
+      nil
+    end
+
     private
 
     def scale_joints(scale, entities = Sketchup.active_model.entities)
@@ -592,19 +651,21 @@ unless file_loaded?(__FILE__)
   Sketchup.add_observer(MSPhysics::Dialog::AppObserver.new)
   Sketchup.add_observer(MSPhysics::Replay::AppObserver.new)
   # Setup audio
-  sdl = MSPhysics::SDL
-  mix = MSPhysics::Mixer
-  sdl.init(sdl::INIT_AUDIO)
-  mix.init(mix::INIT_SUPPORTED)
-  mix.open_audio(22050, mix::DEFAULT_FORMAT, 2, 1024)
-  mix.allocate_channels(16)
-  Kernel.at_exit {
-    MSPhysics::Music.destroy_all
-    MSPhysics::Sound.destroy_all
-    mix.close_audio
-    mix.quit
-    sdl.quit
-  }
+  if MSPhysics.sdl_used?
+    sdl = MSPhysics::SDL
+    mix = MSPhysics::Mixer
+    sdl.init(sdl::INIT_AUDIO)
+    mix.init(mix::INIT_SUPPORTED)
+    mix.open_audio(22050, mix::DEFAULT_FORMAT, 2, 1024)
+    mix.allocate_channels(16)
+    Kernel.at_exit {
+      MSPhysics::Music.destroy_all
+      MSPhysics::Sound.destroy_all
+      mix.close_audio
+      mix.quit
+      sdl.quit
+    }
+  end
   # Create cursors
   path = File.join(dir, 'images/cursors')
   MSPhysics::CURSORS.keys.each { |name|
@@ -897,6 +958,7 @@ unless file_loaded?(__FILE__)
 
   cmd = UI::Command.new('Clear Data') {
     MSPhysics::Replay.clear_active_data
+    MSPhysics::Replay.clear_data_from_model(!MSPhysics::Simulation.is_active?)
   }
   cmd.set_validation_proc {
     MSPhysics::Replay.active_data_valid? && !MSPhysics::Replay.active? ? MF_ENABLED : MF_GRAYED
@@ -1327,7 +1389,7 @@ unless file_loaded?(__FILE__)
   plugin_menu.add_item('About'){
     msg = "MSPhysics #{MSPhysics::VERSION} -- #{MSPhysics::RELEASE_DATE}\n"
     msg << "Powered by the Newton Dynamics #{MSPhysics::Newton.get_version} physics SDK by Juleo Jerez.\n"
-    msg << "Copyright MIT © 2015, Anton Synytsia.\n"
+    msg << "Copyright MIT © 2015-2016, Anton Synytsia.\n"
     msg << "Credit to Chris Phillips for ideas from SketchyPhysics.\n"
     UI.messagebox(msg)
   }

@@ -333,6 +333,11 @@ table {
   font-weight: bold;
 }
 
+.description em8 {
+  color: #FF0000;
+  font-weight: normal;
+}
+
 .description tt {
   color: #170E80;
 }

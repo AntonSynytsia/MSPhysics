@@ -36,7 +36,7 @@
 #define DG_MAX_MIN_VOLUME				dgFloat32 (1.0e-6f)
 
 
-dgVector dgCollisionCompound::m_padding (dgFloat32 (1.0e-6f)); 
+dgVector dgCollisionCompound::m_padding (dgFloat32 (1.0e-3f)); 
 
 class dgCollisionCompound::dgHeapNodePair
 {

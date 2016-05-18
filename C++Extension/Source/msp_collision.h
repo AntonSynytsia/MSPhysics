@@ -9,8 +9,10 @@ namespace MSNewton {
 
 class MSNewton::Collision {
 private:
+	// Constants
 	static const dFloat MIN_SIZE;
 	static const dFloat MAX_SIZE;
+
 public:
 	// Ruby Functions
 	static VALUE create_null(VALUE self, VALUE v_world);

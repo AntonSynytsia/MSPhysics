@@ -49,15 +49,15 @@ module MSPhysics
           (consider_world && (sim_inst.nil? || sim_inst.get_body_by_group(body).nil?)))
         ids = ids.grep(Fixnum)
         if body.get_attribute('MSPhysics Body', 'Connect Closest Joints', MSPhysics::DEFAULT_BODY_SETTINGS[:connect_closest_joinst])
-          bbs = {}
+          bbsc = {}
           Sketchup.active_model.entities.each { |ent|
             next if ((!ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)) ||
               ent.get_attribute('MSPhysics', 'Type', 'Body') != 'Body')
-            bbs[ent] = MSPhysics::Group.get_bounding_box_from_faces(ent, true, ent.transformation) { |e|
+            bbsc[ent] = MSPhysics::Group.get_bounding_box_from_faces(ent, true, ent.transformation) { |e|
               e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
-            }
+            }.center
           }
-          body_center = bbs[body].center
+          body_center = bbsc[body]
           Sketchup.active_model.entities.each { |ent|
             next if (!ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)) || ent == body
             type = ent.get_attribute('MSPhysics', 'Type', 'Body')
@@ -84,7 +84,7 @@ module MSPhysics
                     (consider_world && sim_inst.get_body_by_group(ent2).nil?))
                   ids2 = ent2.get_attribute('MSPhysics Body', 'Connected Joints')
                   if ids2.is_a?(Array) && ids2.include?(id)
-                    dist2 = jtra.origin.distance(bbs[ent2].center)
+                    dist2 = jtra.origin.distance(bbsc[ent2])
                     dist2 = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist2).to_f : dist2.round(3)
                     if dist2 < dist
                       jconnected = false
@@ -109,7 +109,7 @@ module MSPhysics
                   (consider_world && sim_inst.get_body_by_group(ent2).nil?))
                 ids2 = ent2.get_attribute('MSPhysics Body', 'Connected Joints')
                 if ids2.is_a?(Array) && ids2.include?(id)
-                  dist2 = jtra.origin.distance(bbs[ent2].center)
+                  dist2 = jtra.origin.distance(bbsc[ent2])
                   dist2 = RUBY_VERSION =~ /1.8/ ? sprintf("%.3f", dist2).to_f : dist2.round(3)
                   if dist2 < dist
                     jconnected = false

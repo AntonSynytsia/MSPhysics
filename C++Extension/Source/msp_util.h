@@ -2,6 +2,7 @@
 #define MSP_UTIL_H
 
 #include "ruby_util.h"
+#include <cmath>
 #include "NewtonClass.h"
 #include "Newton.h"
 #include "dVector.h"
@@ -10,12 +11,12 @@
 #include <iostream>
 #include <map>
 #include <vector>
-#include <cmath>
 #include <float.h>
 #include "VHACD.h"
 
 // Constants
-const dFloat PI									= 3.141592f;
+const dFloat PI									= 3.14159265f;
+const dFloat PI2								= 6.28318530f;
 const dFloat EPSILON							= 1.0e-6f;
 const dFloat EPSILON2							= 1.0e-3f;
 const dFloat INCH_TO_METER						= 0.02540f;
@@ -51,10 +52,45 @@ const dFloat MIN_DENSITY						= 1.0e-6f;
 
 // Sketchup API Access Constants
 const VALUE suSketchup			= rb_define_module("Sketchup");
+const VALUE suColor				= rb_define_class_under(suSketchup, "Color", rb_cObject);
 const VALUE suGeom				= rb_define_module("Geom");
 const VALUE suPoint3d			= rb_define_class_under(suGeom, "Point3d", rb_cObject);
 const VALUE suVector3d			= rb_define_class_under(suGeom, "Vector3d", rb_cObject);
 const VALUE suTransformation	= rb_define_class_under(suGeom, "Transformation", rb_cObject);
+
+// Optimization interns
+const ID INTERN_NEW				= rb_intern("new");
+const ID INTERN_PACK			= rb_intern("pack");
+const ID INTERN_UNPACK			= rb_intern("unpack");
+const ID INTERN_X				= rb_intern("x");
+const ID INTERN_Y				= rb_intern("y");
+const ID INTERN_Z				= rb_intern("z");
+const ID INTERN_TO_A			= rb_intern("to_a");
+const ID INTERN_RED				= rb_intern("red");
+const ID INTERN_GREEN			= rb_intern("green");
+const ID INTERN_BLUE			= rb_intern("blue");
+const ID INTERN_ALPHA			= rb_intern("alpha");
+const ID INTERN_SRED			= rb_intern("red=");
+const ID INTERN_SGREEN			= rb_intern("green=");
+const ID INTERN_SBLUE			= rb_intern("blue=");
+const ID INTERN_SALPHA			= rb_intern("alpha=");
+const ID INTERN_ROTATION		= rb_intern("rotation");
+const ID INTERN_INVERSE			= rb_intern("inverse");
+const ID INTERN_TRANSFORM		= rb_intern("transform");
+const ID INTERN_CALL			= rb_intern("call");
+const ID INTERN_PUTS			= rb_intern("puts");
+const ID INTERN_INSPECT			= rb_intern("inspect");
+const ID INTERN_BACKTRACE		= rb_intern("backtrace");
+const ID INTERN_XAXIS			= rb_intern("xaxis");
+const ID INTERN_YAXIS			= rb_intern("yaxis");
+const ID INTERN_ZAXIS			= rb_intern("zaxis");
+const ID INTERN_ACTIVE_MODEL	= rb_intern("active_model");
+const ID INTERN_ACTIVE_VIEW		= rb_intern("active_view");
+const ID INTERN_CAMERA			= rb_intern("camera");
+const ID INTERN_EYE				= rb_intern("eye");
+const ID INTERN_DRAW			= rb_intern("draw");
+const ID INTERN_SDRAWING_COLOR	= rb_intern("drawing_color=");
+const ID INTERN_ADD				= rb_intern("add");
 
 // Enumerators
 enum JointType {
@@ -184,7 +220,6 @@ typedef struct BodyData
 	VALUE user_data;
 	dVector matrix_scale;
 	dVector default_collision_scale;
-	dVector collision_scale;
 	dVector default_collision_offset;
 	bool matrix_changed;
 	bool gravity_enabled;
@@ -272,9 +307,8 @@ typedef struct WorldData
 // Variables
 extern std::map<const NewtonWorld*, bool> valid_worlds;
 extern std::map<const NewtonBody*, bool> valid_bodies;
-extern std::map<const NewtonCollision*, bool> valid_collisions;
+extern std::map<const NewtonCollision*, dVector> valid_collisions;
 extern std::map<JointData*, bool> valid_joints;
-extern std::map<StandardJointData*, bool> valid_standard_joints;
 extern bool validate_objects;
 
 // Utility Functions
@@ -376,7 +410,10 @@ VALUE to_value(const wchar_t* value, long length);
 
 VALUE vector_to_value(const dVector& value, dFloat scale = DEFAULT_SCALE);
 VALUE point_to_value(const dVector& value, dFloat scale = DEFAULT_SCALE);
+VALUE point_to_value2(const dVector& value);
 VALUE matrix_to_value(const dMatrix& value, dFloat scale = DEFAULT_SCALE);
+VALUE color_to_value(const dVector& value, dFloat alpha = 1.0f);
+
 
 inline bool value_to_bool(VALUE value) {
 	return RTEST(value);
@@ -445,7 +482,10 @@ inline unsigned int get_string_length(VALUE value) {
 
 dVector value_to_vector(VALUE value, dFloat scale = DEFAULT_SCALE);
 dVector value_to_point(VALUE value, dFloat scale = DEFAULT_SCALE);
+dVector value_to_point2(VALUE value);
 dMatrix value_to_matrix(VALUE value, dFloat scale = DEFAULT_SCALE);
+dVector value_to_color(VALUE value);
+
 const NewtonWorld* value_to_world(VALUE value);
 const NewtonBody* value_to_body(VALUE value);
 const NewtonCollision* value_to_collision(VALUE value);
@@ -455,8 +495,8 @@ JointData* value_to_joint2(VALUE value, JointType joint_type);
 dFloat get_vector_magnitude(const dVector& vector);
 void set_vector_magnitude(dVector& vector, dFloat magnitude);
 void normalize_vector(dVector& vector);
-bool vectors_identical(dVector& a, dVector& b);
-bool is_vector_valid(dVector& vector);
+bool vectors_identical(const dVector& a, const dVector& b);
+bool is_vector_valid(const dVector& vector);
 
 bool is_matrix_uniform(const dMatrix& matrix);
 bool is_matrix_flat(const dMatrix& matrix);

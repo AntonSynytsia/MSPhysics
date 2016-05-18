@@ -14,8 +14,9 @@ module MSPhysics
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
     #   Of the given matrix, matrix origin should represent pin origin, and
     #   matrix Z-axis should represent pin up.
-    def initialize(world, parent, pin_tra)
-      super(world, parent, pin_tra, 8)
+    # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group
+    def initialize(world, parent, pin_tra, group = nil)
+      super(world, parent, pin_tra, 6, group)
       MSPhysics::Newton::Motor.create(@address)
       MSPhysics::Newton::Motor.set_accel(@address, DEFAULT_ACCEL)
       MSPhysics::Newton::Motor.set_damp(@address, DEFAULT_DAMP)
@@ -60,7 +61,7 @@ module MSPhysics
     end
 
     # Get rotational damper.
-	# @note Higher damper makes rotation stronger.
+    # @note Higher damper makes rotation stronger.
     # @note The maximum angular rate in radians per second is
     #   <tt>accel * controller / damp</tt>.
     # @return [Numeric]
@@ -69,7 +70,7 @@ module MSPhysics
     end
 
     # Set rotational damper.
-	# @note Higher damper makes rotation stronger.
+    # @note Higher damper makes rotation stronger.
     # @note The maximum angular rate in radians per second is
     #   <tt>accel * controller / damp</tt>.
     # @param [Numeric] value A value greater than or equal to zero.

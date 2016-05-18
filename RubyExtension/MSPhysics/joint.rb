@@ -30,11 +30,13 @@ module MSPhysics
     #   Of the given matrix, matrix origin should represent pin origin, and
     #   matrix Z-axis should represent pin up.
     # @param [Fixnum] dof Maximum degrees of freedom.
-    def initialize(world, parent, pin_tra, dof)
+    # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group_inst
+    def initialize(world, parent, pin_tra, dof, group_inst = nil)
       MSPhysics::World.validate(world)
       MSPhysics::Body.validate(parent) if parent
       parent_address = parent ? parent.get_address : nil
-      @address = MSPhysics::Newton::Joint.create(world.get_address, parent_address, pin_tra, dof)
+      @world = world
+      @address = MSPhysics::Newton::Joint.create(world.get_address, parent_address, pin_tra, dof, group_inst)
       MSPhysics::Newton::Joint.set_user_data(@address, self)
 
       MSPhysics::Newton::Joint.set_constraint_type(@address, DEFAULT_CONSTRAINT_TYPE)
@@ -48,6 +50,18 @@ module MSPhysics
     # @return [Fixnum]
     def address
       @address
+    end
+
+    # Get group/component associated with the joint.
+    # @return [Sketchup::Group, Sketchup::ComponentInstance, nil]
+    def group
+      MSPhysics::Newton::Joint.get_group(@address)
+    end
+
+    # Get the world the joint is associated to.
+    # @return [MSPhysics::World]
+    def world
+      @world
     end
 
     # Destroy joint.

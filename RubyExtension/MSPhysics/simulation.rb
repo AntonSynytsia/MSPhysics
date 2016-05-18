@@ -135,7 +135,6 @@ module MSPhysics
       @thrusters = {}
       @emitters = {}
       @buoyancy_planes = {}
-      @joints = {}
       @controlled_joints = {}
       @scene_data1 = nil
       @scene_data2 = nil
@@ -147,6 +146,7 @@ module MSPhysics
       @particle_def3d = {}
       @particles_visible = true
       @curves = {}
+      @undo_on_reset = false
       @@instance = self
     end
 
@@ -489,6 +489,7 @@ module MSPhysics
     # @param [Sketchup::Group, Sketchup::ComponentInstance] group
     # @return [Body, nil]
     def get_body_by_group(group)
+=begin
       AMS.validate_type(group, Sketchup::Group, Sketchup::ComponentInstance)
       world_address = @world.get_address
       ovs = MSPhysics::Newton.is_object_validation_enabled?
@@ -504,6 +505,10 @@ module MSPhysics
       end
       MSPhysics::Newton.enable_object_validation(ovs)
       nil
+=end
+      AMS.validate_type(group, Sketchup::Group, Sketchup::ComponentInstance)
+      data = MSPhysics::Newton::Body.get_body_data_by_group(group)
+      data.is_a?(MSPhysics::Body) && data.get_world == @world ? data : nil
     end
 
     # Reference body by group name.
@@ -575,14 +580,13 @@ module MSPhysics
     # @return [Array<Joint>]
     def get_joints_by_group(group)
       AMS.validate_type(group, Sketchup::Group, Sketchup::ComponentInstance)
-      joints = @joints[group]
-      opt_joints = []
-      if joints
-        joints.each { |joint|
-          opt_joints << joint if joint.valid?
-        }
-      end
-      opt_joints
+      joints = []
+      MSPhysics::Newton::Joint.get_joint_datas_by_group(group).each { |data|
+        if data.is_a?(MSPhysics::Joint) && data.world == @world
+          joints << data
+        end
+      }
+      joints
     end
 
     # Get the first joint associated with a particular group.
@@ -590,36 +594,27 @@ module MSPhysics
     # @return [Joint, nil]  A joint or nil if not found.
     def get_joint_by_group(group)
       AMS.validate_type(group, Sketchup::Group, Sketchup::ComponentInstance)
-      joints = @joints[group]
-      if joints
-        joints.each { |joint|
-          return joint if joint.valid?
-        }
-      end
-      nil
+      data = MSPhysics::Newton::Joint.get_joint_data_by_group(group)
+      data.is_a?(MSPhysics::Joint) && data.world == @world ? data : nil
     end
 
     # Get all joints with a particular name.
     # @parma [String] name Joint Name.
     # @return [Array<Joint>]
     def get_joints_by_name(name)
-      opt_joints = []
-      @joints.each { |group, joints|
-        joints.each { |joint|
-          opt_joints << joint if joint.valid? && joint.name == name
-        }
+      joints = []
+      @world.get_joints.each { |joint|
+        joints << joint if joint.name == name
       }
-      opt_joints
+      joints
     end
 
     # Get the first joint with a particular name.
     # @parma [String] name Joint Name.
     # @return [Joint, nil] A joint or nil if not found.
     def get_joint_by_name(name)
-      @joints.each { |group, joints|
-        joints.each { |joint|
-          return joint if joint.valid? && joint.name == name
-        }
+      @world.get_joints.each { |joint|
+        return joint if joint.name == name
       }
       nil
     end
@@ -1045,6 +1040,7 @@ module MSPhysics
     #   mixer failed to play sound.
     # @raise [TypeError] if sound is invalid.
     def play_sound(name, channel = -1, repeat = 0)
+      return unless MSPhysics.sdl_used?
       sound = MSPhysics::Sound.get_by_name(name)
       unless sound
         type = Sketchup.active_model.get_attribute('MSPhysics Sound Types', name, nil)
@@ -1079,6 +1075,7 @@ module MSPhysics
     #   mixer failed to play sound.
     # @raise [TypeError] if sound is invalid.
     def play_sound2(path, channel = -1, repeat = 0)
+      return unless MSPhysics.sdl_used?
       sound = MSPhysics::Sound.create_from_dir(path)
       MSPhysics::Sound.play(sound, channel, repeat)
     end
@@ -1086,9 +1083,11 @@ module MSPhysics
     # Stop the currently playing sound at channel.
     # @param [Fixnum] channel The channel returned by {#play_sound} or
     #   {#play_sound2} functions. Pass -1 to stop all sounds.
-    # @return [nil]
+    # @return [Boolean] success
     def stop_sound(channel)
+      return false unless MSPhysics.sdl_used?
       MSPhysics::Sound.stop(channel)
+      true
     end
 
     # Set sound 3D position.
@@ -1102,6 +1101,7 @@ module MSPhysics
     #   in meters.
     # @return [Boolean] success
     def set_sound_position(channel, pos, max_hearing_range = 100)
+      return false unless MSPhysics.sdl_used?
       MSPhysics::Sound.set_position_3d(channel, pos, max_hearing_range)
     end
 
@@ -1117,6 +1117,7 @@ module MSPhysics
     # @return [Boolean] success
     # @raise [TypeError] if music is invalid.
     def play_music(name, repeat = 0)
+      return false unless MSPhysics.sdl_used?
       music = MSPhysics::Music.get_by_name(name)
       unless music
         type = Sketchup.active_model.get_attribute('MSPhysics Sound Types', name, nil)
@@ -1145,14 +1146,17 @@ module MSPhysics
     # @return [Boolean] success
     # @raise [TypeError] if music is invalid.
     def play_music2(path, repeat = 0)
+      return false if MSPhysics.sdl_used?
       music = MSPhysics::Music.create_from_dir(path)
       MSPhysics::Music.play(music, repeat)
     end
 
     # Stop the currently playing music.
-    # @return [nil]
+    # @return [Boolean] success
     def stop_music
+      return false unless MSPhysics.sdl_used?
       MSPhysics::Music.stop
+      true
     end
 
     # Play MIDI note.
@@ -1283,7 +1287,7 @@ module MSPhysics
     # @option opts [Fixnum] :lifetime (100) Particle lifetime in frames, a value
     #   greater than zero.
     # @option opts [Fixnum] :num_seg (16) Number of segments the particle is to
-    #   consist of, a value between 3 and 100.
+    #   consist of, a value between 3 and 120.
     # @option opts [Numeric] :rot_angle (0.0) Rotate angle in degrees.
     # @option opts [Fixnum] :type (1)
     #   1. Defines a 2D circular particle that is drawn through view drawing
@@ -1294,8 +1298,12 @@ module MSPhysics
     #      geometry. This type is normal, and guarantees good, balanced results.
     #   3. Defines a 3D spherical particle that is crated from SketchUp
     #      geometry. This type is slow, but it guarantees best results.
-    # @return [Hash] A hash containing particle properties.
+    # @return [nil]
     def create_particle(opts)
+      if opts[:type] == 1
+        MSPhysics::C::Particle.create(opts, @update_timestep)
+        return
+      end
       opts2 = {
         :position       => opts[:position] ? Geom::Point3d.new(opts[:position]) : Geom::Point3d.new(0, 0, 0),
         :velocity       => opts[:velocity] ? Geom::Vector3d.new(opts[:velocity]) : nil,
@@ -1309,7 +1317,7 @@ module MSPhysics
         :alpha2         => opts[:alpha2] ? AMS.clamp(opts[:alpha2].to_f, 0.0, 1.0) : nil,
         :fade           => opts[:fade] ? AMS.clamp(opts[:fade].to_f, 0.0, 1.0) : 0.0,
         :lifetime       => opts[:lifetime] ? AMS.clamp(opts[:lifetime].to_i, 1, nil) : 100,
-        :num_seg        => opts[:num_seg] ? AMS.clamp(opts[:num_seg].to_i, 3, 100) : 16,
+        :num_seg        => opts[:num_seg] ? AMS.clamp(opts[:num_seg].to_i, 3, 120) : 16,
         :rot_angle      => opts[:rot_angle] ? opts[:rot_angle].to_f.degrees : 0.0,
         :type           => opts[:type] ? AMS.clamp(opts[:type].to_i, 1, 3) : 1
       }
@@ -1318,7 +1326,7 @@ module MSPhysics
       opts2[:color] = Sketchup::Color.new(opts2[:color1])
       opts2[:color].alpha = opts2[:fade].zero? ? opts2[:alpha1] : 0.0
       @particles << opts2
-      return opts2 if opts2[:type] == 1
+      return if opts2[:type] == 1
 
       model = Sketchup.active_model
       if opts2[:type] == 3 # 3D entity
@@ -1357,13 +1365,13 @@ module MSPhysics
       opts2[:group].material = opts2[:material]
       opts2[:group].visible = false unless @particles_visible
 
-      return opts2
+      nil
     end
 
     # Get number of particles.
     # @return [Fixnum]
     def particles_size
-      @particles.size
+      @particles.size + MSPhysics::C::Particle.size
     end
 
     # Remove all particles.
@@ -1379,6 +1387,7 @@ module MSPhysics
         mats.remove(opts[:material]) if mats.respond_to?(:remove)
       }
       @particles.clear
+      MSPhysics::C::Particle.destroy_all
     end
 
     # Show/hide particles.
@@ -1494,6 +1503,23 @@ module MSPhysics
     end
 
     # @!endgroup
+    # @!group Advanced
+
+    # Determine whether the undo command is triggered when simulation resets.
+    # @note By default the undo command is not triggered when simulation resets.
+    # @return [Boolean]
+    def undo_on_reset?
+      @undo_on_reset
+    end
+
+    # Enable/disable the undo commend when simulation resets, to undo all
+    # model changes.
+    # @param [Boolean] state
+    def undo_on_reset=(state)
+      @undo_on_reset = state ? true : false
+    end
+
+    # @!endgroup
 
     private
 
@@ -1512,6 +1538,7 @@ module MSPhysics
       model = Sketchup.active_model
       mats = model.materials
       eye = model.active_view.camera.eye
+      MSPhysics::C::Particle.update_all(@update_timestep)
       @particles.reject! { |opts|
         # Control radius
         opts[:radius] *= opts[:scale]
@@ -1540,12 +1567,12 @@ module MSPhysics
           if opts[:fade].zero?
             opts[:color].alpha = opts[:alpha1] + (opts[:alpha2] - opts[:alpha1]) * ratio
           else
-            f = opts[:fade] * 0.5
-            if ratio < f
-              r = (@frame - opts[:life_start]) / (opts[:lifetime] * f).to_f
+            fh = opts[:fade] * 0.5
+            if ratio < fh
+              r = (@frame - opts[:life_start]) / (opts[:lifetime] * fh).to_f
               opts[:color].alpha = opts[:alpha1] * r
-            elsif ratio > (1.0 - f)
-              r = (opts[:life_end] - @frame) / (opts[:lifetime] * f).to_f
+            elsif ratio >= (1.0 - fh)
+              r = (opts[:life_end] - @frame) / (opts[:lifetime] * fh).to_f
               opts[:color].alpha = opts[:alpha2] * r
             else
               fl = opts[:lifetime] * opts[:fade]
@@ -1557,12 +1584,12 @@ module MSPhysics
           if opts[:fade].zero?
             opts[:color].alpha = opts[:alpha1]
           else
-            f = opts[:fade] * 0.5
-            if ratio < f
-              r = (@frame - opts[:life_start]) / (opts[:lifetime] * f).to_f
+            fh = opts[:fade] * 0.5
+            if ratio < fh
+              r = (@frame - opts[:life_start]) / (opts[:lifetime] * fh).to_f
               opts[:color].alpha = opts[:alpha1] * r
-            elsif ratio > (1.0 - f)
-              r = (opts[:life_end] - @frame) / (opts[:lifetime] * f).to_f
+            elsif ratio >= (1.0 - fh)
+              r = (opts[:life_end] - @frame) / (opts[:lifetime] * fh).to_f
               opts[:color].alpha = opts[:alpha1] * r
             else
               opts[:color].alpha = opts[:alpha1]
@@ -1610,6 +1637,8 @@ module MSPhysics
 
     def draw_particles(view, bb)
       return unless @particles_visible
+      MSPhysics::C::Particle.draw_all(view, bb)
+=begin
       eye = view.camera.eye
       fx = {}
       @particles.each { |opts|
@@ -1630,6 +1659,7 @@ module MSPhysics
         view.drawing_color = opts[:color]
         view.draw(GL_POLYGON, pts)
       }
+=end
     rescue Exception => e
       puts "An exception occurred while drawing particles.\n#{e.class}: #{e.message}"
     end
@@ -1653,8 +1683,10 @@ module MSPhysics
           @pause_updated = true
           @time_info[:sim] += Time.now - @time_info[:last]
           @fps_info[:change] += Time.now - @fps_info[:last]
-          MSPhysics::Music.pause
-          MSPhysics::Sound.pause(-1)
+          if MSPhysics.sdl_used?
+            MSPhysics::Music.pause
+            MSPhysics::Sound.pause(-1)
+          end
         end
         #view.show_frame
         return
@@ -1663,8 +1695,10 @@ module MSPhysics
         @time_info[:last] = Time.now
         @fps_info[:last] = Time.now
         @pause_updated = false
-        MSPhysics::Music.resume
-        MSPhysics::Sound.resume(-1)
+        if MSPhysics.sdl_used?
+          MSPhysics::Music.resume
+          MSPhysics::Sound.resume(-1)
+        end
       end
       # Clear drawing queues
       @draw_queue.clear
@@ -1752,11 +1786,6 @@ module MSPhysics
         false
       }
       # Update controlled joints
-      @joints.reject! { |joint_ent, joints|
-        next true if joint_ent.deleted?
-        joints.reject! { |joint| !joint.valid? }
-        false
-      }
       @controlled_joints.reject! { |joint, data|
         next true if !joint.valid?
         if data.is_a?(Array)
@@ -1868,7 +1897,9 @@ module MSPhysics
       call_event(:onPostUpdate)
       return unless Simulation.is_active?
       # Process 3D sounds.
-      MSPhysics::Sound.update_effects
+      if MSPhysics.sdl_used?
+        MSPhysics::Sound.update_effects
+      end
       # Process emitted bodies.
       @emitted_bodies.reject! { |body, life_end|
         next false if life_end == 0 || @frame < life_end
@@ -2213,6 +2244,8 @@ module MSPhysics
         joint.accel = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Damp', MSPhysics::Servo::DEFAULT_DAMP)
         joint.damp = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Strength', MSPhysics::Servo::DEFAULT_STRENGTH)
+        joint.strength = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Reduction Ratio', MSPhysics::Servo::DEFAULT_REDUCTION_RATIO)
         joint.reduction_ratio = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Enable Sp Mode', MSPhysics::Servo::DEFAULT_SP_MODE_ENABLED)
@@ -2358,9 +2391,6 @@ module MSPhysics
       joint.breaking_force = attr.to_f
       joint.name = joint_ent.get_attribute(jdict, 'ID').to_s
 
-      @joints[joint_ent] = [] unless @joints[joint_ent]
-      @joints[joint_ent] << joint
-
       joint.connect(child_body)
       joint
     end
@@ -2446,8 +2476,10 @@ module MSPhysics
       # Stop any running animation
       view.animation = nil
       # Stop any playing sounds and music
-      MSPhysics::Sound.destroy_all
-      MSPhysics::Music.destroy_all
+      if MSPhysics.sdl_used?
+        MSPhysics::Sound.destroy_all
+        MSPhysics::Music.destroy_all
+      end
       # Save selected page
       @selected_page = model.pages.selected_page
       # Save camera orientation
@@ -2646,8 +2678,6 @@ module MSPhysics
       # Purge unused
       model.definitions.purge_unused
       #~ model.materials.purge_unused
-      # Finish all operations
-      model.commit_operation
       # Reset selected page
       if @selected_page && @selected_page.valid?
         tt = @selected_page.transition_time
@@ -2682,11 +2712,21 @@ module MSPhysics
       @layers.clear
       # Clear selection
       model.selection.clear
+      # Make sure the undo called next will not undo the prior operation.
+      model.entities.add_cpoint(ORIGIN).erase!
+      # Finish all operations
+      model.commit_operation
+      # Undo all changes
+      Sketchup.undo if @undo_on_reset
       # Refresh view
       view.invalidate
+      # Destroy all particles
+      MSPhysics::C::Particle.destroy_all
       # Stop any playing sounds and music
-      MSPhysics::Sound.destroy_all
-      MSPhysics::Music.destroy_all
+      if MSPhysics.sdl_used?
+        MSPhysics::Sound.destroy_all
+        MSPhysics::Music.destroy_all
+      end
       # Close MIDI device
       AMS::MIDI.close_device
       # Free some variables
@@ -2694,7 +2734,6 @@ module MSPhysics
       @emitters.clear
       @thrusters.clear
       @buoyancy_planes.clear
-      @joints.clear
       @controlled_joints.clear
       @scene_data1 = nil
       @scene_data2 = nil
@@ -2728,11 +2767,12 @@ module MSPhysics
         puts "MSPhysics Simulation was stopped before it even started."
       end
       # Save replay animation data
-      if MSPhysics::Replay.recorded_data_valid?
+      if MSPhysics::Replay.recorded_data_valid? && ::UI.messagebox("Would you like to save recorded simulation for the replay?", MB_YESNO) == IDYES
         MSPhysics::Replay.save_recorded_data
-        MSPhysics::Replay.clear_recorded_data
+        MSPhysics::Replay.smooth_camera_data1
+        #MSPhysics::Replay.save_data_to_model(true)
       end
-      MSPhysics::Replay.smooth_camera_data1
+      MSPhysics::Replay.clear_recorded_data
       # Start garbage collection
       ::ObjectSpace.garbage_collect
     end

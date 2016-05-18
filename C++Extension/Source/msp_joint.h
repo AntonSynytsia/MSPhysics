@@ -28,6 +28,7 @@ public:
 
 	// Variables
 	static std::map<NewtonSkeletonContainer*, bool> valid_skeletons;
+	static std::map<VALUE, std::map<JointData*, bool>> map_group_to_joints;
 
 	// Callback Functions
 	static void submit_constraints(const NewtonJoint* joint, dgFloat32 timestep, int thread_index);
@@ -48,7 +49,7 @@ public:
 	static void c_calculate_global_matrix(JointData* joint_data, dMatrix& matrix0, dMatrix& matrix1);
 	static dFloat c_calculate_angle(const dVector& dir, const dVector& cosDir, const dVector& sinDir, dFloat& sinAngle, dFloat& cosAngle);
 	static dFloat c_calculate_angle(const dVector& dir, const dVector& cosDir, const dVector& sinDir);
-	static JointData* c_create(const NewtonWorld* world, const NewtonBody* parent, dMatrix pin_matrix, unsigned int dof);
+	static JointData* c_create(const NewtonWorld* world, const NewtonBody* parent, dMatrix pin_matrix, unsigned int dof, VALUE v_group);
 	static void c_destroy(JointData* joint_data);
 
 	static bool c_skeleton_is_valid(NewtonSkeletonContainer* skeleton);
@@ -58,7 +59,7 @@ public:
 
 	// Ruby Functions
 	static VALUE is_valid(VALUE self, VALUE v_joint);
-	static VALUE create(VALUE self, VALUE v_world, VALUE v_parent, VALUE v_pin_matrix, VALUE v_dof);
+	static VALUE create(VALUE self, VALUE v_world, VALUE v_parent, VALUE v_pin_matrix, VALUE v_dof, VALUE v_group);
 	static VALUE destroy(VALUE self, VALUE v_joint);
 	static VALUE connect(VALUE self, VALUE v_joint, VALUE v_child);
 	static VALUE disconnect(VALUE self, VALUE v_joint);
@@ -79,6 +80,12 @@ public:
 	static VALUE set_user_data(VALUE self, VALUE v_joint, VALUE v_user_data);
 	static VALUE get_breaking_force(VALUE self, VALUE v_joint);
 	static VALUE set_breaking_force(VALUE self, VALUE v_joint, VALUE v_force);
+
+	static VALUE get_group(VALUE self, VALUE v_joint);
+	static VALUE get_joint_by_group(VALUE self, VALUE v_group);
+	static VALUE get_joints_by_group(VALUE self, VALUE v_group);
+	static VALUE get_joint_data_by_group(VALUE self, VALUE v_group);
+	static VALUE get_joint_datas_by_group(VALUE self, VALUE v_group);
 
 	static VALUE skeleton_is_valid(VALUE self, VALUE v_skeleton);
 	static VALUE skeleton_create(VALUE self, VALUE v_root_body);

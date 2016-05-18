@@ -113,6 +113,7 @@ module MSPhysics
     # @return [Array<Body>]
     def get_bodies
       World.validate(self)
+=begin
       bodies = []
       ovs = MSPhysics::Newton.is_object_validation_enabled?
       MSPhysics::Newton.enable_object_validation(false)
@@ -124,6 +125,8 @@ module MSPhysics
       end
       MSPhysics::Newton.enable_object_validation(ovs)
       bodies
+=end
+      MSPhysics::Newton::World.get_body_datas(@address).grep(MSPhysics::Body)
     end
 
     # Get all joints in the world.
@@ -132,6 +135,7 @@ module MSPhysics
     # @return [Array<Joint>]
     def get_joints
       World.validate(self)
+=begin
       joints = []
       joint_addresses = MSPhysics::Newton::World.get_joints(@address)
       joint_addresses.each { |joint_address|
@@ -139,6 +143,8 @@ module MSPhysics
         joints << data if data.is_a?(MSPhysics::Joint)
       }
       joints
+=end
+      MSPhysics::Newton::World.get_joint_datas(@address).grep(MSPhysics::Joint)
     end
 
     # Get all bodies in a bounding box.

@@ -45,6 +45,7 @@ public:
 	static VALUE get_gravity(VALUE self, VALUE v_world);
 	static VALUE set_gravity(VALUE self, VALUE v_world, VALUE v_gravity);
 	static VALUE get_bodies(VALUE self, VALUE v_world);
+	static VALUE get_body_datas(VALUE self, VALUE v_world);
 	static VALUE get_bodies_in_aabb(VALUE self, VALUE v_world, VALUE v_min_pt, VALUE v_max_pt);
 	static VALUE get_first_body(VALUE self, VALUE v_world);
 	static VALUE get_next_body(VALUE self, VALUE v_world, VALUE v_body);
@@ -76,6 +77,7 @@ public:
 	static VALUE set_contact_merge_tolerance(VALUE self, VALUE v_world, VALUE v_tolerance);
 	static VALUE get_scale(VALUE self, VALUE v_world);
 	static VALUE get_joints(VALUE self, VALUE v_world);
+	static VALUE get_joint_datas(VALUE self, VALUE v_world);
 	static VALUE get_default_material_id(VALUE self, VALUE v_world);
 };
 

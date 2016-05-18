@@ -68,10 +68,6 @@ void MSNewton::World::contact_callback(const NewtonJoint* const contact_joint, d
 	const NewtonBody* body1 = NewtonJointGetBody1(contact_joint);
 	BodyData* data0 = (BodyData*)NewtonBodyGetUserData(body0);
 	BodyData* data1 = (BodyData*)NewtonBodyGetUserData(body1);
-	//if (NewtonBodyGetFreezeState(body0) == 1)
-		//NewtonBodySetFreezeState(body0, 0);
-	//if (NewtonBodyGetFreezeState(body1) == 1)
-		//NewtonBodySetFreezeState(body1, 0);
 	for (void* contact = NewtonContactJointGetFirstContact(contact_joint); contact; contact = NewtonContactJointGetNextContact(contact_joint, contact)) {
 		NewtonMaterial* material = NewtonContactGetMaterial(contact);
 		if (data0->friction_enabled == true && data1->friction_enabled == true) {
@@ -139,7 +135,7 @@ void MSNewton::World::contact_callback(const NewtonJoint* const contact_joint, d
 
 unsigned MSNewton::World::ray_prefilter_callback(const NewtonBody* const body, const NewtonCollision* const collision, void* const user_data) {
 	bool* continuous = (bool*)user_data;
-	return continuous ? 1 : 0;
+	return (*continuous == true) ? 1 : 0;
 }
 
 dFloat MSNewton::World::ray_filter_callback(const NewtonBody* const body, const NewtonCollision* const shape_hit, const dFloat* const hit_contact, const dFloat* const hit_normal, dLong collision_id, void* const user_data, dFloat intersect_param) {
@@ -166,7 +162,7 @@ int MSNewton::World::body_iterator(const NewtonBody* const body, void* const use
 }
 
 void MSNewton::World::collision_copy_constructor_callback(const NewtonWorld* const world, NewtonCollision* const collision, const NewtonCollision* const source_collision) {
-	valid_collisions[collision] = true;
+	valid_collisions[collision] = dVector(valid_collisions[source_collision]);
 }
 
 void MSNewton::World::collision_destructor_callback(const NewtonWorld* const world, const NewtonCollision* const collision) {
@@ -537,6 +533,17 @@ VALUE MSNewton::World::get_bodies(VALUE self, VALUE v_world) {
 	return v_bodies;
 }
 
+VALUE MSNewton::World::get_body_datas(VALUE self, VALUE v_world) {
+	const NewtonWorld* world = Util::value_to_world(v_world);
+	VALUE v_body_datas = rb_ary_new();
+	for (const NewtonBody* body = NewtonWorldGetFirstBody(world); body; body = NewtonWorldGetNextBody(world, body)) {
+		BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
+		VALUE v_user_data = rb_ary_entry(body_data->user_data, 0);
+		if (v_user_data != Qnil) rb_ary_push(v_body_datas, v_user_data);
+	}
+	return v_body_datas;
+}
+
 VALUE MSNewton::World::get_bodies_in_aabb(VALUE self, VALUE v_world, VALUE v_min_pt, VALUE v_max_pt) {
 	const NewtonWorld* world = Util::value_to_world(v_world);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
@@ -605,9 +612,11 @@ VALUE MSNewton::World::ray_cast(VALUE self, VALUE v_world, VALUE v_point1, VALUE
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	dVector point1 = Util::value_to_point(v_point1, world_data->scale);
 	dVector point2 = Util::value_to_point(v_point2, world_data->scale);
-	Hit hit;
-	NewtonWorldRayCast(world, &point1[0], &point2[0], ray_filter_callback, &hit, NULL, 0);
-	return hit.body ? rb_ary_new3(3, Util::to_value(hit.body), Util::point_to_value(hit.point, world_data->inverse_scale), Util::vector_to_value(hit.normal)) : Qnil;
+	Hit* hit = new Hit();
+	NewtonWorldRayCast(world, &point1[0], &point2[0], ray_filter_callback, (void*)hit, NULL, 0);
+	VALUE v_res =  hit->body ? rb_ary_new3(3, Util::to_value(hit->body), Util::point_to_value(hit->point, world_data->inverse_scale), Util::vector_to_value(hit->normal)) : Qnil;
+	delete hit;
+	return v_res;
 }
 
 VALUE MSNewton::World::continuous_ray_cast(VALUE self, VALUE v_world, VALUE v_point1, VALUE v_point2) {
@@ -615,13 +624,14 @@ VALUE MSNewton::World::continuous_ray_cast(VALUE self, VALUE v_world, VALUE v_po
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	dVector point1 = Util::value_to_point(v_point1, world_data->scale);
 	dVector point2 = Util::value_to_point(v_point2, world_data->scale);
-	RayData ray_data;
-	NewtonWorldRayCast(world, &point1[0], &point2[0], continuous_ray_filter_callback, &ray_data, NULL, 0);
-	VALUE hits = rb_ary_new2( (long)ray_data.hits.size() );
-	for (unsigned int i = 0; i < ray_data.hits.size(); ++i) {
-		VALUE hit = rb_ary_new3(3, Util::to_value(ray_data.hits[i].body), Util::point_to_value(ray_data.hits[i].point, world_data->inverse_scale), Util::vector_to_value(ray_data.hits[i].normal));
+	RayData* ray_data = new RayData();
+	NewtonWorldRayCast(world, &point1[0], &point2[0], continuous_ray_filter_callback, (void*)ray_data, NULL, 0);
+	VALUE hits = rb_ary_new2( (long)ray_data->hits.size() );
+	for (unsigned int i = 0; i < ray_data->hits.size(); ++i) {
+		VALUE hit = rb_ary_new3(3, Util::to_value(ray_data->hits[i].body), Util::point_to_value(ray_data->hits[i].point, world_data->inverse_scale), Util::vector_to_value(ray_data->hits[i].normal));
 		rb_ary_store(hits, i, hit);
 	}
+	delete ray_data;
 	return hits;
 }
 
@@ -631,10 +641,12 @@ VALUE MSNewton::World::convex_ray_cast(VALUE self, VALUE v_world, VALUE v_collis
 	const NewtonCollision* collision = Util::value_to_collision(v_collision);
 	dMatrix matrix = Util::value_to_matrix(v_matrix, world_data->scale);
 	dVector target = Util::value_to_point(v_target, world_data->scale);
-	bool continuous = false;
+	bool* continuous = new bool;
+	*continuous = false;
 	dFloat hit_param;
 	NewtonWorldConvexCastReturnInfo info[1];
-	int hit_count = NewtonWorldConvexCast(world, &matrix[0][0], &target[0], collision, &hit_param, &continuous, ray_prefilter_callback, &info[0], 1, 0);
+	int hit_count = NewtonWorldConvexCast(world, &matrix[0][0], &target[0], collision, &hit_param, (void*)continuous, ray_prefilter_callback, &info[0], 1, 0);
+	delete continuous;
 	if (hit_count != 0)
 		return rb_ary_new3(
 			4,
@@ -653,10 +665,12 @@ VALUE MSNewton::World::continuous_convex_ray_cast(VALUE self, VALUE v_world, VAL
 	dMatrix matrix = Util::value_to_matrix(v_matrix, world_data->scale);
 	dVector target = Util::value_to_point(v_target, world_data->scale);
 	unsigned int max_hits = Util::clamp<unsigned int>(Util::value_to_uint(v_max_hits), 1, 256);
-	bool continuous = true;
+	bool* continuous = new bool;
+	*continuous = true;
 	dFloat hit_param;
 	std::vector<NewtonWorldConvexCastReturnInfo> info((size_t)max_hits);
-	int hit_count = NewtonWorldConvexCast(world, &matrix[0][0], &target[0], collision, &hit_param, &continuous, ray_prefilter_callback, &info[0], max_hits, 0);
+	int hit_count = NewtonWorldConvexCast(world, &matrix[0][0], &target[0], collision, &hit_param, (void*)continuous, ray_prefilter_callback, &info[0], max_hits, 0);
+	delete continuous;
 	VALUE hits = rb_ary_new2((long)hit_count);
 	for (int i = 0; i < hit_count; ++i) {
 		VALUE hit = rb_ary_new3(
@@ -871,6 +885,17 @@ VALUE MSNewton::World::get_joints(VALUE self, VALUE v_world) {
 	return v_joints;
 }
 
+VALUE MSNewton::World::get_joint_datas(VALUE self, VALUE v_world) {
+	const NewtonWorld* world = Util::value_to_world(v_world);
+	VALUE v_joint_datas = rb_ary_new();
+	for (std::map<JointData*, bool>::iterator it = valid_joints.begin(); it != valid_joints.end(); ++it)
+		if (it->first->world == world) {
+			VALUE v_user_data = rb_ary_entry(it->first->user_data, 0);
+			if (v_user_data != Qnil) rb_ary_push(v_joint_datas, v_user_data);
+		}
+	return v_joint_datas;
+}
+
 VALUE MSNewton::World::get_default_material_id(VALUE self, VALUE v_world) {
 	const NewtonWorld* world = Util::value_to_world(v_world);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
@@ -901,6 +926,7 @@ void Init_msp_world(VALUE mNewton) {
 	rb_define_module_function(mWorld, "get_gravity", VALUEFUNC(MSNewton::World::get_gravity), 1);
 	rb_define_module_function(mWorld, "set_gravity", VALUEFUNC(MSNewton::World::set_gravity), 2);
 	rb_define_module_function(mWorld, "get_bodies", VALUEFUNC(MSNewton::World::get_bodies), 1);
+	rb_define_module_function(mWorld, "get_body_datas", VALUEFUNC(MSNewton::World::get_body_datas), 1);
 	rb_define_module_function(mWorld, "get_bodies_in_aabb", VALUEFUNC(MSNewton::World::get_bodies_in_aabb), 3);
 	rb_define_module_function(mWorld, "get_first_body", VALUEFUNC(MSNewton::World::get_first_body), 1);
 	rb_define_module_function(mWorld, "get_next_body", VALUEFUNC(MSNewton::World::get_next_body), 2);
@@ -932,5 +958,6 @@ void Init_msp_world(VALUE mNewton) {
 	rb_define_module_function(mWorld, "set_contact_merge_tolerance", VALUEFUNC(MSNewton::World::set_contact_merge_tolerance), 2);
 	rb_define_module_function(mWorld, "get_scale", VALUEFUNC(MSNewton::World::get_scale), 1);
 	rb_define_module_function(mWorld, "get_joints", VALUEFUNC(MSNewton::World::get_joints), 1);
+	rb_define_module_function(mWorld, "get_joint_datas", VALUEFUNC(MSNewton::World::get_joint_datas), 1);
 	rb_define_module_function(mWorld, "get_default_material_id", VALUEFUNC(MSNewton::World::get_default_material_id), 1);
 }

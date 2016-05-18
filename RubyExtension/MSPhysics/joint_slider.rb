@@ -15,8 +15,9 @@ module MSPhysics
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
     #   Of the given matrix, matrix origin should represent pin origin, and
     #   matrix Z-axis should represent pin up.
-    def initialize(world, parent, pin_tra)
-      super(world, parent, pin_tra, 6)
+    # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group
+    def initialize(world, parent, pin_tra, group = nil)
+      super(world, parent, pin_tra, 6, group)
       MSPhysics::Newton::Slider.create(@address)
       MSPhysics::Newton::Slider.set_min(@address, DEFAULT_MIN)
       MSPhysics::Newton::Slider.set_max(@address, DEFAULT_MAX)

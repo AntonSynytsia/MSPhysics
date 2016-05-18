@@ -22,6 +22,7 @@ const char* MSNewton::Joint::TYPE_NAME = "MSPhysicsJoint";
 const dFloat MSNewton::Joint::CUSTOM_LARGE_VALUE = 1.0e15f;
 
 std::map<NewtonSkeletonContainer*, bool> MSNewton::Joint::valid_skeletons;
+std::map<VALUE, std::map<JointData*, bool>> MSNewton::Joint::map_group_to_joints;
 
 
 /*
@@ -149,7 +150,7 @@ dFloat MSNewton::Joint::c_calculate_angle(const dVector& dir, const dVector& cos
 	return c_calculate_angle(dir, cosDir, sinDir, sinAngle, cosAngle);
 }
 
-JointData* MSNewton::Joint::c_create(const NewtonWorld* world, const NewtonBody* parent, dMatrix pin_matrix, unsigned int dof) {
+JointData* MSNewton::Joint::c_create(const NewtonWorld* world, const NewtonBody* parent, dMatrix pin_matrix, unsigned int dof, VALUE v_group) {
 	if (parent != nullptr) {
 		dMatrix parent_matrix;
 		NewtonBodyGetMatrix(parent, &parent_matrix[0][0]);
@@ -182,12 +183,27 @@ JointData* MSNewton::Joint::c_create(const NewtonWorld* world, const NewtonBody*
 	joint_data->on_pin_matrix_changed = nullptr;
 
 	rb_gc_register_address(&joint_data->user_data);
+
+	rb_ary_store(joint_data->user_data, 0, Qnil);
+	rb_ary_store(joint_data->user_data, 1, v_group);
+	if (v_group != Qnil) map_group_to_joints[v_group][joint_data] = true;
+
 	valid_joints[joint_data] = true;
 	return joint_data;
 }
 
 void MSNewton::Joint::c_destroy(JointData* joint_data) {
 	valid_joints.erase(joint_data);
+	VALUE v_group = rb_ary_entry(joint_data->user_data, 1);
+	if (v_group != Qnil) {
+		std::map<VALUE, std::map<JointData*, bool>>::iterator it = map_group_to_joints.find(v_group);
+		if (it != map_group_to_joints.end()) {
+			if (it->second.find(joint_data) != it->second.end())
+				it->second.erase(joint_data);
+			if (it->second.empty())
+				map_group_to_joints.erase(it);
+		}
+	}
 	if (joint_data->connected)
 		NewtonDestroyJoint(joint_data->world, joint_data->constraint);
 	on_destroy(joint_data);
@@ -226,7 +242,7 @@ VALUE MSNewton::Joint::is_valid(VALUE self, VALUE v_joint) {
 	return Util::is_joint_valid((JointData*)Util::value_to_ll(v_joint)) ? Qtrue : Qfalse;
 }
 
-VALUE MSNewton::Joint::create(VALUE self, VALUE v_world, VALUE v_parent, VALUE v_pin_matrix, VALUE v_dof) {
+VALUE MSNewton::Joint::create(VALUE self, VALUE v_world, VALUE v_parent, VALUE v_pin_matrix, VALUE v_dof, VALUE v_group) {
 	const NewtonWorld* world = Util::value_to_world(v_world);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	const NewtonBody* parent = v_parent == Qnil ? nullptr : Util::value_to_body(v_parent);
@@ -238,7 +254,7 @@ VALUE MSNewton::Joint::create(VALUE self, VALUE v_world, VALUE v_parent, VALUE v
 		if (parent_world != world)
 			rb_raise(rb_eTypeError, "Given parent body is not from the preset world!");
 	}
-	JointData* joint_data = c_create(world, parent, pin_matrix, dof);
+	JointData* joint_data = c_create(world, parent, pin_matrix, dof, v_group);
 	return Util::to_value(joint_data);
 }
 
@@ -383,16 +399,12 @@ VALUE MSNewton::Joint::set_stiffness(VALUE self, VALUE v_joint, VALUE v_stiffnes
 
 VALUE MSNewton::Joint::get_user_data(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint(v_joint);
-	if (RARRAY_LEN(joint_data->user_data) == 0) return Qnil;
 	return rb_ary_entry(joint_data->user_data, 0);
 }
 
 VALUE MSNewton::Joint::set_user_data(VALUE self, VALUE v_joint, VALUE v_user_data) {
 	JointData* joint_data = Util::value_to_joint(v_joint);
-	if (v_user_data == Qnil)
-		rb_ary_clear(joint_data->user_data);
-	else
-		rb_ary_store(joint_data->user_data, 0, v_user_data);
+	rb_ary_store(joint_data->user_data, 0, v_user_data);
 	return Qnil;
 }
 
@@ -447,12 +459,64 @@ VALUE MSNewton::Joint::skeleton_set_solver(VALUE self, VALUE v_skeleton, VALUE v
 	return Util::to_value(NewtonSkeletonGetSolverMode(skeleton));
 }
 
+VALUE MSNewton::Joint::get_group(VALUE self, VALUE v_joint) {
+	JointData* joint_data = Util::value_to_joint(v_joint);
+	return rb_ary_entry(joint_data->user_data, 1);
+}
+
+VALUE MSNewton::Joint::get_joint_by_group(VALUE self, VALUE v_group) {
+	std::map<VALUE, std::map<JointData*, bool>>::iterator it = map_group_to_joints.find(v_group);
+	if (it == map_group_to_joints.end() || it->second.empty())
+		return Qnil;
+	else
+		return Util::to_value(it->second.begin()->first);
+}
+
+VALUE MSNewton::Joint::get_joints_by_group(VALUE self, VALUE v_group) {
+	std::map<VALUE, std::map<JointData*, bool>>::iterator it = map_group_to_joints.find(v_group);
+	VALUE v_joints = rb_ary_new();
+	if (it == map_group_to_joints.end() || it->second.empty())
+		return v_joints;
+	else {
+		for (std::map<JointData*, bool>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+			rb_ary_push(v_joints, Util::to_value(it2->first));
+		return v_joints;
+	}
+}
+
+VALUE MSNewton::Joint::get_joint_data_by_group(VALUE self, VALUE v_group) {
+	std::map<VALUE, std::map<JointData*, bool>>::iterator it = map_group_to_joints.find(v_group);
+	if (it == map_group_to_joints.end() || it->second.empty())
+		return Qnil;
+	else {
+		for (std::map<JointData*, bool>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2) {
+			VALUE v_user_data = rb_ary_entry(it2->first->user_data, 0);
+			if (v_user_data != Qnil) return v_user_data;
+		}
+	}
+	return Qnil;
+}
+
+VALUE MSNewton::Joint::get_joint_datas_by_group(VALUE self, VALUE v_group) {
+	std::map<VALUE, std::map<JointData*, bool>>::iterator it = map_group_to_joints.find(v_group);
+	VALUE v_joints = rb_ary_new();
+	if (it == map_group_to_joints.end() || it->second.empty())
+		return v_joints;
+	else {
+		for (std::map<JointData*, bool>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2) {
+			VALUE v_user_data = rb_ary_entry(it2->first->user_data, 0);
+			if (v_user_data != Qnil) rb_ary_push(v_joints, v_user_data);
+		}
+		return v_joints;
+	}
+}
+
 
 void Init_msp_joint(VALUE mNewton) {
 	VALUE mJoint = rb_define_module_under(mNewton, "Joint");
 
 	rb_define_module_function(mJoint, "is_valid?", VALUEFUNC(MSNewton::Joint::is_valid), 1);
-	rb_define_module_function(mJoint, "create", VALUEFUNC(MSNewton::Joint::create), 4);
+	rb_define_module_function(mJoint, "create", VALUEFUNC(MSNewton::Joint::create), 5);
 	rb_define_module_function(mJoint, "destroy", VALUEFUNC(MSNewton::Joint::destroy), 1);
 	rb_define_module_function(mJoint, "connect", VALUEFUNC(MSNewton::Joint::connect), 2);
 	rb_define_module_function(mJoint, "disconnect", VALUEFUNC(MSNewton::Joint::disconnect), 1);
@@ -473,6 +537,12 @@ void Init_msp_joint(VALUE mNewton) {
 	rb_define_module_function(mJoint, "set_user_data", VALUEFUNC(MSNewton::Joint::set_user_data), 2);
 	rb_define_module_function(mJoint, "get_breaking_force", VALUEFUNC(MSNewton::Joint::get_breaking_force), 1);
 	rb_define_module_function(mJoint, "set_breaking_force", VALUEFUNC(MSNewton::Joint::set_breaking_force), 2);
+
+	rb_define_module_function(mJoint, "get_group", VALUEFUNC(MSNewton::Joint::get_group), 1);
+	rb_define_module_function(mJoint, "get_joint_by_group", VALUEFUNC(MSNewton::Joint::get_joint_by_group), 1);
+	rb_define_module_function(mJoint, "get_joints_by_group", VALUEFUNC(MSNewton::Joint::get_joints_by_group), 1);
+	rb_define_module_function(mJoint, "get_joint_data_by_group", VALUEFUNC(MSNewton::Joint::get_joint_data_by_group), 1);
+	rb_define_module_function(mJoint, "get_joint_datas_by_group", VALUEFUNC(MSNewton::Joint::get_joint_datas_by_group), 1);
 
 	rb_define_module_function(mJoint, "skeleton_is_valid?", VALUEFUNC(MSNewton::Joint::skeleton_is_valid), 1);
 	rb_define_module_function(mJoint, "skeleton_create", VALUEFUNC(MSNewton::Joint::skeleton_create), 1);

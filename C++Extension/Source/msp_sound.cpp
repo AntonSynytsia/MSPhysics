@@ -291,13 +291,13 @@ VALUE MSPhysics::Sound::set_position_3d(VALUE self, VALUE v_channel, VALUE v_pos
 VALUE MSPhysics::Sound::update_effects(VALUE self) {
 	if (registered_channels.empty())
 		return Qfalse;
-	VALUE v_model = rb_funcall(suSketchup, rb_intern("active_model"), 0);
-	VALUE v_view = rb_funcall(v_model, rb_intern("active_view"), 0);
-	VALUE v_cam = rb_funcall(v_view, rb_intern("camera"), 0);
-	dVector eye = Util::value_to_point( rb_funcall(v_cam, rb_intern("eye"), 0) );
-	dVector xaxis = Util::value_to_vector( rb_funcall(v_cam, rb_intern("xaxis"), 0) );
-	dVector yaxis = Util::value_to_vector( rb_funcall(v_cam, rb_intern("yaxis"), 0) );
-	dVector zaxis = Util::value_to_vector( rb_funcall(v_cam, rb_intern("zaxis"), 0) );
+	VALUE v_model = rb_funcall(suSketchup, INTERN_ACTIVE_MODEL, 0);
+	VALUE v_view = rb_funcall(v_model, INTERN_ACTIVE_VIEW, 0);
+	VALUE v_cam = rb_funcall(v_view, INTERN_CAMERA, 0);
+	dVector eye = Util::value_to_point( rb_funcall(v_cam, INTERN_EYE, 0) );
+	dVector xaxis = Util::value_to_vector( rb_funcall(v_cam, INTERN_XAXIS, 0) );
+	dVector yaxis = Util::value_to_vector( rb_funcall(v_cam, INTERN_YAXIS, 0) );
+	dVector zaxis = Util::value_to_vector( rb_funcall(v_cam, INTERN_ZAXIS, 0) );
 	dMatrix matrix(zaxis, xaxis, yaxis, eye);
 	std::map<int, SoundData2*>::iterator it = registered_channels.begin();
 	while (it != registered_channels.end()) {

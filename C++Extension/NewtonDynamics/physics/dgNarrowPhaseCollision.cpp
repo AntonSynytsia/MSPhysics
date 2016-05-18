@@ -1763,6 +1763,7 @@ dgInt32 dgWorld::CalculateConvexToNonConvexContactsContinue(dgCollisionParamProx
 	const dgInt32 stride = polygon.m_stride;
 	const dgFloat32* const vertex = polygon.m_vertex;
 	dgAssert(polyInstance.m_scaleType == dgCollisionInstance::m_unit);
+
 	dgContactPoint* const contactOut = proxy.m_contacts;
 	dgContact* const contactJoint = proxy.m_contactJoint;
 	dgInt32* const indexArray = (dgInt32*)data.m_faceVertexIndex;
@@ -1792,6 +1793,7 @@ dgInt32 dgWorld::CalculateConvexToNonConvexContactsContinue(dgCollisionParamProx
 			polygon.m_localPoly[j] = polySoupScaledMatrix.TransformVector(dgVector(&vertex[localIndexArray[j] * stride]));
 		}
 		contactJoint->m_separtingVector = separatingVector;
+		proxy.m_timestep = minTimeStep;
 		proxy.m_maxContacts = countleft;
 		proxy.m_contacts = &contactOut[count];
 		dgInt32 count1 = polygon.CalculateContactToConvexHullContinue(this, polySoupInstance, proxy);
@@ -1816,7 +1818,7 @@ dgInt32 dgWorld::CalculateConvexToNonConvexContactsContinue(dgCollisionParamProx
 		}
 
 		closestDist = dgMin(closestDist, contactJoint->m_closestDistance);
-		if (proxy.m_timestep < minTimeStep) {
+		if (proxy.m_timestep <= minTimeStep) {
 			minTimeStep = proxy.m_timestep;
 			n = proxy.m_normal;
 			p = proxy.m_closestPointBody0;
@@ -1826,6 +1828,7 @@ dgInt32 dgWorld::CalculateConvexToNonConvexContactsContinue(dgCollisionParamProx
 
 	polyInstance.m_userData0 = NULL;
 	polyInstance.m_userData1 = NULL;
+	proxy.m_contacts = contactOut;
 
 	proxy.m_normal = n;
 	proxy.m_closestPointBody0 = p;

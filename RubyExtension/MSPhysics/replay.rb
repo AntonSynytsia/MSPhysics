@@ -44,6 +44,21 @@ module MSPhysics
     @replay_render = DEFAULT_REPLAY_RENDER
     @replay_shadow = DEFAULT_REPLAY_SHADOW
 
+    @image_defaults = {
+      :speed        => '1',
+      :reversed     => 'No',
+      :image_type   => 'png',
+      :resolution   => 'Model-Inherited',
+      :antialias    => 'Yes',
+      :compression  => '0.9',
+      :tbackground  => 'No'
+    }
+
+    @skp_defaults = {
+      :speed        => '1',
+      :reversed     => 'No'
+    }
+
     class << self
 
       # Start replay animation.
@@ -67,7 +82,7 @@ module MSPhysics
         end
         # Record original group data.
         @groups_data.each { |group, data|
-          if group.valid?
+          if (group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentDefinition)) && group.valid?
             data[:original] = {
               :transformation => group.transformation,
               :visible        => group.visible?,
@@ -185,7 +200,8 @@ module MSPhysics
         # Reset group data
         @groups_data.each { |group, data|
           instance = data[:instance]
-          if group.valid?
+          data.delete(:instance)
+          if (group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentDefinition)) && group.valid?
             orig_data = data[:original]
             next if orig_data.nil?
             group.move!(orig_data[:transformation])
@@ -197,6 +213,7 @@ module MSPhysics
               group.material = orig_data[:material] if group.material != orig_data[:material]
             end
             group.layer = orig_data[:layer] if orig_data[:layer].valid? && group.layer != orig_data[:layer]
+            data.delete(:original)
           end
           if instance && instance.valid?
             instance.material = nil if instance.material
@@ -206,6 +223,7 @@ module MSPhysics
         # Reset material data
         @materials_data.each { |material, data|
           instance = data[:instance]
+          data.delete(:instance)
           if material.valid?
             orig_data = data[:original]
             next if orig_data.nil?
@@ -222,6 +240,7 @@ module MSPhysics
             if Sketchup.version.to_i >= 15 && material.colorize_type != orig_data[:colorize_type]
               material.colorize_type = orig_data[:colorize_type]
             end
+            data.delete(:original)
           end
           if instance && instance.valid? && Sketchup.version.to_i >= 14
             model.materials.remove(instance)
@@ -239,27 +258,33 @@ module MSPhysics
           if Sketchup.version.to_i > 13 && layer.color.to_i != orig_data[:color].to_i
             layer.color = orig_data[:color]
           end
+          data.delete(:original)
         }
         # Reset camera data
         data = @camera_data[:original]
-        camera.set(data[:eye], data[:target], data[:up])
-        camera.perspective = data[:perspective]
-        camera.aspect_ratio = data[:aspect_ratio]
-        if camera.perspective?
-          camera.focal_length = data[:focal_length]
-          camera.fov = data[:fov]
-          camera.image_width = data[:image_width]
-        else
-          camera.height = data[:height]
+        if data
+          camera.set(data[:eye], data[:target], data[:up])
+          camera.perspective = data[:perspective]
+          camera.aspect_ratio = data[:aspect_ratio]
+          if camera.perspective?
+            camera.focal_length = data[:focal_length]
+            camera.fov = data[:fov]
+            camera.image_width = data[:image_width]
+          else
+            camera.height = data[:height]
+          end
         end
+        @camera_data.delete(:original)
         # Reset render data
         if @render_data[:original]
           @render_data[:original].each { |k, v| model.rendering_options[k] = v if model.rendering_options[k] != v }
         end
+        @render_data.delete(:original)
         # Reset shadow data
         if @shadow_data[:original]
           @shadow_data[:original].each { |k, v| model.shadow_info[k] = v if model.shadow_info[k] != v }
         end
+        @shadow_data.delete(:original)
         # Commit operation
         model.commit_operation
         true
@@ -640,6 +665,281 @@ module MSPhysics
         @end_frame = nil
       end
 
+      # Save active data into model.
+      # @param [Boolean] wrap_in_op Whether to wrap in operation.
+      def save_data_to_model(wrap_in_op = true)
+        model = Sketchup.active_model
+        # Start operation
+        if wrap_in_op
+          if Sketchup.version.to_i > 6
+            model.start_operation('Saving MSPhysics Replay', true)
+          else
+            model.start_operation('Saving MSPhysics Replay')
+          end
+        end
+        dict = 'MSPhysics Replay'
+        # Save groups
+        groups_data = []
+        @groups_data.each { |group, data|
+          group_data = []
+          if group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentDefinition)
+            group_data[0] = group.entityID if group.valid?
+          else
+            group_data[0] = group
+          end
+          group_data[1] = data[:definition].entityID if data[:definition].valid?
+          next if group_data.empty?
+          group_data[2] = []
+          last_tra = -1
+          last_vis = -1
+          last_mat = -1
+          last_lay = -1
+          data.keys.grep(Fixnum).sort.each { |frame|
+            fdata = data[frame]
+            sdata = []
+            tra = fdata[:transformation].to_a
+            if tra != last_tra
+              sdata[0] = tra
+              last_tra = tra
+            end
+            vis = fdata[:visible]
+            if vis != last_vis
+              sdata[1] = vis
+              last_vis = vis
+            end
+            mat = fdata[:material]
+            mat = mat ? (mat.valid? ? mat.entityID : mat.__id__) : nil
+            if mat != last_mat
+              sdata[2] = mat
+              last_mat = mat
+            end
+            lay = fdata[:layer]
+            lay = lay ? (lay.valid? ? lay.entityID : lay.__id__) : nil
+            if lay != last_lay
+              sdata[3] = lay
+              last_lay = lay
+            end
+            group_data[2][frame] = sdata unless sdata.empty?
+          }
+          groups_data << group_data
+        }
+        model.set_attribute(dict, 'Groups Data', groups_data)
+        # Save materials
+        materials_data = []
+        @materials_data.each { |material, data|
+          material_data = []
+          material_data[0] = material.valid? ? material.entityID : material.__id__
+          material_data[1] = []
+          last_color = -1
+          last_alpha = -1
+          last_texture = -1
+          last_width = -1
+          last_height = -1
+          last_colorize_type = -1
+          data.keys.grep(Fixnum).sort.each { |frame|
+            fdata = data[frame]
+            sdata = []
+            color = fdata[:color].to_a
+            if color != last_color
+              sdata[0] = color
+              last_color = color
+            end
+            alpha = fdata[:alpha]
+            if alpha != last_alpha
+              sdata[1] = alpha
+              last_alpha = alpha
+            end
+            texture = fdata[:texture]
+            if texture != last_texture
+              sdata[2] = texture
+              last_texture = texture
+            end
+            width = fdata[:width]
+            if width != last_width
+              sdata[3] = width
+              last_width = width
+            end
+            height = fdata[:height]
+            if height != last_height
+              sdata[4] = height
+              last_height = height
+            end
+            if Sketchup.version.to_i >= 15
+              colorize_type = fdata[:colorize_type]
+              if colorize_type != last_colorize_type
+                sdata[5] = colorize_type
+                last_colorize_type = colorize_type
+              end
+            end
+            material_data[1][frame] = sdata unless sdata.empty?
+          }
+          materials_data << material_data
+        }
+        model.set_attribute(dict, 'Materials Data', materials_data)
+        # Save layers
+        layers_data = []
+        @layers_data.each { |layer, data|
+          layer_data = []
+          layer_data[0] = layer.valid? ? layer.entityID : layer.__id__
+          layer_data[1] = []
+          last_vis = nil
+          last_col = nil
+          data.keys.grep(Fixnum).sort.each { |frame|
+            fdata = data[frame]
+            sdata = []
+            vis = fdata[:visible]
+            if vis != last_vis
+              sdata[0] = vis
+              last_vis = vis
+            end
+            if Sketchup.version.to_i > 13
+              col = fdata[:color].to_a
+              if col != last_col
+                sdata[0] = col
+                last_col = col
+              end
+            end
+            layer_data[1][frame] = sdata unless sdata.empty?
+          }
+          layers_data << layer_data
+        }
+        model.set_attribute(dict, 'Layers Data', layers_data)
+        # Save render
+        render_data = []
+        opts1 = %w{BackgroundColor BandColor ConstructionColor DepthQueWidth DisplayColorByLayer DisplayFog DisplayInstanceAxes DisplayWatermarks DrawDepthQue DrawGround DrawHidden DrawHorizon DrawLineEnds DrawProfilesOnly DrawSilhouettes DrawUnderground EdgeColorMode EdgeDisplayMode EdgeType ExtendLines FaceBackColor FaceColorMode FaceFrontColor FogColor FogEndDist FogStartDist FogUseBkColor ForegroundColor GroundColor GroundTransparency HideConstructionGeometry HighlightColor HorizonColor InactiveHidden InstanceHidden JitterEdges LineEndWidth LineExtension LockedColor MaterialTransparency ModelTransparency RenderMode SectionActiveColor SectionCutWidth SectionDefaultCutColor SectionInactiveColor ShowViewName SilhouetteWidth SkyColor Texture TransparencySort}
+        opts2 = %w{DisplayDims DisplaySketchAxes DisplayText}
+        opts3 = %w{InactiveFade InstanceFade}
+        opts4 = %w{DisplaySectionPlanes}
+        opts5 = %w{DisplaySectionCuts DrawBackEdges SectionCutDrawEdges}
+        last = {}
+        @render_data.keys.grep(Fixnum).sort.each { |frame|
+          fdata = @render_data[frame]
+          sdata = []
+          i = 0
+          opts1.each { |opt|
+            val = fdata[opt]
+            val = val.to_a if val.is_a?(Sketchup::Color)
+            if val != last[opt]
+              sdata[i] = val
+              last[opt] = val
+            end
+            i += 1
+          }
+          if Sketchup.version.to_i >= 7
+            i = 51
+            opts2.each { |opt|
+              val = fdata[opt]
+              val = val.to_a if val.is_a?(Sketchup::Color)
+              if val != last[opt]
+                sdata[i] = val
+                last[opt] = val
+              end
+              i += 1
+            }
+          end
+          if Sketchup.version.to_i >= 8
+            i = 54
+            opts3.each { |opt|
+              val = fdata[opt]
+              val = val.to_a if val.is_a?(Sketchup::Color)
+              if val != last[opt]
+                sdata[i] = val
+                last[opt] = val
+              end
+              i += 1
+            }
+          end
+          if Sketchup.version.to_i >= 14
+            i = 56
+            opts4.each { |opt|
+              val = fdata[opt]
+              val = val.to_a if val.is_a?(Sketchup::Color)
+              if val != last[opt]
+                sdata[i] = val
+                last[opt] = val
+              end
+              i += 1
+            }
+          end
+           if Sketchup.version.to_i >= 15
+            i = 57
+            opts5.each { |opt|
+              val = fdata[opt]
+              val = val.to_a if val.is_a?(Sketchup::Color)
+              if val != last[opt]
+                sdata[i] = val
+                last[opt] = val
+              end
+              i += 1
+            }
+          end
+          render_data[frame] = sdata unless sdata.empty?
+        }
+        model.set_attribute(dict, 'Render Data', render_data)
+        # Save shadow
+        shadow_data = []
+        last = {}
+        @shadow_data.keys.grep(Fixnum).sort.each { |frame|
+          fdata = @shadow_data[frame]
+          sdata = []
+          i = 0
+          fdata.sort.each { |key, val|
+            next if val.is_a?(Time)
+            val = val.to_a if val.is_a?(Geom::Vector3d)
+            if val != last[key]
+              sdata[i] = val
+              last[key] = val
+            end
+            i += 1
+          }
+          shadow_data[frame] = sdata unless sdata.empty?
+        }
+        model.set_attribute(dict, 'Shadow Data', shadow_data)
+        # End operation
+        model.commit_operation if wrap_in_op
+      end
+
+      # Load saved data from model.
+      def load_data_from_model
+        model = Sketchup.active_model
+        dict = 'MSPhysics Replay'
+        # Load group data
+        groups_data = model.get_attribute(dict, 'Groups Data')
+        if groups_data.is_a?(Array)
+          groups_data.each { |group_data|
+            group = MSPhysics.get_group_by_id(group_data[0]) if group_data[0]
+            definition = MSPhysics.get_definition_by_id(group_data[1]) if group_data[1]
+            next if group.nil? && definition.nil?
+            @groups_data[group] = {}
+          }
+        end
+      end
+
+      # Delete saved data from model.
+      # @param [Boolean] wrap_in_op Whether to wrap in operation.
+      def clear_data_from_model(wrap_in_op = true)
+        model = Sketchup.active_model
+        # Start operation
+        if wrap_in_op
+          if Sketchup.version.to_i > 6
+            model.start_operation('Clearing MSPhysics Replay', true)
+          else
+            model.start_operation('Clearing MSPhysics Replay')
+          end
+        end
+        dict = model.attribute_dictionaries['MSPhysics Replay']
+        if dict
+          dict.delete_key('Groups Data')
+          dict.delete_key('Materials Data')
+          dict.delete_key('Layers Data')
+          dict.delete_key('Camera Data')
+          dict.delete_key('Render Data')
+          dict.delete_key('Shadow Data')
+        end
+        # End operation
+        model.commit_operation if wrap_in_op
+      end
+
       # Make camera data smooth.
       # @param [Fixnum] interval
       # @return [Boolean] success
@@ -838,7 +1138,7 @@ module MSPhysics
               next
             end
             material = frame_data[:material]
-            if entity.valid?
+            if (group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentDefinition)) && entity.valid?
               entity.move!(frame_data[:transformation])
               #~ entity.transformation = frame_data[:transformation]
               entity.visible = frame_data[:visible] if entity.visible? != frame_data[:visible]
@@ -948,7 +1248,8 @@ module MSPhysics
         res = 'Model-Inherited|Custom|320x240|640x480|768x576|800x600|1024x768|1280x720|1280x1024|1920x1080'
         compression = '0.0|0.1|0.2|0.3|0.4|0.5|0.6|0.7|0.8|0.9|1.0'
         drop_downs = ['', '', '', yn, image_types, res, yn, compression, yn, yn, yn, yn, yn, yn]
-        values = [@start_frame, @end_frame, @speed, @reversed ? 'Yes' : 'No', 'png', 'Model-Inherited', 'Yes', '0.9', 'No', @replay_materials ? 'Yes' : 'No', @replay_layers ? 'Yes' : 'No', @replay_camera ? 'Yes' : 'No', @replay_render ? 'Yes' : 'No', @replay_shadow ? 'Yes' : 'No']
+        #values = [@start_frame, @end_frame, @speed, @reversed ? 'Yes' : 'No', 'png', 'Model-Inherited', 'Yes', '0.9', 'No', @replay_materials ? 'Yes' : 'No', @replay_layers ? 'Yes' : 'No', @replay_camera ? 'Yes' : 'No', @replay_render ? 'Yes' : 'No', @replay_shadow ? 'Yes' : 'No']
+        values = [@start_frame, @end_frame, @image_defaults[:speed], @image_defaults[:reversed], @image_defaults[:image_type], @image_defaults[:resolution], @image_defaults[:antialias], @image_defaults[:compression], @image_defaults[:tbackground], @replay_materials ? 'Yes' : 'No', @replay_layers ? 'Yes' : 'No', @replay_camera ? 'Yes' : 'No', @replay_render ? 'Yes' : 'No', @replay_shadow ? 'Yes' : 'No']
         results = UI.inputbox(prompts, values, drop_downs, 'Export Animation Options')
         return false unless results
         # Display Custom resolution input box if desired.
@@ -992,6 +1293,14 @@ module MSPhysics
         @replay_camera = results[11] == 'Yes'
         @replay_render = results[12] == 'Yes'
         @replay_shadow = results[13] == 'Yes'
+        # Save defaults
+        @image_defaults[:speed] = speed.to_s
+        @image_defaults[:reversed] = results[3]
+        @image_defaults[:image_type] = results[4]
+        @image_defaults[:resolution] = results[5]
+        @image_defaults[:antialias] = results[6]
+        @image_defaults[:compression] = results[7]
+        @image_defaults[:tbackground] = results[8]
         # Export animation
         start_time = Time.now
         called_while_active = @active
@@ -1039,7 +1348,7 @@ module MSPhysics
         prompts = ['Start Frame', 'End Frame', 'Speed (0.01 - 10000)   ', 'Reverse', 'Replay Materials', 'Replay Layers', 'Replay Camera', 'Replay Render', 'Replay Shadow']
         yn = 'Yes|No'
         drop_downs = ['', '', '', yn, yn, yn, yn, yn, yn]
-        values = [@start_frame, @end_frame, @speed, @reversed ? 'Yes' : 'No', @replay_materials ? 'Yes' : 'No', @replay_layers ? 'Yes' : 'No', @replay_camera ? 'Yes' : 'No', @replay_render ? 'Yes' : 'No', @replay_shadow ? 'Yes' : 'No']
+        values = [@start_frame, @end_frame, @skp_defaults[:speed],  @skp_defaults[:reversed], @replay_materials ? 'Yes' : 'No', @replay_layers ? 'Yes' : 'No', @replay_camera ? 'Yes' : 'No', @replay_render ? 'Yes' : 'No', @replay_shadow ? 'Yes' : 'No']
         results = UI.inputbox(prompts, values, drop_downs, 'Export Animation Options')
         return false unless results
         # Select export path
@@ -1066,6 +1375,9 @@ module MSPhysics
         @replay_camera = results[6] == 'Yes'
         @replay_render = results[7] == 'Yes'
         @replay_shadow = results[8] == 'Yes'
+        # Save skp defaults
+        @skp_defaults[:speed] = speed.to_s
+        @skp_defaults[:reversed] = results[3]
         # Export animation
         start_time = Time.now
         called_while_active = @active
@@ -1595,6 +1907,12 @@ end}
       def onOpenModel(model)
         onNewModel(model)
         MSPhysics::Replay.load_replay_settings
+        begin
+          MSPhysics::Replay.load_data_from_model
+        rescue Exception => e
+          p e
+          p e.backtrace
+        end
       end
 
     end # class AppObserver

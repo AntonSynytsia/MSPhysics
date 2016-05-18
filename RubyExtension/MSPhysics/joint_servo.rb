@@ -8,6 +8,7 @@ module MSPhysics
     DEFAULT_LIMITS_ENABLED = false
     DEFAULT_ACCEL = 40.0
     DEFAULT_DAMP = 10.0
+    DEFAULT_STRENGTH = 0.0
     DEFAULT_REDUCTION_RATIO = 0.1
     DEFAULT_CONTROLLER = nil
     DEFAULT_SP_MODE_ENABLED = false
@@ -18,14 +19,16 @@ module MSPhysics
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
     #   Of the given matrix, matrix origin should represent pin origin, and
     #   matrix Z-AXIS should represent pin up.
-    def initialize(world, parent, pin_tra)
-      super(world, parent, pin_tra, 6)
+    # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group
+    def initialize(world, parent, pin_tra, group = nil)
+      super(world, parent, pin_tra, 6, group)
       MSPhysics::Newton::Servo.create(@address)
       MSPhysics::Newton::Servo.set_min(@address, DEFAULT_MIN)
       MSPhysics::Newton::Servo.set_max(@address, DEFAULT_MAX)
       MSPhysics::Newton::Servo.enable_limits(@address, DEFAULT_LIMITS_ENABLED)
       MSPhysics::Newton::Servo.set_accel(@address, DEFAULT_ACCEL)
       MSPhysics::Newton::Servo.set_damp(@address, DEFAULT_DAMP)
+      MSPhysics::Newton::Servo.set_strength(@address, DEFAULT_STRENGTH)
       MSPhysics::Newton::Servo.set_reduction_ratio(@address, DEFAULT_REDUCTION_RATIO)
       MSPhysics::Newton::Servo.enable_sp_mode(@address, DEFAULT_SP_MODE_ENABLED)
       MSPhysics::Newton::Servo.set_controller(@address, DEFAULT_CONTROLLER)
@@ -119,6 +122,19 @@ module MSPhysics
     # @param [Numeric] value A value greater than or equal to zero.
     def damp=(value)
       MSPhysics::Newton::Servo.set_damp(@address, value)
+    end
+
+    # Get angular strength.
+    # @return [Numeric]
+    def strength
+      MSPhysics::Newton::Servo.get_strength(@address)
+    end
+
+    # Set angular strength.
+    # @note A strength value of 0.0 represents maximum strength.
+    # @param [Numeric] value A value greater than or equal to zero.
+    def strength=(value)
+      MSPhysics::Newton::Servo.set_strength(@address, value)
     end
 
     # Get angular reduction ratio.

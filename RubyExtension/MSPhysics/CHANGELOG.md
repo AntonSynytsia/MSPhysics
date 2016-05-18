@@ -1,3 +1,7 @@
+## 0.7.1 - May 17, 2016
+- Various optimizations and minor bug fixes.
+- Added a feature to load MSPhysics without SDL in case SDL is not supported on your system.
+
 ## 0.7.0 - Apr 18, 2016
 - Added particle interface.
 - Control panel no longer steals keyboard focus.

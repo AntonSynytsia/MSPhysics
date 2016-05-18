@@ -55,7 +55,7 @@ folder. Make sure to download and install AMS Library!
 
 ## Version
 
-* MSPhysics 0.7.0
+* MSPhysics 0.7.1
 * NewtonDynamics 3.14
 * SDL 2.0.4
 * SDL_Mixer 2.0.1
@@ -63,7 +63,7 @@ folder. Make sure to download and install AMS Library!
 
 ## Release Date
 
-April 18, 2016
+May 17, 2016
 
 
 ## Licence

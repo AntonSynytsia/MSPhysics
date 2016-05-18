@@ -33,9 +33,9 @@
 
 #define	DG_BODY_LRU_STEP				2	
 #define	DG_SMALL_ISLAND_COUNT			2
-#define	DG_MAX_SKELETON_JOINT_COUNT		4096
+#define	DG_MAX_SKELETON_JOINT_COUNT		256
 
-#define	DG_FREEZZING_VELOCITY_DRAG		dgFloat32 (0.5f)
+#define	DG_FREEZZING_VELOCITY_DRAG		dgFloat32 (0.2f)
 #define	DG_SOLVER_MAX_ERROR				(DG_FREEZE_MAG * dgFloat32 (0.5f))
 
 
@@ -220,8 +220,6 @@ class dgJacobianMatrixElement
 	dgFloat32 m_maxImpact;
 	dgForceImpactPair* m_jointFeebackForce;
 	dgInt32 m_normalForceIndex;
-	bool m_accelIsMotor;
-	bool m_applyCorrection;
 } DG_GCC_VECTOR_ALIGMENT;
 
 class dgJacobianMemory

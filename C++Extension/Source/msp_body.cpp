@@ -2,6 +2,15 @@
 
 /*
  ///////////////////////////////////////////////////////////////////////////////
+  Variables
+ ///////////////////////////////////////////////////////////////////////////////
+*/
+
+std::map<VALUE, const NewtonBody*> MSNewton::Body::map_group_to_body;
+
+
+/*
+ ///////////////////////////////////////////////////////////////////////////////
   Callback Functions
  ///////////////////////////////////////////////////////////////////////////////
 */
@@ -10,6 +19,9 @@ void MSNewton::Body::destructor_callback(const NewtonBody* const body) {
 	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
 	c_clear_non_collidable_bodies(body);
 	valid_bodies.erase(body);
+	VALUE v_group = rb_ary_entry(body_data->user_data, 1);
+	if (v_group != Qnil && map_group_to_body.find(v_group) != map_group_to_body.end())
+		map_group_to_body.erase(v_group);
 	body_data->non_collidable_bodies.clear();
 	body_data->touchers.clear();
 	if (RARRAY_LEN(body_data->destructor_proc) == 1 && rb_ary_entry(body_data->destructor_proc, 0) != Qnil)
@@ -349,12 +361,12 @@ VALUE MSNewton::Body::is_valid(VALUE self, VALUE v_body) {
 	return Util::is_body_valid((const NewtonBody*)Util::value_to_ll(v_body)) ? Qtrue : Qfalse;
 }
 
-VALUE MSNewton::Body::create_dynamic(VALUE self, VALUE v_world, VALUE v_collision, VALUE v_matrix, VALUE v_id) {
+VALUE MSNewton::Body::create_dynamic(VALUE self, VALUE v_world, VALUE v_collision, VALUE v_matrix, VALUE v_id, VALUE v_group) {
 	const NewtonWorld* world = Util::value_to_world(v_world);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	const NewtonCollision* collision = Util::value_to_collision(v_collision);
-	dFloat sx, sy, sz;
-	NewtonCollisionGetScale(collision, &sx, &sy, &sz);
+	//dFloat sx, sy, sz;
+	//NewtonCollisionGetScale(collision, &sx, &sy, &sz);
 	dMatrix col_matrix;
 	NewtonCollisionGetMatrix(collision, &col_matrix[0][0]);
 	dMatrix matrix = Util::value_to_matrix(v_matrix, world_data->scale);
@@ -419,8 +431,7 @@ VALUE MSNewton::Body::create_dynamic(VALUE self, VALUE v_world, VALUE v_collisio
 	data->non_collidable_bodies;
 	data->touchers;
 	data->matrix_scale = scale;
-	data->default_collision_scale = dVector(sx, sy, sz);
-	data->collision_scale = dVector(sx, sy, sz);
+	data->default_collision_scale = dVector(valid_collisions[collision]);
 	data->default_collision_offset = col_matrix.m_posit;
 	data->matrix_changed = false;
 	data->gravity_enabled = true;
@@ -434,6 +445,9 @@ VALUE MSNewton::Body::create_dynamic(VALUE self, VALUE v_world, VALUE v_collisio
 	NewtonBodySetDestructorCallback(body, destructor_callback);
 	NewtonBodySetTransformCallback(body, transform_callback);
 	NewtonBodySetMaterialGroupID(body, data->material_id);
+	rb_ary_store(data->user_data, 0, Qnil);
+	rb_ary_store(data->user_data, 1, v_group);
+	if (v_group != Qnil) map_group_to_body[v_group] = body;
 	return Util::to_value(body);
 }
 
@@ -477,20 +491,16 @@ VALUE MSNewton::Body::set_continuous_collision_state(VALUE self, VALUE v_body, V
 
 VALUE MSNewton::Body::get_matrix(VALUE self, VALUE v_body) {
 	const NewtonBody* body = Util::value_to_body(v_body);
+	const NewtonCollision* collision = NewtonBodyGetCollision(body);
 	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
-	//const NewtonCollision* collision = NewtonBodyGetCollision(body);
 	dMatrix matrix;
 	NewtonBodyGetMatrix(body, &matrix[0][0]);
 	const dVector& dcs = body_data->default_collision_scale;
 	const dVector& ms = body_data->matrix_scale;
-	//dFloat csx, csy, csz;
-	//NewtonCollisionGetScale(collision, &csx, &csy, &csz);
-	dFloat csx = body_data->collision_scale.m_x;
-	dFloat csy = body_data->collision_scale.m_y;
-	dFloat csz = body_data->collision_scale.m_z;
-	dVector actual_matrix_scale(ms.m_x * csx / dcs.m_x, ms.m_y * csy / dcs.m_y, ms.m_z * csz / dcs.m_z);
+	const dVector& cs = valid_collisions[collision];
+	dVector actual_matrix_scale(ms.m_x * cs.m_x / dcs.m_x, ms.m_y * cs.m_y / dcs.m_y, ms.m_z * cs.m_z / dcs.m_z);
 	Util::set_matrix_scale(matrix, actual_matrix_scale);
 	return Util::matrix_to_value(matrix, world_data->inverse_scale);
 }
@@ -512,10 +522,10 @@ VALUE MSNewton::Body::get_normal_matrix(VALUE self, VALUE v_body) {
 
 VALUE MSNewton::Body::set_matrix(VALUE self, VALUE v_body, VALUE v_matrix) {
 	const NewtonBody* body = Util::value_to_body(v_body);
+	const NewtonCollision* collision = NewtonBodyGetCollision(body);
 	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
-	//const NewtonCollision* collision = NewtonBodyGetCollision(body);
 	dMatrix matrix = Util::value_to_matrix(v_matrix, world_data->scale);
 	if (Util::is_matrix_flipped(matrix)) {
 		matrix.m_front.m_x *= -1;
@@ -526,12 +536,8 @@ VALUE MSNewton::Body::set_matrix(VALUE self, VALUE v_body, VALUE v_matrix) {
 	NewtonBodySetMatrix(body, &matrix[0][0]);
 	const dVector& dcs = body_data->default_collision_scale;
 	const dVector& ms = body_data->matrix_scale;
-	//dFloat csx, csy, csz;
-	//NewtonCollisionGetScale(collision, &csx, &csy, &csz);
-	dFloat csx = body_data->collision_scale.m_x;
-	dFloat csy = body_data->collision_scale.m_y;
-	dFloat csz = body_data->collision_scale.m_z;
-	dVector actual_matrix_scale(ms.m_x * csx / dcs.m_x, ms.m_y * csy / dcs.m_y, ms.m_z * csz / dcs.m_z);
+	const dVector& cs = valid_collisions[collision];
+	dVector actual_matrix_scale(ms.m_x * cs.m_x / dcs.m_x, ms.m_y * cs.m_y / dcs.m_y, ms.m_z * cs.m_z / dcs.m_z);
 	Util::set_matrix_scale(matrix, actual_matrix_scale);
 	return Util::matrix_to_value(matrix, world_data->inverse_scale);
 }
@@ -1534,7 +1540,7 @@ VALUE MSNewton::Body::apply_fluid_resistance(VALUE self, VALUE v_body, VALUE v_d
 	return rb_ary_new3(2, Util::vector_to_value(iterator_data.force, world_data->inverse_scale3), Util::vector_to_value(iterator_data.torque, world_data->inverse_scale4));
 }
 
-VALUE MSNewton::Body::copy(VALUE self, VALUE v_body, VALUE v_matrix, VALUE v_reapply_forces) {
+VALUE MSNewton::Body::copy(VALUE self, VALUE v_body, VALUE v_matrix, VALUE v_reapply_forces, VALUE v_group) {
 	const NewtonBody* body = Util::value_to_body(v_body);
 	bool reapply_forces = Util::value_to_bool(v_reapply_forces);
 
@@ -1607,17 +1613,19 @@ VALUE MSNewton::Body::copy(VALUE self, VALUE v_body, VALUE v_matrix, VALUE v_rea
 	new_data->user_data = rb_ary_new();
 	new_data->matrix_scale = dVector(body_data->matrix_scale);
 	new_data->default_collision_scale = dVector(body_data->default_collision_scale);
-	new_data->collision_scale = dVector(body_data->collision_scale);
 	new_data->default_collision_offset = dVector(body_data->default_collision_offset);
 	new_data->matrix_changed = false;
 	new_data->gravity_enabled = body_data->gravity_enabled;
 	new_data->material_id = body_data->material_id;
 	new_data->pick_and_drag;
 	new_data->buoyancy;
-
 	NewtonBodySetUserData(new_body, new_data);
 	rb_gc_register_address(&new_data->destructor_proc);
 	rb_gc_register_address(&new_data->user_data);
+
+	rb_ary_store(new_data->user_data, 0, Qnil);
+	rb_ary_store(new_data->user_data, 1, v_group);
+	if (v_group != Qnil) map_group_to_body[v_group] = new_body;
 
 	NewtonBodySetMaterialGroupID(new_body, body_data->material_id);
 
@@ -1666,24 +1674,20 @@ VALUE MSNewton::Body::set_destructor_proc(VALUE self, VALUE v_body, VALUE v_proc
 		rb_ary_store(data->destructor_proc, 0, v_proc);
 	else
 		rb_raise(rb_eTypeError, "Expected nil or a Proc object!");
-	return Qtrue;
+	return Qnil;
 }
 
 VALUE MSNewton::Body::get_user_data(VALUE self, VALUE v_body) {
 	const NewtonBody* body = Util::value_to_body(v_body);
 	BodyData* data = (BodyData*)NewtonBodyGetUserData(body);
-	if (RARRAY_LEN(data->user_data) == 0) return Qnil;
 	return rb_ary_entry(data->user_data, 0);
 }
 
 VALUE MSNewton::Body::set_user_data(VALUE self, VALUE v_body, VALUE v_user_data) {
 	const NewtonBody* body = Util::value_to_body(v_body);
 	BodyData* data = (BodyData*)NewtonBodyGetUserData(body);
-	if (v_user_data == Qnil)
-		rb_ary_clear(data->user_data);
-	else
-		rb_ary_store(data->user_data, 0, v_user_data);
-	return Qtrue;
+	rb_ary_store(data->user_data, 0, v_user_data);
+	return Qnil;
 }
 
 VALUE MSNewton::Body::get_record_touch_data_state(VALUE self, VALUE v_body) {
@@ -1780,12 +1784,8 @@ VALUE MSNewton::Body::set_material_id(VALUE self, VALUE v_body, VALUE v_id) {
 
 VALUE MSNewton::Body::get_collision_scale(VALUE self, VALUE v_body) {
 	const NewtonBody* body = Util::value_to_body(v_body);
-	//const NewtonCollision* collision = NewtonBodyGetCollision(body);
-	//dFloat sx, sy, sz;
-	//NewtonCollisionGetScale(collision, &sx, &sy, &sz);
-	//return Util::vector_to_value(dVector(sx, sy, sz));
-	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
-	return Util::vector_to_value(body_data->collision_scale);
+	const NewtonCollision* collision = NewtonBodyGetCollision(body);
+	return Util::vector_to_value(valid_collisions[collision]);
 }
 
 VALUE MSNewton::Body::set_collision_scale(VALUE self, VALUE v_body, VALUE v_scale) {
@@ -1798,7 +1798,7 @@ VALUE MSNewton::Body::set_collision_scale(VALUE self, VALUE v_body, VALUE v_scal
 	scale.m_x = Util::clamp(scale.m_x, 0.01f, 100.0f);
 	scale.m_y = Util::clamp(scale.m_y, 0.01f, 100.0f);
 	scale.m_z = Util::clamp(scale.m_z, 0.01f, 100.0f);
-	body_data->collision_scale = scale;
+	valid_collisions[collision] = scale;
 	const dVector& dco = body_data->default_collision_offset;
 	const dVector& dcs = body_data->default_collision_scale;
 	dMatrix col_matrix;
@@ -1827,16 +1827,36 @@ VALUE MSNewton::Body::get_default_collision_scale(VALUE self, VALUE v_body) {
 VALUE MSNewton::Body::get_actual_matrix_scale(VALUE self, VALUE v_body) {
 	const NewtonBody* body = Util::value_to_body(v_body);
 	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
-	//const NewtonCollision* collision = NewtonBodyGetCollision(body);
+	const NewtonCollision* collision = NewtonBodyGetCollision(body);
 	const dVector& dcs = body_data->default_collision_scale;
 	const dVector& ms = body_data->matrix_scale;
-	//dFloat csx, csy, csz;
-	//NewtonCollisionGetScale(collision, &csx, &csy, &csz);
-	dFloat csx = body_data->collision_scale.m_x;
-	dFloat csy = body_data->collision_scale.m_y;
-	dFloat csz = body_data->collision_scale.m_z;
-	dVector actual_matrix_scale(ms.m_x * csx / dcs.m_x, ms.m_y * csy / dcs.m_y, ms.m_z * csz / dcs.m_z);
+	const dVector& cs = valid_collisions[collision];
+	dVector actual_matrix_scale(ms.m_x * cs.m_x / dcs.m_x, ms.m_y * cs.m_y / dcs.m_y, ms.m_z * cs.m_z / dcs.m_z);
 	return Util::vector_to_value(actual_matrix_scale);
+}
+
+VALUE MSNewton::Body::get_group(VALUE self, VALUE v_body) {
+	const NewtonBody* body = Util::value_to_body(v_body);
+	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
+	return rb_ary_entry(body_data->user_data, 1);
+}
+
+VALUE MSNewton::Body::get_body_by_group(VALUE self, VALUE v_group) {
+	std::map<VALUE, const NewtonBody*>::iterator it = map_group_to_body.find(v_group);
+	if (it == map_group_to_body.end())
+		return Qnil;
+	else
+		return Util::to_value(it->second);
+}
+
+VALUE MSNewton::Body::get_body_data_by_group(VALUE self, VALUE v_group) {
+	std::map<VALUE, const NewtonBody*>::iterator it = map_group_to_body.find(v_group);
+	if (it == map_group_to_body.end())
+		return Qnil;
+	else {
+		BodyData* body_data = (BodyData*)NewtonBodyGetUserData(it->second);
+		return rb_ary_entry(body_data->user_data, 0);
+	}
 }
 
 
@@ -1850,7 +1870,7 @@ void Init_msp_body(VALUE mNewton) {
 	VALUE mBody = rb_define_module_under(mNewton, "Body");
 
 	rb_define_module_function(mBody, "is_valid?", VALUEFUNC(MSNewton::Body::is_valid), 1);
-	rb_define_module_function(mBody, "create_dynamic", VALUEFUNC(MSNewton::Body::create_dynamic), 4);
+	rb_define_module_function(mBody, "create_dynamic", VALUEFUNC(MSNewton::Body::create_dynamic), 5);
 	rb_define_module_function(mBody, "destroy", VALUEFUNC(MSNewton::Body::destroy), 1);
 	rb_define_module_function(mBody, "get_world", VALUEFUNC(MSNewton::Body::get_world), 1);
 	rb_define_module_function(mBody, "get_collision", VALUEFUNC(MSNewton::Body::get_collision), 1);
@@ -1940,7 +1960,7 @@ void Init_msp_body(VALUE mNewton) {
 	rb_define_module_function(mBody, "apply_pick_and_drag2", VALUEFUNC(MSNewton::Body::apply_pick_and_drag2), 6);
 	rb_define_module_function(mBody, "apply_buoyancy", VALUEFUNC(MSNewton::Body::apply_buoyancy), 7);
 	rb_define_module_function(mBody, "apply_fluid_resistance", VALUEFUNC(MSNewton::Body::apply_fluid_resistance), 2);
-	rb_define_module_function(mBody, "copy", VALUEFUNC(MSNewton::Body::copy), 3);
+	rb_define_module_function(mBody, "copy", VALUEFUNC(MSNewton::Body::copy), 4);
 	rb_define_module_function(mBody, "get_destructor_proc", VALUEFUNC(MSNewton::Body::get_destructor_proc), 1);
 	rb_define_module_function(mBody, "set_destructor_proc", VALUEFUNC(MSNewton::Body::set_destructor_proc), 2);
 	rb_define_module_function(mBody, "get_user_data", VALUEFUNC(MSNewton::Body::get_user_data), 1);
@@ -1961,4 +1981,7 @@ void Init_msp_body(VALUE mNewton) {
 	rb_define_module_function(mBody, "set_collision_scale", VALUEFUNC(MSNewton::Body::set_collision_scale), 2);
 	rb_define_module_function(mBody, "get_default_collision_scale", VALUEFUNC(MSNewton::Body::get_default_collision_scale), 1);
 	rb_define_module_function(mBody, "get_actual_matrix_scale", VALUEFUNC(MSNewton::Body::get_actual_matrix_scale), 1);
+	rb_define_module_function(mBody, "get_group", VALUEFUNC(MSNewton::Body::get_group), 1);
+	rb_define_module_function(mBody, "get_body_by_group", VALUEFUNC(MSNewton::Body::get_body_by_group), 1);
+	rb_define_module_function(mBody, "get_body_data_by_group", VALUEFUNC(MSNewton::Body::get_body_data_by_group), 1);
 }

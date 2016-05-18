@@ -11,6 +11,7 @@ const dFloat MSNewton::Servo::DEFAULT_MAX = 180.0f * DEG_TO_RAD;
 const bool MSNewton::Servo::DEFAULT_LIMITS_ENABLED = false;
 const dFloat MSNewton::Servo::DEFAULT_ACCEL = 40.0f;
 const dFloat MSNewton::Servo::DEFAULT_DAMP = 10.0f;
+const dFloat MSNewton::Servo::DEFAULT_STRENGTH = 0.0f;
 const dFloat MSNewton::Servo::DEFAULT_REDUCTION_RATIO = 0.1f;
 const dFloat MSNewton::Servo::DEFAULT_CONTROLLER = 0.0f;
 const bool MSNewton::Servo::DEFAULT_CONTROLLER_ENABLED = false;
@@ -160,6 +161,10 @@ void MSNewton::Servo::submit_constraints(const NewtonJoint* joint, dgFloat32 tim
 		// Set angular acceleration
 		NewtonUserJointAddAngularRow(joint, 0.0f, &matrix0.m_right[0]);
 		NewtonUserJointSetRowAcceleration(joint, rel_accel);
+		if (cj_data->strength > EPSILON) {
+			NewtonUserJointSetRowMinimumFriction(joint, -cj_data->strength);
+			NewtonUserJointSetRowMaximumFriction(joint, cj_data->strength);
+		}
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
 }
@@ -229,6 +234,7 @@ VALUE MSNewton::Servo::create(VALUE self, VALUE v_joint) {
 	cj_data->limits_enabled = DEFAULT_LIMITS_ENABLED;
 	cj_data->accel = DEFAULT_ACCEL;
 	cj_data->damp = DEFAULT_DAMP;
+	cj_data->strength = DEFAULT_STRENGTH;
 	cj_data->reduction_ratio = DEFAULT_REDUCTION_RATIO;
 	cj_data->ai = new AngularIntegration();
 	cj_data->cur_omega = 0.0f;
@@ -332,6 +338,19 @@ VALUE MSNewton::Servo::set_damp(VALUE self, VALUE v_joint, VALUE v_damp) {
 	return Util::to_value(cj_data->damp);
 }
 
+VALUE MSNewton::Servo::get_strength(VALUE self, VALUE v_joint) {
+	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SERVO);
+	ServoData* cj_data = (ServoData*)joint_data->cj_data;
+	return Util::to_value(cj_data->strength);
+}
+
+VALUE MSNewton::Servo::set_strength(VALUE self, VALUE v_joint, VALUE v_strength) {
+	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SERVO);
+	ServoData* cj_data = (ServoData*)joint_data->cj_data;
+	cj_data->strength = Util::clamp_min(Util::value_to_dFloat(v_strength), 0.0f);
+	return Util::to_value(cj_data->strength);
+}
+
 VALUE MSNewton::Servo::get_reduction_ratio(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SERVO);
 	ServoData* cj_data = (ServoData*)joint_data->cj_data;
@@ -409,6 +428,8 @@ void Init_msp_servo(VALUE mNewton) {
 	rb_define_module_function(mServo, "set_accel", VALUEFUNC(MSNewton::Servo::set_accel), 2);
 	rb_define_module_function(mServo, "get_damp", VALUEFUNC(MSNewton::Servo::get_damp), 1);
 	rb_define_module_function(mServo, "set_damp", VALUEFUNC(MSNewton::Servo::set_damp), 2);
+	rb_define_module_function(mServo, "get_strength", VALUEFUNC(MSNewton::Servo::get_strength), 1);
+	rb_define_module_function(mServo, "set_strength", VALUEFUNC(MSNewton::Servo::set_strength), 2);
 	rb_define_module_function(mServo, "get_reduction_ratio", VALUEFUNC(MSNewton::Servo::get_reduction_ratio), 1);
 	rb_define_module_function(mServo, "set_reduction_ratio", VALUEFUNC(MSNewton::Servo::set_reduction_ratio), 2);
 	rb_define_module_function(mServo, "get_controller", VALUEFUNC(MSNewton::Servo::get_controller), 1);

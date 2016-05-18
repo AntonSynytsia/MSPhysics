@@ -156,7 +156,7 @@ module MSPhysics
         @_group = args[1]
         @_collision_shape = args[2].to_s.downcase.gsub(' ', '_')
         collision = MSPhysics::Collision.create(args[0], @_group, @_collision_shape)
-        @_address = MSPhysics::Newton::Body.create_dynamic(args[0].get_address, collision, @_group.transformation, args[0].get_default_material_id)
+        @_address = MSPhysics::Newton::Body.create_dynamic(args[0].get_address, collision, @_group.transformation, args[0].get_default_material_id, @_group)
         if @_collision_shape == 'null'
           bb = MSPhysics::Group.get_bounding_box_from_faces(@_group, true, nil) { |e|
             e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
@@ -175,11 +175,12 @@ module MSPhysics
         unless args[0].get_group.valid?
           raise(TypeError, 'The specified body references a deleted entity. Copying bodies with erased entities is not acceptable!', caller)
         end
-        @_address = MSPhysics::Newton::Body.copy(args[0].get_address, args[1], args[2])
-        @_collision_shape = args[0].get_collision_shape
         definition = MSPhysics::Group.get_definition(args[0].get_group)
-        @_group = Sketchup.active_model.entities.add_instance(definition, MSPhysics::Newton::Body.get_matrix(@_address))
+        @_group = Sketchup.active_model.entities.add_instance(definition, args[0].get_group.transformation)
         @_group.material = args[0].get_group.material
+        @_address = MSPhysics::Newton::Body.copy(args[0].get_address, args[1], args[2], @_group)
+        @_group.transformation = MSPhysics::Newton::Body.get_matrix(@_address)
+        @_collision_shape = args[0].get_collision_shape
       end
       destructor = Proc.new {
         @_group = nil

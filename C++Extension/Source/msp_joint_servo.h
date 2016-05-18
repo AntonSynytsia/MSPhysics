@@ -16,6 +16,7 @@ private:
 	static const bool DEFAULT_LIMITS_ENABLED;
 	static const dFloat DEFAULT_ACCEL;
 	static const dFloat DEFAULT_DAMP;
+	static const dFloat DEFAULT_STRENGTH;
 	static const dFloat DEFAULT_REDUCTION_RATIO;
 	static const dFloat DEFAULT_CONTROLLER;
 	static const bool DEFAULT_CONTROLLER_ENABLED;
@@ -34,6 +35,7 @@ public:
 		dFloat accel;
 		dFloat damp;
 		dFloat reduction_ratio;
+		dFloat strength;
 		dFloat controller;
 		bool controller_enabled;
 		bool sp_mode_enabled;
@@ -62,6 +64,8 @@ public:
 	static VALUE set_accel(VALUE self, VALUE v_joint, VALUE v_accel);
 	static VALUE get_damp(VALUE self, VALUE v_joint);
 	static VALUE set_damp(VALUE self, VALUE v_joint, VALUE v_damp);
+	static VALUE get_strength(VALUE self, VALUE v_joint);
+	static VALUE set_strength(VALUE self, VALUE v_joint, VALUE v_damp);
 	static VALUE get_reduction_ratio(VALUE self, VALUE v_joint);
 	static VALUE set_reduction_ratio(VALUE self, VALUE v_joint, VALUE v_reduction_ratio);
 	static VALUE get_controller(VALUE self, VALUE v_joint);

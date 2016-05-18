@@ -9,6 +9,9 @@ namespace MSNewton {
 
 class MSNewton::Body {
 private:
+	// Variables
+	static std::map<VALUE, const NewtonBody*> map_group_to_body;
+
 	// Callbacks
 	static void destructor_callback(const NewtonBody* const body);
 	static void transform_callback(const NewtonBody* const body, const dFloat* const matrix, int thread_index);
@@ -24,7 +27,7 @@ private:
 public:
 	// Ruby Functions
 	static VALUE is_valid(VALUE self, VALUE v_body);
-	static VALUE create_dynamic(VALUE self, VALUE v_world, VALUE v_collision, VALUE v_matrix, VALUE v_id);
+	static VALUE create_dynamic(VALUE self, VALUE v_world, VALUE v_collision, VALUE v_matrix, VALUE v_id, VALUE v_group);
 	static VALUE destroy(VALUE self, VALUE v_body);
 	static VALUE get_world(VALUE self, VALUE v_body);
 	static VALUE get_collision(VALUE self, VALUE v_body);
@@ -114,7 +117,7 @@ public:
 	static VALUE apply_pick_and_drag2(VALUE self, VALUE v_body, VALUE v_pick_pt, VALUE v_dest_pt, VALUE v_stiffness, VALUE v_angular_damp, VALUE v_timestep);
 	static VALUE apply_buoyancy(VALUE self, VALUE v_body, VALUE v_plane_origin, VALUE v_plane_normal, VALUE v_plane_current, VALUE v_density, VALUE v_linear_viscosity, VALUE v_angular_viscosity);
 	static VALUE apply_fluid_resistance(VALUE self, VALUE v_body, VALUE v_density);
-	static VALUE copy(VALUE self, VALUE v_body, VALUE v_matrix, VALUE v_reapply_forces);
+	static VALUE copy(VALUE self, VALUE v_body, VALUE v_matrix, VALUE v_reapply_forces, VALUE v_group);
 	static VALUE get_destructor_proc(VALUE self, VALUE v_body);
 	static VALUE set_destructor_proc(VALUE self, VALUE v_body, VALUE v_proc);
 	static VALUE get_user_data(VALUE self, VALUE v_body);
@@ -135,6 +138,9 @@ public:
 	static VALUE set_collision_scale(VALUE self, VALUE v_body, VALUE v_scale);
 	static VALUE get_default_collision_scale(VALUE self, VALUE v_body);
 	static VALUE get_actual_matrix_scale(VALUE self, VALUE v_body);
+	static VALUE get_group(VALUE self, VALUE v_body);
+	static VALUE get_body_by_group(VALUE self, VALUE v_body);
+	static VALUE get_body_data_by_group(VALUE self, VALUE v_body);
 };
 
 void Init_msp_body(VALUE mNewton);

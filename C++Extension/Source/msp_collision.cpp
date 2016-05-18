@@ -19,7 +19,7 @@ const dFloat MSNewton::Collision::MAX_SIZE = 1.0e4f;
 VALUE MSNewton::Collision::create_null(VALUE self, VALUE v_world) {
 	const NewtonWorld* world = Util::value_to_world(v_world);
 	const NewtonCollision* col = NewtonCreateNull(world);
-	valid_collisions[col] = true;
+	valid_collisions[col] = dVector(1.0f, 1.0f, 1.0f);
 	return Util::to_value(col);
 }
 
@@ -34,7 +34,7 @@ VALUE MSNewton::Collision::create_box(VALUE self, VALUE v_world, VALUE v_width, 
 		Util::value_to_dFloat2(v_depth, scale, MIN_SIZE, MAX_SIZE),
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
-	valid_collisions[col] = true;
+	valid_collisions[col] = dVector(1.0f, 1.0f, 1.0f);
 	return Util::to_value(col);
 }
 
@@ -47,7 +47,7 @@ VALUE MSNewton::Collision::create_sphere(VALUE self, VALUE v_world, VALUE v_radi
 		Util::value_to_dFloat2(v_radius, scale, MIN_SIZE, MAX_SIZE),
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
-	valid_collisions[col] = true;
+	valid_collisions[col] = dVector(1.0f, 1.0f, 1.0f);
 	return Util::to_value(col);
 }
 
@@ -66,8 +66,11 @@ VALUE MSNewton::Collision::create_scaled_sphere(VALUE self, VALUE v_world, VALUE
 		r * 0.5f,
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
-	valid_collisions[col] = true;
-	NewtonCollisionSetScale(col, w * ir, h * ir, d * ir);
+	dFloat sx = w * ir;
+	dFloat sy = h * ir;
+	dFloat sz = d * ir;
+	NewtonCollisionSetScale(col, sx, sy, sz);
+	valid_collisions[col] = dVector(sx, sy, sz);
 	return Util::to_value(col);
 }
 
@@ -81,7 +84,7 @@ VALUE MSNewton::Collision::create_cone(VALUE self, VALUE v_world, VALUE v_radius
 		Util::value_to_dFloat2(v_height, scale, MIN_SIZE, MAX_SIZE),
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
-	valid_collisions[col] = true;
+	valid_collisions[col] = dVector(1.0f, 1.0f, 1.0f);
 	return Util::to_value(col);
 }
 
@@ -100,8 +103,11 @@ VALUE MSNewton::Collision::create_scaled_cone(VALUE self, VALUE v_world, VALUE v
 		h,
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
-	valid_collisions[col] = true;
-	NewtonCollisionSetScale(col, 1.0f, ry * ir, rx * ir);
+	dFloat sx = 1.0f;
+	dFloat sy = ry * ir;
+	dFloat sz = rx * ir;
+	NewtonCollisionSetScale(col, sx, sy, sz);
+	valid_collisions[col] = dVector(sx, sy, sz);
 	return Util::to_value(col);
 }
 
@@ -116,7 +122,7 @@ VALUE MSNewton::Collision::create_cylinder(VALUE self, VALUE v_world, VALUE v_ra
 		Util::value_to_dFloat2(v_height, scale, MIN_SIZE, MAX_SIZE),
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
-	valid_collisions[col] = true;
+	valid_collisions[col] = dVector(1.0f, 1.0f, 1.0f);
 	return Util::to_value(col);
 }
 
@@ -136,8 +142,11 @@ VALUE MSNewton::Collision::create_scaled_cylinder(VALUE self, VALUE v_world, VAL
 		h,
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
-	valid_collisions[col] = true;
-	NewtonCollisionSetScale(col, 1.0f, ry * ir, rx * ir);
+	dFloat sx = 1.0f;
+	dFloat sy = ry * ir;
+	dFloat sz = rx * ir;
+	NewtonCollisionSetScale(col, sx, sy, sz);
+	valid_collisions[col] = dVector(sx, sy, sz);
 	return Util::to_value(col);
 }
 
@@ -152,7 +161,7 @@ VALUE MSNewton::Collision::create_capsule(VALUE self, VALUE v_world, VALUE v_rad
 		Util::value_to_dFloat2(v_height, scale, 0.0f, MAX_SIZE),
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
-	valid_collisions[col] = true;
+	valid_collisions[col] = dVector(1.0f, 1.0f, 1.0f);
 	return Util::to_value(col);
 }
 
@@ -173,8 +182,11 @@ VALUE MSNewton::Collision::create_scaled_capsule(VALUE self, VALUE v_world, VALU
 		h < 0 ? 0 : h,
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
-	valid_collisions[col] = true;
-	NewtonCollisionSetScale(col, h < 0 ? th * 0.5f * ir : 1.0f, ry * ir, rx * ir);
+	dFloat sx = h < 0 ? th * 0.5f * ir : 1.0f;
+	dFloat sy = ry * ir;
+	dFloat sz = rx * ir;
+	NewtonCollisionSetScale(col, sx, sy, sz);
+	valid_collisions[col] = dVector(sx, sy, sz);
 	return Util::to_value(col);
 }
 
@@ -189,7 +201,7 @@ VALUE MSNewton::Collision::create_tapered_capsule(VALUE self, VALUE v_world, VAL
 		Util::value_to_dFloat2(v_height, scale, 0.0f, MAX_SIZE),
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
-	valid_collisions[col] = true;
+	valid_collisions[col] = dVector(1.0f, 1.0f, 1.0f);
 	return Util::to_value(col);
 }
 
@@ -204,7 +216,7 @@ VALUE MSNewton::Collision::create_tapered_cylinder(VALUE self, VALUE v_world, VA
 		Util::value_to_dFloat2(v_height, scale, MIN_SIZE, MAX_SIZE),
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
-	valid_collisions[col] = true;
+	valid_collisions[col] = dVector(1.0f, 1.0f, 1.0f);
 	return Util::to_value(col);
 }
 
@@ -218,7 +230,7 @@ VALUE MSNewton::Collision::create_chamfer_cylinder(VALUE self, VALUE v_world, VA
 		Util::value_to_dFloat2(v_height, scale, 0.0f, MAX_SIZE),
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
-	valid_collisions[col] = true;
+	valid_collisions[col] = dVector(1.0f, 1.0f, 1.0f);
 	return Util::to_value(col);
 }
 
@@ -237,8 +249,11 @@ VALUE MSNewton::Collision::create_scaled_chamfer_cylinder(VALUE self, VALUE v_wo
 		h,
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
-	valid_collisions[col] = true;
-	NewtonCollisionSetScale(col, 1.0f, ry / (h * 0.5f + r), rx / (h * 0.5f + r));
+	dFloat sx = 1.0f;
+	dFloat sy = ry / (h * 0.5f + r);
+	dFloat sz = rx / (h * 0.5f + r);
+	NewtonCollisionSetScale(col, sx, sy, sz);
+	valid_collisions[col] = dVector(sx, sy, sz);
 	return Util::to_value(col);
 }
 
@@ -261,7 +276,7 @@ VALUE MSNewton::Collision::create_convex_hull(VALUE self, VALUE v_world, VALUE v
 		Util::value_to_dFloat(v_tolerance),
 		Util::value_to_long(v_id),
 		v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix, world_data->scale)[0][0]);
-	valid_collisions[col] = true;
+	valid_collisions[col] = dVector(1.0f, 1.0f, 1.0f);
 	return Util::to_value(col);
 }
 
@@ -277,7 +292,7 @@ VALUE MSNewton::Collision::create_compound(VALUE self, VALUE v_world, VALUE v_co
 			NewtonCompoundCollisionAddSubCollision(compound, col);
 	}
 	NewtonCompoundCollisionEndAddRemove(compound);
-	valid_collisions[compound] = true;
+	valid_collisions[compound] = dVector(1.0f, 1.0f, 1.0f);
 	return Util::to_value(compound);
 }
 
@@ -323,7 +338,7 @@ VALUE MSNewton::Collision::create_compound_from_cd1(
 	NewtonMeshDestroy(mesh);
 	const NewtonCollision* collision = NewtonCreateCompoundCollisionFromMesh(world, convex_approximation, max_concavity, id, id);
 	NewtonMeshDestroy(convex_approximation);
-	valid_collisions[collision] = true;
+	valid_collisions[collision] = dVector(1.0f, 1.0f, 1.0f);
 	return Util::to_value(collision);
 }
 
@@ -432,7 +447,7 @@ VALUE MSNewton::Collision::create_compound_from_cd2(
 	interfaceVHACD->Clean();
 	interfaceVHACD->Release();
 
-	valid_collisions[compound] = true;
+	valid_collisions[compound] = dVector(1.0f, 1.0f, 1.0f);
 	return Util::to_value(compound);
 }
 
@@ -475,7 +490,7 @@ VALUE MSNewton::Collision::create_static_mesh(VALUE self, VALUE v_world, VALUE v
 		NewtonMeshPolygonize(mesh);
 	NewtonCollision* collision = NewtonCreateTreeCollisionFromMesh(world, mesh, id);
 	NewtonMeshDestroy(mesh);
-	valid_collisions[collision] = true;
+	valid_collisions[collision] = dVector(1.0f, 1.0f, 1.0f);
 	return Util::to_value(collision);
 }
 
@@ -486,9 +501,7 @@ VALUE MSNewton::Collision::get_type(VALUE self, VALUE v_collision) {
 
 VALUE  MSNewton::Collision::get_scale(VALUE self, VALUE v_collision) {
 	const NewtonCollision* collision = Util::value_to_collision(v_collision);
-	dFloat sx, sy, sz;
-	NewtonCollisionGetScale(collision, &sx, &sy, &sz);
-	return Util::vector_to_value(dVector(sx, sy, sz));
+	return Util::vector_to_value(valid_collisions[collision]);
 }
 
 VALUE  MSNewton::Collision::set_scale(VALUE self, VALUE v_collision, VALUE v_scale) {
@@ -500,6 +513,7 @@ VALUE  MSNewton::Collision::set_scale(VALUE self, VALUE v_collision, VALUE v_sca
 	scale.m_y = Util::clamp(scale.m_y, 0.01f, 100.0f);
 	scale.m_z = Util::clamp(scale.m_z, 0.01f, 100.0f);
 	NewtonCollisionSetScale(collision, scale.m_x, scale.m_y, scale.m_z);
+	valid_collisions[collision] = scale;
 	return Util::vector_to_value(scale);
 }
 

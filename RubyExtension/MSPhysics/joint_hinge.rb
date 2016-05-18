@@ -20,8 +20,9 @@ module MSPhysics
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
     #   Of the given matrix, matrix origin should represent pin origin, and
     #   matrix Z-axis should represent pin up.
-    def initialize(world, parent, pin_tra)
-      super(world, parent, pin_tra, 8)
+    # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group
+    def initialize(world, parent, pin_tra, group = nil)
+      super(world, parent, pin_tra, 6, group)
       MSPhysics::Newton::Hinge.create(@address)
       MSPhysics::Newton::Hinge.set_min(@address, DEFAULT_MIN)
       MSPhysics::Newton::Hinge.set_max(@address, DEFAULT_MAX)

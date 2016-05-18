@@ -50,7 +50,7 @@ module MSPhysics
             layered = AMS::System.get_windows_version < 6.0 ? 0 : 0x00080000
             style_ex = 0x00010000 | layered # WS_EX_CONTROLPARENT | WS_EX_LAYERED
             style = 0x54000000 # WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
-            #~ style = 0x94000000 # WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS
+            #style = 0x94000000 # WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS
             AMS::Window.lock_update(@handle)
             AMS::Window.set_long(@handle, -20, style_ex)
             AMS::Window.set_long(@handle, -16, style)
@@ -58,6 +58,7 @@ module MSPhysics
             AMS::Window.set_pos(@handle, 0, 0, 0, 0, 0, 0x0267)
             AMS::Window.set_layered_attributes(@handle, 0, 200, 2)
             AMS::Sketchup.ignore_dialog(@handle)
+            AMS::Sketchup.activate
           end
         else
           @dialog.close

@@ -1,10 +1,35 @@
 # Overview
 
 ## Scripting Documentation
-Every body in MSPhysics has its own body context, see {MSPhysics::Body}.
+Scripting in MSPhysics is very similar to SketchyPhysics. The process is very
+simple; you select a desired group, open MSPhysics UI, and activate the
+scripting tab. Every group, being part of simulation, has its own body context,
+an instance of {MSPhysics::Body} class. <tt>MSPhysis::Body</tt> class contains
+a set of useful functions and events, allowing user to have control over body in
+physics world.
 
+To get more familiar with scripting lets refer to a simple tutorial below.
 
-## Fast Links
+# Controllable Sphere Tutorial
+In this tutorial we will create a sphere and control it with keyboard.
+
+1. To get you started, open SketchUp and create a floor group, settings its
+   shape to "Static Mesh".
+2. Now that you have a floor, create a sphere or even a cube over the floor,
+   and set its shape to "Sphere".
+3. Now select the sphere group, open MSPhysics UI, activate the scripting tab,
+   and paste this code in it:
+    onUpdate {
+      mag = this.get_mass() * 5 # Force strength and magnitude.
+      v = key('w') - key('s') # This will return 1, 0, or -1.
+      h = key('d') - key('a') # This will return 1, 0, or -1.
+      this.add_force2(h * mag, v * mag, 0) # Apply force on this object.
+    }
+4. Start simulation and control the sphere with W,S,A,D keys.
+5. All you're left to do is create a simple maze in the staticmesh group, and
+   there you have your first simple game.
+
+## Scripting Links
 - See {MSPhysics::Simulation}
 - See {MSPhysics::World}
 - See {MSPhysics::Common}
@@ -19,6 +44,12 @@ Use the following to get reference to {MSPhysics::Simulation} instance:
   Body and Controller scopes only.
 * <tt>MSPhysics::Simulation.instance</tt> - accessible from all scopes.
 
+Displaying frame using simulation log_line or display_note functions:
+    onUpdate {
+      simulation.log_line(frame)
+      # OR
+      simulation.display_note(frame)
+    }
 
 ## Script Errors
 All detected script errors will cause simulation to reset. A message box will
@@ -156,7 +187,7 @@ rather than being a shortcut for a zoom tool.
 * Use iterative solver when simulating stacked geometry, like walls, as exact
   solver might result in lag.
 * Enable continuous collision check or reduce simulation speed to prevent
-  objects from passing or penetrating into each other at high speeds.
+  objects from passing or penetrating through each other at high speeds.
 
 
 ## Music & Sound

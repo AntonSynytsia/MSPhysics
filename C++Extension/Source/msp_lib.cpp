@@ -22,7 +22,6 @@ Do the following when updating NewtonDynamics:
 	~ Change DG_COMPOUND_STACK_DEPTH to 4096
 * File: dgCollisionCompound.cpp
 	Change DG_MAX_MIN_VOLUME to 1.0e-6f
-	Change dgCollisionCompound::m_padding to 1.0e-6f
 * File: dgCollisionConvex.h
 	~ Change DG_CLIP_MAX_COUNT to 4096
 	~ Change DG_CLIP_MAX_POINT_COUNT to 256
@@ -34,10 +33,10 @@ Do the following when updating NewtonDynamics:
 * File: dgContact.h
 	~ Change DG_MAX_CONTATCS to 1024
 * File: dgBroadPhase.h
-	Change DG_BROADPHASE_MAX_STACK_DEPTH to 1024
+	~ Change DG_BROADPHASE_MAX_STACK_DEPTH to 1024
 * File: dgWorldDynamicUpdate.h
 	Change DG_MAX_SKELETON_JOINT_COUNT to 4096
-	Change DG_FREEZZING_VELOCITY_DRAG to 0.5f
+	Change DG_FREEZZING_VELOCITY_DRAG to 0.2f
 	~ Change DG_SOLVER_MAX_ERROR to DG_FREEZE_MAG * dgFloat32(0.05f)
 * File: dgWorldDynamicUpdate.cpp
 	~ Change DG_PARALLEL_JOINT_COUNT_CUT_OFF to 1024
@@ -47,6 +46,8 @@ Do the following when updating NewtonDynamics:
 	~ Change NewtonMaterialSetContactSoftness min/max to 0.01f and 1.00f
 * File: NewtonClass.h
 	Change min and max timestep to 1/30 and 1/1200
+* File: NewtonClass.cpp
+	Comment out clamping and modification in SetRowStiffness, lines 310 and 311
 
 To Do:
 - body_recalculate_volume(body)
@@ -80,14 +81,27 @@ To Do:
 #include "msp_joint_universal.h"
 #include "msp_joint_up_vector.h"
 
-#include "msp_sdl.h"
-#include "msp_sdl_mixer.h"
-#include "msp_sound.h"
-#include "msp_music.h"
+#ifdef USE_SDL
+	#include "msp_sdl.h"
+	#include "msp_sdl_mixer.h"
+	#include "msp_sound.h"
+	#include "msp_music.h"
+#endif
+
+#include "msp_particle.h"
+
+static VALUE msp_sdl_used(VALUE self) {
+#ifdef USE_SDL
+	return Qtrue;
+#else
+	return Qfalse;
+#endif
+}
 
 void Init_msp_lib() {
 	VALUE mMSPhysics = rb_define_module("MSPhysics");
 	VALUE mNewton = rb_define_module_under(mMSPhysics, "Newton");
+	VALUE mC = rb_define_module_under(mMSPhysics, "C");
 
 	Init_msp_util(mMSPhysics);
 	Init_msp_newton(mNewton);
@@ -109,8 +123,18 @@ void Init_msp_lib() {
 	Init_msp_up_vector(mNewton);
 	Init_msp_universal(mNewton);
 
-	Init_msp_sdl(mMSPhysics);
-	Init_msp_sdl_mixer(mMSPhysics);
-	Init_msp_sound(mMSPhysics);
-	Init_msp_music(mMSPhysics);
+	#ifdef USE_SDL
+		Init_msp_sdl(mMSPhysics);
+		Init_msp_sdl_mixer(mMSPhysics);
+		Init_msp_sound(mMSPhysics);
+		Init_msp_music(mMSPhysics);
+	#endif
+
+	Init_msp_particle(mC);
+
+	rb_define_module_function(mMSPhysics, "sdl_used?", VALUEFUNC(msp_sdl_used), 0);
+}
+
+void Init_msp_lib_no_sdl() {
+	Init_msp_lib();
 }

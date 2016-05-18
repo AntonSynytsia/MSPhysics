@@ -35,7 +35,7 @@ class dgBroadPhaseAggregate;
 
 
 #define DG_CACHE_DIST_TOL				dgFloat32 (1.0e-3f)
-#define DG_BROADPHASE_MAX_STACK_DEPTH	1024
+#define DG_BROADPHASE_MAX_STACK_DEPTH	256
 
 class dgConvexCastReturnInfo
 {

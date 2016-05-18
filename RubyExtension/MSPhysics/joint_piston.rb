@@ -17,8 +17,9 @@ module MSPhysics
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
     #   Of the given matrix, matrix origin should represent pin origin, and
     #   matrix Z-axis should represent pin up.
-    def initialize(world, parent, pin_tra)
-      super(world, parent, pin_tra, 6)
+    # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group
+    def initialize(world, parent, pin_tra, group = nil)
+      super(world, parent, pin_tra, 6, group)
       MSPhysics::Newton::Piston.create(@address)
       MSPhysics::Newton::Piston.set_min(@address, DEFAULT_MIN)
       MSPhysics::Newton::Piston.set_max(@address, DEFAULT_MAX)
@@ -155,7 +156,7 @@ module MSPhysics
     end
 
     # Set piston controller, a desired position in meters. Pass nil to
-	# turn off the piston.
+    # turn off the piston.
     # @param [Numeric, nil] value
     def controller=(value)
       MSPhysics::Newton::Piston.set_controller(@address, value)

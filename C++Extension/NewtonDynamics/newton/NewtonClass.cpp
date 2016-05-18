@@ -257,8 +257,6 @@ void NewtonUserJoint::SetSpringDamperAcceleration (dFloat spring, dFloat damper)
 {
 	dgInt32 index = m_rows - 1;
 	if ((index >= 0) &&  (index < dgInt32 (m_maxDOF))) {
-//		dgFloat32 accel = CalculateSpringDamperAcceleration (index, *m_param, springK, damperD);
-//		SetMotorAcceleration (index, accel, *m_param);
 		dgBilateralConstraint::SetSpringDamperAcceleration (index, *m_param, spring, damper);
 	}
 }
@@ -309,8 +307,8 @@ void NewtonUserJoint::SetRowStiffness (dgFloat32 stiffness)
 {
 	dgInt32 index = m_rows - 1;
 	if ((index >= 0) &&  (index < dgInt32 (m_maxDOF))) {
-		//stiffness = dgClamp (stiffness, dgFloat32(0.0f), dgFloat32(1.0f));
-		//stiffness = 100.0f - stiffness * 99.0f; 
+		//stiffness = dgFloat32 (1.0f) - dgClamp (stiffness, dgFloat32(0.0f), dgFloat32(1.0f));
+		//stiffness = -dgFloat32 (1.0f) - stiffness / DG_PSD_DAMP_TOL; 
 		m_param->m_jointStiffness[index] = stiffness;
 	}
 }

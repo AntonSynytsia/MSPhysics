@@ -284,7 +284,7 @@ module MSPhysics
             cmd << "$('#tab2-content2').css('display', 'block');"
             # Display Ignore state
             state = @selected_body.get_attribute('MSPhysics Body', 'Ignore', nil) ? true : false
-            cmd << "$('#internal-body-ignore').prop('checked', #{state});"
+            cmd << "$('#internal_body-ignore').prop('checked', #{state});"
           end
           cmd << "activate_tab(#{@last_active_body_tab});"
         else
@@ -421,6 +421,8 @@ module MSPhysics
             cmd << "$('#servo-accel').val('#{ format_value(attr.to_f, @precision) }');"
             attr = @selected_joint.get_attribute(jdict, 'Damp', fix_numeric_value(MSPhysics::Servo::DEFAULT_DAMP))
             cmd << "$('#servo-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            attr = @selected_joint.get_attribute(jdict, 'Strength', fix_numeric_value(MSPhysics::Servo::DEFAULT_STRENGTH))
+            cmd << "$('#servo-strength').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
             attr = @selected_joint.get_attribute(jdict, 'Reduction Ratio', fix_numeric_value(MSPhysics::Servo::DEFAULT_REDUCTION_RATIO))
             cmd << "$('#servo-reduction_ratio').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), @precision) }');"
             attr = @selected_joint.get_attribute(jdict, 'Enable Sp Mode', MSPhysics::Servo::DEFAULT_SP_MODE_ENABLED)
@@ -596,6 +598,11 @@ module MSPhysics
           cmd << "$('#sound-command_music').val('simulation.play_music(\"sound_name\")');"
           cmd << "$('#sound-command_sound').val('simulation.play_sound(\"sound_name\")');"
         end
+        if MSPhysics.sdl_used?
+          cmd << "$('#sound-no_sdl').css('display', 'none');"
+        else
+          cmd << "$('#sound-no_sdl').css('display', 'block');"
+        end
         @dialog.execute_script(cmd)
       end
 
@@ -658,6 +665,7 @@ module MSPhysics
               when 'Enable Limits'; MSPhysics::Servo::DEFAULT_LIMITS_ENABLED
               when 'Accel'; MSPhysics::Servo::DEFAULT_ACCEL
               when 'Damp'; MSPhysics::Servo::DEFAULT_DAMP
+              when 'Strength'; MSPhysics::Servo::DEFAULT_STRENGTH
               when 'Reduction Ratio'; MSPhysics::Servo::DEFAULT_REDUCTION_RATIO
               when 'Enable Sp Mode'; MSPhysics::Servo::DEFAULT_SP_MODE_ENABLED
               when 'Controller'; MSPhysics::Servo::DEFAULT_CONTROLLER
@@ -852,7 +860,7 @@ module MSPhysics
                 update_sound_state
               end
             when 'sound-play'
-              if @selected_sound
+              if MSPhysics.sdl_used? && @selected_sound
                 music = MSPhysics::Music.get_by_name(@selected_sound)
                 unless music
                   begin
@@ -867,13 +875,17 @@ module MSPhysics
                 MSPhysics::Music.play(music, 0) if music
               end
             when 'sound-toggle_pause'
-              if MSPhysics::Music.is_paused?
-                MSPhysics::Music.resume
-              else
-                MSPhysics::Music.pause
+              if MSPhysics.sdl_used?
+                if MSPhysics::Music.is_paused?
+                  MSPhysics::Music.resume
+                else
+                  MSPhysics::Music.pause
+                end
               end
             when 'sound-stop'
-              MSPhysics::Music.stop
+              if MSPhysics.sdl_used?
+                MSPhysics::Music.stop
+              end
             when 'motor-generate_slider'
               if @selected_joint
                 jdict = 'MSPhysics Joint'
@@ -1284,9 +1296,13 @@ module MSPhysics
       # @return [String] Name of added file.
       # @raise [TypeError] if file path is invalid.
       # @raise [TypeError] if file is over 100 megabytes.
+      # @raise [TypeError] if SDL is not supported on your system.
       def add_sound(path)
         unless File.exist?(path)
           raise(TypeError, "Invalid path!", caller)
+        end
+        unless MSPhysics.sdl_used?
+          raise(TypeError, "SDL is not supported on your system!", caller)
         end
         name = File.basename(path, File.extname(path)).gsub("'", " ")
         size = File.size(path) * 1.0e-6
@@ -1310,8 +1326,10 @@ module MSPhysics
       # Remove sound from UI.
       # @param [String] name
       def remove_sound(name)
-        music = MSPhysics::Music.get_by_name(name)
-        MSPhysics::Music.destroy(music) if music
+        if MSPhysics.sdl_used?
+          music = MSPhysics::Music.get_by_name(name)
+          MSPhysics::Music.destroy(music) if music
+        end
         dict1 = Sketchup.active_model.attribute_dictionary('MSPhysics Sounds', false)
         dict1.delete_key(name.to_s) if dict1
         dict2 = Sketchup.active_model.attribute_dictionary('MSPhysics Sound Types', false)
@@ -1321,7 +1339,7 @@ module MSPhysics
       # Remove all sounds from UI.
       def remove_all_sounds
         dict = Sketchup.active_model.attribute_dictionary('MSPhysics Sounds', false)
-        if dict
+        if MSPhysics.sdl_used? && dict
           dict.each_key { |name|
             music = MSPhysics::Music.get_by_name(name)
             MSPhysics::Music.destroy(music) if music

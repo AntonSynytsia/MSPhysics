@@ -26,10 +26,6 @@
 	<ClCompile Include="Source\msp_joint_spring.cpp"><Filter>Joints</Filter></ClCompile>
 	<ClCompile Include="Source\msp_joint_universal.cpp"><Filter>Joints</Filter></ClCompile>
 	<ClCompile Include="Source\msp_joint_up_vector.cpp"><Filter>Joints</Filter></ClCompile>
-	<ClCompile Include="Source\msp_sdl.cpp" />
-	<ClCompile Include="Source\msp_sdl_mixer.cpp" />
-	<ClCompile Include="Source\msp_sound.cpp" />
-	<ClCompile Include="Source\msp_music.cpp" />
 	<ClCompile Include="Source\msp_particle.cpp" />
 	<ClCompile Include="Source\angular_integration.cpp" />
   </ItemGroup>
@@ -62,15 +58,11 @@
 	<ClInclude Include="Source\msp_joint_spring.h"><Filter>Joints</Filter></ClInclude>
 	<ClInclude Include="Source\msp_joint_universal.h"><Filter>Joints</Filter></ClInclude>
 	<ClInclude Include="Source\msp_joint_up_vector.h"><Filter>Joints</Filter></ClInclude>
-	<ClInclude Include="Source\msp_sdl.h" />
-	<ClInclude Include="Source\msp_sdl_mixer.h" />
-	<ClInclude Include="Source\msp_sound.h" />
-	<ClInclude Include="Source\msp_music.h" />
 	<ClInclude Include="Source\msp_particle.h" />
 	<ClInclude Include="Source\angular_integration.h" />
   </ItemGroup>
   <ItemGroup>
-	<None Include="Source\RubyExtension.def" />
+	<None Include="Source\RubyExtensionNoSDL.def" />
   </ItemGroup>
   <ItemGroup>
 	<Filter Include="Newton"></Filter>

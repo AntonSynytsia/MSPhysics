@@ -300,7 +300,15 @@
               <tr title="Whether to assume impulse with respect to body axis.">
                 <td><label class="spacing_tab" for="body-emitter_lock_axis">Lock to Body Axis</label></td>
                 <td><input id="body-emitter_lock_axis" type="checkbox"></input></td>
-                </tr>
+              </tr>
+              <tr title="Set emit rate in frames. The object will be emitted every [rate] frames.">
+                <td><label class="spacing_tab" for="body-emitter_rate">Rate</label></td>
+                <td><input id="body-emitter_rate" class="custom-text fixnum-input" type="text"></input></td>
+              </tr>
+              <tr title="Set lifetime of the emitted object in frames. Pass 0 to have the object live thought the simulation.">
+                <td><label class="spacing_tab" for="body-emitter_lifetime">Lifetime</label></td>
+                <td><input id="body-emitter_lifetime" class="custom-text fixnum-input" type="text"></input></td>
+              </tr>
             </table>
             <div id="body-internal_joints_div" style="display: none;">
               <p class="description"><em7>Internal Joints</em7></p>
@@ -648,6 +656,10 @@
                 <tr title="The angular damper, a numeric value greater than or equal to zero. Higher damper makes rotation stronger.">
                   <td><label for="servo-damp">Damp</label></td>
                   <td><input id="servo-damp" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="Rotational power in Joules per second. A strength of 0.0 represents maximum power.">
+                  <td><label for="servo-strength">Strength</label></td>
+                  <td><input id="servo-strength" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
                 <tr title="The angular reduction ratio, a numeric value between 0.0 and 1.0. This features reduces angular rate when current angle nears the desired angle in order to achieve a smooth stop. A value of 0.0 will disable angular reduction. A value of greater than zero will enable angular reduction and will act accordingly, based on the ratio. A typical reduction ratio is 0.1.">
                   <td><label for="servo-reduction_ratio">Reduction Ratio</label></td>
@@ -1038,6 +1050,11 @@
           <table class="struct_table center">
             <tr><td><p class="title">Embedded Sounds List</p></td></tr>
             <tr><td><select id="sound-list" class="sound-list" size="12"></select></td></tr>
+            <tr><td>
+              <div id="sound-no_sdl" style="display: none;">
+                <p class="description" align="center"><em8>SDL is not supported on your system, so playing music and sounds won't work!</em8></p>
+              </div>
+            </td></tr>
             <tr>
               <td>
                 <button id="sound-add" title="Add sound.">Add</button>
@@ -1062,7 +1079,6 @@
               <td><input id="sound-command_sound" class="custom-text command-input" type="text" readonly="readonly"></input></td>
             </tr>
           </table>
-          <div>
           <label class="expander description"><em5>Notes</em5></label>
           <div class="content spacing_tab">
             <ul style="padding-left:1em;">
@@ -1084,7 +1100,6 @@
           <div class="credit">Powered by <a href="https://www.libsdl.org/" target="_blank">SDL</a></div>
         </div>
 
-      </div>
     </div>
   </body>
 </html>
