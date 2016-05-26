@@ -103,5 +103,69 @@ module MSPhysics
       MSPhysics::ControlPanel.get_slider_value(name)
     end
 
+    # Get joy-stick value.
+    # @note Axis name parameter is not case sensitive.
+    # @param [String, Symbol] axis Axis name. Valid names are:
+    #   - <tt>'leftx'</tt> : X-XAXIS position on left stick.
+    #   - <tt>'lefty'</tt> : Y-XAXIS position on left stick.
+    #   - <tt>'rightx'</tt> : X-XAXIS position on right stick.
+    #   - <tt>'righty'</tt> : Y-XAXIS position on right stick.
+    # @return [Numeric] Stick position on the axis, a ranging value from -1.0 to 1.0.
+    # @example
+    #   onUpdate {
+    #     value = joystick(:leftx)
+    #     simulation.display_note value.to_s
+    #   }
+    def joystick(axis)
+      v = MSPhysics::Simulation.instance.joystick_data[axis.to_s.downcase]
+      v ? v : 0.0
+    end
+
+    # Get joy-button value.
+    # @note Button name parameter is not case sensitive.
+    # @param [String, Symbol] button Button name. Valid names are:
+    #   - <tt>X</tt> : The X button.
+    #   - <tt>A</tt> : The A button.
+    #   - <tt>B</tt> : The B button.
+    #   - <tt>Y</tt> : The Y button.
+    #   - <tt>LT</tt> : The top-left button.
+    #   - <tt>RT</tt> : The top-right button.
+    #   - <tt>LB</tt> : The bottom-left button.
+    #   - <tt>RB</tt> : The bottom-right button.
+    #   - <tt>back</tt> : The back button.
+    #   - <tt>start</tt> : The start button.
+    #   - <tt>leftb</tt> : The left joystick button.
+    #   - <tt>rightb</tt> : The right joystick button.
+    # @return [Fixnum] +1+ if the button is down; +0+ if the button is up.
+    # @example
+    #   onUpdate {
+    #     value = joybutton(:lt)
+    #     simulation.display_note value.to_s
+    #   }
+    def joybutton(button)
+      v = MSPhysics::Simulation.instance.joybutton_data[button.to_s.downcase]
+      v ? v : 0
+    end
+
+    # Get joy-pad value.
+    # @return [Fixnum] Returns one of the following values:
+    # - +0+ if hat is centered
+    # - +1+ if hat is up
+    # - +2+ if hat is right
+    # - +4+ if hat is down
+    # - +8+ if hat is left
+    # - +12+ if hat is left-down
+    # - +9+ if hat is left-up
+    # - +6+ if hat is right-down
+    # - +3+ if hat is right-up
+    # @example
+    #   onUpdate {
+    #     value = joypad()
+    #     simulation.display_note value.to_s
+    #   }
+    def joypad
+      MSPhysics::Simulation.instance.joypad_data
+    end
+
   end # class Common
 end # module MSPhysics

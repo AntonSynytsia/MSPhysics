@@ -50,7 +50,7 @@ void MSNewton::Body::force_and_torque_callback(const NewtonBody* const body, dFl
 
 	if (body_data->gravity_enabled) {
 		dFloat mass, ixx, iyy, izz;
-		NewtonBodyGetMassMatrix(body, &mass, &ixx, &iyy, &izz);
+		NewtonBodyGetMass(body, &mass, &ixx, &iyy, &izz);
 		dVector force = world_data->gravity.Scale(mass);
 		NewtonBodySetForce(body, &force[0]);
 	}
@@ -1464,7 +1464,7 @@ VALUE MSNewton::Body::apply_pick_and_drag2(VALUE self, VALUE v_body, VALUE v_pic
 
 	// Convert the delta velocity change to an external force and torque
 	dFloat Ixx, Iyy, Izz, mass;
-	NewtonBodyGetMassMatrix(body, &mass, &Ixx, &Iyy, &Izz);
+	NewtonBodyGetMass(body, &mass, &Ixx, &Iyy, &Izz);
 
 	dVector angular_momentum(Ixx, Iyy, Izz, 0.0f);
 	angular_momentum = matrix.RotateVector( angular_momentum.CompProduct(matrix.UnrotateVector(omega1 - omega0)) );

@@ -5,8 +5,8 @@
 #include "SDL.h"
 #include "SDL_mixer.h"
 
-#define _USE_MATH_DEFINES
-#include <math.h>
+/*#define _USE_MATH_DEFINES
+#include <math.h>*/
 
 namespace MSPhysics {
 	class Sound;

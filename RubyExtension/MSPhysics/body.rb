@@ -296,23 +296,6 @@ module MSPhysics
       MSPhysics::Newton::Body.destroy(@_address)
     end
 
-    # Get simulation state of the body.
-    # @return [Boolean] +true+ if body simulation is enabled, +false+ if body
-    #   simulation is disabled.
-    def get_simulation_state
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_simulation_state(@_address)
-    end
-
-    # Set simulation state of the body.
-    # @param [Boolean] state +true+ to enable body simulation, +false+ to
-    #   disable body simulation.
-    # @return [Boolean] The newly assigned state.
-    def set_simulation_state(state)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_simulation_state(@_address, state)
-    end
-
     # Get continuous collision state of the body. If continuous collision check
     # is enabled, the body avoids passing other bodies at high speeds and
     # avoids penetrating into other bodies.

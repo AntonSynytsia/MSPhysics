@@ -3,6 +3,7 @@
 
 #include "ruby_util.h"
 #include <cmath>
+#include <math.h>
 #include "NewtonClass.h"
 #include "Newton.h"
 #include "dVector.h"

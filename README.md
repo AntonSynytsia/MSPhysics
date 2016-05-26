@@ -51,11 +51,18 @@ folder. Make sure to download and install AMS Library!
     - <i>C:/Program Files (x86)/SketchUp/SketchUp 2013/</i>
 * For SU2014 and later the plugins folder is located in
     - <i>C:/Users/[User Name]/AppData/Roaming/SketchUp/SketchUp 20XY/SketchUp/</i>
+	
+When extracted and posted in the plugins folder, the content should be resembled in the following way:
+<i>.../Plugins/</i>
+* <i>MSPhysics</i> folder
+* <i>MSPhysics.rb</i> file
+* <i>ams_Lib</i> folder
+* <i>ams_lib.rb</i> file
 
 
 ## Version
 
-* MSPhysics 0.7.1
+* MSPhysics 0.7.3
 * NewtonDynamics 3.14
 * SDL 2.0.4
 * SDL_Mixer 2.0.1
@@ -63,15 +70,16 @@ folder. Make sure to download and install AMS Library!
 
 ## Release Date
 
-May 17, 2016
+May 25, 2016
 
 
 ## Licence
 
-[MIT](http://opensource.org/licenses/MIT) © 2015 - 2016, Anton Synytsia
+[MIT](http://opensource.org/licenses/MIT) © 2015-2016, Anton Synytsia
 
 
 ## Credits
 
-* **Juleo Jerez** for the [NewtonDynamics](http://newtondynamics.com/forum/index.php) physics engine.
+* **Julio Jerez** for the [NewtonDynamics](http://newtondynamics.com/forum/index.php) physics engine.
 * **Chris Phillips** for ideas from [SketchyPhysics](https://code.google.com/p/sketchyphysics/).
+* **István Nagy (PituPhysics)** for examples and testing.

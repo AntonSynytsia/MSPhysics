@@ -312,7 +312,7 @@
     <ClCompile Include="NewtonDynamics\physics\dgCollisionInstance.cpp" />
     <ClCompile Include="NewtonDynamics\physics\dgConstraint.cpp" />
     <ClCompile Include="NewtonDynamics\physics\dgContact.cpp" />
-	<ClCompile Include="NewtonDynamics\physics\dgContactSolver.cpp" />
+    <ClCompile Include="NewtonDynamics\physics\dgContactSolver.cpp" />
     <ClCompile Include="NewtonDynamics\physics\dgCorkscrewConstraint.cpp" />
     <ClCompile Include="NewtonDynamics\physics\dgDeformableBodiesUpdate.cpp" />
     <ClCompile Include="NewtonDynamics\physics\dgDeformableContact.cpp" />
@@ -376,7 +376,7 @@
     <ClInclude Include="NewtonDynamics\physics\dgCollisionInstance.h" />
     <ClInclude Include="NewtonDynamics\physics\dgConstraint.h" />
     <ClInclude Include="NewtonDynamics\physics\dgContact.h" />
-	<ClInclude Include="NewtonDynamics\physics\dgContactSolver.h" />
+    <ClInclude Include="NewtonDynamics\physics\dgContactSolver.h" />
     <ClInclude Include="NewtonDynamics\physics\dgCorkscrewConstraint.h" />
     <ClInclude Include="NewtonDynamics\physics\dgDeformableBodiesUpdate.h" />
     <ClInclude Include="NewtonDynamics\physics\dgDeformableContact.h" />

@@ -86,6 +86,7 @@ To Do:
 	#include "msp_sdl_mixer.h"
 	#include "msp_sound.h"
 	#include "msp_music.h"
+	#include "msp_joystick.h"
 #endif
 
 #include "msp_particle.h"
@@ -128,6 +129,7 @@ void Init_msp_lib() {
 		Init_msp_sdl_mixer(mMSPhysics);
 		Init_msp_sound(mMSPhysics);
 		Init_msp_music(mMSPhysics);
+		Init_msp_joystick(mMSPhysics);
 	#endif
 
 	Init_msp_particle(mC);

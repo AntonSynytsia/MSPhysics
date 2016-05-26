@@ -321,7 +321,7 @@ enum {
 struct timespec {
         time_t tv_sec;
         long tv_nsec;
-};
+} timespec;
 #endif
 #endif /* _TIMESPEC_DEFINED */
 #endif /* HAVE_STRUCT_TIMESPEC */

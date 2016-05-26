@@ -82,7 +82,7 @@ module MSPhysics
         end
         # Record original group data.
         @groups_data.each { |group, data|
-          if (group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentDefinition)) && group.valid?
+          if (group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentInstance)) && group.valid?
             data[:original] = {
               :transformation => group.transformation,
               :visible        => group.visible?,
@@ -90,14 +90,15 @@ module MSPhysics
               :layer          => group.layer
             }
             group.transformation = group.transformation # Do this once just to be able to undo.
-          elsif data[:definition] && data[:definition].valid?
+          elsif data[:definition] && data[:definition].valid? && (data[:instance].nil? || data[:instance].deleted?)
             data[:instance] = model.entities.add_instance(data[:definition], Geom::Transformation.new())
             data[:instance].visible = false
           end
         }
         # Record original material data.
+        count = 10000
         @materials_data.each { |material, data|
-          if material.valid?
+          if material.is_a?(Sketchup::Material) && material.valid?
             t = material.texture
             data[:original] = {
               :color   => material.color,
@@ -109,13 +110,14 @@ module MSPhysics
             if Sketchup.version.to_i >= 15
               data[:original][:colorize_type] = material.colorize_type
             end
-          else
-            data[:instance] = model.materials.add("MSPReplay#{1000 + rand(9000)}")
+          elsif (data[:instance].nil? || data[:instance].deleted?)
+            data[:instance] = model.materials.add("MSPReplay#{count}")
+            count += 1
           end
         }
         # Record original layer data.
         @layers_data.each { |layer, data|
-          if layer.valid?
+          if layer.is_a?(Sketchup::Layer) && layer.valid?
             data[:original] = { :visible => layer.visible? }
             data[:original][:color] = layer.color if Sketchup.version.to_i > 13
           end
@@ -201,7 +203,7 @@ module MSPhysics
         @groups_data.each { |group, data|
           instance = data[:instance]
           data.delete(:instance)
-          if (group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentDefinition)) && group.valid?
+          if (group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentInstance)) && group.valid?
             orig_data = data[:original]
             next if orig_data.nil?
             group.move!(orig_data[:transformation])
@@ -224,7 +226,7 @@ module MSPhysics
         @materials_data.each { |material, data|
           instance = data[:instance]
           data.delete(:instance)
-          if material.valid?
+          if material.is_a?(Sketchup::Material) && material.valid?
             orig_data = data[:original]
             next if orig_data.nil?
             material.color = orig_data[:color] if material.color.to_i != orig_data[:color].to_i
@@ -251,7 +253,7 @@ module MSPhysics
         end
         # Reset layer data
         @layers_data.each { |layer, data|
-          next unless layer.valid?
+          next if !(layer.is_a?(Sketchup::Layer) && layer.valid?)
           orig_data = data[:original]
           next if orig_data.nil?
           layer.visible = orig_data[:visible] if layer.visible? != orig_data[:visible]
@@ -483,19 +485,17 @@ module MSPhysics
       end
 
       # @!visibility private
-      def update_data_frame_limits(data, frame)
-        frame = frame.to_i
-        data[:start_frame] = frame if data[:start_frame].nil? || frame < data[:start_frame]
-        data[:end_frame] = frame if data[:end_frame].nil? || frame > data[:end_frame]
-        @tstart_frame = frame if @tstart_frame.nil? || frame < @tstart_frame
-        @tend_frame = frame if @tend_frame.nil? || frame > @tend_frame
+      def update_data_frame_limits(data, pframe)
+        data[:start_frame] = pframe if data[:start_frame].nil? || pframe < data[:start_frame]
+        data[:end_frame] = pframe if data[:end_frame].nil? || pframe > data[:end_frame]
+        @tstart_frame = pframe if @tstart_frame.nil? || pframe < @tstart_frame
+        @tend_frame = pframe if @tend_frame.nil? || pframe > @tend_frame
       end
 
       # Record group/component.
       # @param [Sketchup::Group, Sketchup::ComponentInstance] group
-      # @param [Fixnum] frame
-      def record_group(group, frame)
-        frame = frame.to_i
+      # @param [Fixnum] pframe
+      def record_group(group, pframe)
         data = @tgroups_data[group]
         unless data
           @tgroups_data[group] = {}
@@ -504,27 +504,29 @@ module MSPhysics
         unless data[:definition]
           data[:definition] = MSPhysics::Group.get_definition(group)
         end
-        data[frame] = {
+        data[pframe] = {
           :transformation => group.transformation,
           :visible        => group.visible?,
-          :material       => group.material,
-          :layer          => group.layer
+          :material       => group.material ? group.material : 0,
+          :layer          => group.layer ? group.layer : 0
         }
-        update_data_frame_limits(data, frame)
+        update_data_frame_limits(data, pframe)
       end
 
       # Record all groups.
-      # @param [Fixnum] frame
-      def record_groups(frame)
+      # @param [Fixnum] pframe
+      def record_groups(pframe)
         Sketchup.active_model.definitions.each { |d|
-          d.instances.each { |i| record_group(i, frame) }
+          d.instances.each { |i|
+            next if i.get_attribute('MSPhysics Body', 'Ignore') || i.get_attribute('MSPhysics Joint', 'Type')
+            record_group(i, pframe)
+          }
         }
       end
 
       # Record camera.
-      # @param [Fixnum] frame
-      def record_camera(frame)
-        frame = frame.to_i
+      # @param [Fixnum] pframe
+      def record_camera(pframe)
         camera = Sketchup.active_model.active_view.camera
         data = {
           :eye          => camera.eye,
@@ -543,22 +545,22 @@ module MSPhysics
         else
           data[:height] = camera.height
         end
-        @tcamera_data[frame] = data
-        update_data_frame_limits(data, frame)
+        @tcamera_data[pframe] = data
+        update_data_frame_limits(data, pframe)
       end
 
       # Record material.
       # @param [Sketchup::Material] material
-      # @param [Fixnum] frame
-      def record_material(material, frame)
-        frame = frame.to_i
+      # @param [Fixnum] pframe
+      def record_material(material, pframe)
         data = @tmaterials_data[material]
         unless data
           @tmaterials_data[material] = {}
           data = @tmaterials_data[material]
+          data[:id] = material.entityID
         end
         t = material.texture
-        data[frame] = {
+        data[pframe] = {
           :color   => material.color,
           :alpha   => material.alpha,
           :texture => t ? t.filename : nil,
@@ -566,67 +568,67 @@ module MSPhysics
           :height  => t ? t.height : nil
         }
         if Sketchup.version.to_i >= 15
-          data[frame][:colorize_type] = material.colorize_type
+          data[pframe][:colorize_type] = material.colorize_type
         end
-        update_data_frame_limits(data, frame)
+        update_data_frame_limits(data, pframe)
       end
 
       # Record all materials.
-      # @param [Fixnum] frame
-      def record_materials(frame)
+      # @param [Fixnum] pframe
+      def record_materials(pframe)
         Sketchup.active_model.materials.each { |m|
-          record_material(m, frame)
+          record_material(m, pframe)
         }
       end
 
       # Record layer.
       # @param [Sketchup::Layer] layer
-      # @param [Fixnum] frame
-      def record_layer(layer, frame)
-        frame = frame.to_i
+      # @param [Fixnum] pframe
+      def record_layer(layer, pframe)
         data = @tlayers_data[layer]
         unless data
           @tlayers_data[layer] = {}
           data = @tlayers_data[layer]
+          data[:id] = layer.entityID
         end
-        data[frame] = { :visible => layer.visible? }
-        data[frame][:color] = layer.color if Sketchup.version.to_i > 13
-        update_data_frame_limits(data, frame)
+        data[pframe] = { :visible => layer.visible? }
+        data[pframe][:color] = layer.color if Sketchup.version.to_i > 13
+        update_data_frame_limits(data, pframe)
       end
 
       # Record all layers.
-      # @param [Fixnum] frame
-      def record_layers(frame)
+      # @param [Fixnum] pframe
+      def record_layers(pframe)
         Sketchup.active_model.layers.each { |l|
-          record_layer(l, frame)
+          record_layer(l, pframe)
         }
       end
 
       # Record rendering options.
-      # @param [Fixnum] frame
-      def record_render(frame)
+      # @param [Fixnum] pframe
+      def record_render(pframe)
         data = {}
         Sketchup.active_model.rendering_options.each { |k, v| data[k] = v }
-        @trender_data[frame.to_i] = data
+        @trender_data[pframe] = data
       end
 
       # Record shadow info.
-      # @param [Fixnum] frame
-      def record_shadow(frame)
+      # @param [Fixnum] pframe
+      def record_shadow(pframe)
         data = {}
         Sketchup.active_model.shadow_info.each { |k, v| data[k] = v }
-        @tshadow_data[frame.to_i] = data
+        @tshadow_data[pframe] = data
       end
 
       # Record groups, camera, materials, layers, render, and shadow.
-      # @param [Fixnum] frame
-      def record_all(frame)
-        record_groups(frame)
-        record_materials(frame)
-        record_layers(frame)
-        record_camera(frame)
-        record_render(frame)
-        record_shadow(frame)
+      # @param [Fixnum] pframe
+      def record_all(pframe)
+        record_groups(pframe)
+        record_materials(pframe)
+        record_layers(pframe)
+        record_camera(pframe)
+        record_render(pframe)
+        record_shadow(pframe)
       end
 
       # Activate recorded data.
@@ -667,7 +669,9 @@ module MSPhysics
 
       # Save active data into model.
       # @param [Boolean] wrap_in_op Whether to wrap in operation.
+      # @return [Boolean] success
       def save_data_to_model(wrap_in_op = true)
+        return false unless active_data_valid?
         model = Sketchup.active_model
         # Start operation
         if wrap_in_op
@@ -678,132 +682,136 @@ module MSPhysics
           end
         end
         dict = 'MSPhysics Replay'
+        # Save info
+        model.set_attribute(dict, 'Start Frame', @start_frame)
+        model.set_attribute(dict, 'End Frame', @end_frame)
         # Save groups
-        groups_data = []
         @groups_data.each { |group, data|
-          group_data = []
-          if group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentDefinition)
-            group_data[0] = group.entityID if group.valid?
-          else
-            group_data[0] = group
-          end
-          group_data[1] = data[:definition].entityID if data[:definition].valid?
-          next if group_data.empty?
-          group_data[2] = []
-          last_tra = -1
-          last_vis = -1
-          last_mat = -1
-          last_lay = -1
-          data.keys.grep(Fixnum).sort.each { |frame|
-            fdata = data[frame]
+          next if !(((group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentInstance)) && group.valid?) || (data[:definition] && data[:definition].valid?))
+          last = {}
+          last[:material] = -1
+          last[:layer] = -1
+          group_data = [data[:start_frame], data[:end_frame], []]
+          data.keys.grep(Fixnum).sort.each { |pframe|
+            fdata = data[pframe]
             sdata = []
-            tra = fdata[:transformation].to_a
-            if tra != last_tra
-              sdata[0] = tra
-              last_tra = tra
+            if fdata[:transformation]
+              tra = fdata[:transformation].to_a
+              if tra != last[:transformation]
+                sdata << [0, tra]
+                last[:transformation] = tra
+              end
             end
-            vis = fdata[:visible]
-            if vis != last_vis
-              sdata[1] = vis
-              last_vis = vis
+            if fdata[:visible] != nil && fdata[:visible] != last[:visible]
+              sdata << [1, fdata[:visible]]
+              last[:visible] = fdata[:visible]
             end
             mat = fdata[:material]
-            mat = mat ? (mat.valid? ? mat.entityID : mat.__id__) : nil
-            if mat != last_mat
-              sdata[2] = mat
-              last_mat = mat
+            if mat.is_a?(Sketchup::Material)
+              mat = @materials_data[mat].is_a?(Hash) ? @materials_data[mat][:id] : nil
+            end
+            #mat = mat && mat != 0 ? (mat.valid? ? mat.name : nil) : 0
+            if mat && mat != last[:material]
+              sdata << [2, mat]
+              last[:material] = mat
             end
             lay = fdata[:layer]
-            lay = lay ? (lay.valid? ? lay.entityID : lay.__id__) : nil
-            if lay != last_lay
-              sdata[3] = lay
-              last_lay = lay
+            if lay.is_a?(Sketchup::Layer)
+              lay = @layers_data[lay].is_a?(Hash) ? @layers_data[lay][:id] : nil
             end
-            group_data[2][frame] = sdata unless sdata.empty?
+            #lay = lay && lay.valid? ? lay.name : nil
+            if lay && lay != last[:layer]
+              sdata << [3, lay]
+              last[:layer] = lay
+            end
+            group_data[2] << [pframe, sdata] unless sdata.empty?
           }
-          groups_data << group_data
+          if (group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentInstance)) && group.valid?
+            group.set_attribute(dict, 'Data', group_data)
+          elsif data[:definition] && data[:definition].valid?
+            d_groups_data = data[:definition].get_attribute(dict, 'Data')
+            if d_groups_data.is_a?(Array)
+              d_groups_data << group_data
+            else
+              d_groups_data = [group_data]
+            end
+            data[:definition].set_attribute(dict, 'Data', d_groups_data)
+          end
         }
-        model.set_attribute(dict, 'Groups Data', groups_data)
         # Save materials
-        materials_data = []
         @materials_data.each { |material, data|
-          material_data = []
-          material_data[0] = material.valid? ? material.entityID : material.__id__
-          material_data[1] = []
-          last_color = -1
-          last_alpha = -1
-          last_texture = -1
-          last_width = -1
-          last_height = -1
-          last_colorize_type = -1
-          data.keys.grep(Fixnum).sort.each { |frame|
-            fdata = data[frame]
+          material_data = [data[:id], data[:start_frame], data[:end_frame], []]
+          last = {}
+          last[:texture] = -1
+          data.keys.grep(Fixnum).sort.each { |pframe|
+            fdata = data[pframe]
             sdata = []
-            color = fdata[:color].to_a
-            if color != last_color
-              sdata[0] = color
-              last_color = color
+            if fdata[:color]
+              color = fdata[:color].to_a
+              if color != last[:color]
+                sdata << [0, color]
+                last[:color] = color
+              end
             end
-            alpha = fdata[:alpha]
-            if alpha != last_alpha
-              sdata[1] = alpha
-              last_alpha = alpha
+            if fdata[:alpha] && fdata[:alpha] != last[:alpha]
+              sdata << [1, fdata[:alpha]]
+              last[:alpha] = fdata[:alpha]
             end
-            texture = fdata[:texture]
-            if texture != last_texture
-              sdata[2] = texture
-              last_texture = texture
+            if fdata[:texture] != last[:texture]
+              sdata << [2, fdata[:texture]]
+              last[:texture] = fdata[:texture]
             end
-            width = fdata[:width]
-            if width != last_width
-              sdata[3] = width
-              last_width = width
+            if fdata[:width] && fdata[:width] != last[:width]
+              sdata << [3, fdata[:width]]
+              last[:width] = fdata[:width]
             end
-            height = fdata[:height]
-            if height != last_height
-              sdata[4] = height
-              last_height = height
+            if fdata[:height] && fdata[:height] != last[:height]
+              sdata << [4, fdata[:height]]
+              last[:height] = fdata[:height]
             end
             if Sketchup.version.to_i >= 15
-              colorize_type = fdata[:colorize_type]
-              if colorize_type != last_colorize_type
-                sdata[5] = colorize_type
-                last_colorize_type = colorize_type
+              if fdata[:colorize_type] && fdata[:colorize_type] != last[:colorize_type]
+                sdata << [5, fdata[:colorize_type]]
+                last[:colorize_type] = fdata[:colorize_type]
               end
             end
-            material_data[1][frame] = sdata unless sdata.empty?
+            material_data[3] << [pframe, sdata] unless sdata.empty?
           }
-          materials_data << material_data
+          if material.is_a?(Sketchup::Material) && material.valid?
+            material.set_attribute(dict, 'Data', material_data)
+          else
+            d_materials_data = model.get_attribute(dict, 'Materials Data')
+            if d_materials_data.is_a?(Array)
+              d_materials_data << material_data
+            else
+              d_materials_data = [material_data]
+            end
+            model.set_attribute(dict, 'Materials Data', d_materials_data)
+          end
         }
-        model.set_attribute(dict, 'Materials Data', materials_data)
         # Save layers
-        layers_data = []
         @layers_data.each { |layer, data|
-          layer_data = []
-          layer_data[0] = layer.valid? ? layer.entityID : layer.__id__
-          layer_data[1] = []
-          last_vis = nil
-          last_col = nil
-          data.keys.grep(Fixnum).sort.each { |frame|
-            fdata = data[frame]
+          next unless layer.valid?
+          layer_data = [data[:id], data[:start_frame], data[:end_frame], []]
+          last = {}
+          data.keys.grep(Fixnum).sort.each { |pframe|
+            fdata = data[pframe]
             sdata = []
-            vis = fdata[:visible]
-            if vis != last_vis
-              sdata[0] = vis
-              last_vis = vis
+            if fdata[:visible] != nil && fdata[:visible] != last[:visible]
+              sdata << [0, fdata[:visible]]
+              last[:visible] = fdata[:visible]
             end
-            if Sketchup.version.to_i > 13
-              col = fdata[:color].to_a
-              if col != last_col
-                sdata[0] = col
-                last_col = col
+            if Sketchup.version.to_i > 13 && fdata[:color]
+              color = fdata[:color].to_a
+              if color != last[:color]
+                sdata << [1, color]
+                last[:color] = color
               end
             end
-            layer_data[1][frame] = sdata unless sdata.empty?
+            layer_data[3] << [pframe, sdata] unless sdata.empty?
           }
-          layers_data << layer_data
+          layer.set_attribute(dict, 'Data', layer_data)
         }
-        model.set_attribute(dict, 'Layers Data', layers_data)
         # Save render
         render_data = []
         opts1 = %w{BackgroundColor BandColor ConstructionColor DepthQueWidth DisplayColorByLayer DisplayFog DisplayInstanceAxes DisplayWatermarks DrawDepthQue DrawGround DrawHidden DrawHorizon DrawLineEnds DrawProfilesOnly DrawSilhouettes DrawUnderground EdgeColorMode EdgeDisplayMode EdgeType ExtendLines FaceBackColor FaceColorMode FaceFrontColor FogColor FogEndDist FogStartDist FogUseBkColor ForegroundColor GroundColor GroundTransparency HideConstructionGeometry HighlightColor HorizonColor InactiveHidden InstanceHidden JitterEdges LineEndWidth LineExtension LockedColor MaterialTransparency ModelTransparency RenderMode SectionActiveColor SectionCutWidth SectionDefaultCutColor SectionInactiveColor ShowViewName SilhouetteWidth SkyColor Texture TransparencySort}
@@ -812,15 +820,15 @@ module MSPhysics
         opts4 = %w{DisplaySectionPlanes}
         opts5 = %w{DisplaySectionCuts DrawBackEdges SectionCutDrawEdges}
         last = {}
-        @render_data.keys.grep(Fixnum).sort.each { |frame|
-          fdata = @render_data[frame]
+        @render_data.keys.grep(Fixnum).sort.each { |pframe|
+          fdata = @render_data[pframe]
           sdata = []
           i = 0
           opts1.each { |opt|
             val = fdata[opt]
             val = val.to_a if val.is_a?(Sketchup::Color)
             if val != last[opt]
-              sdata[i] = val
+              sdata << [i, val]
               last[opt] = val
             end
             i += 1
@@ -831,7 +839,7 @@ module MSPhysics
               val = fdata[opt]
               val = val.to_a if val.is_a?(Sketchup::Color)
               if val != last[opt]
-                sdata[i] = val
+                sdata << [i, val]
                 last[opt] = val
               end
               i += 1
@@ -843,7 +851,7 @@ module MSPhysics
               val = fdata[opt]
               val = val.to_a if val.is_a?(Sketchup::Color)
               if val != last[opt]
-                sdata[i] = val
+                sdata << [i, val]
                 last[opt] = val
               end
               i += 1
@@ -855,7 +863,7 @@ module MSPhysics
               val = fdata[opt]
               val = val.to_a if val.is_a?(Sketchup::Color)
               if val != last[opt]
-                sdata[i] = val
+                sdata << [i, val]
                 last[opt] = val
               end
               i += 1
@@ -867,51 +875,533 @@ module MSPhysics
               val = fdata[opt]
               val = val.to_a if val.is_a?(Sketchup::Color)
               if val != last[opt]
-                sdata[i] = val
+                sdata << [i, val]
                 last[opt] = val
               end
               i += 1
             }
           end
-          render_data[frame] = sdata unless sdata.empty?
+          render_data << [pframe, sdata] unless sdata.empty?
         }
         model.set_attribute(dict, 'Render Data', render_data)
         # Save shadow
         shadow_data = []
+        opts = %w{City Country Dark DayOfYear DaylightSavings DisplayNorth DisplayOnAllFaces DisplayOnGroundPlane DisplayShadows EdgesCastShadows Latitude Light Longitude NorthAngle ShadowTime_time_t TZOffset UseSunForAllShading}
         last = {}
-        @shadow_data.keys.grep(Fixnum).sort.each { |frame|
-          fdata = @shadow_data[frame]
+        @shadow_data.keys.grep(Fixnum).sort.each { |pframe|
+          fdata = @shadow_data[pframe]
           sdata = []
           i = 0
-          fdata.sort.each { |key, val|
-            next if val.is_a?(Time)
-            val = val.to_a if val.is_a?(Geom::Vector3d)
-            if val != last[key]
-              sdata[i] = val
-              last[key] = val
+          opts.each { |opt|
+            val = fdata[opt]
+            val = val.to_s if val.is_a?(Bignum)
+            if val != nil && val != last[opt]
+              sdata << [i, val]
+              last[opt] = val
             end
             i += 1
           }
-          shadow_data[frame] = sdata unless sdata.empty?
+          shadow_data << [pframe, sdata] unless sdata.empty?
         }
         model.set_attribute(dict, 'Shadow Data', shadow_data)
+        # Save camera
+        camera = model.active_view.camera
+        camera_data = [@camera_data[:start_frame], @camera_data[:end_frame], []]
+        last = {}
+        opts = %w{eye target up perspective aspect_ratio xaxis yaxis zaxis focal_length fov image_width height}
+        @camera_data.keys.grep(Fixnum).sort.each { |pframe|
+          fdata = @camera_data[pframe]
+          sdata = []
+          i = 0
+          opts.each { |opt|
+            opt_sym = opt.to_sym
+            attr = fdata[opt_sym]
+            if attr && attr != last[opt_sym]
+              last[opt_sym] = attr
+              sdata << [i, attr.is_a?(Geom::Point3d) || attr.is_a?(Geom::Vector3d) ? attr.to_a : attr]
+            end
+            i += 1
+          }
+          camera_data[2] << [pframe, sdata] unless sdata.empty?
+        }
+        model.set_attribute(dict, 'Camera Data', camera_data)
         # End operation
         model.commit_operation if wrap_in_op
+        # Return success
+        true
       end
 
       # Load saved data from model.
       def load_data_from_model
         model = Sketchup.active_model
         dict = 'MSPhysics Replay'
-        # Load group data
-        groups_data = model.get_attribute(dict, 'Groups Data')
-        if groups_data.is_a?(Array)
-          groups_data.each { |group_data|
-            group = MSPhysics.get_group_by_id(group_data[0]) if group_data[0]
-            definition = MSPhysics.get_definition_by_id(group_data[1]) if group_data[1]
-            next if group.nil? && definition.nil?
-            @groups_data[group] = {}
+        # Load info
+        @start_frame = model.get_attribute(dict, 'Start Frame', 0)
+        @end_frame = model.get_attribute(dict, 'End Frame', 0)
+        # Load material data
+        @materials_data = {}
+        model.materials.each { |m|
+          material_data = m.get_attribute(dict, 'Data')
+          next if !(material_data.is_a?(Array) && material_data[3].is_a?(Array))
+          data = {}
+          last = {}
+          material_data[3].each { |info|
+            next if !(info.is_a?(Array) && info[0].is_a?(Numeric) && info[1].is_a?(Array))
+            fdata = []
+            sdata = {}
+            info[1].each { |sub_info|
+              if sub_info.is_a?(Array) && sub_info.size == 2 && sub_info[0].is_a?(Numeric)
+                fdata[sub_info[0]] = sub_info[1]
+              end
+            }
+            if fdata[0].is_a?(Array)
+              sdata[:color] = Sketchup::Color.new(fdata[0])
+              last[:color] = sdata[:color]
+            elsif last[:color]
+              sdata[:color] = last[:color]
+            end
+            if fdata[1]
+              sdata[:alpha] = fdata[1]
+              last[:alpha] = sdata[:alpha]
+            elsif last[:alpha]
+              sdata[:alpha] = last[:alpha]
+            end
+            if fdata[2]
+              sdata[:texture] = fdata[2]
+              last[:texture] = sdata[:texture]
+            elsif last[:texture]
+              sdata[:texture] = last[:texture]
+            end
+            if fdata[3]
+              sdata[:width] = fdata[3]
+              last[:width] = sdata[:width]
+            elsif last[:width]
+              sdata[:width] = last[:width]
+            end
+            if fdata[4]
+              sdata[:height] = fdata[4]
+              last[:height] = sdata[:height]
+            elsif last[:height]
+              sdata[:height] = last[:height]
+            end
+            if Sketchup.version.to_i >= 15
+              if fdata[5]
+                sdata[:colorize_type] = fdata[5]
+                last[:colorize_type] = sdata[:colorize_type]
+              elsif last[:colorize_type]
+                sdata[:colorize_type] = last[:colorize_type]
+              end
+            end
+            data[info[0]] = sdata
           }
+          data[:id] = material_data[0].is_a?(Numeric) ? material_data[0] : m.entityID
+          data[:start_frame] = material_data[1] if material_data[1].is_a?(Numeric)
+          data[:end_frame] = material_data[2] if material_data[2].is_a?(Numeric)
+          @materials_data[m] = data
+        }
+        d_materials_data = model.get_attribute(dict, 'Materials Data')
+        if d_materials_data.is_a?(Array)
+          d_materials_data.each { |d_material_data|
+            next if !(d_material_data.is_a?(Array) && d_material_data[0].is_a?(Numeric) && d_material_data[3].is_a?(Array))
+            data = {}
+            last = {}
+            d_material_data[3].each { |info|
+              next if !(info.is_a?(Array) && info[0].is_a?(Numeric) && info[1].is_a?(Array))
+              fdata = []
+              sdata = {}
+              info[1].each { |sub_info|
+                if sub_info.is_a?(Array) && sub_info.size == 2 && sub_info[0].is_a?(Numeric)
+                  fdata[sub_info[0]] = sub_info[1]
+                end
+              }
+              if fdata[0].is_a?(Array)
+                sdata[:color] = Sketchup::Color.new(fdata[0])
+                last[:color] = sdata[:color]
+              elsif last[:color]
+                sdata[:color] = last[:color]
+              end
+              if fdata[1]
+                sdata[:alpha] = fdata[1]
+                last[:alpha] = sdata[:alpha]
+              elsif last[:alpha]
+                sdata[:alpha] = last[:alpha]
+              end
+              if fdata[2]
+                sdata[:texture] = fdata[2]
+                last[:texture] = sdata[:texture]
+              elsif last[:texture]
+                sdata[:texture] = last[:texture]
+              end
+              if fdata[3]
+                sdata[:width] = fdata[3]
+                last[:width] = sdata[:width]
+              elsif last[:width]
+                sdata[:width] = last[:width]
+              end
+              if fdata[4]
+                sdata[:height] = fdata[4]
+                last[:height] = sdata[:height]
+              elsif last[:height]
+                sdata[:height] = last[:height]
+              end
+              if Sketchup.version.to_i >= 15
+                if fdata[5]
+                  sdata[:colorize_type] = fdata[5]
+                  last[:colorize_type] = sdata[:colorize_type]
+                elsif last[:colorize_type]
+                  sdata[:colorize_type] = last[:colorize_type]
+                end
+              end
+              data[info[0]] = sdata
+            }
+            data[:id] = d_material_data[0]
+            data[:start_frame] = d_material_data[1] if d_material_data[1].is_a?(Numeric)
+            data[:end_frame] = d_material_data[2] if d_material_data[2].is_a?(Numeric)
+            @materials_data[d_material_data[0]] = data
+          }
+        end
+        # Load layer data
+        @layers_data = {}
+        model.layers.each { |l|
+          layer_data = l.get_attribute(dict, 'Data')
+          next if !(layer_data.is_a?(Array) && layer_data[3].is_a?(Array))
+          data = {}
+          last = {}
+          layer_data[3].each { |info|
+            next if !(info.is_a?(Array) && info[0].is_a?(Numeric) && info[1].is_a?(Array))
+            fdata = []
+            sdata = {}
+            info[1].each { |sub_info|
+              if sub_info.is_a?(Array) && sub_info.size == 2 && sub_info[0].is_a?(Numeric)
+                fdata[sub_info[0]] = sub_info[1]
+              end
+            }
+            if fdata[0].is_a?(TrueClass) || fdata[1].is_a?(FalseClass)
+              sdata[:visible] = fdata[0]
+              last[:visible] = sdata[:visible]
+            elsif last[:visible]
+              sdata[:visible] = last[:visible]
+            end
+            if Sketchup.version.to_i > 13
+              if fdata[1].is_a?(Array)
+                sdata[:color] = Sketchup::Color.new(fdata[1])
+                last[:color] = sdata[:color]
+              elsif last[:color]
+                sdata[:color] = last[:color]
+              end
+            end
+            data[info[0]] = sdata
+          }
+          data[:id] = layer_data[0].is_a?(Numeric) ? layer_data[0] : l.entityID
+          data[:start_frame] = layer_data[1] if layer_data[1].is_a?(Numeric)
+          data[:end_frame] = layer_data[2] if layer_data[2].is_a?(Numeric)
+          @layers_data[l] = data
+        }
+        # Load group data
+        @groups_data = {}
+        model.entities.each { |e|
+          next if !e.is_a?(Sketchup::Group) && !e.is_a?(Sketchup::ComponentInstance)
+          group_data = e.get_attribute(dict, 'Data')
+          next if !(group_data.is_a?(Array) && group_data[2].is_a?(Array))
+          data = {}
+          last = {}
+          group_data[2].each { |info|
+            next if !(info.is_a?(Array) && info[0].is_a?(Numeric) && info[1].is_a?(Array))
+            fdata = []
+            sdata = {}
+            info[1].each { |sub_info|
+              if sub_info.is_a?(Array) && sub_info.size == 2 && sub_info[0].is_a?(Numeric)
+                fdata[sub_info[0]] = sub_info[1]
+              end
+            }
+            if fdata[0].is_a?(Array)
+              sdata[:transformation] = Geom::Transformation.new(fdata[0])
+              last[:transformation] = sdata[:transformation]
+            elsif last[:transformation]
+              sdata[:transformation] = last[:transformation]
+            end
+            if fdata[1].is_a?(TrueClass) || fdata[1].is_a?(FalseClass)
+              sdata[:visible] = fdata[1]
+              last[:visible] = sdata[:visible]
+            elsif last[:visible]
+              sdata[:visible] = last[:visible]
+            end
+            if fdata[2].is_a?(Numeric)
+              if fdata[2] == 0
+                sdata[:material] = 0
+                last[:material] = sdata[:material]
+              else
+                @materials_data.each { |m, mat_data|
+                  if mat_data[:id] == fdata[2]
+                    sdata[:material] = m
+                    last[:material] = sdata[:material]
+                    break
+                  end
+                }
+                sdata[:material] = last[:material] if sdata[:material].nil? && last[:material]
+              end
+            elsif last[:material]
+              sdata[:material] = last[:material]
+            end
+            if fdata[3].is_a?(Numeric)
+              if fdata[3] == 0
+                sdata[:layer] = 0
+                last[:layer] = sdata[:layer]
+              else
+                @layers_data.each { |l, lay_data|
+                  if lay_data[:id] == fdata[3]
+                    sdata[:layer] = l
+                    last[:layer] = sdata[:layer]
+                    break
+                  end
+                }
+                sdata[:layer] = last[:layer] if sdata[:layer].nil? && last[:layer]
+              end
+            elsif last[:layer]
+              sdata[:layer] = last[:layer]
+            end
+            data[info[0]] = sdata
+          }
+          data[:definition] = MSPhysics::Group.get_definition(e)
+          data[:start_frame] = group_data[0] if group_data[0].is_a?(Numeric)
+          data[:end_frame] = group_data[1] if group_data[1].is_a?(Numeric)
+          @groups_data[e] = data
+        }
+        count = 10000
+        model.definitions.each { |d|
+          d_groups_data = d.get_attribute(dict, 'Data')
+          next unless d_groups_data.is_a?(Array)
+          d_groups_data.each { |d_group_data|
+            next if !(d_group_data.is_a?(Array) && d_group_data[2].is_a?(Array))
+            data = {}
+            last = {}
+            d_group_data[2].each { |info|
+              next if !(info.is_a?(Array) && info[0].is_a?(Numeric) && info[1].is_a?(Array))
+              fdata = []
+              sdata = {}
+              info[1].each { |sub_info|
+                if sub_info.is_a?(Array) && sub_info.size == 2 && sub_info[0].is_a?(Numeric)
+                  fdata[sub_info[0]] = sub_info[1]
+                end
+              }
+              if fdata[0].is_a?(Array)
+                sdata[:transformation] = Geom::Transformation.new(fdata[0])
+                last[:transformation] = sdata[:transformation]
+              elsif last[:transformation]
+                sdata[:transformation] = last[:transformation]
+              end
+              if fdata[1].is_a?(TrueClass) || fdata[1].is_a?(FalseClass)
+                sdata[:visible] = fdata[1]
+                last[:visible] = sdata[:visible]
+              elsif last[:visible]
+                sdata[:visible] = last[:visible]
+              end
+              if fdata[2].is_a?(Numeric)
+                if fdata[2] == 0
+                  sdata[:material] = 0
+                  last[:material] = sdata[:material]
+                else
+                  @materials_data.each { |m, mat_data|
+                    if mat_data[:id] == fdata[2]
+                      sdata[:material] = m
+                      last[:material] = sdata[:material]
+                      break
+                    end
+                  }
+                  sdata[:material] = last[:material] if sdata[:material].nil? && last[:material]
+                end
+              elsif last[:material]
+                sdata[:material] = last[:material]
+              end
+              if fdata[3].is_a?(Numeric)
+                if fdata[3] == 0
+                  sdata[:layer] = 0
+                  last[:layer] = sdata[:layer]
+                else
+                  @layers_data.each { |l, lay_data|
+                    if lay_data[:id] == fdata[3]
+                      sdata[:layer] = l
+                      last[:layer] = sdata[:layer]
+                      break
+                    end
+                  }
+                  sdata[:layer] = last[:layer] if sdata[:layer].nil? && last[:layer]
+                end
+              elsif last[:layer]
+                sdata[:layer] = last[:layer]
+              end
+              data[info[0]] = sdata
+            }
+            data[:definition] = d
+            data[:start_frame] = d_group_data[0] if d_group_data[0].is_a?(Numeric)
+            data[:end_frame] = d_group_data[1] if d_group_data[1].is_a?(Numeric)
+            @groups_data[count] = data
+            count += 1
+          }
+        }
+        # Load render data
+        @render_data = {}
+        render_data = model.get_attribute(dict, 'Render Data')
+        if render_data.is_a?(Array)
+          opts1 = %w{BackgroundColor BandColor ConstructionColor DepthQueWidth DisplayColorByLayer DisplayFog DisplayInstanceAxes DisplayWatermarks DrawDepthQue DrawGround DrawHidden DrawHorizon DrawLineEnds DrawProfilesOnly DrawSilhouettes DrawUnderground EdgeColorMode EdgeDisplayMode EdgeType ExtendLines FaceBackColor FaceColorMode FaceFrontColor FogColor FogEndDist FogStartDist FogUseBkColor ForegroundColor GroundColor GroundTransparency HideConstructionGeometry HighlightColor HorizonColor InactiveHidden InstanceHidden JitterEdges LineEndWidth LineExtension LockedColor MaterialTransparency ModelTransparency RenderMode SectionActiveColor SectionCutWidth SectionDefaultCutColor SectionInactiveColor ShowViewName SilhouetteWidth SkyColor Texture TransparencySort}
+          opts2 = %w{DisplayDims DisplaySketchAxes DisplayText}
+          opts3 = %w{InactiveFade InstanceFade}
+          opts4 = %w{DisplaySectionPlanes}
+          opts5 = %w{DisplaySectionCuts DrawBackEdges SectionCutDrawEdges}
+          last = {}
+          render_data.each { |info|
+            next if !(info.is_a?(Array) && info[0].is_a?(Numeric) && info[1].is_a?(Array))
+            fdata = []
+            sdata = {}
+            info[1].each { |sub_info|
+              if sub_info.is_a?(Array) && sub_info.size == 2 && sub_info[0].is_a?(Numeric)
+                fdata[sub_info[0]] = sub_info[1]
+              end
+            }
+            i = 0
+            opts1.each { |opt|
+              val = fdata[i]
+              if val != nil
+                sdata[opt] = val.is_a?(Array) ? Sketchup::Color.new(val) : val
+                last[opt] = val
+              elsif last[opt]
+                sdata[opt] = last[opt]
+              end
+              i += 1
+            }
+            if Sketchup.version.to_i >= 7
+              i = 51
+              opts2.each { |opt|
+                val = fdata[i]
+                if val != nil
+                  sdata[opt] = val.is_a?(Array) ? Sketchup::Color.new(val) : val
+                  last[opt] = val
+                elsif last[opt]
+                  sdata[opt] = last[opt]
+                end
+                i += 1
+              }
+            end
+            if Sketchup.version.to_i >= 8
+              i = 54
+              opts3.each { |opt|
+                val = fdata[i]
+                if val != nil
+                  sdata[opt] = val.is_a?(Array) ? Sketchup::Color.new(val) : val
+                  last[opt] = val
+                elsif last[opt]
+                  sdata[opt] = last[opt]
+                end
+                i += 1
+              }
+            end
+            if Sketchup.version.to_i >= 14
+              i = 56
+              opts4.each { |opt|
+                val = fdata[i]
+                if val != nil
+                  sdata[opt] = val.is_a?(Array) ? Sketchup::Color.new(val) : val
+                  last[opt] = val
+                elsif last[opt]
+                  sdata[opt] = last[opt]
+                end
+                i += 1
+              }
+            end
+            if Sketchup.version.to_i >= 15
+              i = 57
+              opts5.each { |opt|
+                val = fdata[i]
+                if val != nil
+                  sdata[opt] = val.is_a?(Array) ? Sketchup::Color.new(val) : val
+                  last[opt] = val
+                elsif last[opt]
+                  sdata[opt] = last[opt]
+                end
+                i += 1
+              }
+            end
+            @render_data[info[0]] = sdata
+          }
+        end
+        # Load shadow data
+        @shadow_data = {}
+        opts = %w{City Country Dark DayOfYear DaylightSavings DisplayNorth DisplayOnAllFaces DisplayOnGroundPlane DisplayShadows EdgesCastShadows Latitude Light Longitude NorthAngle ShadowTime_time_t TZOffset UseSunForAllShading}
+        shadow_data = model.get_attribute(dict, 'Shadow Data')
+        if shadow_data.is_a?(Array)
+          last = {}
+          shadow_data.each { |info|
+            next if !(info.is_a?(Array) && info[0].is_a?(Numeric) && info[1].is_a?(Array))
+            fdata = []
+            sdata = {}
+            info[1].each { |sub_info|
+              if sub_info.is_a?(Array) && sub_info.size == 2 && sub_info[0].is_a?(Numeric)
+                fdata[sub_info[0]] = sub_info[1]
+              end
+            }
+            i = 0
+            opts.each { |opt|
+              val = fdata[i]
+              if val
+                val = val.to_i if opt == 'ShadowTime_time_t'
+                sdata[opt] = val
+                last[opt] = val
+              elsif last[opt]
+                sdata[opt] = last[opt]
+              end
+              i += 1
+            }
+            @shadow_data[info[0]] = sdata
+          }
+        end
+        # Load camera data
+        @camera_data = {}
+        camera_data = model.get_attribute(dict, 'Camera Data')
+        if camera_data.is_a?(Array) && camera_data[2].is_a?(Array)
+          last = {}
+          camera_data[2].each { |info|
+            next if !(info.is_a?(Array) && info[0].is_a?(Numeric) && info[1].is_a?(Array))
+            fdata = []
+            sdata = {}
+            info[1].each { |sub_info|
+              if sub_info.is_a?(Array) && sub_info.size == 2 && sub_info[0].is_a?(Numeric)
+                fdata[sub_info[0]] = sub_info[1]
+              end
+            }
+            if fdata[3].is_a?(TrueClass) || fdata[3].is_a?(FalseClass)
+              sdata[:perspective] = fdata[3]
+              last[:perspective] = sdata[:perspective]
+            elsif last[:perspective]
+              sdata[:perspective] = last[:perspective]
+            end
+            { 0 => :eye, 1 => :target }.each { |index, attr|
+              if fdata[index].is_a?(Array)
+                sdata[attr] = Geom::Point3d.new(fdata[index])
+                last[attr] = sdata[attr]
+              elsif last[attr]
+                sdata[attr] = last[attr]
+              end
+            }
+            { 2 => :up, 5 => :xaxis, 6 => :yaxis, 7 => :zaxis }.each { |index, attr|
+              if fdata[index].is_a?(Array)
+                sdata[attr] = Geom::Vector3d.new(fdata[index])
+                last[attr] = sdata[attr]
+              elsif last[attr]
+                sdata[attr] = last[attr]
+              end
+            }
+            { 4 => :aspect_ratio, 8 => :focal_length, 9 => :fov, 10 => :image_width, 11 => :height }.each { |index, attr|
+              if fdata[index]
+                sdata[attr] = fdata[index]
+                last[attr] = sdata[attr]
+              elsif last[attr]
+                sdata[attr] = last[attr]
+              end
+            }
+            @camera_data[info[0]] = sdata
+          }
+          @camera_data[:start_frame] = camera_data[0] if camera_data[0].is_a?(Numeric)
+          @camera_data[:end_frame] = camera_data[1] if camera_data[1].is_a?(Numeric)
         end
       end
 
@@ -935,7 +1425,20 @@ module MSPhysics
           dict.delete_key('Camera Data')
           dict.delete_key('Render Data')
           dict.delete_key('Shadow Data')
+          dict.delete_key('Camera Data')
         end
+        model.definitions.each { |d|
+          d.attribute_dictionaries.delete('MSPhysics Replay') if d.attribute_dictionaries
+          d.instances.each { |i|
+            i.attribute_dictionaries.delete('MSPhysics Replay') if i.attribute_dictionaries
+          }
+        }
+        model.materials.each { |m|
+          m.attribute_dictionaries.delete('MSPhysics Replay') if m.attribute_dictionaries
+        }
+        model.layers.each { |l|
+          l.attribute_dictionaries.delete('MSPhysics Replay') if l.attribute_dictionaries
+        }
         # End operation
         model.commit_operation if wrap_in_op
       end
@@ -945,13 +1448,13 @@ module MSPhysics
       # @return [Boolean] success
       def smooth_camera_data1(interval = 40)
         return false if @camera_data.empty?
-        frame = @start_frame
+        pframe = @start_frame
         while true
-          sframe = frame
+          sframe = pframe
           sdata = get_camera_data(sframe)
-          frame += interval
-          frame = @end_frame if frame > @end_frame
-          eframe = frame
+          pframe += interval
+          pframe = @end_frame if pframe > @end_frame
+          eframe = pframe
           edata = get_camera_data(eframe)
           return if eframe - sframe < 2
           tra1 = Geom::Transformation.new(sdata[:xaxis], sdata[:zaxis], sdata[:yaxis], sdata[:eye])
@@ -968,7 +1471,7 @@ module MSPhysics
             data[:yaxis] = tra.zaxis
             data[:zaxis] = tra.yaxis
           end
-          break if frame >= @end_frame
+          break if pframe >= @end_frame
         end
         true
       end
@@ -979,10 +1482,10 @@ module MSPhysics
       def smooth_camera_data2(interval = 25)
         return false if @camera_data.empty?
         tcam_data = {}
-        @camera_data.each { |frame, data|
-          next unless frame.is_a?(Fixnum)
-          s = AMS.clamp(frame - interval, @start_frame, @end_frame)
-          e = AMS.clamp(frame + interval, @start_frame, @end_frame)
+        @camera_data.each { |pframe, data|
+          next unless pframe.is_a?(Fixnum)
+          s = AMS.clamp(pframe - interval, @start_frame, @end_frame)
+          e = AMS.clamp(pframe + interval, @start_frame, @end_frame)
           count = 1
           ndata = {
             :eye    => Geom::Point3d.new(data[:eye]),
@@ -990,7 +1493,7 @@ module MSPhysics
             :up     => Geom::Vector3d.new(data[:up])
           }
           for n in s..e
-            next if n == frame
+            next if n == pframe
             data2 = @camera_data[n]
             next unless data2
             for i in 0..2
@@ -1006,11 +1509,11 @@ module MSPhysics
             ndata[:target][i] *= ratio
             ndata[:up][i] *= ratio
           end
-          tcam_data[frame] = ndata
-          frame += 1
+          tcam_data[pframe] = ndata
+          pframe += 1
         }
-        tcam_data.each { |frame, ndata|
-          data = @camera_data[frame]
+        tcam_data.each { |pframe, ndata|
+          data = @camera_data[pframe]
           next unless data
           data[:eye] = ndata[:eye]
           data[:target] = ndata[:target]
@@ -1020,175 +1523,150 @@ module MSPhysics
         true
       end
 
+      # Get data at a particular frame.
+      # @param [Hash] data
+      # @param [Fixnum] pframe
+      # @return [Hash, nil]
+      def get_frame_data(data, pframe)
+        fdata = data[pframe]
+        return fdata if fdata
+        cf = nil
+        ldiff = nil
+        data.keys.each { |f|
+          next if !f.is_a?(Fixnum) || f > pframe
+          tdiff = pframe - f
+          if ldiff.nil? || tdiff < ldiff
+            ldiff = tdiff
+            cf = f
+          end
+        }
+        return cf ? data[cf] : nil
+      end
+
       # Get group/component data at a particular frame.
       # @param [Sketchup::Group, Sketchup::ComponentInstance] group
-      # @param [Fixnum] frame
+      # @param [Fixnum] pframe
       # @return [Hash, nil]
-      def get_group_data(group, frame)
-        frame = frame.to_i
+      def get_group_data(group, pframe)
         data = @groups_data[group]
         return unless data
-        return data[frame] if data[frame]
-        last = nil
-        data.each { |f, fdata|
-          next unless f.is_a?(Fixnum)
-          return last if last != nil && f > frame
-          last = fdata
-        }
-        return last
+        get_frame_data(data, pframe)
       end
 
       # Get material data at a particular frame.
       # @param [Sketchup::Material] material
-      # @param [Fixnum] frame
+      # @param [Fixnum] pframe
       # @return [Hash, nil]
-      def get_material_data(material, frame)
-        frame = frame.to_i
-        data = @materials_data[material]
+      def get_material_data(material, pframe)
+        data = @materials_data[group]
         return unless data
-        return data[frame] if data[frame]
-        last = nil
-        data.each { |f, fdata|
-          next unless f.is_a?(Fixnum)
-          return last if last != nil && f > frame
-          last = fdata
-        }
-        return last
+        get_frame_data(data, pframe)
       end
 
       # Get layer data at a particular frame.
       # @param [Sketchup::Layer] layer
-      # @param [Fixnum] frame
+      # @param [Fixnum] pframe
       # @return [Hash, nil]
-      def get_layer_data(layer, frame)
-        frame = frame.to_i
+      def get_layer_data(layer, pframe)
         data = @layers_data[layer]
         return unless data
-        return data[frame] if data[frame]
-        last = nil
-        data.each { |f, fdata|
-          next unless f.is_a?(Fixnum)
-          return last if last != nil && f > frame
-          last = fdata
-        }
-        return last
+        get_frame_data(data, pframe)
       end
 
       # Get camera data at a particular frame.
-      # @param [Fixnum] frame
+      # @param [Fixnum] pframe
       # @return [Hash, nil]
-      def get_camera_data(frame)
-        frame = frame.to_i
-        return @camera_data[frame] if @camera_data[frame]
-        last = nil
-        @camera_data.each { |f, fdata|
-          next unless f.is_a?(Fixnum)
-          return last if last != nil && f > frame
-          last = fdata
-        }
-        return last
+      def get_camera_data(pframe)
+        get_frame_data(@camera_data, pframe)
       end
 
       # Get render data at a particular frame.
-      # @param [Fixnum] frame
+      # @param [Fixnum] pframe
       # @return [Hash, nil]
-      def get_render_data(frame)
-        frame = frame.to_i
-        return @render_data[frame] if @render_data[frame]
-        last = nil
-        @render_data.each { |f, fdata|
-          next unless f.is_a?(Fixnum)
-          return last if last != nil && f > frame
-          last = fdata
-        }
-        return last
+      def get_render_data(pframe)
+        get_frame_data(@render_data, pframe)
       end
 
       # Get shadow data at a particular frame.
-      # @param [Fixnum] frame
+      # @param [Fixnum] pframe
       # @return [Hash, nil]
-      def get_shadow_data(frame)
-        frame = frame.to_i
-        return @shadow_data[frame] if @shadow_data[frame]
-        last = nil
-        @shadow_data.each { |f, fdata|
-          next unless f.is_a?(Fixnum)
-          return last if last != nil && f > frame
-          last = fdata
-        }
-        return last
+      def get_shadow_data(pframe)
+        get_frame_data(@shadow_data, pframe)
       end
 
       # Activate frame data.
-      # @param [Fixnum] frame
+      # @param [Fixnum] pframe
       # @return [Boolean] success
-      def activate_frame(frame)
+      def activate_frame(pframe)
         return false unless active_data_valid?
-        frame = frame.to_i
         model = Sketchup.active_model
         # Activate group data
         if @replay_groups
           @groups_data.each { |entity, data|
-            frame_data = data[frame]
+            frame_data = get_frame_data(data, pframe)
             instance = data[:instance]
             if frame_data.nil?
-              if instance && instance.valid? && instance.visible? && (frame < data[:start_frame] || frame > data[:end_frame])
+              if instance && instance.valid? && instance.visible? && (pframe < data[:start_frame] || pframe > data[:end_frame])
                 instance.visible = false
               end
               next
             end
             material = frame_data[:material]
-            if (group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentDefinition)) && entity.valid?
-              entity.move!(frame_data[:transformation])
+            if (entity.is_a?(Sketchup::Group) || entity.is_a?(Sketchup::ComponentInstance)) && entity.valid?
+              entity.move!(frame_data[:transformation]) if frame_data[:transformation]
               #~ entity.transformation = frame_data[:transformation]
-              entity.visible = frame_data[:visible] if entity.visible? != frame_data[:visible]
-              if material.nil?
-                entity.material = nil if entity.material
-              elsif material.valid?
-                entity.material = material if entity.material != material
-              else
-                material_data = @materials_data[material]
-                if material_data && material_data[:instance] && material_data[:instance].valid?
-                  entity.material = material_data[:instance] if entity.material != material_data[:instance]
+              entity.visible = frame_data[:visible] if frame_data[:visible] != nil && entity.visible? != frame_data[:visible]
+              if material
+                if material == 0
+                  entity.material = nil if entity.material
+                elsif material.is_a?(Sketchup::Material) && material.valid?
+                  entity.material = material if entity.material != material
+                else
+                  material_data = @materials_data[material]
+                  if material_data && material_data[:instance] && material_data[:instance].valid?
+                    entity.material = material_data[:instance] if entity.material != material_data[:instance]
+                  end
                 end
               end
-              entity.layer = frame_data[:layer] if frame_data[:layer].valid? && entity.layer != frame_data[:layer]
-            elsif instance && instance.valid? && frame >= data[:start_frame] && frame <= data[:end_frame]
+              entity.layer = frame_data[:layer] if frame_data[:layer] && frame_data[:layer] != 0 && frame_data[:layer].valid? && entity.layer != frame_data[:layer]
+            elsif instance && instance.valid? && pframe >= data[:start_frame] && pframe <= data[:end_frame]
               instance.move!(frame_data[:transformation])
               #~ instance.transformation = frame_data[:transformation]
-              instance.visible = frame_data[:visible] if instance.visible? != frame_data[:visible]
-              if material.nil?
-                instance.material = nil if instance.material
-              elsif material.valid?
-                instance.material = material if instance.material != material
-              else
-                material_data = @materials_data[material]
-                if material_data && material_data[:instance] && material_data[:instance].valid?
-                  instance.material = material_data[:instance] if instance.material != material_data[:instance]
+              instance.visible = frame_data[:visible] if frame_data[:visible] != nil && instance.visible? != frame_data[:visible]
+              if material
+                if material == 0
+                  instance.material = nil if instance.material
+                elsif material.is_a?(Sketchup::Material) && material.valid?
+                  instance.material = material if instance.material != material
+                else
+                  material_data = @materials_data[material]
+                  if material_data && material_data[:instance] && material_data[:instance].valid?
+                    instance.material = material_data[:instance] if instance.material != material_data[:instance]
+                  end
                 end
               end
-              instance.layer = frame_data[:layer] if frame_data[:layer].valid? && instance.layer != frame_data[:layer]
+              instance.layer = frame_data[:layer] if frame_data[:layer] && frame_data[:layer] != 0 && frame_data[:layer].valid? && instance.layer != frame_data[:layer]
             end
           }
         end
         # Activate material data
         if @replay_materials
           @materials_data.each { |material, data|
-            frame_data = data[frame]
+            frame_data = get_frame_data(data, pframe)
             next if frame_data.nil?
-            mat = material.valid? ? material : (data[:instance].valid? ? data[:instance] : nil)
+            mat = (material.is_a?(Sketchup::Material) && material.valid?) ? material : (data[:instance] && data[:instance].valid? ? data[:instance] : nil)
             next if mat.nil?
-            mat.color = frame_data[:color] if mat.color.to_i != frame_data[:color].to_i
-            mat.alpha = frame_data[:alpha] if mat.alpha != frame_data[:alpha]
+            mat.color = frame_data[:color] if frame_data[:color] && mat.color.to_i != frame_data[:color].to_i
+            mat.alpha = frame_data[:alpha] if frame_data[:alpha] && mat.alpha != frame_data[:alpha]
             if mat.texture
-              mat.texture = frame_data[:texture] if mat.texture.filename != frame_data[:texture]
+              mat.texture = frame_data[:texture] if frame_data[:texture] && mat.texture.filename != frame_data[:texture]
             else
               mat.texture = frame_data[:texture] if frame_data[:texture]
             end
-            if mat.texture && (mat.texture.width != frame_data[:width] || mat.texture.height != frame_data[:height])
+            if mat.texture && frame_data[:width] && frame_data[:height] && (mat.texture.width != frame_data[:width] || mat.texture.height != frame_data[:height])
               mat.texture.size = [frame_data[:width], frame_data[:height]]
             end
-            if Sketchup.version.to_i >= 15 && mat.colorize_type != frame_data[:colorize_type]
+            if Sketchup.version.to_i >= 15 && frame_data[:colorize_type] && mat.colorize_type != frame_data[:colorize_type]
               mat.colorize_type = frame_data[:colorize_type]
             end
           }
@@ -1197,36 +1675,47 @@ module MSPhysics
         if @replay_layers
           @layers_data.each { |layer, data|
             next unless layer.valid?
-            frame_data = data[frame]
+            frame_data = get_frame_data(data, pframe)
             next if frame_data.nil?
-            layer.visible = frame_data[:visible] if layer.visible? != frame_data[:visible]
-            if Sketchup.version.to_i > 13 && layer.color.to_i != frame_data[:color].to_i
+            layer.visible = frame_data[:visible] if frame_data[:visible] != nil && layer.visible? != frame_data[:visible]
+            if Sketchup.version.to_i > 13 && frame_data[:color] && layer.color.to_i != frame_data[:color].to_i
               layer.color = frame_data[:color]
             end
           }
         end
         # Activate camera data.
-        if @replay_camera && @camera_data[frame]
-          data = @camera_data[frame]
-          camera = model.active_view.camera
-          camera.set(data[:eye], data[:target], data[:up])
-          camera.perspective = data[:perspective]
-          camera.aspect_ratio = data[:aspect_ratio]
-          if camera.perspective?
-            camera.focal_length = data[:focal_length]
-            camera.fov = data[:fov]
-            camera.image_width = data[:image_width]
-          else
-            camera.height = data[:height]
+        if @replay_camera
+          frame_data = get_frame_data(@camera_data, pframe)
+          if frame_data
+            camera = model.active_view.camera
+            eye = frame_data[:eye] ? frame_data[:eye] : camera.eye
+            target = frame_data[:target] ? frame_data[:target] : camera.target
+            up = frame_data[:up] ? frame_data[:up] : camera.up
+            camera.set(eye, target, up)
+            camera.perspective = frame_data[:perspective] if frame_data[:perspective] != nil
+            camera.aspect_ratio = frame_data[:aspect_ratio] if frame_data[:aspect_ratio]
+            if camera.perspective?
+              camera.focal_length = frame_data[:focal_length] if frame_data[:focal_length]
+              camera.fov = frame_data[:fov] if frame_data[:fov]
+              camera.image_width = frame_data[:image_width] if frame_data[:image_width]
+            else
+              camera.height = frame_data[:height] if frame_data[:height]
+            end
           end
         end
         # Activate render data.
-        if @replay_render && @render_data[frame]
-          @render_data[frame].each { |k, v| model.rendering_options[k] = v if model.rendering_options[k] != v }
+        if @replay_render
+          frame_data = get_frame_data(@render_data, pframe)
+          if frame_data
+            frame_data.each { |k, v| model.rendering_options[k] = v if model.rendering_options[k] != nil && model.rendering_options[k] != v }
+          end
         end
         # Activate shadow data.
-        if @replay_shadow && @shadow_data[frame]
-          @shadow_data[frame].each { |k, v| model.shadow_info[k] = v if model.shadow_info[k] != v }
+        if @replay_shadow
+          frame_data = get_frame_data(@shadow_data, pframe)
+          if frame_data
+            frame_data.each { |k, v| model.shadow_info[k] = v if model.shadow_info[k] != nil && model.shadow_info[k] != v }
+          end
         end
         true
       end
@@ -1305,19 +1794,19 @@ module MSPhysics
         start_time = Time.now
         called_while_active = @active
         start(false) unless called_while_active
-        frame = reversed ? eframe : sframe
+        pframe = reversed ? eframe : sframe
         last_frame = nil
         count = 1
-        while(frame.to_i >= sframe && frame.to_i <= eframe)
-          if frame.to_i != last_frame
-            activate_frame(frame)
-            last_frame = frame.to_i
+        while(pframe.to_i >= sframe && pframe.to_i <= eframe)
+          if pframe.to_i != last_frame
+            activate_frame(pframe)
+            last_frame = pframe.to_i
           end
           opts[:filename] = "#{fpath}/#{fname}#{sprintf("%04d", count)}.#{results[4]}"
           view.write_image(opts)
-          progress = (frame.to_i - sframe) * 100 / (eframe - sframe).to_f
-          Sketchup.status_text = "Exporting MSPhysics Replay Animation    Progress: #{frame.to_i - sframe} / #{eframe - sframe} -- #{sprintf("%.2f", progress)}%"
-          frame += reversed ? -speed : speed
+          progress = (pframe.to_i - sframe) * 100 / (eframe - sframe).to_f
+          Sketchup.status_text = "Exporting MSPhysics Replay Animation    Progress: #{pframe.to_i - sframe} / #{eframe - sframe} -- #{sprintf("%.2f", progress)}%"
+          pframe += reversed ? -speed : speed
           count += 1
         end
         reset unless called_while_active
@@ -1381,14 +1870,15 @@ module MSPhysics
         # Export animation
         start_time = Time.now
         called_while_active = @active
+        clear_data_from_model(true)
         start(false) unless called_while_active
-        frame = reversed ? eframe : sframe
+        pframe = reversed ? eframe : sframe
         last_frame = nil
         count = 1
-        while(frame.to_i >= sframe && frame.to_i <= eframe)
-          if frame.to_i != last_frame
-            activate_frame(frame)
-            last_frame = frame.to_i
+        while(pframe.to_i >= sframe && pframe.to_i <= eframe)
+          if pframe.to_i != last_frame
+            activate_frame(pframe)
+            last_frame = pframe.to_i
           end
           full_path = "#{fpath}/#{fname}#{sprintf("%04d", count)}.skp"
           if Sketchup.version.to_i < 14
@@ -1400,12 +1890,13 @@ module MSPhysics
               model.save_copy(full_path)
             end
           end
-          progress = (frame.to_i - sframe) * 100 / (eframe - sframe).to_f
-          Sketchup.status_text = "Exporting MSPhysics Replay Animation    Progress: #{frame.to_i - sframe} / #{eframe - sframe} -- #{sprintf("%.2f", progress)}%"
-          frame += reversed ? -speed : speed
+          progress = (pframe.to_i - sframe) * 100 / (eframe - sframe).to_f
+          Sketchup.status_text = "Exporting MSPhysics Replay Animation    Progress: #{pframe.to_i - sframe} / #{eframe - sframe} -- #{sprintf("%.2f", progress)}%"
+          pframe += reversed ? -speed : speed
           count += 1
         end
         reset unless called_while_active
+        save_data_to_model(true)
         # Set original settings
         @replay_groups = orig_rep_grp
         @replay_materials = orig_rep_mat
@@ -1533,13 +2024,13 @@ def self.export_msp_animation
   start_time = Time.now
   called_while_active = replay.active?
   replay.start(false) unless called_while_active
-  frame = reversed ? eframe : sframe
+  pframe = reversed ? eframe : sframe
   last_frame = nil
   count = 1
-  while(frame.to_i >= sframe && frame.to_i <= eframe)
-    if frame.to_i != last_frame
-      replay.activate_frame(frame)
-      last_frame = frame.to_i
+  while(pframe.to_i >= sframe && pframe.to_i <= eframe)
+    if pframe.to_i != last_frame
+      replay.activate_frame(pframe)
+      last_frame = pframe.to_i
     end
     # Export data to the frame file
     frame_name = sprintf("%04d", count)
@@ -1559,10 +2050,10 @@ def self.export_msp_animation
     SU2KT.write_sun(out)
     SU2KT.finish_close(out)
     # Display progress
-    progress = (frame.to_i - sframe) * 100 / (eframe - sframe).to_f
-    Sketchup.status_text = "Exporting MSPhysics Replay to KT    Progress: #{frame.to_i - sframe} / #{eframe - sframe} -- #{sprintf("%.2f", progress)}%"
+    progress = (pframe.to_i - sframe) * 100 / (eframe - sframe).to_f
+    Sketchup.status_text = "Exporting MSPhysics Replay to KT    Progress: #{pframe.to_i - sframe} / #{eframe - sframe} -- #{sprintf("%.2f", progress)}%"
     # Increment frame and counter
-    frame += reversed ? -speed : speed
+    pframe += reversed ? -speed : speed
     count += 1
   end
   replay.reset unless called_while_active
@@ -1748,21 +2239,21 @@ def self.export_msp_animation
   start_time = Time.now
   called_while_active = replay.active?
   replay.start(false) unless called_while_active
-  frame = reversed ? eframe : sframe
+  pframe = reversed ? eframe : sframe
   last_frame = nil
   count = 1
-  while(frame.to_i >= sframe && frame.to_i <= eframe)
-    if frame.to_i != last_frame
-      replay.activate_frame(frame)
-      last_frame = frame.to_i
+  while(pframe.to_i >= sframe && pframe.to_i <= eframe)
+    if pframe.to_i != last_frame
+      replay.activate_frame(pframe)
+      last_frame = pframe.to_i
     end
     # Export data to the frame file
     ie.export_msp_frame(File.dirname(export_path), mesh_builder, shared_igs_path)
     # Display progress
-    progress = (frame.to_i - sframe) * 100 / (eframe - sframe).to_f
-    Sketchup.status_text = "Exporting MSPhysics Replay to SkIndigo    Progress: #{frame.to_i - sframe} / #{eframe - sframe} -- #{sprintf("%.2f", progress)}%"
+    progress = (pframe.to_i - sframe) * 100 / (eframe - sframe).to_f
+    Sketchup.status_text = "Exporting MSPhysics Replay to SkIndigo    Progress: #{pframe.to_i - sframe} / #{eframe - sframe} -- #{sprintf("%.2f", progress)}%"
     # Increment frame and counter
-    frame += reversed ? -speed : speed
+    pframe += reversed ? -speed : speed
     count += 1
   end
   replay.reset unless called_while_active
@@ -1892,27 +2383,36 @@ end}
         @replay_shadow = DEFAULT_REPLAY_SHADOW
       end
 
+      # Load settings and data procedure.
+      def load_replay_proc
+        MSPhysics::Replay.stop
+        MSPhysics::Replay.clear_recorded_data
+        MSPhysics::Replay.clear_active_data
+        MSPhysics::Replay.reset_replay_settings
+        begin
+          MSPhysics::Replay.load_replay_settings
+          MSPhysics::Replay.load_data_from_model
+        rescue Exception => e
+          MSPhysics::Replay.clear_recorded_data
+          MSPhysics::Replay.clear_active_data
+          MSPhysics::Replay.reset_replay_settings
+          msg = "An error occurred while loading MSPhysics Replay data!\n#{e.class}:\n#{e.message}\nBacktrace:\n#{e.backtrace.join("\n")}\n"
+          ::UI.messagebox(msg)
+          puts msg
+        end
+      end
+
     end # class << self
 
     # @!visibility private
     class AppObserver < ::Sketchup::AppObserver
 
       def onNewModel(model)
-        MSPhysics::Replay.stop
-        MSPhysics::Replay.clear_recorded_data
-        MSPhysics::Replay.clear_active_data
-        MSPhysics::Replay.reset_replay_settings
+        MSPhysics::Replay.load_replay_proc
       end
 
       def onOpenModel(model)
-        onNewModel(model)
-        MSPhysics::Replay.load_replay_settings
-        begin
-          MSPhysics::Replay.load_data_from_model
-        rescue Exception => e
-          p e
-          p e.backtrace
-        end
+        MSPhysics::Replay.load_replay_proc
       end
 
     end # class AppObserver

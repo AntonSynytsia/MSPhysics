@@ -6,48 +6,71 @@ module MSPhysics
 
     include Math
 
-    # LEFT & RIGHT
-    # @return [Fixnum] -1, 0, or 1.
+    # Output from LEFT and RIGHT arrow keys or x-axis position on the right
+    # joy-stick.
+    # @return [Numeric] A value ranging from -1.0 to 1.0.
     def rightx
-      key('right') - key('left')
+      v = AMS::Keyboard.key('right') - AMS::Keyboard.key('left')
+      return v.to_f if v != 0
+      v2 = MSPhysics::Simulation.instance.joystick_data['rightx']
+      v2 ? v2 : 0.0
     end
 
-    # UP & DOWN
-    # @return [Fixnum] -1, 0, or 1.
+    # Output from UP and DOWN arrow keys or y-axis position on the right
+    # joy-stick.
+    # @return [Numeric] A value ranging from -1.0 to 1.0.
     def righty
-      key('up') - key('down')
+      v = AMS::Keyboard.key('up') - AMS::Keyboard.key('down')
+      return v.to_f if v != 0
+      v2 = MSPhysics::Simulation.instance.joystick_data['righty']
+      v2 ? v2 : 0.0
     end
 
-    # A & D.
-    # @return [Fixnum] -1, 0, or 1.
+    # Output from keys D and A or x-axis position on the left joy-stick.
+    # @return [Numeric] A value ranging from -1.0 to 1.0.
     def leftx
-      key('d') - key('a')
+      v = AMS::Keyboard.key('d') - AMS::Keyboard.key('a')
+      return v.to_f if v != 0
+      v2 = MSPhysics::Simulation.instance.joystick_data['leftx']
+      v2 ? v2 : 0.0
     end
 
-    # W & S
-    # @return [Fixnum] -1, 0, or 1.
+    # Output from keys W and S or y-axis position on the left joy-stick.
+    # @return [Numeric] A value ranging from -1.0 to 1.0.
     def lefty
-      key('w') - key('s')
+      v = AMS::Keyboard.key('w') - AMS::Keyboard.key('s')
+      return v.to_f if v != 0
+      v2 = MSPhysics::Simulation.instance.joystick_data['lefty']
+      v2 ? v2 : 0.0
     end
 
-    # NUMPAD6 & NUMPAD4
+    # Output from keys NUMPAD6 and NUMPAD4 or centered-x-axis position on the
+    # joy-pad.
     # @return [Fixnum] -1, 0, or 1.
     def numx
-      key('numpad6') - key('numpad4')
+      v = AMS::Keyboard.key('numpad6') - AMS::Keyboard.key('numpad4')
+      return v if v != 0
+      jpd = MSPhysics::Simulation.instance.joypad_data
+      jpd == 2 ? 1 : (jpd == 8 ? -1 : 0)
     end
 
-    # NUMPAD8 & NUMPAD5
+    # Output from keys NUMPAD8 and NUMPAD5 or centered-y-axis position on the
+    # joy-pad.
     # @return [Fixnum] -1, 0, or 1.
     def numy
-      key('numpad8') - key('numpad5')
+      v = AMS::Keyboard.key('numpad8') - AMS::Keyboard.key('numpad5')
+      return v if v != 0
+      jpd = MSPhysics::Simulation.instance.joypad_data
+      jpd == 1 ? 1 : (jpd == 4 ? -1 : 0)
     end
 
     # Get oscillated value of a sine curve.
     # @param [Numeric] rate
-    # @return [Numeric] A value between -1.0 and 1.0.
+    # @return [Numeric] A value ranging between -1.0 and 1.0.
     def oscillator(rate)
-      inc = (2*Math::PI)/rate
-      Math.sin(inc*frame)
+      return 0.0 if rate.zero?
+      inc = (2 * Math::PI) / rate
+      Math.sin(inc * MSPhysics::Simulation.instance.frame)
     end
 
   end # class Controller

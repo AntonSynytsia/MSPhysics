@@ -147,6 +147,9 @@ module MSPhysics
       @particles_visible = true
       @curves = {}
       @undo_on_reset = false
+      @joystick_data = {}
+      @joybutton_data = {}
+      @joypad_data = 0
       @@instance = self
     end
 
@@ -164,6 +167,9 @@ module MSPhysics
 
 
     attr_reader :world, :frame, :fps
+
+    # @!visibility private
+    attr_reader :joystick_data, :joybutton_data, :joypad_data
 
     # @!group Simulation Control Functions
 
@@ -1523,6 +1529,36 @@ module MSPhysics
 
     private
 
+    def update_joy_data
+      @joystick_data.clear
+      @joybutton_data.clear
+      @joypad_data = 0
+      return if MSPhysics::Joystick.get_num_joysticks == 0
+      joys = MSPhysics::Joystick.get_open_joysticks
+      if joys.empty?
+        joy = MSPhysics::Joystick.open(0)
+      else
+        joy = joys[0]
+      end
+      return unless joy
+      MSPhysics::Joystick.update
+      count = MSPhysics::Joystick.get_num_axes(joy)
+      names = %w(leftx lefty rightx righty)
+      for i in 0...count
+        v = MSPhysics::Joystick.get_axis(joy, i)
+        r = v < 0 ? v / 32768.0 : v / 32767.0
+        @joystick_data[names[i]] = (i == 1 || i == 3) ? -r : r
+      end
+      count = MSPhysics::Joystick.get_num_buttons(joy)
+      names = %w(x a b y lt rt lb rb back start leftb rightb)
+      for i in 0...count
+        @joybutton_data[names[i]] = MSPhysics::Joystick.get_button(joy, i)
+      end
+      if MSPhysics::Joystick.get_num_hats(joy) > 0
+        @joypad_data = MSPhysics::Joystick.get_hat(joy, 0)
+      end
+    end
+
     def load_curves
       @curves.clear
       Sketchup.active_model.entities.grep(Sketchup::Edge).each { |e|
@@ -1703,6 +1739,8 @@ module MSPhysics
       # Clear drawing queues
       @draw_queue.clear
       @points_queue.clear
+      # Update joy data
+      update_joy_data
       # Increment frame
       @frame += 1
       # Call onPreUpdate event
@@ -2720,6 +2758,8 @@ module MSPhysics
       Sketchup.undo if @undo_on_reset
       # Refresh view
       view.invalidate
+      # Close joystick
+      MSPhysics::Joystick.close_all_joysticks
       # Destroy all particles
       MSPhysics::C::Particle.destroy_all
       # Stop any playing sounds and music
@@ -2770,7 +2810,7 @@ module MSPhysics
       if MSPhysics::Replay.recorded_data_valid? && ::UI.messagebox("Would you like to save recorded simulation for the replay?", MB_YESNO) == IDYES
         MSPhysics::Replay.save_recorded_data
         MSPhysics::Replay.smooth_camera_data1
-        #MSPhysics::Replay.save_data_to_model(true)
+        MSPhysics::Replay.save_data_to_model(true)
       end
       MSPhysics::Replay.clear_recorded_data
       # Start garbage collection

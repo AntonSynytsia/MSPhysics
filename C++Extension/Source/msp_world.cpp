@@ -696,7 +696,7 @@ VALUE MSNewton::World::add_explosion(VALUE self, VALUE v_world, VALUE v_center, 
 		return Qfalse;
 	for (const NewtonBody* body = NewtonWorldGetFirstBody(world); body; body = NewtonWorldGetNextBody(world, body)) {
 		dFloat mass, ixx, iyy, izz;
-		NewtonBodyGetMassMatrix(body, &mass, &ixx, &iyy, &izz);
+		NewtonBodyGetMass(body, &mass, &ixx, &iyy, &izz);
 		if (mass == 0.0f) continue;
 		NewtonBodyGetMatrix(body, &matrix[0][0]);
 		NewtonBodyGetCentreOfMass(body, &point2[0]);

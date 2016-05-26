@@ -211,3 +211,8 @@ To play sound in 3d, use <tt>simulation.set_sound_position</tt> command:
         simulation.set_sound_position(channel, pos, 500)
       end
     }
+
+
+## Joystick
+Joystick is accessible from the common context and from the controller context.
+See {MSPhysics::Common} and {MSPhysics::Controller} for details.

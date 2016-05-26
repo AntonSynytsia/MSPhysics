@@ -1,3 +1,12 @@
+## 0.7.3 - May 25, 2016
+- Implemented latest Newton version which fixes static mesh collision bug.
+- Fixed bug in replay after stooping animation. Thanks to faust07 for report.
+- Added a feature to save replay into model.
+- Added joystick support.
+
+## 0.7.2 - May 22, 2016
+- Fixed typos.
+
 ## 0.7.1 - May 17, 2016
 - Various optimizations and minor bug fixes.
 - Added a feature to load MSPhysics without SDL in case SDL is not supported on your system.

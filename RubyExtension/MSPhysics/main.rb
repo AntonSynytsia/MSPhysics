@@ -6,10 +6,11 @@ unless defined?(MSPhysics)
 end
 
 dir = File.dirname(__FILE__)
+dir.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
 ops = (RUBY_PLATFORM =~ /mswin|mingw/i) ? 'win' : 'mac'
 bit = (Sketchup.respond_to?('is_64bit?') && Sketchup.is_64bit?) ? '64' : '32'
-ver = (RUBY_VERSION =~ /1.8/) ? '1.8' : '2.0'
-ext = (RUBY_PLATFORM =~ /mswin|mingw/i) ? '.so' : '.a'
+ver = RUBY_VERSION[0..2]
+ext = (RUBY_PLATFORM =~ /mswin|mingw/i) ? '.so' : '.bundle'
 
 # Load SDL and SDL Mixer DLLs
 use_sdl = true
@@ -21,11 +22,12 @@ libraries.each { |name|
   use_sdl = false if res == nil || res == 0
   info << "#{name} - #{res}\n"
 }
+# Uncomment to see results of the loaded libraries.
 #UI.messagebox info
 
 # Load MSPhysics Library
 
-require File.join(dir, ops+bit, ver, use_sdl ? 'msp_lib' : 'msp_lib_no_sdl' + ext)
+require File.join(dir, ops+bit, ver, (use_sdl ? 'msp_lib' : 'msp_lib_no_sdl') + ext)
 
 require File.join(dir, 'geometry.rb')
 require File.join(dir, 'group.rb')
@@ -590,38 +592,6 @@ module MSPhysics
       end
     end
 
-    # Get component definition by entity ID.
-    # @param [Fixnum] id
-    # @return [Sketchup::ComponentDefinition, nil]
-    def get_definition_by_id(id)
-      Sketchup.active_model.definitions.each { |d|
-        return d if d.entityId == id
-      }
-      nil
-    end
-
-    # Get group/component by entity ID.
-    # @param [Fixnum] id
-    # @return [Sketchup::Group, Sketchup::ComponentInstance, nil]
-    def get_group_by_id(id)
-      Sketchup.active_model.definitions.each { |d|
-        d.instances.each { |i|
-          return i if i.entityId == id
-        }
-      }
-      nil
-    end
-
-    # Get material by entity ID.
-    # @param [Fixnum] id
-    # @return [Sketchup::Material, nil]
-    def get_material_by_id(id)
-      Sketchup.active_model.materials.each { |m|
-        return m if m.entityId == id
-      }
-      nil
-    end
-
     private
 
     def scale_joints(scale, entities = Sketchup.active_model.entities)
@@ -654,7 +624,7 @@ unless file_loaded?(__FILE__)
   if MSPhysics.sdl_used?
     sdl = MSPhysics::SDL
     mix = MSPhysics::Mixer
-    sdl.init(sdl::INIT_AUDIO)
+    sdl.init(sdl::INIT_AUDIO | sdl::INIT_JOYSTICK)
     mix.init(mix::INIT_SUPPORTED)
     mix.open_audio(22050, mix::DEFAULT_FORMAT, 2, 1024)
     mix.allocate_channels(16)
@@ -672,6 +642,8 @@ unless file_loaded?(__FILE__)
     pt = MSPhysics::CURSOR_ORIGINS[name]
     MSPhysics::CURSORS[name] = UI.create_cursor(File.join(path, name.to_s + '.png'), pt[0], pt[1])
   }
+  # Activate replay
+  MSPhysics::Replay.load_replay_proc
 
   # Create some materials
   # Coefficients are defined from material to material contacts. Material to
@@ -850,9 +822,18 @@ unless file_loaded?(__FILE__)
   replay_toolbar.add_item(cmd)
 
   cmd = UI::Command.new('Play'){
-    MSPhysics::Replay.reversed = false
-    MSPhysics::Replay.start unless MSPhysics::Replay.active?
-    MSPhysics::Replay.play
+    if MSPhysics::Replay.active?
+      if MSPhysics::Replay.paused? || MSPhysics::Replay.reversed?
+        MSPhysics::Replay.reversed = false
+        MSPhysics::Replay.play
+      else
+        MSPhysics::Replay.pause
+      end
+    else
+      MSPhysics::Replay.reversed = false
+      MSPhysics::Replay.start
+      MSPhysics::Replay.play
+    end
   }
   cmd.set_validation_proc {
     next MF_GRAYED unless MSPhysics::Replay.active_data_valid?
@@ -869,9 +850,18 @@ unless file_loaded?(__FILE__)
   replay_toolbar.add_item(cmd)
 
   cmd = UI::Command.new('Reverse'){
-    MSPhysics::Replay.reversed = true
-    MSPhysics::Replay.start unless MSPhysics::Replay.active?
-    MSPhysics::Replay.play
+    if MSPhysics::Replay.active?
+      if MSPhysics::Replay.paused? || !MSPhysics::Replay.reversed?
+        MSPhysics::Replay.reversed = true
+        MSPhysics::Replay.play
+      else
+        MSPhysics::Replay.pause
+      end
+    else
+      MSPhysics::Replay.reversed = true
+      MSPhysics::Replay.start
+      MSPhysics::Replay.play
+    end
   }
   cmd.set_validation_proc {
     next MF_GRAYED unless MSPhysics::Replay.active_data_valid?
@@ -888,7 +878,11 @@ unless file_loaded?(__FILE__)
   replay_toolbar.add_item(cmd)
 
   cmd = UI::Command.new('Pause'){
-    MSPhysics::Replay.pause
+    if MSPhysics::Replay.paused?
+      MSPhysics::Replay.play
+    else
+      MSPhysics::Replay.pause
+    end
   }
   cmd.set_validation_proc {
     next MF_GRAYED unless MSPhysics::Replay.active_data_valid?
@@ -1388,9 +1382,11 @@ unless file_loaded?(__FILE__)
 
   plugin_menu.add_item('About'){
     msg = "MSPhysics #{MSPhysics::VERSION} -- #{MSPhysics::RELEASE_DATE}\n"
-    msg << "Powered by the Newton Dynamics #{MSPhysics::Newton.get_version} physics SDK by Juleo Jerez.\n"
+    msg << "Powered by the Newton Dynamics #{MSPhysics::Newton.get_version} physics SDK by Julio Jerez.\n"
     msg << "Copyright MIT © 2015-2016, Anton Synytsia.\n"
-    msg << "Credit to Chris Phillips for ideas from SketchyPhysics.\n"
+    msg << "Credits to\n"
+    msg << "- Chris Phillips for ideas from SketchyPhysics.\n"
+    msg << "- István Nagy (PituPhysics) for examples and testing.\n"
     UI.messagebox(msg)
   }
 
