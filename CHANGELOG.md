@@ -1,8 +1,15 @@
+## 0.8.0 - Jun 12, 2016
+- Added CurvySlider and CurvyPiston joints.
+- Many bug fixes and improvements.
+
+## 0.7.4 - May 26, 2016
+- Fixed encoding issues.
+
 ## 0.7.3 - May 25, 2016
 - Implemented latest Newton version which fixes static mesh collision bug.
-- Fixed bug in replay after stooping animation. Thanks to faust07 for report.
+- Fixed bug in replay after stopping animation. Thanks to faust07 for report.
 - Added a feature to save replay into model.
-- Added joystick support.
+- Added joystick support. See {MSPhysics::Common} for joystick usage.
 
 ## 0.7.2 - May 22, 2016
 - Fixed typos.
