@@ -3,6 +3,7 @@ module MSPhysics
 
     @dialog = nil
     @handle = nil
+    @update_size = true
     @title = 'MSPhysics Control Panel'
     @size = [0,0]
     @sliders = {}
@@ -16,18 +17,21 @@ module MSPhysics
         return false if (state ? true : false) == is_visible?
         if state
           @dialog = ::UI::WebDialog.new(@title, false, nil, 300, 300, 800, 600, false)
-          update_size = true
+          @update_size = true
           # Callbacks
           @dialog.add_action_callback('init'){ |dlg, params|
-            update_size = false
+            @update_size = false
             @sliders.each { |name, data|
-              generate_slider_html(name)
+			  generate_slider_html(name)
             }
-            update_size = true
+            @update_size = true
           }
           @dialog.add_action_callback('size_changed'){ |dlg, params|
             @size = eval(params)
-            update_placement if update_size
+            update_placement if @update_size
+          }
+          @dialog.add_action_callback('mouse_leave') { |dlg, params|
+            AMS::Sketchup.activate
           }
           @dialog.set_on_close {
             AMS::Sketchup.include_dialog(@handle)
@@ -37,6 +41,7 @@ module MSPhysics
           }
           # Set content
           dir = File.dirname(__FILE__)
+          dir.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
           url = File.join(dir, 'html/control_panel.html')
           @dialog.set_file(url)
           # Show dialog

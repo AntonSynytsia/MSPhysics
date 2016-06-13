@@ -71,13 +71,13 @@ VALUE MSNewton::Bodies::get_force_in_between(VALUE self, VALUE v_body1, VALUE v_
 	}
 	const NewtonWorld* world = NewtonBodyGetWorld(body1);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
-	BodyData* body1_data = (BodyData*)NewtonBodyGetUserData(body1);
-	BodyData* body2_data = (BodyData*)NewtonBodyGetUserData(body2);
-	if (world_data->gravity_enabled && (body1_data->gravity_enabled || body2_data->gravity_enabled)) {
+	//BodyData* body1_data = (BodyData*)NewtonBodyGetUserData(body1);
+	//BodyData* body2_data = (BodyData*)NewtonBodyGetUserData(body2);
+	/*if (world_data->gravity_enabled && (body1_data->gravity_enabled || body2_data->gravity_enabled)) {
 		for (int i = 0; i < 3; ++i)
 			net_force[i] *= world_data->inverse_scale;
-	}
-	return Util::vector_to_value(net_force, world_data->inverse_scale3);
+	}*/
+	return Util::vector_to_value(net_force, world_data->inverse_scale4);
 }
 
 

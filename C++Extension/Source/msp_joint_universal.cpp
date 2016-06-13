@@ -24,9 +24,8 @@ void MSNewton::Universal::submit_constraints(const NewtonJoint* joint, dgFloat32
 	UniversalData* cj_data = (UniversalData*)joint_data->cj_data;
 
 	// Calculate position of pivot points and Jacobian direction vectors in global space.
-	dMatrix matrix0;
-	dMatrix matrix1;
-	Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1);
+	dMatrix matrix0, matrix1, matrix2;
+	MSNewton::Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1, matrix2);
 
 	// Restrict movement on the pivot point along all three orthonormal directions
 	NewtonUserJointAddLinearRow(joint, &matrix0.m_posit[0], &matrix1.m_posit[0], &matrix0.m_front[0]);
@@ -89,7 +88,7 @@ void MSNewton::Universal::submit_constraints(const NewtonJoint* joint, dgFloat32
 	cj_data->cur_omega2 = rel_omega % matrix1.m_front;
 	cj_data->cur_accel2 = (cj_data->cur_omega2 - last_omega2) / timestep;
 
-	if (cj_data->limits_enabled1 == true && (cur_angle1 - cj_data->min1) < -Joint::ANGULAR_LIMIT_EPSILON) {
+	if (cj_data->limits1_enabled == true && cur_angle1 < cj_data->min1 - Joint::ANGULAR_LIMIT_EPSILON) {
 		dFloat rel_angle = cur_angle1 - cj_data->min1;
 		// Tell joint error will minimize the exceeded angle error
 		NewtonUserJointAddAngularRow(joint, rel_angle, &matrix0.m_right[0]);
@@ -101,7 +100,7 @@ void MSNewton::Universal::submit_constraints(const NewtonJoint* joint, dgFloat32
 			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
-	else if (cj_data->limits_enabled1 == true && (cur_angle1 - cj_data->max1) > Joint::ANGULAR_LIMIT_EPSILON) {
+	else if (cj_data->limits1_enabled == true && cur_angle1 > cj_data->max1 + Joint::ANGULAR_LIMIT_EPSILON) {
 		dFloat rel_angle = cur_angle1 - cj_data->max1;
 		// Tell joint error will minimize the exceeded angle error
 		NewtonUserJointAddAngularRow(joint, rel_angle, &matrix0.m_right[0]);
@@ -116,19 +115,19 @@ void MSNewton::Universal::submit_constraints(const NewtonJoint* joint, dgFloat32
 	else {
 		NewtonUserJointAddAngularRow(joint, 0.0f, &matrix0.m_right[0]);
 		dFloat power = cj_data->friction * dAbs(cj_data->controller);
-		BodyData* cbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
+		/*BodyData* cbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
 		if (cbody_data->bstatic == false && cbody_data->mass >= MIN_MASS)
 			power *= cbody_data->mass;
 		else {
 			BodyData* pbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
 			if (pbody_data->bstatic == false && pbody_data->mass >= MIN_MASS) power *= pbody_data->mass;
-		}
+		}*/
 		NewtonUserJointSetRowMinimumFriction(joint, -power);
 		NewtonUserJointSetRowMaximumFriction(joint, power);
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
 
-	if (cj_data->limits_enabled2 == true && (cur_angle2 - cj_data->min2) < -Joint::ANGULAR_LIMIT_EPSILON) {
+	if (cj_data->limits2_enabled == true && cur_angle2 < cj_data->min2 - Joint::ANGULAR_LIMIT_EPSILON) {
 		dFloat rel_angle = cur_angle2 - cj_data->min2;
 		// Tell joint error will minimize the exceeded angle error
 		NewtonUserJointAddAngularRow(joint, rel_angle, &matrix0.m_front[0]);
@@ -140,7 +139,7 @@ void MSNewton::Universal::submit_constraints(const NewtonJoint* joint, dgFloat32
 			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
-	else if (cj_data->limits_enabled2 == true && (cur_angle2 - cj_data->max2) > Joint::ANGULAR_LIMIT_EPSILON) {
+	else if (cj_data->limits2_enabled == true && cur_angle2 > cj_data->max2 + Joint::ANGULAR_LIMIT_EPSILON) {
 		dFloat rel_angle = cur_angle2 - cj_data->max2;
 		// Tell joint error will minimize the exceeded angle error
 		NewtonUserJointAddAngularRow(joint, rel_angle, &matrix0.m_front[0]);
@@ -155,13 +154,13 @@ void MSNewton::Universal::submit_constraints(const NewtonJoint* joint, dgFloat32
 	else {
 		NewtonUserJointAddAngularRow(joint, 0.0f, &matrix0.m_front[0]);
 		dFloat power = cj_data->friction * dAbs(cj_data->controller);
-		BodyData* cbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
+		/*BodyData* cbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
 		if (cbody_data->bstatic == false && cbody_data->mass >= MIN_MASS)
 			power *= cbody_data->mass;
 		else {
 			BodyData* pbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
 			if (pbody_data->bstatic == false && pbody_data->mass >= MIN_MASS) power *= pbody_data->mass;
-		}
+		}*/
 		NewtonUserJointSetRowMinimumFriction(joint, -power);
 		NewtonUserJointSetRowMaximumFriction(joint, power);
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
@@ -179,7 +178,7 @@ void MSNewton::Universal::get_info(const NewtonJoint* const joint, NewtonJointRe
 	info->m_minLinearDof[2] = -0.0f;
 	info->m_maxLinearDof[2] = 0.0f;
 
-	if (cj_data->limits_enabled2) {
+	if (cj_data->limits2_enabled) {
 		info->m_minAngularDof[0] = (cj_data->min2 - cj_data->ai2->get_angle()) * RAD_TO_DEG;
 		info->m_maxAngularDof[0] = (cj_data->max2 - cj_data->ai2->get_angle()) * RAD_TO_DEG;
 	}
@@ -191,7 +190,7 @@ void MSNewton::Universal::get_info(const NewtonJoint* const joint, NewtonJointRe
 	info->m_minAngularDof[1] = -0.0f;
 	info->m_maxAngularDof[1] = 0.0f;
 
-	if (cj_data->limits_enabled1) {
+	if (cj_data->limits1_enabled) {
 		info->m_minAngularDof[2] = (cj_data->min1 - cj_data->ai1->get_angle()) * RAD_TO_DEG;
 		info->m_maxAngularDof[2] = (cj_data->max1 - cj_data->ai1->get_angle()) * RAD_TO_DEG;
 	}
@@ -204,9 +203,6 @@ void MSNewton::Universal::get_info(const NewtonJoint* const joint, NewtonJointRe
 void MSNewton::Universal::on_destroy(JointData* joint_data) {
 	UniversalData* cj_data = (UniversalData*)joint_data->cj_data;
 	delete cj_data;
-}
-
-void MSNewton::Universal::on_connect(JointData* joint_data) {
 }
 
 void MSNewton::Universal::on_disconnect(JointData* joint_data) {
@@ -242,13 +238,13 @@ VALUE MSNewton::Universal::create(VALUE self, VALUE v_joint) {
 	cj_data->cur_accel1 = 0.0f;
 	cj_data->min1 = DEFAULT_MIN;
 	cj_data->max1 = DEFAULT_MAX;
-	cj_data->limits_enabled1 = DEFAULT_LIMITS_ENABLED;
+	cj_data->limits1_enabled = DEFAULT_LIMITS_ENABLED;
 	cj_data->ai2 = new AngularIntegration();
 	cj_data->cur_omega2 = 0.0f;
 	cj_data->cur_accel2 = 0.0f;
 	cj_data->min2 = DEFAULT_MIN;
 	cj_data->max2 = DEFAULT_MAX;
-	cj_data->limits_enabled2 = DEFAULT_LIMITS_ENABLED;
+	cj_data->limits2_enabled = DEFAULT_LIMITS_ENABLED;
 	cj_data->friction = DEFAULT_FRICTION;
 	cj_data->controller = DEFAULT_CONTROLLER;
 
@@ -258,7 +254,6 @@ VALUE MSNewton::Universal::create(VALUE self, VALUE v_joint) {
 	joint_data->submit_constraints = submit_constraints;
 	joint_data->get_info = get_info;
 	joint_data->on_destroy = on_destroy;
-	joint_data->on_connect = on_connect;
 	joint_data->on_disconnect = on_disconnect;
 
 	return Util::to_value(joint_data);
@@ -311,14 +306,14 @@ VALUE MSNewton::Universal::set_max1(VALUE self, VALUE v_joint, VALUE v_max) {
 VALUE MSNewton::Universal::enable_limits1(VALUE self, VALUE v_joint, VALUE v_state) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_UNIVERSAL);
 	UniversalData* cj_data = (UniversalData*)joint_data->cj_data;
-	cj_data->limits_enabled1 = Util::value_to_bool(v_state);
-	return Util::to_value(cj_data->limits_enabled1);
+	cj_data->limits1_enabled = Util::value_to_bool(v_state);
+	return Util::to_value(cj_data->limits1_enabled);
 }
 
-VALUE MSNewton::Universal::limits_enabled1(VALUE self, VALUE v_joint) {
+VALUE MSNewton::Universal::limits1_enabled(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_UNIVERSAL);
 	UniversalData* cj_data = (UniversalData*)joint_data->cj_data;
-	return Util::to_value(cj_data->limits_enabled1);
+	return Util::to_value(cj_data->limits1_enabled);
 }
 
 
@@ -369,28 +364,30 @@ VALUE MSNewton::Universal::set_max2(VALUE self, VALUE v_joint, VALUE v_max) {
 VALUE MSNewton::Universal::enable_limits2(VALUE self, VALUE v_joint, VALUE v_state) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_UNIVERSAL);
 	UniversalData* cj_data = (UniversalData*)joint_data->cj_data;
-	cj_data->limits_enabled2 = Util::value_to_bool(v_state);
-	return Util::to_value(cj_data->limits_enabled2);
+	cj_data->limits2_enabled = Util::value_to_bool(v_state);
+	return Util::to_value(cj_data->limits2_enabled);
 }
 
-VALUE MSNewton::Universal::limits_enabled2(VALUE self, VALUE v_joint) {
+VALUE MSNewton::Universal::limits2_enabled(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_UNIVERSAL);
 	UniversalData* cj_data = (UniversalData*)joint_data->cj_data;
-	return Util::to_value(cj_data->limits_enabled2);
+	return Util::to_value(cj_data->limits2_enabled);
 }
 
 
 VALUE MSNewton::Universal::get_friction(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_UNIVERSAL);
 	UniversalData* cj_data = (UniversalData*)joint_data->cj_data;
-	return Util::to_value(cj_data->friction);
+	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(joint_data->world);
+	return Util::to_value(cj_data->friction * world_data->inverse_scale5);
 }
 
 VALUE MSNewton::Universal::set_friction(VALUE self, VALUE v_joint, VALUE v_friction) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_UNIVERSAL);
 	UniversalData* cj_data = (UniversalData*)joint_data->cj_data;
-	cj_data->friction = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_friction), 0.0f);
-	return Util::to_value(cj_data->friction);
+	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(joint_data->world);
+	cj_data->friction = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_friction), 0.0f) * world_data->scale5;
+	return Util::to_value(cj_data->friction * world_data->inverse_scale5);
 }
 
 VALUE MSNewton::Universal::get_controller(VALUE self, VALUE v_joint) {
@@ -425,7 +422,7 @@ void Init_msp_universal(VALUE mNewton) {
 	rb_define_module_function(mUniversal, "get_max1", VALUEFUNC(MSNewton::Universal::get_max1), 1);
 	rb_define_module_function(mUniversal, "set_max1", VALUEFUNC(MSNewton::Universal::set_max1), 2);
 	rb_define_module_function(mUniversal, "enable_limits1", VALUEFUNC(MSNewton::Universal::enable_limits1), 2);
-	rb_define_module_function(mUniversal, "limits_enabled1?", VALUEFUNC(MSNewton::Universal::limits_enabled1), 1);
+	rb_define_module_function(mUniversal, "limits1_enabled?", VALUEFUNC(MSNewton::Universal::limits1_enabled), 1);
 
 	rb_define_module_function(mUniversal, "get_cur_angle2", VALUEFUNC(MSNewton::Universal::get_cur_angle2), 1);
 	rb_define_module_function(mUniversal, "get_cur_omega2", VALUEFUNC(MSNewton::Universal::get_cur_omega2), 1);
@@ -435,7 +432,7 @@ void Init_msp_universal(VALUE mNewton) {
 	rb_define_module_function(mUniversal, "get_max2", VALUEFUNC(MSNewton::Universal::get_max2), 1);
 	rb_define_module_function(mUniversal, "set_max2", VALUEFUNC(MSNewton::Universal::set_max2), 2);
 	rb_define_module_function(mUniversal, "enable_limits2", VALUEFUNC(MSNewton::Universal::enable_limits2), 2);
-	rb_define_module_function(mUniversal, "limits_enabled2?", VALUEFUNC(MSNewton::Universal::limits_enabled2), 1);
+	rb_define_module_function(mUniversal, "limits2_enabled?", VALUEFUNC(MSNewton::Universal::limits2_enabled), 1);
 
 	rb_define_module_function(mUniversal, "get_friction", VALUEFUNC(MSNewton::Universal::get_friction), 1);
 	rb_define_module_function(mUniversal, "set_friction", VALUEFUNC(MSNewton::Universal::set_friction), 2);

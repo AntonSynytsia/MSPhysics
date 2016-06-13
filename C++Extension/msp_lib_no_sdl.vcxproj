@@ -827,6 +827,9 @@
     <ClCompile Include="Source\msp_joint_spring.cpp" />
     <ClCompile Include="Source\msp_joint_universal.cpp" />
     <ClCompile Include="Source\msp_joint_up_vector.cpp" />
+	<ClCompile Include="Source\msp_joint_plane.cpp" />
+	<ClCompile Include="Source\msp_joint_curvy_slider.cpp" />
+	<ClCompile Include="Source\msp_joint_curvy_piston.cpp" />
     <ClCompile Include="Source\msp_particle.cpp" />
     <ClCompile Include="Source\angular_integration.cpp" />
     <ClCompile Include="NewtonDynamics\newton\Newton.cpp" />
@@ -863,6 +866,9 @@
     <ClInclude Include="Source\msp_joint_spring.h" />
     <ClInclude Include="Source\msp_joint_universal.h" />
     <ClInclude Include="Source\msp_joint_up_vector.h" />
+	<ClInclude Include="Source\msp_joint_plane.h" />
+	<ClInclude Include="Source\msp_joint_curvy_slider.h" />
+	<ClInclude Include="Source\msp_joint_curvy_piston.h" />
     <ClInclude Include="Source\msp_particle.h" />
     <ClInclude Include="Source\angular_integration.h" />
     <ClInclude Include="NewtonDynamics\newton\Newton.h" />

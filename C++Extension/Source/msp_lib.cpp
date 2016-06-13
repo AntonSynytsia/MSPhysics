@@ -7,6 +7,30 @@ The C++ version of MSPhysics implements the following:
 
 Implementation by Anton Synytsia
 
+World Scale Conversion Guide:
+By none
+	density
+	angle
+	omega
+	angular acceleration
+By scale
+	point
+	velocity
+	linear acceleration
+	length
+	speed
+By scale^2
+	area
+By scale^3
+	volume
+	mass
+By scale^4
+	force (since force = mass * acceleration)
+	linear friction
+By scale^5
+	torque (since torque = force * radius)
+	angular friction
+
 Do the following when updating NewtonDynamics:
 * File: dgTypes.h, line 102
 	Comment out #define DG_SSE4_INSTRUCTIONS_SET
@@ -35,9 +59,8 @@ Do the following when updating NewtonDynamics:
 * File: dgBroadPhase.h
 	~ Change DG_BROADPHASE_MAX_STACK_DEPTH to 1024
 * File: dgWorldDynamicUpdate.h
-	Change DG_MAX_SKELETON_JOINT_COUNT to 4096
+	~ Change DG_MAX_SKELETON_JOINT_COUNT to 1024
 	Change DG_FREEZZING_VELOCITY_DRAG to 0.2f
-	~ Change DG_SOLVER_MAX_ERROR to DG_FREEZE_MAG * dgFloat32(0.05f)
 * File: dgWorldDynamicUpdate.cpp
 	~ Change DG_PARALLEL_JOINT_COUNT_CUT_OFF to 1024
 * File: dgThread.h, line 27
@@ -48,17 +71,8 @@ Do the following when updating NewtonDynamics:
 	Change min and max timestep to 1/30 and 1/1200
 * File: NewtonClass.cpp
 	Comment out clamping and modification in SetRowStiffness, lines 310 and 311
+	Multiply the final stiffness by 0.995f
 
-To Do:
-- body_recalculate_volume(body)
-- body_get_moments_of_inertia(body)
-- body_set_moments_of_inertia(body, ixx, iyy, izz)
-- User Mesh
-- Fractured Compounds
-- Vehicles
-- Ragdols
-- Cloth
-- Kinematic bodies
 */
 
 #include "msp_util.h"
@@ -80,6 +94,9 @@ To Do:
 #include "msp_joint_spring.h"
 #include "msp_joint_universal.h"
 #include "msp_joint_up_vector.h"
+#include "msp_joint_curvy_slider.h"
+#include "msp_joint_curvy_piston.h"
+#include "msp_joint_plane.h"
 
 #ifdef USE_SDL
 	#include "msp_sdl.h"
@@ -123,6 +140,9 @@ void Init_msp_lib() {
 	Init_msp_spring(mNewton);
 	Init_msp_up_vector(mNewton);
 	Init_msp_universal(mNewton);
+	Init_msp_curvy_slider(mNewton);
+	Init_msp_curvy_piston(mNewton);
+	Init_msp_plane(mNewton);
 
 	#ifdef USE_SDL
 		Init_msp_sdl(mMSPhysics);

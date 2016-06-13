@@ -275,24 +275,40 @@ void Util::extract_matrix_scale(dMatrix& matrix) {
 	normalize_vector(matrix.m_right);
 }
 
-dMatrix Util::matrix_from_pin_dir(const dVector& pos, const dVector& dir) {
+void Util::matrix_from_pin_dir(const dVector& pos, const dVector& dir, dMatrix& matrix_out) {
 	dVector zaxis(dir);
 	Util::normalize_vector(zaxis);
-	dVector xaxis((1.0f - dAbs(zaxis.m_z) < EPSILON) ? X_AXIS * zaxis : Z_AXIS * zaxis);
+	dVector xaxis((1.0f - dAbs(zaxis.m_z) < EPSILON) ? Y_AXIS * zaxis : Z_AXIS * zaxis);
 	Util::normalize_vector(xaxis);
-	dVector yaxis(xaxis * zaxis);
+	dVector yaxis(zaxis * xaxis);
 	Util::normalize_vector(yaxis);
-	return dMatrix(xaxis, yaxis, zaxis, pos);
+	matrix_out.m_front.m_x = xaxis.m_x;
+	matrix_out.m_front.m_y = xaxis.m_y;
+	matrix_out.m_front.m_z = xaxis.m_z;
+	matrix_out.m_front.m_w = 0.0f;
+	matrix_out.m_up.m_x = yaxis.m_x;
+	matrix_out.m_up.m_y = yaxis.m_y;
+	matrix_out.m_up.m_z = yaxis.m_z;
+	matrix_out.m_up.m_w = 0.0f;
+	matrix_out.m_right.m_x = zaxis.m_x;
+	matrix_out.m_right.m_y = zaxis.m_y;
+	matrix_out.m_right.m_z = zaxis.m_z;
+	matrix_out.m_right.m_w = 0.0f;
+	matrix_out.m_posit.m_x = pos.m_x;
+	matrix_out.m_posit.m_y = pos.m_y;
+	matrix_out.m_posit.m_z = pos.m_z;
+	matrix_out.m_posit.m_w = 1.0f;
 	/*VALUE v_tra = rb_funcall(suTransformation, INTERN_NEW, 2, Util::point_to_value(pos), Util::vector_to_value(dir));
-	return Util::value_to_matrix(v_tra);*/
+	matrix_out = Util::value_to_matrix(v_tra);*/
 }
 
-dMatrix Util::rotate_matrix_to_dir(const dMatrix& matrix, const dVector& dir) {
+void Util::rotate_matrix_to_dir(const dMatrix& matrix, const dVector& dir, dMatrix& matrix_out) {
 	//dMatrix ta(matrix.m_front, matrix.m_up, matrix.m_right, ORIGIN);
 	//dMatrix tb(matrix.m_front, matrix.m_up, dir, ORIGIN);
-	dMatrix ta = matrix_from_pin_dir(ORIGIN, matrix.m_right);
-	dMatrix tb = matrix_from_pin_dir(ORIGIN, dir);
-	return (matrix * ta.Inverse()) * tb;
+	dMatrix ta, tb;
+	matrix_from_pin_dir(ORIGIN, matrix.m_right, ta);
+	matrix_from_pin_dir(ORIGIN, dir, tb);
+	matrix_out = (matrix * ta.Inverse()) * tb;
 }
 
 dVector Util::rotate_vector(const dVector& vector, const dVector& normal, const dFloat& angle) {
@@ -306,6 +322,12 @@ dVector Util::rotate_vector(const dVector& vector, const dVector& normal, const 
 	VALUE v_itra = rb_funcall(v_tra, INTERN_INVERSE, 0);
 	VALUE v_rvector = rb_funcall(Util::vector_to_value(vector), INTERN_TRANSFORM, 1, v_itra);
 	return Util::value_to_vector(v_rvector);
+}
+
+void Util::correct_to_expected_matrix(dMatrix& matrix, const dVector& velocity, const dVector& omega, dFloat timestep) {
+	matrix.m_posit.m_x -= velocity.m_x * timestep;
+	matrix.m_posit.m_y -= velocity.m_y * timestep;
+	matrix.m_posit.m_z -= velocity.m_z * timestep;
 }
 
 bool Util::is_world_valid(const NewtonWorld* address) {

@@ -53,6 +53,8 @@ require File.join(dir, 'joint_piston.rb')
 require File.join(dir, 'joint_spring.rb')
 require File.join(dir, 'joint_up_vector.rb')
 require File.join(dir, 'joint_fixed.rb')
+require File.join(dir, 'joint_curvy_slider.rb')
+require File.join(dir, 'joint_curvy_piston.rb')
 require File.join(dir, 'simulation.rb')
 require File.join(dir, 'settings.rb')
 require File.join(dir, 'dialog.rb')
@@ -157,10 +159,12 @@ module MSPhysics
     :corkscrew          => 8,
     :ball_and_socket    => 9,
     :universal          => 10,
-    :fixed              => 11
+    :fixed              => 11,
+    :curvy_slider       => 12,
+    :curvy_piston       => 13
   }.freeze
 
-  JOINT_NAMES = %w(hinge motor servo slider piston up_vector spring corkscrew ball_and_socket universal fixed).freeze
+  JOINT_NAMES = %w(hinge motor servo slider piston up_vector spring corkscrew ball_and_socket universal fixed curvy_slider curvy_piston).freeze
 
   DEFAULT_JOINT_SCALE = 1.0
 
@@ -506,6 +510,7 @@ module MSPhysics
     # @return [Sketchup::Text, nil] A text object if successful.
     def add_watermark_text(x, y, text, name = 'watermark', component = 'version_text.skp')
       dir = File.dirname(__FILE__)
+      dir.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
       path = File.join(dir, "models/#{component}")
       return unless File.exists?(path)
       model = Sketchup.active_model
@@ -541,6 +546,7 @@ module MSPhysics
     # @return [Sketchup::Text, nil] A text object if successful.
     def add_watermark_text2(x, y, text, name = 'watermark', component = 'version_text.skp')
       dir = File.dirname(__FILE__)
+      dir.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
       path = File.join(dir, "models/#{component}")
       return unless File.exists?(path)
       model = Sketchup.active_model
@@ -781,8 +787,12 @@ unless file_loaded?(__FILE__)
       words[i].capitalize!
     end
     ename = words.join(' ')
-    cmd = UI::Command.new('cmd'){
-      MSPhysics::JointTool.new(type)
+    jt = nil
+    cmd = UI::Command.new('cmd') {
+      jt = MSPhysics::JointTool.new(type)
+    }
+    cmd.set_validation_proc {
+      jt != nil && jt.is_active? ? MF_CHECKED : MF_UNCHECKED
     }
     cmd.menu_text = cmd.tooltip = ename
     cmd.status_bar_text = "Add #{ename} joint."

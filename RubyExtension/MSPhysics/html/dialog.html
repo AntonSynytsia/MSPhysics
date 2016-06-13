@@ -149,6 +149,10 @@
                 <td>
                   <table class="struct_table">
                     <col width="80%" />
+                    <tr><td colspan="2"><p class="heading">Name</p></td></tr>
+                    <tr title="Set body name. Body name is inherited from group name.">
+                      <td colspan="2"><input id="body-name" class="custom-text text-input" type="text"></input></td>
+                    </tr>
                     <tr><td colspan="2"><p class="heading">Collision Shape</p></td></tr>
                     <tr><td colspan="2"><select id="body-shape" data-placeholder="Collision Shape" class="chosen-select-no-single drop-down" style="width: 186px;">
                       <option value="Null">Null</option>
@@ -220,7 +224,7 @@
                       <td><select id="body-weight_control" data-placeholder="Weight Control" class="chosen-select-no-single drop-down" style="width: 114px;">
                         <option value="Density">Density</option>
                         <option value="Mass">Mass</option>
-                        </select></td>
+                      </select></td>
                     </tr>
                     <tr id="body-density_control" title="Set body density in kilograms per cubic meter (kg/m³).">
                       <td><label class="spacing_tab" for="body-density">Density</label></td>
@@ -273,6 +277,10 @@
                     <tr title="Set angular damping coefficient, a value between 0.00 and 1.00.">
                       <td><label class="spacing_tab" for="body-angular_damping">Angular Damping</label></td>
                       <td><input id="body-angular_damping" class="custom-text numeric-input" type="text"></input></td>
+                    </tr>
+                    <tr class="vertical_spacing"></tr>
+                    <tr>
+                      <td colspan="2" align="right"><button id="body-assign_to_all" title="Assign identical attributes to all bodies with the same name.">Assign to All with Same Name</button></td>
                     </tr>
                   </table>
                 </td>
@@ -347,7 +355,7 @@
               <table class="struct_table">
                 <tr>
                   <td><label class="expander description"><em5>Options</em5></label></td>
-                  <td colspan="4"><pre class="center"><a href="http://www.rubydoc.info/github/AntonSynytsia/MSPhysics/master/index" target="_blank">MSPhysics</a> | <a href="http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/index" target="_blank">AMS Library</a> | <a href="http://www.sketchup.com/intl/en/developer/" target="_blank">SketchUp API</a> | <a href="ruby_core" target="_blank">Ruby Core</a></pre></td>
+                  <td colspan="4"><pre class="center"><a href="http://www.rubydoc.info/github/AntonSynytsia/MSPhysics/master/file/Overview.md" target="_blank">MSPhysics</a> | <a href="http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/index" target="_blank">AMS Library</a> | <a href="http://www.sketchup.com/intl/en/developer/" target="_blank">SketchUp API</a> | <a href="ruby_core" target="_blank">Ruby Core</a></pre></td>
                   <td colspan="2"><pre><label class="description">Entity ID: </label><input id="body-entity_id" class="labeled-text" type="text" unselectable="on" onselectstart="return false;" onmousedown="return false;" readonly></input><label class="description">Index: </label><input id="body-entity_index" class="labeled-text" type="text" unselectable="on" onselectstart="return false;" onmousedown="return false;" readonly></input></pre></td>
                 </tr>
               </table>
@@ -454,28 +462,28 @@
             <p>Joint properties cannot be edited while simulation is running.</p>
           </div>
           <div id="tab4-general">
-            <p class="title">General Properties</p>
-            <div class="spacing_tab">
+            <label class="expander expanded title">General Properties</label>
+            <div class="content spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
                 <tr>
                   <td><label>Constraint Type</label></td>
                   <td><table class="struct_table">
                     <td title="Somewhat stiff and somewhat robust.">
-                      <label for="joint_constraint-standard" style="padding-right:0.5em;">Standard</label>
-                      <input id="joint_constraint-standard" type="radio" name="constraint_type"></input>
+                      <label for="joint-constraint_type-standard" style="padding-right:0.5em;">Standard</label>
+                      <input id="joint-constraint_type-standard" type="radio" name="constraint_type"></input>
                     </td>
                     <td title="Somewhat stiff and somewhat flexible (works best with threads).">
-                      <label for="joint_constraint-flexible" style="padding-right:0.5em;">Flexible</label>
-                      <input id="joint_constraint-flexible" type="radio" name="constraint_type"></input>
+                      <label for="joint-constraint_type-flexible" style="padding-right:0.5em;">Flexible</label>
+                      <input id="joint-constraint_type-flexible" type="radio" name="constraint_type"></input>
                     </td>
                     <td title="Robust but unstable.">
-                      <label for="joint_constraint-robust" style="padding-right:0.5em;">Robust</label>
-                      <input id="joint_constraint-robust" type="radio" name="constraint_type"></input>
+                      <label for="joint-constraint_type-robust" style="padding-right:0.5em;">Robust</label>
+                      <input id="joint-constraint_type-robust" type="radio" name="constraint_type"></input>
                     </td>
                   </table></td>
                 </tr>
-                <tr title="Set joint name. By default joint name is joint ID.">
+                <tr title="Set joint name. By default joint name is joint ID. Joint name is inherited from group name.">
                   <td><label for="joint-name">Name</label></td>
                   <td><input id="joint-name" class="custom-text text-input" type="text"></input></td>
                 </tr>
@@ -491,28 +499,51 @@
                   <td><label for="joint-bodies_collidable">Connected Collide</label></td>
                   <td><input id="joint-bodies_collidable" type="checkbox"></input></td>
                 </tr>
+                <tr><td colspan="2"><button id="joint-assign_to_all" title="Assign identical attributes to all joints with the same name and type.">Assign to All with Same Name and Type</button></td></tr>
               </table>
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
-                  <ul style="padding-left:1em;">
-                    <li><p class="description">Joints work best with solver model set to exact or iterative 64 passes.</p></li>
-                    <li><p class="description">Two functions, <tt>simulation.get_joint_by_name(name)</tt> and <tt>simulation.get_joints_by_name(name)</tt>, may be used to acquire Joint instances by their names in script context of a body.</p></li>
-                    <li><p class="description">Other functions, like <tt>this.get_connected_joints</tt>, <tt>this.get_contained_joints</tt> and <tt>this.get_connected_bodies</tt>, may be used to acquire all related joints and bodies in script context of a body.</p></li>
+                  <ul style="padding-left:1em;" type="circle">
+                    <li><p class="description">Joints work best with the world solver model set to exact or iterative 64 passes. In other solvers they may appear weak or unstable.</p></li>
+                    <li><p class="description">Two functions, <em1>simulation.get_joint_by_name(name)</em1> and <em1>simulation.get_joints_by_name(name)</em1>, may be used to acquire Joint instances by their names in the script context of a body.</p></li>
+                    <li><p class="description">Other functions, like <em1>this.get_connected_joints</em1>, <em1>this.get_contained_joints</em1> and <em1>this.get_connected_bodies</em1>, may be used to acquire all related joints and bodies in the script context of a body.</p></li>
                   </ul>
                 </div>
               </div>
             </div>
           </div>
           <div id="tab4-fixed">
-            <p class="title">Fixed</p>
-            <div class="spacing_tab">
-              <p class="description">Currently, the fixed joint doesn't have unique properties.</p>
+            <label class="expander expanded title">Fixed</label>
+            <div class="content spacing_tab">
+              <table class="struct_table">
+                <col width="40%" />
+                <tr title="Shift pin matrix toward the centre of the connected body.">
+                  <td><label for="fixed-adjust_to-child">Adjust Pin to Child</label></td>
+                  <td><input id="fixed-adjust_to-child" type="radio" name="fixed-adjust_to" value="child" style="float:right;"></input></td>
+                </tr>
+                <tr title="Shift pin matrix toward the centre of the parent body (if there is a parent body).">
+                  <td><label for="fixed-adjust_to-parent">Adjust Pin to Parent</label></td>
+                  <td><input id="fixed-adjust_to-parent" type="radio" name="fixed-adjust_to" value="parent" style="float:right;"></input></td>
+                </tr>
+                <tr title="Avoid shifting pin matrix.">
+                  <td><label for="fixed-adjust_to-none">Don't Readjust Pin</label></td>
+                  <td><input id="fixed-adjust_to-none" type="radio" name="fixed-adjust_to" value="none" style="float:right;"></input></td>
+                </tr>
+              </table>
+              <div>
+                <label class="expander description"><em5>Notes</em5></label>
+                <div class="content spacing_tab">
+                  <ul style="padding-left:1em;" type="circle">
+                    <li class="description">Currently, the fixed joint is limited in properties. Use the options within <b>General Properties</b> section, for instance, to adjust the breaking force, which can be applied to any joint.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
           <div id="tab4-hinge">
-            <p class="title">Hinge</p>
-            <div class="spacing_tab">
+            <label class="expander expanded title">Hinge</label>
+            <div class="content spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
                 <tr>
@@ -534,15 +565,19 @@
                   <td><label for="hinge-enable_limits">Limits</label></td>
                   <td><input id="hinge-enable_limits" type="checkbox"></input></td>
                 </tr>
-                <tr title="The angular friction, a value greater than or equal to zero. Note: This feature has an effect only if 'rotate back' is disabled.">
-                  <td><label for="hinge-friction">Friction</label></td>
+                <tr title="The angular friction, a value greater than or equal to zero. Note: 'Rotate Back' must be disabled in order for this option to work.">
+                  <td><label for="hinge-friction">Angular Friction</label></td>
                   <td><input id="hinge-friction" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The angular acceleration, a value greater than or equal to zero. Higher acceleration makes rotation faster. Note: This feature has an effect only if 'rotate back' is enabled.">
+                <tr title="Enable/disable a feature to rotate back to the starting angle.">
+                  <td><label for="hinge-enable_rotate_back">Rotate Back</label></td>
+                  <td><input id="hinge-enable_rotate_back" type="checkbox"></input></td>
+                </tr>
+                <tr title="The angular acceleration, a value greater than or equal to zero. Higher acceleration makes rotation faster. Note: 'Rotate Back' must be enabled in order for this option to work.">
                   <td><label for="hinge-accel">Accel</label></td>
                   <td><input id="hinge-accel" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The angular damper, a value greater than or equal to zero. Higher damper makes rotation stronger. Note: This feature has an effect only if 'rotate back' is enabled.">
+                <tr title="The angular damper, a value greater than or equal to zero. Higher damper makes rotation stronger. Note: 'Rotate Back' must be enabled in order for this option to work.">
                   <td><label for="hinge-damp">Damp</label></td>
                   <td><input id="hinge-damp" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
@@ -550,15 +585,11 @@
                   <td><label for="hinge-start_angle">Start Angle</label></td>
                   <td><input id="hinge-start_angle" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="Enable/disable a feature to rotate back to a starting angle.">
-                  <td><label for="hinge-enable_rotate_back">Rotate Back</label></td>
-                  <td><input id="hinge-enable_rotate_back" type="checkbox"></input></td>
-                </tr>
-                <tr title="Make angular spring stronger than usual. Note: This feature has an effect only if 'rotate back' is enabled.">
+                <tr title="Make angular spring stronger than usual. Note: 'Rotate Back' must be enabled in order for this option to work.">
                   <td><label for="hinge-enable_strong_mode">Strong Mode</label></td>
                   <td><input id="hinge-enable_strong_mode" type="checkbox"></input></td>
                 </tr>
-                <tr title="Control magnitude of the angular friction or magnitude and direction of the starting angle, depending on the state of the 'rotate back' feature.">
+                <tr title="Control magnitude of the angular friction or magnitude and direction of the starting angle, depending on the state of the 'Rotate Back' option.">
                   <td><label for="hinge-controller">Controller</label></td>
                   <td><input id="hinge-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
@@ -566,25 +597,25 @@
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
-                  <p class="description">Hinge joint has two modes:</p>
+                  <p class="description">The hinge joint has two modes:</p>
                   <ol style="padding-left:2em;" type="1">
-                    <li style="padding-left:1em;">
-                      <p class="description">Friction mode - a hinge with angular friction.</p>
-                      <ul>
-                        <li class="description">The <em1>Friction</em2> parameter may be used to adjust angular friction.</li>
-                        <li class="description">The <em2>Controller</em2> parameter may be used to control the magnitude of the angular frictional.</li>
-                        <li class="description">The actual angular friction is <em1>friction • controller</em1>.</li>
-                        <li class="description">The <em2>Rotate Back</em2> parameter must be disabled in order to use this mode.</li>
+                    <li style="padding-left:0em;">
+                      <p class="description">Friction mode - a hinge with rotational friction.</p>
+                      <ul style="padding-left:1em;" type="circle">
+                        <li class="description">The <em2>Friction</em2> argument controls rotational friction.</li>
+                        <li class="description">The <em2>Controller</em2> argument may be used to control the magnitude of the angular frictional.</li>
+                        <li class="description">The actual angular friction is, <em1>friction • controller</em1>.</li>
+                        <li class="description">Uncheck the <em2>Rotate Back</em2> option in order to activate the friction mode.</li>
                       </ul>
                     </li>
-                    <li style="padding-left:1em;">
+                    <li style="padding-left:0em;">
                       <p class="description">Spring mode - a hinge with angular spring that rotates connected bodies back to their starting angle.</p>
-                      <ul>
-                        <li class="description">The <em2>Accel</em2> and <em2>Damp</em2> parameters may be used to control acceleration and strength of the angular spring.</li>
-                        <li class="description">The <em2>Start Angle</em2> parameter may be used to preset the desired starting angle.</li>
-                        <li class="description">The <em2>Controller</em2> parameter may be used to control the magnitude of the starting angle.</li>
-                        <li class="description">The actual starting angle, in preset units, is <em1>start_angle • controller</em1>.</li>
-                        <li class="description">The <em2>Rotate Back</em2> parameter must be enabled in order to use this mode.</li>
+                      <ul style="padding-left:1em;" type="circle">
+                        <li class="description">The <em2>Accel</em2> and <em2>Damp</em2> arguments control acceleration and strength of the angular spring.</li>
+                        <li class="description">The <em2>Start Angle</em2> argument controls the desired starting angle in preset angle units.</li>
+                        <li class="description">The <em2>Controller</em2> argument may be used to control the magnitude and direction of the starting angle.</li>
+                        <li class="description">The actual starting angle, in preset angle units, is, <em1>start_angle • controller</em1>.</li>
+                        <li class="description">Check the <em2>Rotate Back</em2> option in order to activate the spring mode.</li>
                       </ul>
                     </li>
                   </ol>
@@ -593,8 +624,8 @@
             </div>
           </div>
           <div id="tab4-motor">
-            <p class="title">Motor</p>
-            <div class="spacing_tab">
+            <label class="expander expanded title">Motor</label>
+            <div class="content spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
                 <tr title="The angular acceleration in radians per second per second, a numeric value greater than or equal to zero. Note: Actual acceleration is accel • controller.">
@@ -620,14 +651,17 @@
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
-                  <p class="description">The maximum angular rate, in radians per second, is <em1>accel • controller / damp<em1>.</p>
+                  <ul style="padding-left:1em;" type="circle">
+                    <li class="description">The <em2>Controller</em2> argument may be used to control the magnitude and direction of the rotation.</li>
+                    <li class="description">The maximum angular rate, in radians per second, is, <em1>accel • controller / damp<em1>.</li>
+                  </ul>
                 </div>
               </div>
             </div>
           </div>
           <div id="tab4-servo">
-            <p class="title">Servo</p>
-            <div class="spacing_tab">
+            <label class="expander expanded title">Servo</label>
+            <div class="content spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
                 <tr>
@@ -637,11 +671,11 @@
                     <option value="deg">Degrees</option>
                   </select></td>
                 </tr>
-                <tr title="The minimum angle in desired angle units.">
+                <tr title="The minimum angle in preset angle units.">
                   <td><label for="servo-min">Min</label></td>
                   <td><input id="servo-min" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The maximum angle in desired angle units.">
+                <tr title="The maximum angle in preset angle units.">
                   <td><label for="servo-max">Max</label></td>
                   <td><input id="servo-max" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
@@ -649,27 +683,19 @@
                   <td><label for="servo-enable_limits">Limits</label></td>
                   <td><input id="servo-enable_limits" type="checkbox"></input></td>
                 </tr>
-                <tr title="The angular acceleration in radians per second per second, a numeric value greater than or equal to zero.">
-                  <td><label for="servo-accel">Accel</label></td>
-                  <td><input id="servo-accel" class="custom-text numeric-input" type="text"></input></td>
+                <tr title="The angular rate in preset units per second, a numeric value greater than or equal to zero.">
+                  <td><label for="servo-rate">Angular Rate</label></td>
+                  <td><input id="servo-rate" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The angular damper, a numeric value greater than or equal to zero. Higher damper makes rotation stronger.">
-                  <td><label for="servo-damp">Damp</label></td>
-                  <td><input id="servo-damp" class="custom-text numeric-input" type="text"></input></td>
+                <tr title="The rotational power in Watts. Pass 0.0 to use maximum power.">
+                  <td><label for="servo-power">Power</label></td>
+                  <td><input id="servo-power" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="Rotational power in Joules per second. A strength of 0.0 represents maximum power.">
-                  <td><label for="servo-strength">Strength</label></td>
-                  <td><input id="servo-strength" class="custom-text numeric-input" type="text"></input></td>
-                </tr>
-                <tr title="The angular reduction ratio, a numeric value between 0.0 and 1.0. This features reduces angular rate when current angle nears the desired angle in order to achieve a smooth stop. A value of 0.0 will disable angular reduction. A value of greater than zero will enable angular reduction and will act accordingly, based on the ratio. A typical reduction ratio is 0.1.">
+                <tr title="The angular reduction ratio, a numeric value between 0.0 and 1.0. This feature reduces angular rate when current angle nears the desired angle, for the purpose of achieving a smooth stop. A value of 0.0 disables angular reduction. A value greater than zero enables angular reduction and acts accordingly based on the ratio. A typical reduction ratio is 0.1.">
                   <td><label for="servo-reduction_ratio">Reduction Ratio</label></td>
                   <td><input id="servo-reduction_ratio" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="Whether to resemble SkethyPhysics mode. See notes for details.">
-                  <td><label for="servo-enable_sp_mode">SketchyPhysics Mode</label></td>
-                  <td><input id="servo-enable_sp_mode" type="checkbox"></input></td>
-                </tr>
-                <tr title="Control the angle in preset angle units or the ratio between min and max limits, depending on the mode. Pass nil to 'turn off' the servo.">
+                <tr title="Control the desired angle in preset angle units. Pass nil to turn off the servo.">
                   <td><label for="servo-controller">Controller</label></td>
                   <td><input id="servo-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
@@ -680,33 +706,19 @@
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
-                  <p class="description">Servo joint has two modes:</p>
-                  <ol style="padding-left:2em;" type="1">
-                    <li style="padding-left:1em;">
-                      <p class="description">MSPhysics Mode</p>
-                      <ul>
-                        <li class="description">The maximum angular rate, in radians per second, is <em1>accel / damp<em1>.</li>
-                        <li class="description">The controller parameter assumes input as the desired angle in preset units.</li>
-                        <li class="description">The desired angle is clamped between min and max limits if the limits are enabled.</li>
-                        <li class="description">The reduction ratio may be used to decelerate angular rate when servo nears its desired angle.</li>
-                      </ul>
-                    </li>
-                    <li style="padding-left:1em;">
-                      <p class="description">SketchyPhysics Mode</p>
-                      <ul>
-                        <li class="description">The controller parameter assumes input as the ratio between min and max angles.</li>
-                        <li class="description">The desired angle, in preset units, is, <em1>min + (max - min) * controller</em1></li>
-                        <li class="description">The enable/disable <em2>Limits</em2> and <em2>Reduction Ratio</em2> parameters have no effect in this mode.</li>
-                      </ul>
-                    </li>
-                  </ol>
+                  <ul style="padding-left:1em;" type="circle">
+                    <li class="description">The <em2>Controller</em2> argument assumes input as the desired angle in preset angle units.</li>
+                    <li class="description">The <em2>Controller</em2> argument also accepts <em1>nil</em1> as the parameter, which turns off the joint.</li>
+                    <li class="description">The desired angle is clamped between min and max limits if the limits are enabled.</li>
+                    <li class="description">The <em2>Reduction Ratio</em2> may be used to decelerate angular rate when servo nears its desired angle.</li>
+                  </ul>
                 </div>
               </div>
             </div>
           </div>
           <div id="tab4-slider">
-            <p class="title">Slider</p>
-            <div class="spacing_tab">
+            <label class="expander expanded title">Slider</label>
+            <div class="content spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
                 <tr>
@@ -734,7 +746,7 @@
                   <td><input id="slider-enable_limits" type="checkbox"></input></td>
                 </tr>
                 <tr title="The linear friction, a value greater than or equal to zero. Note: The actual friction is friction • magnitude.">
-                  <td><label for="slider-friction">Friction</label></td>
+                  <td><label for="slider-friction">Linear Friction</label></td>
                   <td><input id="slider-friction" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
                 <tr title="Control magnitude of the linear friction.">
@@ -745,14 +757,17 @@
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
-                  <p class="description">The actual friction is, <em1>friction • controller<em1>.</p>
+                  <ul style="padding-left:1em;" type="circle">
+                    <li class="description">The <em2>Controller</em2> argument may be used to control the magnitude of the linear friction.</li>
+                    <li class="description">The actual linear friction is, <em1>friction • controller<em1>.</li>
+                  </ul>
                 </div>
               </div>
             </div>
           </div>
           <div id="tab4-piston">
-            <p class="title">Piston</p>
-            <div class="spacing_tab">
+            <label class="expander expanded title">Piston</label>
+            <div class="content spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
                 <tr>
@@ -779,19 +794,19 @@
                   <td><label for="piston-enable_limits">Limits</label></td>
                   <td><input id="piston-enable_limits" type="checkbox"></input></td>
                 </tr>
-                <tr title="The desired linear rate in preset units per second, a value greater than or equal to zero.">
-                  <td><label for="piston-linear_rate">Linear Rate</label></td>
-                  <td><input id="piston-linear_rate" class="custom-text numeric-input" type="text"></input></td>
+                <tr title="The linear rate in preset units per second, a numeric value greater than or equal to zero.">
+                  <td><label for="piston-rate">Linear Rate</label></td>
+                  <td><input id="piston-rate" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The power-to-mass ratio. A strength of 0.0 represents infinite power. The actuals power in Joules per second can be determined by multiplying strength with the mass of a connected body.">
-                  <td><label for="piston-strength">Strength</label></td>
-                  <td><input id="piston-strength" class="custom-text numeric-input" type="text"></input></td>
+                <tr title="The movement power in Watts. Pass 0.0 to use maximum power.">
+                  <td><label for="piston-power">Power</label></td>
+                  <td><input id="piston-power" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="The linear reduction ratio, a numeric value between 0.0 and 1.0. This features reduces linear rate when current position nears the desired position in order to achieve a smooth stop. A value of 0.0 will disable linear reduction. A value of greater than zero will enable linear reduction and will act accordingly, based on the ratio. A typical reduction ratio is 0.1.">
+                <tr title="The linear reduction ratio, a numeric value between 0.0 and 1.0. This feature reduces linear rate when current position nears the desired position, for the purpose of achieving a smooth stop. A value of 0.0 disables linear reduction. A value greater than zero enables linear reduction and acts accordingly based on the ratio. A typical reduction ratio is 0.1.">
                   <td><label for="piston-reduction_ratio">Reduction Ratio</label></td>
                   <td><input id="piston-reduction_ratio" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
-                <tr title="Control desired position in preset units. Pass nil to 'turn off' the piston.">
+                <tr title="Control the desired position in preset units. Pass nil to turn off the piston.">
                   <td><label for="piston-controller">Controller</label></td>
                   <td><input id="piston-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
@@ -799,11 +814,22 @@
                   <td colspan="2"><button id="piston-generate_slider" title="Generate slider controller based on the current parameters.">Generate Slider Controller</button></td>
                 </tr>
               </table>
+              <div>
+                <label class="expander description"><em5>Notes</em5></label>
+                <div class="content spacing_tab">
+                  <ul style="padding-left:1em;" type="circle">
+                    <li class="description">The <em2>Controller</em2> argument assumes input as the desired linear position in preset units.</li>
+                    <li class="description">The <em2>Controller</em2> argument also accepts <em1>nil</em1> as the parameter, which turns off the joint.</li>
+                    <li class="description">The desired position is clamped between min and max limits if the limits are enabled.</li>
+                    <li class="description">The <em2>Reduction Ratio</em2> may be used to decelerate linear rate when piston nears its desired position.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
           <div id="tab4-spring">
-            <p class="title">Spring</p>
-            <div class="spacing_tab">
+            <label class="expander expanded title">Spring</label>
+            <div class="content spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
                 <tr>
@@ -854,14 +880,17 @@
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
-                  <p class="description">The starting position may be modified with a controller. The actual starting position, in preset units, is <em1>start_position • controller</em1>.</p>
+                  <ul style="padding-left:1em;" type="circle">
+                    <li class="description">The <em2>Controller</em2> argument may be used to modify the starting position.</li>
+                    <li class="description">The actual starting position, in preset units, is, <em1>start_position • controller</em1>.</li>
+                  </ul>
                 </div>
               </div>
             </div>
           </div>
           <div id="tab4-up_vector">
-            <p class="title">Up Vector</p>
-            <div class="spacing_tab">
+            <label class="expander expanded title">Up Vector</label>
+            <div class="content spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
                 <tr title="The angular acceleration, a value greater than or equal to zero. Higher acceleration makes rotation faster.">
@@ -881,11 +910,19 @@
                   <td><input id="up_vector-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
               </table>
+              <div>
+                <label class="expander description"><em5>Notes</em5></label>
+                <div class="content spacing_tab">
+                  <ul style="padding-left:1em;" type="circle">
+                    <li class="description">The <em2>Controller</em2> argument assumes input the desired direction with respect the joint orientation. For example, passing <em1>[1,0,0]</em1> into the controller will rotate the connected body so that it points the same direction as the joint's x-axis is.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
           <div id="tab4-corkscrew">
-            <p class="title">Corkscrew</p>
-            <div class="spacing_tab">
+            <label class="expander expanded title">Corkscrew</label>
+            <div class="content spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
                 <tr>
@@ -940,11 +977,19 @@
                   <td><input id="corkscrew-angular_friction" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
               </table>
+              <div>
+                <label class="expander description"><em5>Notes</em5></label>
+                <div class="content spacing_tab">
+                  <ul style="padding-left:1em;" type="circle">
+                    <li class="description">The corkscrew joint works like a slider and a hinge combined, however without a controller.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
           <div id="tab4-ball_and_socket">
-            <p class="title">Ball and Socket</p>
-            <div class="spacing_tab">
+            <label class="expander expanded title">Ball &amp; Socket</label>
+            <div class="content spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
                 <tr>
@@ -975,7 +1020,7 @@
                   <td><input id="ball_and_socket-enable_twist_limits" type="checkbox"></input></td>
                 </tr>
                 <tr title="The angular friction, a value greater than or equal to zero.">
-                  <td><label for="ball_and_socket-friction">Friction</label></td>
+                  <td><label for="ball_and_socket-friction">Angular Friction</label></td>
                   <td><input id="ball_and_socket-friction" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
                 <tr title="Control magnitude of the angular friction.">
@@ -986,14 +1031,17 @@
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
-                  <p class="description">The magnitude of the angular friction can be controlled via the controller. The actual angular friction is, <em1>friction • controller</em1>.</p>
+                  <ul style="padding-left:1em;" type="circle">
+                    <li class="description">The <em2>Controller</em2> argument may be used to control the magnitude of the angular friction.</li>
+                    <li class="description">The actual angular friction is, <em1>friction • controller</em1>.</li>
+                  </ul>
                 </div>
               </div>
             </div>
           </div>
           <div id="tab4-universal">
-            <p class="title">Universal</p>
-            <div class="spacing_tab">
+            <label class="expander expanded title">Universal</label>
+            <div class="content spacing_tab">
               <table class="struct_table">
                 <col width="40%" />
                 <tr>
@@ -1028,7 +1076,7 @@
                   <td><input id="universal-enable_limits2" type="checkbox"></input></td>
                 </tr>
                 <tr title="The angular friction, a value greater than or equal to zero.">
-                  <td><label for="universal-friction">Friction</label></td>
+                  <td><label for="universal-friction">Angular Friction</label></td>
                   <td><input id="universal-friction" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
                 <tr title="Control magnitude of the angular friction.">
@@ -1039,7 +1087,121 @@
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
-                  <p class="description">The magnitude of the angular friction can be controlled via the controller. The actual angular friction is, <em1>friction • controller</em1>.</p>
+                  <ul style="padding-left:1em;" type="circle">
+                    <li class="description">The <em2>Controller</em2> argument may be used to control the magnitude of the angular friction.</li>
+                    <li class="description">The actual angular friction is, <em1>friction • controller</em1>.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="tab4-curvy_slider">
+            <label class="expander expanded title">CurvySlider</label>
+            <div class="content spacing_tab">
+              <table class="struct_table">
+                <col width="40%" />
+                <tr title="Control linear friction along the curve, a value greater than or equal to zero.">
+                  <td><label for="curvy_slider-linear_friction">Linear Friction</label></td>
+                  <td><input id="curvy_slider-linear_friction" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="Control angular friction along the curve, a value greater than or equal to zero. Note: This option has no effect if rotation is disabled.">
+                  <td><label for="curvy_slider-angular_friction">Angular Friction</label></td>
+                  <td><input id="curvy_slider-angular_friction" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="Enable/disable rotation along the current point on curve.">
+                  <td><label for="curvy_slider-enable_rotation">Rotation</label></td>
+                  <td><input id="curvy_slider-enable_rotation" type="checkbox"></input></td>
+                </tr>
+                <tr title="Enable/disable alignment along the current direction on curve.">
+                  <td><label for="curvy_slider-enable_alignment">Alignment</label></td>
+                  <td><input id="curvy_slider-enable_alignment" type="checkbox"></input></td>
+                </tr>
+                <tr title="Enable/disable looping.">
+                  <td><label for="curvy_slider-enable_loop">Loop</label></td>
+                  <td><input id="curvy_slider-enable_loop" type="checkbox"></input></td>
+                </tr>
+                <tr title="Control magnitude of the linear and angular friction.">
+                  <td><label for="curvy_slider-controller">Controller</label></td>
+                  <td><input id="curvy_slider-controller" class="custom-text controller-input" type="text"></input></td>
+                </tr>
+              </table>
+              <div>
+                <label class="expander description"><em5>Notes</em5></label>
+                <div class="content spacing_tab">
+                  <ul style="padding-left:1em;" type="circle">
+                    <li class="description">The idea behind a curvy joint is that the connected body travels along the user-drawn curve.</li>
+                    <li class="description">The curve can be modified by adding a connected set of edges/curves within the joint. The edge closest to the origin of the joint is considered as the starting edge.</li>
+                    <li class="description">The curve joint works best when the angle between any two connected edges is less than 45 degrees.</li>
+                    <li class="description">The magnitude of the linear and angular friction can be controlled with the controller.</li>
+                    <li class="description">The actual linear friction is, <em1>linear_friction • controller</em1>.</li>
+                    <li class="description">The actual angular friction is, <em1>angular_friction • controller</em1>.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="tab4-curvy_piston">
+            <label class="expander expanded title">CurvyPiston</label>
+            <div class="content spacing_tab">
+              <table class="struct_table">
+                <col width="40%" />
+                <tr>
+                  <td><label for="curvy_piston-position_units">Position Units</label></td>
+                  <td><select id="curvy_piston-position_units" data-placeholder="Position Units" class="chosen-select-no-single drop-down" style="width: 248px;">
+                    <option value="mm">Millimeters</option>
+                    <option value="cm">Centimeters</option>
+                    <option value="dm">Decimeters</option>
+                    <option value="m">Meters</option>
+                    <option value="in">Inches</option>
+                    <option value="ft">Feet</option>
+                    <option value="yd">Yards</option>
+                  </select></td>
+                </tr>
+                <tr title="The linear rate in preset units per second, a numeric value greater than or equal to zero.">
+                  <td><label for="curvy_piston-rate">Linear Rate</label></td>
+                  <td><input id="curvy_piston-rate" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="The movement power in Watts. Pass 0.0 to use maximum power.">
+                  <td><label for="curvy_piston-power">Power</label></td>
+                  <td><input id="curvy_piston-power" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="The linear reduction ratio, a numeric value between 0.0 and 1.0. This feature reduces linear rate when current position nears the desired position, for the purpose of achieving a smooth stop. A value of 0.0 disables linear reduction. A value greater than zero enables linear reduction and acts accordingly based on the ratio. A typical reduction ratio is 0.1.">
+                  <td><label for="curvy_piston-reduction_ratio">Reduction Ratio</label></td>
+                  <td><input id="curvy_piston-reduction_ratio" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="Control angular friction along the curve, a value greater than or equal to zero. Note: This option has no effect if rotation is disabled.">
+                  <td><label for="curvy_piston-angular_friction">Angular Friction</label></td>
+                  <td><input id="curvy_piston-angular_friction" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
+                <tr title="Enable/disable rotation along the current point on curve.">
+                  <td><label for="curvy_piston-enable_rotation">Rotation</label></td>
+                  <td><input id="curvy_piston-enable_rotation" type="checkbox"></input></td>
+                </tr>
+                <tr title="Enable/disable alignment along the current direction on curve.">
+                  <td><label for="curvy_piston-enable_alignment">Alignment</label></td>
+                  <td><input id="curvy_piston-enable_alignment" type="checkbox"></input></td>
+                </tr>
+                <tr title="Enable/disable looping.">
+                  <td><label for="curvy_piston-enable_loop">Loop</label></td>
+                  <td><input id="curvy_piston-enable_loop" type="checkbox"></input></td>
+                </tr>
+                <tr title="Control desired position in preset units. Pass nil to 'turn off' the piston.">
+                  <td><label for="curvy_piston-controller">Controller</label></td>
+                  <td><input id="curvy_piston-controller" class="custom-text controller-input" type="text"></input></td>
+                </tr>
+              </table>
+              <div>
+                <label class="expander description"><em5>Notes</em5></label>
+                <div class="content spacing_tab">
+                  <ul style="padding-left:1em;" type="circle">
+                    <li class="description">The idea behind a curvy joint is that the connected body travels along the user-drawn curve.</li>
+                    <li class="description">The curve can be modified by adding a connected set of edges/curves within the joint. The edge closest to the origin of the joint is considered as the starting edge.</li>
+                    <li class="description">The curve joint works best when the angle between any two connected edges is less than 45 degrees.</li>
+                    <li class="description">The <em2>Controller</em2> argument assumes input as the desired linear position in preset units.</li>
+                    <li class="description">The <em2>Controller</em2> argument also accepts <em1>nil</em1> as the parameter, which turns off the joint.</li>
+                    <li class="description">The desired position is clamped between min and max limits if the limits are enabled.</li>
+                    <li class="description">The <em2>Reduction Ratio</em2> may be used to decelerate linear rate when piston nears its desired position.</li>
+                  </ul>
                 </div>
               </div>
             </div>

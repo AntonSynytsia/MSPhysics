@@ -9,9 +9,6 @@
 html {
   font-size: 11px;
   font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
-}
-
-html {
   overflow: hidden;
   width: 100%;
   height: 100%;
@@ -65,6 +62,18 @@ input[type=checkbox], input[type=radio] {
   *width: 13px;
   *height: 13px;
   margin: 3.5px 0 !important;
+}
+
+input[type=checkbox] {
+  box-shadow: 1px 1px 4px rgba(80, 80, 80, 0.15);
+  -webkit-box-shadow: 1px 1px 4px rgba(80, 80, 80, 0.15);
+  -moz-box-shadow: 1px 1px 4px rgba(80, 80, 80, 0.15);
+}
+
+input[type=checkbox]:focus {
+  box-shadow: 0 0 8px rgba(0, 80, 255, 0.35);
+  -webkit-box-shadow: 0 0 8px rgba(0, 80, 255, 0.35);
+  -moz-box-shadow: 0 0 8px rgba(0, 80, 255, 0.35);
 }
 
 fieldset {
@@ -173,9 +182,9 @@ table {
 }
 
 .custom-text {
-  background-color: #FFF;
-  font-size: 0.9em !important;
+  background-color: #FEFEFE;
   color: #0A0A0A;
+  font-size: 11px !important;
   cursor: auto;
   padding: 0.25em 0em;
   text-indent: 0.5em;
@@ -186,44 +195,51 @@ table {
   border-radius: 3px;
   -webkit-border-radius: 3px;
   -moz-border-radius: 3px;
-  border: 1px solid rgba(0,0,0, 0.25);
   vertical-align: top;
+  border: 1px solid rgba(80, 80, 80, 0.30) !important;
+  box-shadow: 1px 1px 4px rgba(80, 80, 80, 0.15);
+  -webkit-box-shadow: 1px 1px 4px rgba(80, 80, 80, 0.15);
+  -moz-box-shadow: 1px 1px 4px rgba(80, 80, 80, 0.15);
 }
 
 .custom-text:focus {
-  box-shadow: 0 0 8px rgba(0, 100, 100, 0.25);
-  -webkit-box-shadow: 0 0 8px rgba(0, 100, 255, 0.25);
-  -moz-box-shadow: 0 0 8px rgba(0, 100, 255, 0.25);
-  border: 1px solid rgba(0, 100, 255, 0.50);
-  transition: 0.25s linear box-shadow;
+  border: 1px solid rgba(0, 80, 255, 0.50) !important;
+  box-shadow: 0 0 12px rgba(0, 100, 255, 0.25);
+  -webkit-box-shadow: 0 0 12px rgba(0, 100, 255, 0.25);
+  -moz-box-shadow: 0 0 12px rgba(0, 100, 255, 0.25);
 }
 
 .text-input {
   width: 100%;
+  font-size: 10px !important;
 }
 
 .fixnum-input {
   width: 100%;
+  font-size: 10px !important;
 }
 
 .numeric-input {
   width: 100%;
+  font-size: 10px !important;
 }
 
 .controller-input {
   width: 100%;
+  font-size: 11px !important;
 }
 
 .command-input {
   background-color: #2E2E2E;
   color: #CFCFCF;
   width: 100%;
+  font-size: 11px !important;
 }
 
 .labeled-text {
   border: none;
   background: none;
-  font-size: 1.0em !important;
+  font-size: 11px !important;
   color: #FA8000;
   cursor: auto;
   outline: none;
@@ -248,7 +264,7 @@ table {
   padding-right: 1em;
   position: relative;
   color: gray;
-  font-size: 0.9em;
+  font-size: 9px !important;
 }
 
 #editor {
@@ -299,33 +315,39 @@ table {
 }
 
 .description {
-  font-size: 1.0em;
+  font-size: 11px !important;
   color: #2F2F2F;
+  font-weight: normal;
 }
 
 .description em1 {
   color: #000DFF;
+  font-weight: normal;
 }
 
 .description em2 {
   color: #00CF00;
+  font-weight: normal;
 }
 
 .description em3 {
   color: #F02B2B;
+  font-weight: normal;
 }
 
 .description em4 {
   color: #2F2F2F;
+  font-weight: normal;
 }
 
 .description em5 {
-  font-weight: bold;
   color: #606060;
+  font-weight: bold;
 }
 
 .description em6 {
   color: #FFB01F;
+  font-weight: normal;
 }
 
 .description em7 {
@@ -342,12 +364,13 @@ table {
   color: #170E80;
 }
 
-p.title {
+.title {
+  color: #7F7F7F;
   font-weight: normal;
-  font-size: 1.3em !important;
+  font-size: 16px !important;
 }
 
-p.heading {
+.heading {
   color: #0AAA0A;
   font-weight: bold;
 }
@@ -397,7 +420,7 @@ label.joint-label {
   padding: 0.15em;
   color: #0036C9;
   background-color: none;
-  font-size: 1.0em !important;
+  font-size: 11px !important;
   font-family: "Courier New";
   font-weight: normal;
   transition: all 0.1s ease-in-out;
@@ -414,7 +437,7 @@ label.joint-label-selected {
   padding: 0.15em;
   color: #0036C9;
   background-color: rgba(255, 255, 120, 1.0);
-  font-size: 1.0em !important;
+  font-size: 11px !important;
   font-family: "Courier New";
   font-weight: normal;
   transition: all 0.1s ease-in-out;

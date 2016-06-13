@@ -194,7 +194,6 @@ module MSPhysics
     end
 
     # Set world gravity.
-    # @param [Geom::Vector3d, Array<Numeric>] acceleration
     # @overload set_gravity(acceleration)
     #   @param [Geom::Vector3d, Array<Numeric>] acceleration Gravitational
     #     acceleration vector. The magnitude of the vector is assumed in meters

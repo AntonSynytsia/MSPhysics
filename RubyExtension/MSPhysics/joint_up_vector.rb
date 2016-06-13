@@ -38,14 +38,14 @@ module MSPhysics
       MSPhysics::Newton::UpVector.set_accel(@address, value)
     end
 
-    # Get rotation damper.
+    # Get angular damper.
     # @note Higher damper makes rotation stronger.
     # @return [Numeric]
     def damp
       MSPhysics::Newton::UpVector.get_damp(@address)
     end
 
-    # Set rotation damper.
+    # Set angular damper.
     # @note Higher damper makes rotation stronger.
     # @param [Numeric] value A value greater than or equal to zero.
     def damp=(value)
@@ -55,7 +55,7 @@ module MSPhysics
     # Determine whether rotation stiff & damp parameters are enabled.
     # @return [Boolean]
     def damper_enabled?
-      MSPhysics::Newton::UpVector.is_damper_enabled?(@address)
+      MSPhysics::Newton::UpVector.damper_enabled?(@address)
     end
 
     # Enable/disable rotation stiff & damp parameters.

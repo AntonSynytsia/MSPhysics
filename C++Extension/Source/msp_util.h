@@ -16,40 +16,40 @@
 #include "VHACD.h"
 
 // Constants
-const dFloat PI									= 3.14159265f;
-const dFloat PI2								= 6.28318530f;
-const dFloat EPSILON							= 1.0e-6f;
-const dFloat EPSILON2							= 1.0e-3f;
-const dFloat INCH_TO_METER						= 0.02540f;
-const dFloat METER_TO_INCH						= 39.3701f;
-const dFloat DEG_TO_RAD							= 0.01745329f;
-const dFloat RAD_TO_DEG							= 57.2957795f;
+const dFloat PI									= dFloat(3.14159265f);
+const dFloat PI2								= dFloat(6.28318530f);
+const dFloat EPSILON							= dFloat(1.0e-6f);
+const dFloat EPSILON2							= dFloat(1.0e-3f);
+const dFloat INCH_TO_METER						= dFloat(0.02540f);
+const dFloat METER_TO_INCH						= dFloat(39.3701f);
+const dFloat DEG_TO_RAD							= dFloat(0.01745329f);
+const dFloat RAD_TO_DEG							= dFloat(57.2957795f);
 
-const dVector X_AXIS(1.0f, 0.0f, 0.0f);
-const dVector Y_AXIS(0.0f, 1.0f, 0.0f);
-const dVector Z_AXIS(0.0f, 0.0f, 1.0f);
-const dVector ORIGIN(0.0f, 0.0f, 0.0f);
+const dVector X_AXIS(1.0f, 0.0f, 0.0f, 0.0f);
+const dVector Y_AXIS(0.0f, 1.0f, 0.0f, 0.0f);
+const dVector Z_AXIS(0.0f, 0.0f, 1.0f, 0.0f);
+const dVector ORIGIN(0.0f, 0.0f, 0.0f, 0.0f);
 
 const dVector DEFAULT_GRAVITY(0.0f, 0.0f, -9.8f);
-const dFloat DEFAULT_SCALE						= 1.0f;
-const dFloat DEFAULT_DENSITY					= 700.0f;
-const dFloat DEFAULT_ELASTICITY					= 0.40f;
-const dFloat DEFAULT_SOFTNESS					= 0.10f;
-const dFloat DEFAULT_STATIC_FRICTION			= 0.90f;
-const dFloat DEFAULT_DYNAMIC_FRICTION			= 0.50f;
+const dFloat DEFAULT_SCALE						= dFloat(1.0f);
+const dFloat DEFAULT_DENSITY					= dFloat(700.0f);
+const dFloat DEFAULT_ELASTICITY					= dFloat(0.40f);
+const dFloat DEFAULT_SOFTNESS					= dFloat(0.10f);
+const dFloat DEFAULT_STATIC_FRICTION			= dFloat(0.90f);
+const dFloat DEFAULT_DYNAMIC_FRICTION			= dFloat(0.50f);
 const bool DEFAULT_ENABLE_FRICTION				= true;
 const long NON_COL_CONTACTS_CAPACITY			= 32;
 const int DEFAULT_SOLVER_MODEL					= 4;
 const int DEFAULT_FRICTION_MODEL				= 0;
 const int DEFAULT_CONVERGENCE_QUALITY			= 1;
-const dFloat DEFAULT_MATERIAL_THICKNESS			= 1.0f / 256.0f;
-const dFloat DEFAULT_CONTACT_MERGE_TOLERANCE	= 1.0e-3f;
-const dFloat MIN_TOUCH_DISTANCE					= 0.005f;
+const dFloat DEFAULT_MATERIAL_THICKNESS			= dFloat(1.0f / 256.0f);
+const dFloat DEFAULT_CONTACT_MERGE_TOLERANCE	= dFloat(1.0e-3f);
+const dFloat MIN_TOUCH_DISTANCE					= dFloat(0.005f);
 
-const dFloat MIN_MASS							= 1.0e-6f;
-const dFloat MAX_MASS							= 1.0e14f;
-const dFloat MIN_VOLUME							= 1.0e-6f;
-const dFloat MIN_DENSITY						= 1.0e-6f;
+const dFloat MIN_MASS							= dFloat(1.0e-6f);
+const dFloat MAX_MASS							= dFloat(1.0e14f);
+const dFloat MIN_VOLUME							= dFloat(1.0e-6f);
+const dFloat MIN_DENSITY						= dFloat(1.0e-6f);
 
 // Sketchup API Access Constants
 const VALUE suSketchup			= rb_define_module("Sketchup");
@@ -91,6 +91,8 @@ const ID INTERN_CAMERA			= rb_intern("camera");
 const ID INTERN_EYE				= rb_intern("eye");
 const ID INTERN_DRAW			= rb_intern("draw");
 const ID INTERN_SDRAWING_COLOR	= rb_intern("drawing_color=");
+const ID INTERN_SLINE_WIDTH		= rb_intern("line_width=");
+const ID INTERN_SLINE_STIPPLE	= rb_intern("line_stipple=");
 const ID INTERN_ADD				= rb_intern("add");
 
 // Enumerators
@@ -106,7 +108,10 @@ enum JointType {
 	JT_CORKSCREW,
 	JT_BALL_AND_SOCKET,
 	JT_UNIVERSAL,
-	JT_FIXED
+	JT_FIXED,
+	JT_CURVY_SLIDER,
+	JT_CURVY_PISTON,
+	JT_PLANE
 };
 
 enum ConstraintType {
@@ -245,6 +250,7 @@ typedef struct JointData
 	dMatrix pin_matrix;
 	dMatrix local_matrix0;
 	dMatrix local_matrix1;
+	dMatrix local_matrix2;
 	VALUE user_data;
 	void* cj_data;
 	NewtonUserBilateralCallback submit_constraints;
@@ -256,6 +262,7 @@ typedef struct JointData
 	void (*on_collidable_changed)(JointData* data);
 	void (*on_stiffness_changed)(JointData* data);
 	void (*on_pin_matrix_changed)(JointData* data);
+	void (*adjust_pin_matrix_proc)(JointData* data, dMatrix& pin_matrix);
 } JointData;
 
 typedef struct StandardJointData
@@ -294,11 +301,15 @@ typedef struct WorldData
 	std::vector<JointData*> joints_to_disconnect;
 	dFloat time;
 	dFloat scale;
+	dFloat scale2;
 	dFloat scale3;
 	dFloat scale4;
+	dFloat scale5;
 	dFloat inverse_scale;
+	dFloat inverse_scale2;
 	dFloat inverse_scale3;
 	dFloat inverse_scale4;
+	dFloat inverse_scale5;
 	bool gravity_enabled;
 	int material_id;
 	bool process_info;
@@ -505,9 +516,10 @@ bool is_matrix_flipped(const dMatrix& matrix);
 dVector get_matrix_scale(const dMatrix& matrix);
 void set_matrix_scale(dMatrix& matrix, const dVector& scale);
 void extract_matrix_scale(dMatrix& matrix);
-dMatrix matrix_from_pin_dir(const dVector& pos, const dVector& dir);
-dMatrix rotate_matrix_to_dir(const dMatrix& matrix, const dVector& dir);
+void matrix_from_pin_dir(const dVector& pos, const dVector& dir, dMatrix& matrix_out);
+void rotate_matrix_to_dir(const dMatrix& matrix, const dVector& dir, dMatrix& matrix_out);
 dVector rotate_vector(const dVector& vector, const dVector& normal, const dFloat& angle);
+void correct_to_expected_matrix(dMatrix& matrix, const dVector& velocity, const dVector& omega, dFloat timestep);
 
 bool is_world_valid(const NewtonWorld* address);
 bool is_body_valid(const NewtonBody* address);

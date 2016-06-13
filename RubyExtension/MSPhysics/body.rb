@@ -1315,8 +1315,8 @@ module MSPhysics
     end
 
     # Apply buoyancy on the body.
-    # @param [Geom::Point3d, Array<Numeric>] origin Plane origin.
-    # @param [Geom::Vector3d, Array<Numeric>] normal Plane normal.
+    # @param [Geom::Point3d, Array<Numeric>] plane_origin Plane origin.
+    # @param [Geom::Vector3d, Array<Numeric>] plane_normal Plane normal.
     # @param [Geom::Vector3d, Array<Numeric>] current Plane acceleration in
     #   global space.
     # @param [Numeric] density Fluid density in kilograms per cubic meter
@@ -1590,16 +1590,22 @@ module MSPhysics
       rescue Exception => e
         ref = nil
         test = MSPhysics::SCRIPT_NAME + ':'
-        e.backtrace.each { |location|
+        err_message = e.message
+        err_backtrace = e.backtrace
+        if RUBY_VERSION !~ /1.8/
+          err_message.force_encoding("UTF-8")
+          err_backtrace.each { |i| i.force_encoding("UTF-8") }
+        end
+        err_backtrace.each { |location|
           if location.include?(test)
             ref = location
             break
           end
         }
-        ref = e.message if !ref && e.message.include?(test)
+        ref = err_message if !ref && err_message.include?(test)
         line = ref ? ref.split(test, 2)[1].split(':', 2)[0].to_i : nil
-        msg = "#{e.class.to_s[0] =~ /a|e|i|o|u/i ? 'An' : 'A'} #{e.class} has occurred while calling body #{event} event#{line ? ', line ' + line.to_s : nil}:\n#{e.message}"
-        raise MSPhysics::ScriptException.new(msg, e.backtrace, @_group, line)
+        msg = "#{e.class.to_s[0] =~ /a|e|i|o|u/i ? 'An' : 'A'} #{e.class} has occurred while calling body #{event} event#{line ? ', line ' + line.to_s : nil}:\n#{err_message}"
+        raise MSPhysics::ScriptException.new(msg, err_backtrace, @_group, line)
       end
       true
     end

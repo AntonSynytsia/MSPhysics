@@ -26,13 +26,13 @@ public:
 		dFloat cur_accel1;
 		dFloat min1;
 		dFloat max1;
-		bool limits_enabled1;
+		bool limits1_enabled;
 		AngularIntegration* ai2;
 		dFloat cur_omega2;
 		dFloat cur_accel2;
 		dFloat min2;
 		dFloat max2;
-		bool limits_enabled2;
+		bool limits2_enabled;
 		dFloat friction;
 		dFloat controller;
 	} UniversalData;
@@ -41,7 +41,6 @@ public:
 	static void submit_constraints(const NewtonJoint* joint, dgFloat32 timestep, int thread_index);
 	static void get_info(const NewtonJoint* const joint, NewtonJointRecord* const info);
 	static void on_destroy(JointData* joint_data);
-	static void on_connect(JointData* joint_data);
 	static void on_disconnect(JointData* joint_data);
 
 	// Ruby Functions
@@ -55,7 +54,7 @@ public:
 	static VALUE get_max1(VALUE self, VALUE v_joint);
 	static VALUE set_max1(VALUE self, VALUE v_joint, VALUE v_max);
 	static VALUE enable_limits1(VALUE self, VALUE v_joint, VALUE v_state);
-	static VALUE limits_enabled1(VALUE self, VALUE v_joint);
+	static VALUE limits1_enabled(VALUE self, VALUE v_joint);
 	static VALUE get_cur_angle2(VALUE self, VALUE v_joint);
 	static VALUE get_cur_omega2(VALUE self, VALUE v_joint);
 	static VALUE get_cur_acceleration2(VALUE self, VALUE v_joint);
@@ -64,7 +63,7 @@ public:
 	static VALUE get_max2(VALUE self, VALUE v_joint);
 	static VALUE set_max2(VALUE self, VALUE v_joint, VALUE v_max);
 	static VALUE enable_limits2(VALUE self, VALUE v_joint, VALUE v_state);
-	static VALUE limits_enabled2(VALUE self, VALUE v_joint);
+	static VALUE limits2_enabled(VALUE self, VALUE v_joint);
 	static VALUE get_friction(VALUE self, VALUE v_joint);
 	static VALUE set_friction(VALUE self, VALUE v_joint, VALUE v_friction);
 	static VALUE get_controller(VALUE self, VALUE v_joint);

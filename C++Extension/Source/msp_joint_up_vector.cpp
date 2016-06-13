@@ -23,9 +23,9 @@ void MSNewton::UpVector::submit_constraints(const NewtonJoint* joint, dgFloat32 
 	UpVectorData* cj_data = (UpVectorData*)joint_data->cj_data;
 
 	// Calculate position of pivot points and Jacobian direction vectors in global space.
-	dMatrix matrix0;
-	dMatrix matrix1;
-	Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1);
+	dMatrix matrix0, matrix1, matrix2;
+	MSNewton::Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1, matrix2);
+	
 	dMatrix pin_matrix = cj_data->pin_matrix * matrix1;
 
 	// If the body is rotated by some amount, there is a plane of rotation.
@@ -93,12 +93,6 @@ void MSNewton::UpVector::on_destroy(JointData* joint_data) {
 	delete cj_data;
 }
 
-void MSNewton::UpVector::on_connect(JointData* joint_data) {
-}
-
-void MSNewton::UpVector::on_disconnect(JointData* joint_data) {
-}
-
 
 /*
  ///////////////////////////////////////////////////////////////////////////////
@@ -117,7 +111,7 @@ VALUE MSNewton::UpVector::create(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_NONE);
 	UpVectorData* cj_data = new UpVectorData;
 	cj_data->pin_dir = DEFAULT_PIN_DIR;
-	cj_data->pin_matrix = Util::matrix_from_pin_dir(ORIGIN, cj_data->pin_dir);
+	Util::matrix_from_pin_dir(ORIGIN, cj_data->pin_dir, cj_data->pin_matrix);
 	cj_data->accel = DEFAULT_ACCEL;
 	cj_data->damp = DEFAULT_DAMP;
 	cj_data->damper_enabled = DEFAULT_DAMPER_ENABLED;
@@ -128,8 +122,6 @@ VALUE MSNewton::UpVector::create(VALUE self, VALUE v_joint) {
 	joint_data->submit_constraints = submit_constraints;
 	joint_data->get_info = get_info;
 	joint_data->on_destroy = on_destroy;
-	joint_data->on_connect = on_connect;
-	joint_data->on_disconnect = on_disconnect;
 
 	return Util::to_value(joint_data);
 }
@@ -149,7 +141,7 @@ VALUE MSNewton::UpVector::set_pin_dir(VALUE self, VALUE v_joint, VALUE v_pin_dir
 	Util::normalize_vector(pin_dir);
 	if (!Util::vectors_identical(pin_dir, cj_data->pin_dir)) {
 		cj_data->pin_dir = pin_dir;
-		cj_data->pin_matrix = Util::matrix_from_pin_dir(ORIGIN, cj_data->pin_dir);
+		Util::matrix_from_pin_dir(ORIGIN, cj_data->pin_dir, cj_data->pin_matrix);
 		if (joint_data->connected)
 			NewtonBodySetSleepState(joint_data->child, 0);
 	}
@@ -189,7 +181,7 @@ VALUE MSNewton::UpVector::enable_damper(VALUE self, VALUE v_joint, VALUE v_state
 	return Util::to_value(cj_data->damper_enabled);
 }
 
-VALUE MSNewton::UpVector::is_damper_enabled(VALUE self, VALUE v_joint) {
+VALUE MSNewton::UpVector::damper_enabled(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_UP_VECTOR);
 	UpVectorData* cj_data = (UpVectorData*)joint_data->cj_data;
 	return Util::to_value(cj_data->damper_enabled);
@@ -208,5 +200,5 @@ void Init_msp_up_vector(VALUE mNewton) {
 	rb_define_module_function(mUpVector, "get_damp", VALUEFUNC(MSNewton::UpVector::get_damp), 1);
 	rb_define_module_function(mUpVector, "set_damp", VALUEFUNC(MSNewton::UpVector::set_damp), 2);
 	rb_define_module_function(mUpVector, "enable_damper", VALUEFUNC(MSNewton::UpVector::enable_damper), 2);
-	rb_define_module_function(mUpVector, "is_damper_enabled?", VALUEFUNC(MSNewton::UpVector::is_damper_enabled), 1);
+	rb_define_module_function(mUpVector, "damper_enabled?", VALUEFUNC(MSNewton::UpVector::damper_enabled), 1);
 }

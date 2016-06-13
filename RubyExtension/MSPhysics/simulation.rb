@@ -605,7 +605,7 @@ module MSPhysics
     end
 
     # Get all joints with a particular name.
-    # @parma [String] name Joint Name.
+    # @param [String] name Joint Name.
     # @return [Array<Joint>]
     def get_joints_by_name(name)
       joints = []
@@ -616,7 +616,7 @@ module MSPhysics
     end
 
     # Get the first joint with a particular name.
-    # @parma [String] name Joint Name.
+    # @param [String] name Joint Name.
     # @return [Joint, nil] A joint or nil if not found.
     def get_joint_by_name(name)
       @world.get_joints.each { |joint|
@@ -676,16 +676,22 @@ module MSPhysics
         rescue Exception => e
           ref = nil
           test = MSPhysics::SCRIPT_NAME + ':'
-          e.backtrace.each { |location|
+          err_message = e.message
+          err_backtrace = e.backtrace
+          if RUBY_VERSION !~ /1.8/
+            err_message.force_encoding("UTF-8")
+            err_backtrace.each { |i| i.force_encoding("UTF-8") }
+          end
+          err_backtrace.each { |location|
             if location.include?(test)
               ref = location
               break
             end
           }
-          ref = e.message if !ref && e.message.include?(test)
+          ref = err_message if !ref && err_message.include?(test)
           line = ref ? ref.split(test, 2)[1].split(':', 2)[0].to_i : nil
-          msg = "#{e.class.to_s[0] =~ /a|e|i|o|u/i ? 'An' : 'A'} #{e.class} has occurred while evaluating entity script#{line ? ', line ' + line.to_s : nil}:\n#{e.message}"
-          raise MSPhysics::ScriptException.new(msg, e.backtrace, group, line)
+          msg = "#{e.class.to_s[0] =~ /a|e|i|o|u/i ? 'An' : 'A'} #{e.class} has occurred while evaluating entity script#{line ? ', line ' + line.to_s : nil}:\n#{err_message}"
+          raise MSPhysics::ScriptException.new(msg, err_backtrace, group, line)
         end if script.is_a?(String)
       end
 
@@ -1668,7 +1674,13 @@ module MSPhysics
         false
       }
     rescue Exception => e
-      puts "An exception occurred while updating particles.\n#{e.class}: #{e.message}"
+      err_message = e.message
+      err_backtrace = e.backtrace
+      if RUBY_VERSION !~ /1.8/
+        err_message.force_encoding("UTF-8")
+        err_backtrace.each { |i| i.force_encoding("UTF-8") }
+      end
+      puts "An exception occurred while updating particles.\n#{e.class}:\n#{err_message}\nTrace:\n#{err_backtrace.join("\n")}"
     end
 
     def draw_particles(view, bb)
@@ -1697,7 +1709,13 @@ module MSPhysics
       }
 =end
     rescue Exception => e
-      puts "An exception occurred while drawing particles.\n#{e.class}: #{e.message}"
+      err_message = e.message
+      err_backtrace = e.backtrace
+      if RUBY_VERSION !~ /1.8/
+        err_message.force_encoding("UTF-8")
+        err_backtrace.each { |i| i.force_encoding("UTF-8") }
+      end
+      puts "An exception occurred while drawing particles.\n#{e.class}:\n#{err_message}\nTrace:\n#{err_backtrace.join("\n")}"
     end
 
     def do_on_update
@@ -1754,7 +1772,9 @@ module MSPhysics
           #value = Kernel.eval(data[:controller], @controller.get_binding, CONTROLLER_NAME, 0)
           value = @controller_context.instance_eval(data[:controller], CONTROLLER_NAME, 0)
         rescue Exception => e
-          puts "An exception occurred while evaluating thruster controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{e.message}"
+          err_message = e.message
+          err_message.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+          puts "An exception occurred while evaluating thruster controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{err_message}"
         end
         return unless Simulation.is_active?
         next true unless body.is_valid?
@@ -1771,7 +1791,9 @@ module MSPhysics
             body.add_force2( data[:lock_axis] ? value.transform(body.get_normal_matrix) : value )
           end
         rescue Exception => e
-          puts "An exception occurred while assigning thruster controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{e.message}"
+          err_message = e.message
+          err_message.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+          puts "An exception occurred while assigning thruster controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{err_message}"
         end
         false
       }
@@ -1783,7 +1805,9 @@ module MSPhysics
           #value = Kernel.eval(data[:controller], @controller.get_binding, CONTROLLER_NAME, 0)
           value = @controller_context.instance_eval(data[:controller], CONTROLLER_NAME, 0)
         rescue Exception => e
-          puts "An exception occurred while evaluating emitter controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{e.message}"
+          err_message = e.message
+          err_message.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+          puts "An exception occurred while evaluating emitter controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{err_message}"
         end
         return unless Simulation.is_active?
         next true unless body.is_valid?
@@ -1802,7 +1826,9 @@ module MSPhysics
             end
           end
         rescue Exception => e
-          puts "An exception occurred while assigning emitter controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{e.message}"
+          err_message = e.message
+          err_message.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+          puts "An exception occurred while assigning emitter controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{err_message}"
         end
         false
       }
@@ -1837,18 +1863,14 @@ module MSPhysics
         begin
           value = @controller_context.instance_eval(controller, CONTROLLER_NAME, 0)
         rescue Exception => e
-          puts "An exception occurred while evaluating joint controller!\nController:\n#{controller}\n#{e.class}:\n#{e.message}"
+          err_message = e.message
+          err_message.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+          puts "An exception occurred while evaluating joint controller!\nController:\n#{controller}\n#{e.class}:\n#{err_message}"
         end
         return unless Simulation.is_active?
         next true if !joint.valid?
         begin
-          if joint.is_a?(Servo)
-            if value.is_a?(Numeric)
-              joint.controller = joint.sp_mode_enabled? ? value : value * ratio
-            elsif value.nil?
-              joint.controller = nil
-            end
-          elsif joint.is_a?(Piston)
+          if joint.is_a?(Servo) || joint.is_a?(Piston) || joint.is_a?(CurvyPiston)
             if value.is_a?(Numeric)
               joint.controller = value * ratio
             elsif value.nil?
@@ -1862,7 +1884,9 @@ module MSPhysics
             joint.controller = value * ratio
           end
         rescue Exception => e
-          puts "An exception occurred while assigning joint controller!\nController:\n#{controller}\n#{e.class}:\n#{e.message}"
+          err_message = e.message
+          err_message.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+          puts "An exception occurred while assigning joint controller!\nController:\n#{controller}\n#{e.class}:\n#{err_message}"
         end
         false
       }
@@ -2053,6 +2077,8 @@ module MSPhysics
 
     def draw_collision_wireframe(view)
       return unless @collision_wireframe[:show]
+      MSPhysics::Newton::World.draw_collision_wireframe(@world.get_address, view, @bb, @collision_wireframe[:sleeping], @collision_wireframe[:active], @collision_wireframe[:line_width], @collision_wireframe[:line_stipple])
+=begin
       view.line_width = @collision_wireframe[:line_width]
       view.line_stipple = @collision_wireframe[:line_stipple]
       world_address = @world.get_address
@@ -2068,6 +2094,7 @@ module MSPhysics
         body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
       end
       MSPhysics::Newton.enable_object_validation(ovs)
+=end
     end
 
     def draw_axes(view)
@@ -2233,6 +2260,14 @@ module MSPhysics
       ipos_ratio = 1.0 / pos_ratio
       case jtype
       when 'Fixed'
+        attr = joint_ent.get_attribute(jdict, 'Adjust To', 0)
+        if (attr == 2 && parent_body)
+          centre = parent_body.get_position(1)
+          pin_matrix = Geom::Transformation.new(pin_matrix.xaxis, pin_matrix.yaxis, pin_matrix.zaxis, centre)
+        elsif (attr == 1)
+          centre = child_body.get_position(1)
+          pin_matrix = Geom::Transformation.new(pin_matrix.xaxis, pin_matrix.yaxis, pin_matrix.zaxis, centre)
+        end
         joint = MSPhysics::Fixed.new(@world, parent_body, pin_matrix)
       when 'Hinge'
         joint = MSPhysics::Hinge.new(@world, parent_body, pin_matrix)
@@ -2278,16 +2313,12 @@ module MSPhysics
         joint.max = attr.to_f * ang_ratio
         attr = joint_ent.get_attribute(jdict, 'Enable Limits', MSPhysics::Servo::DEFAULT_LIMITS_ENABLED)
         joint.limits_enabled = attr
-        attr = joint_ent.get_attribute(jdict, 'Accel', MSPhysics::Servo::DEFAULT_ACCEL)
-        joint.accel = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Damp', MSPhysics::Servo::DEFAULT_DAMP)
-        joint.damp = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Strength', MSPhysics::Servo::DEFAULT_STRENGTH)
-        joint.strength = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Rate', MSPhysics::Servo::DEFAULT_RATE * iang_ratio)
+        joint.rate = attr.to_f * ang_ratio
+        attr = joint_ent.get_attribute(jdict, 'Power', MSPhysics::Servo::DEFAULT_POWER)
+        joint.power = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Reduction Ratio', MSPhysics::Servo::DEFAULT_REDUCTION_RATIO)
         joint.reduction_ratio = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Enable Sp Mode', MSPhysics::Servo::DEFAULT_SP_MODE_ENABLED)
-        joint.sp_mode_enabled = attr
         controller = joint_ent.get_attribute(jdict, 'Controller')
         if controller.is_a?(String) && !controller.empty?
           @controlled_joints[joint] = [controller, ang_ratio]
@@ -2314,10 +2345,10 @@ module MSPhysics
         joint.max = attr.to_f * pos_ratio
         attr = joint_ent.get_attribute(jdict, 'Enable Limits', MSPhysics::Piston::DEFAULT_LIMITS_ENABLED)
         joint.limits_enabled = attr
-        attr = joint_ent.get_attribute(jdict, 'Linear Rate', MSPhysics::Piston::DEFAULT_LINEAR_RATE * ipos_ratio)
-        joint.linear_rate = attr.to_f * pos_ratio
-        attr = joint_ent.get_attribute(jdict, 'Strength', MSPhysics::Piston::DEFAULT_STRENGTH)
-        joint.strength = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Rate', MSPhysics::Piston::DEFAULT_RATE * ipos_ratio)
+        joint.rate = attr.to_f * pos_ratio
+        attr = joint_ent.get_attribute(jdict, 'Power', MSPhysics::Piston::DEFAULT_POWER)
+        joint.power = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Reduction Ratio', MSPhysics::Piston::DEFAULT_REDUCTION_RATIO)
         joint.reduction_ratio = attr.to_f
         controller = joint_ent.get_attribute(jdict, 'Controller')
@@ -2399,26 +2430,111 @@ module MSPhysics
         attr = joint_ent.get_attribute(jdict, 'Max1', MSPhysics::Universal::DEFAULT_MAX * iang_ratio)
         joint.max1 = attr.to_f * ang_ratio
         attr = joint_ent.get_attribute(jdict, 'Enable Limits1', MSPhysics::Universal::DEFAULT_LIMITS_ENABLED)
-        joint.limits_enabled1 = attr
+        joint.limits1_enabled = attr
         attr = joint_ent.get_attribute(jdict, 'Min2', MSPhysics::Universal::DEFAULT_MIN * iang_ratio)
         joint.min2 = attr.to_f * ang_ratio
         attr = joint_ent.get_attribute(jdict, 'Max2', MSPhysics::Universal::DEFAULT_MAX * iang_ratio)
         joint.max2 = attr.to_f * ang_ratio
         attr = joint_ent.get_attribute(jdict, 'Enable Limits2', MSPhysics::Universal::DEFAULT_LIMITS_ENABLED)
-        joint.limits_enabled2 = attr
+        joint.limits2_enabled = attr
         attr = joint_ent.get_attribute(jdict, 'Friction', MSPhysics::Universal::DEFAULT_FRICTION)
         joint.friction = attr.to_f
         controller = joint_ent.get_attribute(jdict, 'Controller')
         if controller.is_a?(String) && !controller.empty?
           @controlled_joints[joint] = controller
         end
+      when 'CurvySlider', 'CurvyPiston'
+        if jtype == 'CurvySlider'
+          joint = MSPhysics::CurvySlider.new(@world, parent_body, pin_matrix)
+          attr = joint_ent.get_attribute(jdict, 'Enable Alignment', MSPhysics::CurvySlider::DEFAULT_ALIGNMENT_ENABLED)
+          joint.alignment_enabled = attr
+          attr = joint_ent.get_attribute(jdict, 'Enable Rotation', MSPhysics::CurvySlider::DEFAULT_ROTATION_ENABLED)
+          joint.rotation_enabled = attr
+          attr = joint_ent.get_attribute(jdict, 'Enable Loop', MSPhysics::CurvySlider::DEFAULT_LOOP_ENABLED)
+          joint.loop_enabled = attr
+          attr = joint_ent.get_attribute(jdict, 'Linear Friction', MSPhysics::CurvySlider::DEFAULT_LINEAR_FRICTION)
+          joint.linear_friction = attr.to_f
+          attr = joint_ent.get_attribute(jdict, 'Angular Friction', MSPhysics::CurvySlider::DEFAULT_ANGULAR_FRICTION)
+          joint.angular_friction = attr.to_f
+          controller = joint_ent.get_attribute(jdict, 'Controller')
+          if controller.is_a?(String) && !controller.empty?
+            @controlled_joints[joint] = controller
+          end
+        else
+          joint = MSPhysics::CurvyPiston.new(@world, parent_body, pin_matrix)
+          attr = joint_ent.get_attribute(jdict, 'Enable Alignment', MSPhysics::CurvyPiston::DEFAULT_ALIGNMENT_ENABLED)
+          joint.alignment_enabled = attr
+          attr = joint_ent.get_attribute(jdict, 'Enable Rotation', MSPhysics::CurvyPiston::DEFAULT_ROTATION_ENABLED)
+          joint.rotation_enabled = attr
+          attr = joint_ent.get_attribute(jdict, 'Enable Loop', MSPhysics::CurvyPiston::DEFAULT_LOOP_ENABLED)
+          joint.loop_enabled = attr
+          attr = joint_ent.get_attribute(jdict, 'Angular Friction', MSPhysics::CurvyPiston::DEFAULT_ANGULAR_FRICTION)
+          joint.angular_friction = attr.to_f
+          attr = joint_ent.get_attribute(jdict, 'Rate', MSPhysics::CurvyPiston::DEFAULT_RATE * ipos_ratio)
+          joint.rate = attr.to_f * pos_ratio
+          attr = joint_ent.get_attribute(jdict, 'Power', MSPhysics::CurvyPiston::DEFAULT_POWER)
+          joint.power = attr.to_f
+          attr = joint_ent.get_attribute(jdict, 'Reduction Ratio', MSPhysics::CurvyPiston::DEFAULT_REDUCTION_RATIO)
+          joint.reduction_ratio = attr.to_f
+          controller = joint_ent.get_attribute(jdict, 'Controller')
+          if controller.is_a?(String) && !controller.empty?
+            @controlled_joints[joint] = controller
+          end
+        end
+        # Get points on curve
+        closest_dist = nil
+        start_vertex = nil
+        MSPhysics::Group.get_entities(joint_ent).each { |e|
+          next unless e.is_a?(Sketchup::Edge)
+          dist1 = e.start.position.distance(ORIGIN)
+          dist2 = e.end.position.distance(ORIGIN)
+          if dist1 < dist2
+            vertex = e.start
+            dist = dist1
+          else
+            vertex = e.end
+            dist = dist2
+          end
+          if closest_dist.nil? || dist < closest_dist
+            closest_dist = dist
+            start_vertex = vertex
+            break if closest_dist < 1.0e-8
+          end
+        }
+        verts = []
+        if start_vertex
+          used_edges = []
+          verts << start_vertex
+          edge = start_vertex.edges[0]
+          verts << edge.other_vertex(start_vertex)
+          used_edges << edge
+          while true
+            edge = nil
+            lastv = verts.last
+            lastv.edges.each { |e|
+              unless used_edges.include?(e)
+                edge = e
+                break
+              end
+            }
+            break unless edge
+            verts << edge.other_vertex(lastv)
+            used_edges << edge
+          end
+        end
+        # Append points to curve
+        tra = joint_ent.transformation
+        if parent_body
+          tra = parent_body.get_matrix * tra
+        end
+        verts.each { |v| joint.add_point(v.position.transform(tra)) }
       else
         return
       end
 
       attr = joint_ent.get_attribute(jdict, 'Constraint Type', MSPhysics::Joint::DEFAULT_CONSTRAINT_TYPE).to_i
       joint.constraint_type = attr
-      attr = joint_ent.get_attribute(jdict, 'Name').to_s
+      attr = joint_ent.name.to_s
       attr = joint_ent.get_attribute(jdict, 'ID').to_s if attr.empty?
       joint.name = attr
       attr = joint_ent.get_attribute(jdict, 'Stiffness', MSPhysics::Joint::DEFAULT_STIFFNESS)
@@ -2427,7 +2543,6 @@ module MSPhysics
       joint.bodies_collidable = attr
       attr = joint_ent.get_attribute(jdict, 'Breaking Force', MSPhysics::Joint::DEFAULT_BREAKING_FORCE)
       joint.breaking_force = attr.to_f
-      joint.name = joint_ent.get_attribute(jdict, 'ID').to_s
 
       joint.connect(child_body)
       joint
@@ -2451,7 +2566,13 @@ module MSPhysics
               begin
                 init_joint(cent, parent_body, child_body, jtra)
               rescue Exception => e
-                puts "An exception occurred while creating a joint from #{cent}!\n#{e.class}:\n#{e.message}\nLocation:\n#{e.backtrace.join("\n")}"
+                err_message = e.message
+                err_backtrace = e.backtrace
+                if RUBY_VERSION !~ /1.8/
+                  err_message.force_encoding("UTF-8")
+                  err_backtrace.each { |i| i.force_encoding("UTF-8") }
+                end
+                puts "An exception occurred while creating a joint from #{cent}!\n#{e.class}:\n#{err_message}\nTrace:\n#{err_backtrace.join("\n")}"
               end
             }
           }
@@ -2462,7 +2583,13 @@ module MSPhysics
             begin
               init_joint(ent, nil, child_body, jtra)
             rescue Exception => e
-              puts "An exception occurred while creating a joint from #{ent}!\n#{e.class}:\n#{e.message}\nLocation:\n#{e.backtrace.join("\n")}"
+              err_message = e.message
+              err_backtrace = e.backtrace
+              if RUBY_VERSION !~ /1.8/
+                err_message.force_encoding("UTF-8")
+                err_backtrace.each { |i| i.force_encoding("UTF-8") }
+              end
+              puts "An exception occurred while creating a joint from #{ent}!\n#{e.class}:\n#{err_message}\nTrace:\n#{err_backtrace.join("\n")}"
             end
           }
         end
@@ -2479,7 +2606,13 @@ module MSPhysics
             jparent_body = jparent_ent ? get_body_by_group(jparent_ent) : nil
             init_joint(jent, jparent_body, body, jtra)
           rescue Exception => e
-            puts "An exception occurred while creating a joint from #{jent}!\n#{e.class}:\n#{e.message}\nLocation:\n#{e.backtrace.join("\n")}"
+            err_message = e.message
+            err_backtrace = e.backtrace
+            if RUBY_VERSION !~ /1.8/
+              err_message.force_encoding("UTF-8")
+              err_backtrace.each { |i| i.force_encoding("UTF-8") }
+            end
+            puts "An exception occurred while creating a joint from #{jent}!\n#{e.class}:\n#{err_message}\nTrace:\n#{err_backtrace.join("\n")}"
           end
         }
       }
@@ -2584,8 +2717,14 @@ module MSPhysics
             return
           rescue StandardError => e
             index = ents.index(entity)
-            puts "Entity at index #{index} was not added to simulation:\n#{e.inspect}\n"
-            puts e.backtrace.first
+            err_message = e.message
+            err_backtrace = e.backtrace
+            if RUBY_VERSION !~ /1.8/
+              err_message.force_encoding("UTF-8")
+              err_backtrace.each { |i| i.force_encoding("UTF-8") }
+            end
+            #~ puts "Entity at index #{index} was not added to simulation:\n#{e.class}:\n#{err_message}\nTrace:\n#{err_backtrace.join("\n")}\n\n"
+            puts "Entity at index #{index} was not added to simulation:\n#{e.class}:\n#{err_message}\n\n"
           end
         elsif type == 'Joint'
         elsif type == 'Buoyancy Plane'
@@ -2787,8 +2926,14 @@ module MSPhysics
       @@instance = nil
       # Show info
       if @error
-        msg = "MSPhysics Simulation has been aborted due to an error!\n#{@error.class}: #{@error}"
-        puts "#{msg}\nTrace:\n#{@error.backtrace.join("\n")}\n\n"
+        err_message = @error.message
+        err_backtrace = @error.backtrace
+        if RUBY_VERSION !~ /1.8/
+          err_message.force_encoding("UTF-8")
+          err_backtrace.each { |i| i.force_encoding("UTF-8") }
+        end
+        msg = "MSPhysics Simulation has been aborted due to an error!\n#{@error.class}:\n#{err_message}"
+        puts "#{msg}\nTrace:\n#{err_backtrace.join("\n")}\n\n"
         ::UI.messagebox(msg)
         if @error.is_a?(MSPhysics::ScriptException)
           MSPhysics::Dialog.locate_error(@error)
@@ -2809,7 +2954,9 @@ module MSPhysics
       # Save replay animation data
       if MSPhysics::Replay.recorded_data_valid? && ::UI.messagebox("Would you like to save recorded simulation for the replay?", MB_YESNO) == IDYES
         MSPhysics::Replay.save_recorded_data
-        MSPhysics::Replay.smooth_camera_data1
+        if ::UI.messagebox("Would you like to smoothen recorded camera?", MB_YESNO) == IDYES
+          MSPhysics::Replay.smooth_camera_data1(25)
+        end
         MSPhysics::Replay.save_data_to_model(true)
       end
       MSPhysics::Replay.clear_recorded_data

@@ -41,14 +41,16 @@ public:
 	static void on_collidable_changed(JointData* joint_data);
 	static void on_stiffness_changed(JointData* joint_data);
 	static void on_pin_matrix_changed(JointData* joint_data);
+	static void adjust_pin_matrix_proc(JointData* joint_data, dMatrix& pin_matrix);
 
 	static void skeleton_destructor(const NewtonSkeletonContainer* const skeleton);
 
 	// Helper Functions
 	static void c_calculate_local_matrix(JointData* joint_data);
-	static void c_calculate_global_matrix(JointData* joint_data, dMatrix& matrix0, dMatrix& matrix1);
+	static void c_calculate_global_matrix(JointData* joint_data, dMatrix& matrix0, dMatrix& matrix1, dMatrix& matrix2);
 	static dFloat c_calculate_angle(const dVector& dir, const dVector& cosDir, const dVector& sinDir, dFloat& sinAngle, dFloat& cosAngle);
 	static dFloat c_calculate_angle(const dVector& dir, const dVector& cosDir, const dVector& sinDir);
+	static void c_get_pin_matrix(JointData* joint_data, dMatrix& matrix_out);
 	static JointData* c_create(const NewtonWorld* world, const NewtonBody* parent, dMatrix pin_matrix, unsigned int dof, VALUE v_group);
 	static void c_destroy(JointData* joint_data);
 

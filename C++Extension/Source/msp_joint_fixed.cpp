@@ -17,12 +17,11 @@ void MSNewton::Fixed::submit_constraints(const NewtonJoint* joint, dgFloat32 tim
 	JointData* joint_data = (JointData*)NewtonJointGetUserData(joint);
 
 	// Calculate position of pivot points and Jacobian direction vectors in global space.
-	dMatrix matrix0;
-	dMatrix matrix1;
-	Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1);
+	dMatrix matrix0, matrix1, matrix2;
+	MSNewton::Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1, matrix2);
 
-	dVector p0(matrix0.m_posit);
-	dVector p1(matrix1.m_posit);
+	const dVector& p0 = matrix0.m_posit;
+	const dVector& p1 = matrix1.m_posit;
 	// Get a point along the pin axis at some reasonable large distance from the pivot.
 	dVector q0(p0 + matrix0.m_right.Scale(MIN_JOINT_PIN_LENGTH));
 	dVector q1(p1 + matrix1.m_right.Scale(MIN_JOINT_PIN_LENGTH));
@@ -96,10 +95,24 @@ void MSNewton::Fixed::on_destroy(JointData* joint_data) {
 	delete cj_data;
 }
 
-void MSNewton::Fixed::on_connect(JointData* joint_data) {
-}
-
-void MSNewton::Fixed::on_disconnect(JointData* joint_data) {
+void MSNewton::Fixed::adjust_pin_matrix_proc(JointData* joint_data, dMatrix& pin_matrix) {
+	dMatrix matrix;
+	dVector ccentre;
+	NewtonBodyGetMatrix(joint_data->child, &matrix[0][0]);
+	NewtonBodyGetCentreOfMass(joint_data->child, &ccentre[0]);
+	ccentre = matrix.TransformVector(ccentre);
+	if (joint_data->parent != nullptr) {
+		/*NewtonBodyGetMatrix(joint_data->parent, &matrix[0][0]);
+		dVector pcentre;
+		NewtonBodyGetCentreOfMass(joint_data->parent, &pcentre[0]);
+		pcentre = matrix.TransformVector(pcentre);
+		pin_matrix.m_posit.m_x = (ccentre.m_x + pcentre.m_x) * 0.5f;
+		pin_matrix.m_posit.m_y = (ccentre.m_y + pcentre.m_y) * 0.5f;
+		pin_matrix.m_posit.m_z = (ccentre.m_z + pcentre.m_z) * 0.5f;*/
+	}
+	else {
+		pin_matrix.m_posit = ccentre;
+	}
 }
 
 
@@ -127,8 +140,7 @@ VALUE MSNewton::Fixed::create(VALUE self, VALUE v_joint) {
 	joint_data->submit_constraints = submit_constraints;
 	joint_data->get_info = get_info;
 	joint_data->on_destroy = on_destroy;
-	joint_data->on_connect = on_connect;
-	joint_data->on_disconnect = on_disconnect;
+	//~ joint_data->adjust_pin_matrix_proc = adjust_pin_matrix_proc;
 
 	return Util::to_value(joint_data);
 }

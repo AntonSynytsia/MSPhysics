@@ -98,7 +98,7 @@ function update_size2() {
 function assign_joint_click_event() {
   var last_selected_joint_label = 0;
   $('.joint-label').off();
-  $('.joint-label').on("click", function() {
+  $('.joint-label').on('click', function() {
     if (last_selected_joint_label != 0) {
       last_selected_joint_label.removeClass('joint-label-selected');
       last_selected_joint_label.addClass('joint-label');
@@ -226,8 +226,11 @@ $(document).ready( function() {
     e.preventDefault();
   });
 
-  $('#tab1').on('mouseenter', function(e) {
+  /*$('#tab1').on('mouseenter', function(e) {
     callback('update_simulation_state');
+  });*/
+  $( document ).on('mouseenter', function(e) {
+    callback("mouse_enter");
   });
 
   // Resize editor

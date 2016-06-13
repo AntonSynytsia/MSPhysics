@@ -4,7 +4,7 @@ module MSPhysics
   class ScriptException < Exception
 
     # @param [String] message
-    # @parma [Array<String>] backtrace
+    # @param [Array<String>] backtrace
     # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
     # @param [Fixnum, nil] line
     def initialize(message, backtrace, entity, line)

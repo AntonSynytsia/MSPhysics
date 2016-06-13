@@ -2,6 +2,15 @@
 
 /*
  ///////////////////////////////////////////////////////////////////////////////
+  Constants
+ ///////////////////////////////////////////////////////////////////////////////
+*/
+
+const VALUE MSNewton::World::V_GL_LINE_LOOP = INT2FIX(2);
+
+
+/*
+ ///////////////////////////////////////////////////////////////////////////////
   Callback Functions
  ///////////////////////////////////////////////////////////////////////////////
 */
@@ -33,8 +42,8 @@ void MSNewton::World::destructor_callback(const NewtonWorld* const world) {
 }
 
 int MSNewton::World::aabb_overlap_callback(const NewtonMaterial* const material, const NewtonBody* const body0, const NewtonBody* const body1, int thread_index) {
-	BodyData* data0 = (BodyData*)NewtonBodyGetUserData(body0);
-	BodyData* data1 = (BodyData*)NewtonBodyGetUserData(body1);
+	const BodyData* data0 = (const BodyData*)NewtonBodyGetUserData(body0);
+	const BodyData* data1 = (const BodyData*)NewtonBodyGetUserData(body1);
 	NewtonWorld* world = NewtonBodyGetWorld(body0);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	if ((data0->collidable == false || data1->collidable == false) ||
@@ -54,13 +63,29 @@ int MSNewton::World::aabb_overlap_callback(const NewtonMaterial* const material,
 		}
 		return 0;
 	}
-	else {
-		if (NewtonBodyGetFreezeState(body0) == 1)
+	else if (NewtonBodyGetFreezeState(body0) == 1 || NewtonBodyGetFreezeState(body1) == 1) {
+		if (NewtonBodyGetContinuousCollisionMode(body0) == 1 || NewtonBodyGetContinuousCollisionMode(body1) == 1) {
 			NewtonBodySetFreezeState(body0, 0);
-		if (NewtonBodyGetFreezeState(body1) == 1)
 			NewtonBodySetFreezeState(body1, 0);
-		return 1;
+			return 1;
+		}
+		else {
+			const NewtonCollision* colA = NewtonBodyGetCollision(body0);
+			const NewtonCollision* colB = NewtonBodyGetCollision(body1);
+			dMatrix matrixA, matrixB;
+			NewtonBodyGetMatrix(body0, &matrixA[0][0]);
+			NewtonBodyGetMatrix(body1, &matrixB[0][0]);
+			if (NewtonCollisionIntersectionTest(world, colA, &matrixA[0][0], colB, &matrixB[0][0], 0) == 1) {
+				NewtonBodySetFreezeState(body0, 0);
+				NewtonBodySetFreezeState(body1, 0);
+				return 1;
+			}
+			else
+				return 0;
+		}
 	}
+	else
+		return 1;
 }
 
 void MSNewton::World::contact_callback(const NewtonJoint* const contact_joint, dFloat timestep, int thread_index) {
@@ -167,6 +192,16 @@ void MSNewton::World::collision_copy_constructor_callback(const NewtonWorld* con
 
 void MSNewton::World::collision_destructor_callback(const NewtonWorld* const world, const NewtonCollision* const collision) {
 	valid_collisions.erase(collision);
+}
+
+void MSNewton::World::draw_collision_iterator(void* const user_data, int vertex_count, const dFloat* const face_array, int face_id) {
+	DrawData* data = (DrawData*)(user_data);
+	VALUE v_face = rb_ary_new2(vertex_count);
+	for (int i = 0; i < vertex_count; ++i) {
+		dVector vertex(face_array[i*3+0], face_array[i*3+1], face_array[i*3+2]);
+		rb_ary_store(v_face, i, Util::point_to_value(vertex, data->scale));
+	};
+	rb_funcall(data->v_view, INTERN_DRAW, 2, V_GL_LINE_LOOP, v_face);
 }
 
 
@@ -358,11 +393,15 @@ VALUE MSNewton::World::create(VALUE self, VALUE v_world_scale) {
 	data->joints_to_disconnect;
 	data->time = 0.0f;
 	data->scale = world_scale;
-	data->scale3 = world_scale * world_scale * world_scale;
+	data->scale2 = world_scale * world_scale;
+	data->scale3 = data->scale2 * world_scale;
 	data->scale4 = data->scale3 * world_scale;
+	data->scale5 = data->scale4 * world_scale;
 	data->inverse_scale = 1.0f / data->scale;
+	data->inverse_scale2 = 1.0f / data->scale2;
 	data->inverse_scale3 = 1.0f / data->scale3;
 	data->inverse_scale4 = 1.0f / data->scale4;
+	data->inverse_scale5 = 1.0f / data->scale5;
 	data->gravity_enabled = false;
 	data->process_info = true;
 	data->temp_cccd_bodies;
@@ -613,8 +652,9 @@ VALUE MSNewton::World::ray_cast(VALUE self, VALUE v_world, VALUE v_point1, VALUE
 	dVector point1 = Util::value_to_point(v_point1, world_data->scale);
 	dVector point2 = Util::value_to_point(v_point2, world_data->scale);
 	Hit* hit = new Hit();
+	hit->body = nullptr;
 	NewtonWorldRayCast(world, &point1[0], &point2[0], ray_filter_callback, (void*)hit, NULL, 0);
-	VALUE v_res =  hit->body ? rb_ary_new3(3, Util::to_value(hit->body), Util::point_to_value(hit->point, world_data->inverse_scale), Util::vector_to_value(hit->normal)) : Qnil;
+	VALUE v_res =  hit->body != nullptr ? rb_ary_new3(3, Util::to_value(hit->body), Util::point_to_value(hit->point, world_data->inverse_scale), Util::vector_to_value(hit->normal)) : Qnil;
 	delete hit;
 	return v_res;
 }
@@ -790,16 +830,14 @@ VALUE MSNewton::World::get_touch_data_at(VALUE self, VALUE v_world, VALUE v_inde
 	rb_ary_store(v_touch_data, 1, Util::to_value(touch_data.body1));
 	rb_ary_store(v_touch_data, 2, Util::point_to_value(touch_data.point, world_data->inverse_scale));
 	rb_ary_store(v_touch_data, 3, Util::vector_to_value(touch_data.normal));
-	BodyData* body0_data = (BodyData*)NewtonBodyGetUserData(touch_data.body0);
-	BodyData* body1_data = (BodyData*)NewtonBodyGetUserData(touch_data.body1);
-	dVector force(touch_data.force);
-	for (int i = 0; i < 3; ++i)
-		force[i] *= world_data->inverse_scale3;
-	if (world_data->gravity_enabled && (body0_data->gravity_enabled || body1_data->gravity_enabled)) {
+	//BodyData* body0_data = (BodyData*)NewtonBodyGetUserData(touch_data.body0);
+	//BodyData* body1_data = (BodyData*)NewtonBodyGetUserData(touch_data.body1);
+	//dVector force(touch_data.force);
+	/*if (world_data->gravity_enabled && (body0_data->gravity_enabled || body1_data->gravity_enabled)) {
 		for (int i = 0; i < 3; ++i)
 			force[i] *= world_data->inverse_scale;
-	}
-	rb_ary_store(v_touch_data, 4, Util::vector_to_value(force));
+	}*/
+	rb_ary_store(v_touch_data, 4, Util::vector_to_value(touch_data.force, world_data->inverse_scale4));
 	rb_ary_store(v_touch_data, 5, Util::to_value(touch_data.speed * world_data->inverse_scale));
 	return v_touch_data;
 }
@@ -902,6 +940,31 @@ VALUE MSNewton::World::get_default_material_id(VALUE self, VALUE v_world) {
 	return Util::to_value(world_data->material_id);
 }
 
+VALUE MSNewton::World::draw_collision_wireframe(VALUE self, VALUE v_world, VALUE v_view, VALUE v_bb, VALUE v_sleep_color, VALUE v_active_color, VALUE v_line_width, VALUE v_line_stipple) {
+	const NewtonWorld* world = Util::value_to_world(v_world);
+	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
+	DrawData draw_data;
+	draw_data.v_view = v_view;
+	draw_data.v_bb = v_bb;
+	draw_data.scale = world_data->inverse_scale;
+	rb_funcall(v_view, INTERN_SLINE_WIDTH, 1, v_line_width);
+	rb_funcall(v_view, INTERN_SLINE_STIPPLE, 1, v_line_stipple);
+	unsigned int count = 0;
+	dMatrix matrix;
+	for (const NewtonBody* body = NewtonWorldGetFirstBody(world); body; body = NewtonWorldGetNextBody(world, body)) {
+		NewtonCollision* collision = NewtonBodyGetCollision(body);
+		NewtonBodyGetMatrix(body, &matrix[0][0]);
+		//rb_funcall(v_bb, INTERN_ADD, 1, Util::point_to_value(matrix.m_posit, world_data->inverse_scale));
+		if (NewtonBodyGetSleepState(body) == 1)
+			rb_funcall(v_view, INTERN_SDRAWING_COLOR, 1, v_sleep_color);
+		else
+			rb_funcall(v_view, INTERN_SDRAWING_COLOR, 1, v_active_color);
+		NewtonCollisionForEachPolygonDo(collision, &matrix[0][0], draw_collision_iterator, (void*)&draw_data);
+		++count;
+	}
+	return Util::to_value(count);
+}
+
 
 /*
  ///////////////////////////////////////////////////////////////////////////////
@@ -960,4 +1023,5 @@ void Init_msp_world(VALUE mNewton) {
 	rb_define_module_function(mWorld, "get_joints", VALUEFUNC(MSNewton::World::get_joints), 1);
 	rb_define_module_function(mWorld, "get_joint_datas", VALUEFUNC(MSNewton::World::get_joint_datas), 1);
 	rb_define_module_function(mWorld, "get_default_material_id", VALUEFUNC(MSNewton::World::get_default_material_id), 1);
+	rb_define_module_function(mWorld, "draw_collision_wireframe", VALUEFUNC(MSNewton::World::draw_collision_wireframe), 7);
 }

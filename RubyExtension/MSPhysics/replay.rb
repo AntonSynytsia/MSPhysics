@@ -1605,12 +1605,11 @@ module MSPhysics
           @groups_data.each { |entity, data|
             frame_data = get_frame_data(data, pframe)
             instance = data[:instance]
-            if frame_data.nil?
-              if instance && instance.valid? && instance.visible? && (pframe < data[:start_frame] || pframe > data[:end_frame])
-                instance.visible = false
-              end
+            if instance && instance.valid? && instance.visible? && (pframe < data[:start_frame] || pframe > data[:end_frame])
+              instance.visible = false
               next
             end
+            next unless frame_data
             material = frame_data[:material]
             if (entity.is_a?(Sketchup::Group) || entity.is_a?(Sketchup::ComponentInstance)) && entity.valid?
               entity.move!(frame_data[:transformation]) if frame_data[:transformation]
@@ -1755,6 +1754,7 @@ module MSPhysics
         script_file = UI.savepanel('Choose Export Directory and Name', nil, model_fname)
         return false unless script_file
         fpath = File.dirname(script_file)
+        fpath.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
         fname = File.basename(script_file, '.skp')
         # Preset user data
         sframe = results[0].to_i
@@ -1846,6 +1846,7 @@ module MSPhysics
         script_file = UI.savepanel('Choose Export Directory and Name', nil, model_fname)
         return false unless script_file
         fpath = File.dirname(script_file)
+        fpath.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
         fname = File.basename(script_file, '.skp')
         # Preset user data
         sframe = results[0].to_i
@@ -1977,6 +1978,7 @@ def self.export_msp_animation
   end
   script_file = UI.savepanel('Select Export Directory and Name', '', model_name)
   return false unless script_file
+  script_file.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
   if script_file == script_file.split('.')[0..-2].join('.') # No file extension
     script_file << '.kst'
   end
@@ -2070,6 +2072,7 @@ def self.export_msp_animation
   if result == IDYES
     kt_path = SU2KT.get_kt_path
     return unless kt_path
+    kt_path.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
     if RUBY_PLATFORM =~ /mswin|mingw/i
       #batch_file_path = File.join(File.dirname(kt_path), 'start.bat')
       batch_file_path = File.join(File.dirname(script_file), "#{File.basename(script_file, '.kst')}_start_render.bat")
@@ -2131,6 +2134,7 @@ def self.export_msp_animation
 
   # Select export path and create export folder.
   model_filename = File.basename(model.path, ".*")
+  model_filename.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
   if model_filename.empty?
     queue_filename = 'Untitled.igq'
   else
@@ -2138,9 +2142,11 @@ def self.export_msp_animation
   end
   batch_file_path = UI.savepanel('Select Export Directory and Name', '', queue_filename)
   return false unless batch_file_path
+  batch_file_path.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
   export_dir = File.join(File.dirname(batch_file_path), File.basename(batch_file_path, ".*"))
   Dir.mkdir(export_dir) unless FileTest.exist?(export_dir)
   export_path = File.join(export_dir, File.basename(batch_file_path, ".*")) + '.igs'
+  export_path.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
 
   ie = ::IndigoExporter.new(export_path)
   ie.settings.save_to_model()
@@ -2396,7 +2402,13 @@ end}
           MSPhysics::Replay.clear_recorded_data
           MSPhysics::Replay.clear_active_data
           MSPhysics::Replay.reset_replay_settings
-          msg = "An error occurred while loading MSPhysics Replay data!\n#{e.class}:\n#{e.message}\nBacktrace:\n#{e.backtrace.join("\n")}\n"
+          err_message = e.message
+          err_backtrace = e.backtrace
+          if RUBY_VERSION !~ /1.8/
+            err_message.force_encoding("UTF-8")
+            err_backtrace.each { |i| i.force_encoding("UTF-8") }
+          end
+          msg = "An error occurred while loading MSPhysics Replay data!\n#{e.class}:\n#{err_message}\nBacktrace:\n#{err_backtrace.join("\n")}\n"
           ::UI.messagebox(msg)
           puts msg
         end

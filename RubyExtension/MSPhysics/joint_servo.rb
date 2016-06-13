@@ -6,12 +6,10 @@ module MSPhysics
     DEFAULT_MIN = -180.0.degrees
     DEFAULT_MAX = 180.0.degrees
     DEFAULT_LIMITS_ENABLED = false
-    DEFAULT_ACCEL = 40.0
-    DEFAULT_DAMP = 10.0
-    DEFAULT_STRENGTH = 0.0
+    DEFAULT_RATE = 360.degrees
+    DEFAULT_POWER = 0.0
     DEFAULT_REDUCTION_RATIO = 0.1
     DEFAULT_CONTROLLER = nil
-    DEFAULT_SP_MODE_ENABLED = false
 
     # Create a servo joint.
     # @param [MSPhysics::World] world
@@ -26,11 +24,9 @@ module MSPhysics
       MSPhysics::Newton::Servo.set_min(@address, DEFAULT_MIN)
       MSPhysics::Newton::Servo.set_max(@address, DEFAULT_MAX)
       MSPhysics::Newton::Servo.enable_limits(@address, DEFAULT_LIMITS_ENABLED)
-      MSPhysics::Newton::Servo.set_accel(@address, DEFAULT_ACCEL)
-      MSPhysics::Newton::Servo.set_damp(@address, DEFAULT_DAMP)
-      MSPhysics::Newton::Servo.set_strength(@address, DEFAULT_STRENGTH)
+      MSPhysics::Newton::Servo.set_rate(@address, DEFAULT_RATE)
+      MSPhysics::Newton::Servo.set_power(@address, DEFAULT_POWER)
       MSPhysics::Newton::Servo.set_reduction_ratio(@address, DEFAULT_REDUCTION_RATIO)
-      MSPhysics::Newton::Servo.enable_sp_mode(@address, DEFAULT_SP_MODE_ENABLED)
       MSPhysics::Newton::Servo.set_controller(@address, DEFAULT_CONTROLLER)
     end
 
@@ -90,109 +86,68 @@ module MSPhysics
       MSPhysics::Newton::Servo.enable_limits(@address, state)
     end
 
-    # Get angular acceleration in radians per second per second.
-    # @note If SP mode is disabled, the maximum angular rate in radians per
-    #   second is <tt>accel / damp</tt>.
+    # Get maximum angular rate in radians per second.
     # @return [Numeric]
-    def accel
-      MSPhysics::Newton::Servo.get_accel(@address)
+    def rate
+      MSPhysics::Newton::Servo.get_rate(@address)
     end
 
-    # Set angular acceleration in radians per second per second.
-    # @note If SP mode is disabled, the maximum angular rate in radians per
-    #   second is <tt>accel / damp</tt>.
+    # Set maximum angular rate in radians per second.
     # @param [Numeric] value A value greater than or equal to zero.
-    def accel=(value)
-      MSPhysics::Newton::Servo.set_accel(@address, value)
+    def rate=(value)
+      MSPhysics::Newton::Servo.set_rate(@address, value)
     end
 
-    # Get angular damper.
-    # @note Higher damper makes rotation stronger.
-    # @note If SP mode is disabled, the maximum angular rate in radians per
-    #   second is <tt>accel / damp</tt>.
+    # Get rotational power in Watts.
+    # @note A power value of zero represents maximum power.
     # @return [Numeric]
-    def damp
-      MSPhysics::Newton::Servo.get_damp(@address)
+    def power
+      MSPhysics::Newton::Servo.get_power(@address)
     end
 
-    # Set angular damper.
-    # @note Higher damper makes rotation stronger.
-    # @note If SP mode is disabled, the maximum angular rate in radians per
-    #   second is <tt>accel / damp</tt>.
+    # Set rotational power in Watts.
+    # @note A power value of zero represents maximum power.
     # @param [Numeric] value A value greater than or equal to zero.
-    def damp=(value)
-      MSPhysics::Newton::Servo.set_damp(@address, value)
-    end
-
-    # Get angular strength.
-    # @return [Numeric]
-    def strength
-      MSPhysics::Newton::Servo.get_strength(@address)
-    end
-
-    # Set angular strength.
-    # @note A strength value of 0.0 represents maximum strength.
-    # @param [Numeric] value A value greater than or equal to zero.
-    def strength=(value)
-      MSPhysics::Newton::Servo.set_strength(@address, value)
+    def power=(value)
+      MSPhysics::Newton::Servo.set_power(@address, value)
     end
 
     # Get angular reduction ratio.
-    # @note The reduction ratio is a feature that reduces angular rate when
-    #   servo angle nears its desired angle. A value of 0.0 will disable the
-    #   angular reduction. A value of greater than zero will enable angular
-    #   reduction. Angular reduction starts acting upon the angular rate when
-    #   the difference between the current angle and the desired angle is less
-    #   than or equal to <tt>accel * reduction_ratio / damp</tt> radians.
-    # @note This option has no effect if SP mode is enabled.
+    # @note Reduction ratio is a feature that reduces angular rate of the joint
+    #   when its current angle nears its desired angle. Angular reduction ratio
+	#   starts acting upon the angular rate of the joint when the difference
+	#	between the current angle and the desired angle of the joint is less
+    #   than <tt>rate * reduction_ratio</tt> radians.
+    # @note A reduction ratio of zero disables the reduction feature.
+    # @note A typical reduction ratio value is 0.1.
     # @return [Numeric] A value between 0.0 and 1.0.
     def reduction_ratio
       MSPhysics::Newton::Servo.get_reduction_ratio(@address)
     end
 
     # Set angular reduction ratio.
-    # @note The reduction ratio is a feature that reduces angular rate when
-    #   servo angle nears its desired angle. A value of 0.0 will disable the
-    #   angular reduction. A value of greater than zero will enable angular
-    #   reduction. Angular reduction starts acting upon the angular rate when
-    #   the difference between the current angle and the desired angle is less
-    #   than or equal to <tt>accel * reduction_ratio / damp</tt> radians.
-    # @note This option has no effect if SP mode is enabled.
+    # @note Reduction ratio is a feature that reduces angular rate of the joint
+    #   when its current angle nears its desired angle. Angular reduction ratio
+	#   starts acting upon the angular rate of the joint when the difference
+	#	between the current angle and the desired angle of the joint is less
+    #   than <tt>rate * reduction_ratio</tt> radians.
+    # @note A reduction ratio of zero disables the reduction feature.
+    # @note A typical reduction ratio value is 0.1.
     # @param [Numeric] value A value between 0.0 and 1.0.
     def reduction_ratio=(value)
       MSPhysics::Newton::Servo.set_reduction_ratio(@address, value)
     end
 
-    # Determine whether SketchyPhysics mode is enabled.
-    # @note In SketchyPhysics mode, the controller parameter is used to control
-    #   the ratio between the min and max angle range, as well as, the servo is
-    #   stronger and usually rotates faster to its desired destination angle.
-    # @return [Boolean]
-    def sp_mode_enabled?
-      MSPhysics::Newton::Servo.sp_mode_enabled?(@address)
-    end
-
-    # Enable/disable SketchyPhysics mode.
-    # @note In SketchyPhysics mode, the controller parameter is used to control
-    #   the ratio between the min and max angle range, as well as, the servo is
-    #   stronger and usually rotates faster to its desired destination angle.
-    # @param [Boolean] state
-    def sp_mode_enabled=(state)
-      MSPhysics::Newton::Servo.enable_sp_mode(@address, state)
-    end
-
-    # Get servo controller, a desired angle in radians or ratio between the min
-    # and max angle range, depending on the mode. Nil is returned if the servo
-    # is turned off.
-    # @return [Numeric, nil]
+    # Get servo controller.
+    # @return [Numeric, nil] Desired angle in radians or +nil+ if servo is
+    #   turned off.
     def controller
       MSPhysics::Newton::Servo.get_controller(@address)
     end
 
-    # Set servo controller, a desired angle in radians or ratio between the min
-    # and max angle range, depending on the mode. Pass nil to turn off the
-    # servo.
-    # @param [Numeric, nil] value
+    # Set servo controller.
+    # @param [Numeric, nil] value Desired angle in radians or +nil+ to turn off
+    #   the servo.
     def controller=(value)
       MSPhysics::Newton::Servo.set_controller(@address, value)
     end

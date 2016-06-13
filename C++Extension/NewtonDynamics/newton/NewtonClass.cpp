@@ -237,7 +237,7 @@ void NewtonUserJoint::SetAcceleration (dgFloat32 acceleration)
 {
 	dgInt32 index = m_rows - 1;
 	if ((index >= 0) &&  (index < dgInt32 (m_maxDOF))) {
-//		m_param->m_jointAccel[index] = acceleration;
+		//m_param->m_jointAccel[index] = acceleration;
 		SetMotorAcceleration (index, acceleration, *m_param);
 	}
 }
@@ -307,9 +307,10 @@ void NewtonUserJoint::SetRowStiffness (dgFloat32 stiffness)
 {
 	dgInt32 index = m_rows - 1;
 	if ((index >= 0) &&  (index < dgInt32 (m_maxDOF))) {
-		//stiffness = dgFloat32 (1.0f) - dgClamp (stiffness, dgFloat32(0.0f), dgFloat32(1.0f));
-		//stiffness = -dgFloat32 (1.0f) - stiffness / DG_PSD_DAMP_TOL; 
-		m_param->m_jointStiffness[index] = stiffness;
+		/*stiffness = dgFloat32 (1.0f) - dgClamp (stiffness, dgFloat32(0.0f), dgFloat32(1.0f));
+		stiffness = -dgFloat32 (1.0f) - stiffness / DG_PSD_DAMP_TOL; 
+		m_param->m_jointStiffness[index] = stiffness;*/
+		m_param->m_jointStiffness[index] = stiffness * 0.995f;
 	}
 }
 

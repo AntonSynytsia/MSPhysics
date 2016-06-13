@@ -1,21 +1,6 @@
-- Create an installer that would automatically install AMS Library and MSPhysics into the desired plugins folder.
-- Make compatible with Mac OS X.
-- Implement cloth and soft bodies interface.
-- Implement user mesh collision interface.
-- Implement vehicle interface.
-- Implement fractured compound interface.
-- Add geared joints interface.
-- Add differential joint.
-- Add MSPhysics functions to Ace text editor.
-- Add advanced explosion function.
-- Add serial port.
-- Make replay compatible with LightUp, Vray, Twilight, and Thea Render.
-- Add curve joint.
-- Add plane joint.
-- Add fracture/split functions.
-- Revamp joint acceleration and damper parameters.
-- Spring accel and damp must remain the same at different timestep.
-- Control panel doesn't redirect focus to main window properly. Make it redirect its input when necessary.
-- Input from web-dialog and other dialogs should not be transfered to SU main window.
-- Fix the unfreeze issue when the bounding boxes overlap but no collision occurs.
-- Fix world raycast bug which occurs at random times.
+- Make compatible with Mac OS X
+- Implement cloth and soft bodies interface
+- Implement user mesh collision interface
+- Add geared joints interface
+- Add fracture/split interface
+- Make Replay compatible with LightUp, Vray, Twilight, and Thea Render

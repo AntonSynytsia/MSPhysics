@@ -27,11 +27,10 @@ void MSNewton::Spring::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 	SpringData* cj_data = (SpringData*)joint_data->cj_data;
 
 	// Calculate position of pivot points and Jacobian direction vectors in global space.
-	dMatrix matrix0;
-	dMatrix matrix1;
-	Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1);
+	dMatrix matrix0, matrix1, matrix2;
+	MSNewton::Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1, matrix2);
 
-	dVector pos0(matrix0.m_posit);
+	const dVector& pos0 = matrix0.m_posit;
 	dVector pos1(matrix1.m_posit + matrix1.m_right.Scale((pos0 - matrix1.m_posit) % matrix1.m_right));
 
 	// Calculate position, velocity, and acceleration
@@ -116,9 +115,9 @@ void MSNewton::Spring::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 		cj_data->temp_disable_limits = false;
 
 	// Add limits and friction
-	if (cj_data->limits_enabled == true && cur_pos < cj_data->min && cj_data->temp_disable_limits == false) {
+	if (cj_data->limits_enabled == true && cur_pos < cj_data->min - Joint::LINEAR_LIMIT_EPSILON && cj_data->temp_disable_limits == false) {
 		const dVector& s0 = matrix0.m_posit;
-		dVector s1(s0 + matrix1.m_right.Scale(cj_data->min + Joint::LINEAR_LIMIT_EPSILON - cur_pos));
+		dVector s1(s0 + matrix1.m_right.Scale(cj_data->min - cur_pos));
 		NewtonUserJointAddLinearRow(joint, &s0[0], &s1[0], &matrix1.m_right[0]);
 		NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
 		if (joint_data->ctype == CT_FLEXIBLE)
@@ -127,9 +126,9 @@ void MSNewton::Spring::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
-	else if (cj_data->limits_enabled == true && cur_pos > cj_data->max && cj_data->temp_disable_limits == false) {
+	else if (cj_data->limits_enabled == true && cur_pos > cj_data->max + Joint::LINEAR_LIMIT_EPSILON && cj_data->temp_disable_limits == false) {
 		const dVector& s0 = matrix0.m_posit;
-		dVector s1(s0 + matrix1.m_right.Scale(cj_data->max - Joint::LINEAR_LIMIT_EPSILON - cur_pos));
+		dVector s1(s0 + matrix1.m_right.Scale(cj_data->max - cur_pos));
 		NewtonUserJointAddLinearRow(joint, &s0[0], &s1[0], &matrix1.m_right[0]);
 		NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
 		if (joint_data->ctype == CT_FLEXIBLE)
@@ -139,9 +138,10 @@ void MSNewton::Spring::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
 	else {
-		const dVector& s0 = matrix0.m_posit;
-		dVector s1(s0 + matrix1.m_right.Scale(-cur_pos));
-		NewtonUserJointAddLinearRow(joint, &s0[0], &s1[0], &matrix0.m_right[0]);
+		dVector point(matrix1.UntransformVector(matrix0.m_posit));
+		point.m_z = cur_pos;
+		point = matrix1.TransformVector(point);
+		NewtonUserJointAddLinearRow(joint, &point[0], &matrix1.m_posit[0], &matrix1.m_right[0]);
 		if (cj_data->strong_mode_enabled) {
 			dFloat accel = NewtonCalculateSpringDamperAcceleration(timestep, cj_data->accel, cur_pos, cj_data->damp, cj_data->cur_vel);
 			NewtonUserJointSetRowAcceleration(joint, accel);
@@ -185,14 +185,19 @@ void MSNewton::Spring::on_destroy(JointData* joint_data) {
 	delete cj_data;
 }
 
-void MSNewton::Spring::on_connect(JointData* joint_data) {
-}
-
 void MSNewton::Spring::on_disconnect(JointData* joint_data) {
 	SpringData* cj_data = (SpringData*)joint_data->cj_data;
 	cj_data->cur_pos = 0.0f;
 	cj_data->cur_vel = 0.0f;
 	cj_data->cur_accel = 0.0f;
+}
+
+void MSNewton::Spring::adjust_pin_matrix_proc(JointData* joint_data, dMatrix& pin_matrix) {
+	dMatrix matrix;
+	dVector centre;
+	NewtonBodyGetMatrix(joint_data->child, &matrix[0][0]);
+	NewtonBodyGetCentreOfMass(joint_data->child, &centre[0]);
+	pin_matrix.m_posit = matrix.TransformVector(centre);
 }
 
 
@@ -233,8 +238,8 @@ VALUE MSNewton::Spring::create(VALUE self, VALUE v_joint) {
 	joint_data->submit_constraints = submit_constraints;
 	joint_data->get_info = get_info;
 	joint_data->on_destroy = on_destroy;
-	joint_data->on_connect = on_connect;
 	joint_data->on_disconnect = on_disconnect;
+	//~ joint_data->adjust_pin_matrix_proc = adjust_pin_matrix_proc;
 
 	return Util::to_value(joint_data);
 }

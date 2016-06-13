@@ -200,7 +200,8 @@ void MSNewton::Body::collision_iterator2(void* const user_data, int vertex_count
 	VALUE v_face_normal = Util::vector_to_value(n);
 	// Transform points with respect to face normal
 	std::vector<dVector> vertices;
-	dMatrix face_matrix = Util::matrix_from_pin_dir(ORIGIN, n);
+	dMatrix face_matrix;
+	Util::matrix_from_pin_dir(ORIGIN, n, face_matrix);
 	for (int i = 0; i < vertex_count; ++i) {
 		dVector vertex = face_matrix.UntransformVector(dVector(face_array[i*3+0], face_array[i*3+1], face_array[i*3+2]));
 		vertices.push_back(vertex);
@@ -240,7 +241,8 @@ void MSNewton::Body::collision_iterator3(void* const user_data, int vertex_count
 	VALUE v_face_normal = Util::vector_to_value(n);
 	// Transform points with respect to face normal
 	std::vector<dVector> vertices;
-	dMatrix face_matrix = Util::matrix_from_pin_dir(ORIGIN, n);
+	dMatrix face_matrix;
+	Util::matrix_from_pin_dir(ORIGIN, n, face_matrix);
 	for (int i = 0; i < vertex_count; ++i) {
 		dVector vertex = face_matrix.UntransformVector(dVector(face_array[i*3+0], face_array[i*3+1], face_array[i*3+2]));
 		vertices.push_back(vertex);
@@ -279,7 +281,8 @@ void MSNewton::Body::collision_iterator4(void* const user_data, int vertex_count
 	Util::normalize_vector(normal);
 	// Transform points with respect to face normal
 	std::vector<dVector> vertices;
-	dMatrix face_matrix = Util::matrix_from_pin_dir(ORIGIN, normal);
+	dMatrix face_matrix;
+	Util::matrix_from_pin_dir(ORIGIN, normal, face_matrix);
 	for (int i = 0; i < vertex_count; ++i) {
 		dVector vertex = face_matrix.UntransformVector(dVector(face_array[i*3+0], face_array[i*3+1], face_array[i*3+2]));
 		vertices.push_back(vertex);
@@ -310,7 +313,8 @@ void MSNewton::Body::collision_iterator4(void* const user_data, int vertex_count
 	dFloat cos_theta = (normal % point_veloc) / veloc_mag;
 	if (cos_theta < EPSILON) return;
 	Util::normalize_vector(point_veloc);
-	dMatrix veloc_matrix = Util::matrix_from_pin_dir(ORIGIN, point_veloc);
+	dMatrix veloc_matrix;
+	Util::matrix_from_pin_dir(ORIGIN, point_veloc, veloc_matrix);
 	dVector loc_normal = veloc_matrix.UnrotateVector(normal);
 	//if (loc_normal.m_z < EPSILON) return;
 	dVector point_force(
@@ -1022,7 +1026,7 @@ VALUE MSNewton::Body::add_point_force(VALUE self, VALUE v_body, VALUE v_point, V
 	dMatrix matrix;
 	dVector centre;
 	dVector point = Util::value_to_point(v_point, world_data->scale);
-	dVector force = Util::value_to_vector(v_force, world_data->scale3);
+	dVector force = Util::value_to_vector(v_force, world_data->scale4);
 	NewtonBodyGetCentreOfMass(body, &centre[0]);
 	NewtonBodyGetMatrix(body, &matrix[0][0]);
 	centre = matrix.TransformVector(centre);
@@ -1049,30 +1053,30 @@ VALUE MSNewton::Body::add_impulse(VALUE self, VALUE v_body, VALUE v_center, VALU
 
 VALUE MSNewton::Body::get_force(VALUE self, VALUE v_body) {
 	const NewtonBody* body = Util::value_to_body(v_body);
-	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
+	//BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	dVector force;
 	NewtonBodyGetForce(body, &force[0]);
-	if (world_data->gravity_enabled && body_data->gravity_enabled) {
+	/*if (world_data->gravity_enabled && body_data->gravity_enabled) {
 		for (int i = 0; i < 3; ++i)
 			force[i] *= world_data->inverse_scale;
-	}
-	return Util::vector_to_value(force, world_data->inverse_scale3);
+	}*/
+	return Util::vector_to_value(force, world_data->inverse_scale4);
 }
 
 VALUE MSNewton::Body::get_force_acc(VALUE self, VALUE v_body) {
 	const NewtonBody* body = Util::value_to_body(v_body);
-	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
+	//BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	dVector force;
 	NewtonBodyGetForceAcc(body, &force[0]);
-	if (world_data->gravity_enabled && body_data->gravity_enabled) {
+	/*if (world_data->gravity_enabled && body_data->gravity_enabled) {
 		for (int i = 0; i < 3; ++i)
 			force[i] *= world_data->inverse_scale;
-	}
-	return Util::vector_to_value(force, world_data->inverse_scale3);
+	}*/
+	return Util::vector_to_value(force, world_data->inverse_scale4);
 }
 
 VALUE MSNewton::Body::add_force(VALUE self, VALUE v_body, VALUE v_force) {
@@ -1081,7 +1085,7 @@ VALUE MSNewton::Body::add_force(VALUE self, VALUE v_body, VALUE v_force) {
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	if (body_data->bstatic) return Qfalse;
-	body_data->add_force += Util::value_to_vector(v_force, world_data->scale3);
+	body_data->add_force += Util::value_to_vector(v_force, world_data->scale4);
 	body_data->add_force_state = true;
 	return Qtrue;
 }
@@ -1092,7 +1096,7 @@ VALUE MSNewton::Body::add_force2(VALUE self, VALUE v_body, VALUE v_force) {
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	if (body_data->bstatic) return Qfalse;
-	body_data->add_force2 += Util::value_to_vector(v_force, world_data->scale3);
+	body_data->add_force2 += Util::value_to_vector(v_force, world_data->scale4);
 	body_data->add_force2_state = true;
 	return Qtrue;
 }
@@ -1103,7 +1107,7 @@ VALUE MSNewton::Body::set_force(VALUE self, VALUE v_body, VALUE v_force) {
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	if (body_data->bstatic) return Qfalse;
-	body_data->set_force = Util::value_to_vector(v_force, world_data->scale3);
+	body_data->set_force = Util::value_to_vector(v_force, world_data->scale4);
 	body_data->set_force_state = true;
 	return Qtrue;
 }
@@ -1114,37 +1118,37 @@ VALUE MSNewton::Body::set_force2(VALUE self, VALUE v_body, VALUE v_force) {
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	if (body_data->bstatic) return Qfalse;
-	body_data->set_force2 = Util::value_to_vector(v_force, world_data->scale3);
+	body_data->set_force2 = Util::value_to_vector(v_force, world_data->scale4);
 	body_data->set_force2_state = true;
 	return Qtrue;
 }
 
 VALUE MSNewton::Body::get_torque(VALUE self, VALUE v_body) {
 	const NewtonBody* body = Util::value_to_body(v_body);
-	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
+	//BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	dVector torque;
 	NewtonBodyGetTorque(body, &torque[0]);
-	if (world_data->gravity_enabled && body_data->gravity_enabled) {
+	/*if (world_data->gravity_enabled && body_data->gravity_enabled) {
 		for (int i = 0; i < 3; ++i)
 			torque[i] *= world_data->inverse_scale;
-	}
-	return Util::vector_to_value(torque, world_data->inverse_scale4);
+	}*/
+	return Util::vector_to_value(torque, world_data->inverse_scale5);
 }
 
 VALUE MSNewton::Body::get_torque_acc(VALUE self, VALUE v_body) {
 	const NewtonBody* body = Util::value_to_body(v_body);
-	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
+	//BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	dVector torque;
 	NewtonBodyGetTorqueAcc(body, &torque[0]);
-	if (world_data->gravity_enabled && body_data->gravity_enabled) {
+	/*if (world_data->gravity_enabled && body_data->gravity_enabled) {
 		for (int i = 0; i < 3; ++i)
 			torque[i] *= world_data->inverse_scale;
-	}
-	return Util::vector_to_value(torque, world_data->inverse_scale4);
+	}*/
+	return Util::vector_to_value(torque, world_data->inverse_scale5);
 }
 
 VALUE MSNewton::Body::add_torque(VALUE self, VALUE v_body, VALUE v_torque) {
@@ -1153,7 +1157,7 @@ VALUE MSNewton::Body::add_torque(VALUE self, VALUE v_body, VALUE v_torque) {
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	if (body_data->bstatic) return Qfalse;
-	body_data->add_torque += Util::value_to_vector(v_torque, world_data->scale4);
+	body_data->add_torque += Util::value_to_vector(v_torque, world_data->scale5);
 	body_data->add_torque_state = true;
 	return Qtrue;
 }
@@ -1164,7 +1168,7 @@ VALUE MSNewton::Body::add_torque2(VALUE self, VALUE v_body, VALUE v_torque) {
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	if (body_data->bstatic) return Qfalse;
-	body_data->add_torque2 += Util::value_to_vector(v_torque, world_data->scale4);
+	body_data->add_torque2 += Util::value_to_vector(v_torque, world_data->scale5);
 	body_data->add_torque2_state = true;
 	return Qtrue;
 }
@@ -1175,7 +1179,7 @@ VALUE MSNewton::Body::set_torque(VALUE self, VALUE v_body, VALUE v_torque) {
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	if (body_data->bstatic) return Qfalse;
-	body_data->set_torque = Util::value_to_vector(v_torque, world_data->scale4);
+	body_data->set_torque = Util::value_to_vector(v_torque, world_data->scale5);
 	body_data->set_torque_state = true;
 	return Qtrue;
 }
@@ -1186,14 +1190,14 @@ VALUE MSNewton::Body::set_torque2(VALUE self, VALUE v_body, VALUE v_torque) {
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	if (body_data->bstatic) return Qfalse;
-	body_data->set_torque2 = Util::value_to_vector(v_torque, world_data->scale4);
+	body_data->set_torque2 = Util::value_to_vector(v_torque, world_data->scale5);
 	body_data->set_torque2_state = true;
 	return Qtrue;
 }
 
 VALUE MSNewton::Body::get_net_contact_force(VALUE self, VALUE v_body) {
 	const NewtonBody* body = Util::value_to_body(v_body);
-	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
+	//BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	dVector net_force(0.0f, 0.0f, 0.0f, 0.0f);
@@ -1205,17 +1209,17 @@ VALUE MSNewton::Body::get_net_contact_force(VALUE self, VALUE v_body) {
 			net_force += force;
 		}
 	}
-	if (world_data->gravity_enabled && body_data->gravity_enabled) {
+	/*if (world_data->gravity_enabled && body_data->gravity_enabled) {
 		for (int i = 0; i < 3; ++i)
 			net_force[i] *= world_data->inverse_scale;
-	}
-	return Util::vector_to_value(net_force, world_data->inverse_scale3);
+	}*/
+	return Util::vector_to_value(net_force, world_data->inverse_scale4);
 }
 
 VALUE MSNewton::Body::get_contacts(VALUE self, VALUE v_body, VALUE v_inc_non_collidable) {
 	const NewtonBody* body = Util::value_to_body(v_body);
 	bool inc_non_collidable = Util::value_to_bool(v_inc_non_collidable);
-	BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
+	//BodyData* body_data = (BodyData*)NewtonBodyGetUserData(body);
 	const NewtonWorld* world = NewtonBodyGetWorld(body);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(world);
 	VALUE v_contacts = rb_ary_new();
@@ -1223,7 +1227,7 @@ VALUE MSNewton::Body::get_contacts(VALUE self, VALUE v_body, VALUE v_inc_non_col
 		NewtonBody* touching_body = NewtonJointGetBody0(joint);
 		if (touching_body == body)
 			touching_body = NewtonJointGetBody1(joint);
-		BodyData* touching_body_data = (BodyData*)NewtonBodyGetUserData(touching_body);
+		//BodyData* touching_body_data = (BodyData*)NewtonBodyGetUserData(touching_body);
 		for (void* contact = NewtonContactJointGetFirstContact(joint); contact; contact = NewtonContactJointGetNextContact(joint, contact)) {
 			NewtonMaterial* material = NewtonContactGetMaterial(contact);
 			dVector point;
@@ -1231,12 +1235,12 @@ VALUE MSNewton::Body::get_contacts(VALUE self, VALUE v_body, VALUE v_inc_non_col
 			dVector force;
 			NewtonMaterialGetContactPositionAndNormal(material, body, &point[0], &normal[0]);
 			NewtonMaterialGetContactForce(material, body, &force[0]);
-			if (world_data->gravity_enabled && (body_data->gravity_enabled || touching_body_data->gravity_enabled)) {
+			/*if (world_data->gravity_enabled && (body_data->gravity_enabled || touching_body_data->gravity_enabled)) {
 				for (int i = 0; i < 3; ++i)
 					force[i] *= world_data->inverse_scale;
-			}
+			}*/
 			dFloat speed = NewtonMaterialGetContactNormalSpeed(material) * world_data->inverse_scale;
-			rb_ary_push(v_contacts, rb_ary_new3(5, Util::to_value(touching_body), Util::point_to_value(point, world_data->inverse_scale), Util::vector_to_value(normal), Util::vector_to_value(force, world_data->inverse_scale3), Util::to_value(speed)));
+			rb_ary_push(v_contacts, rb_ary_new3(5, Util::to_value(touching_body), Util::point_to_value(point, world_data->inverse_scale), Util::vector_to_value(normal), Util::vector_to_value(force, world_data->inverse_scale5), Util::to_value(speed)));
 		}
 	}
 	if (inc_non_collidable) {
@@ -1499,7 +1503,8 @@ VALUE MSNewton::Body::apply_buoyancy(VALUE self, VALUE v_body, VALUE v_plane_ori
 	if (body_data->bstatic)
 		return Qfalse;
 	else {
-		dMatrix plane_matrix = Util::matrix_from_pin_dir(origin, normal);
+		dMatrix plane_matrix;
+		Util::matrix_from_pin_dir(origin, normal, plane_matrix);
 		normal.m_w = plane_matrix.UntransformVector(ORIGIN).m_z;
 		BuoyancyData buoyancy_data;
 		buoyancy_data.density = density;
@@ -1537,7 +1542,7 @@ VALUE MSNewton::Body::apply_fluid_resistance(VALUE self, VALUE v_body, VALUE v_d
 	body_data->add_torque += iterator_data.torque;
 	body_data->add_torque_state = true;
 
-	return rb_ary_new3(2, Util::vector_to_value(iterator_data.force, world_data->inverse_scale3), Util::vector_to_value(iterator_data.torque, world_data->inverse_scale4));
+	return rb_ary_new3(2, Util::vector_to_value(iterator_data.force, world_data->inverse_scale4), Util::vector_to_value(iterator_data.torque, world_data->inverse_scale5));
 }
 
 VALUE MSNewton::Body::copy(VALUE self, VALUE v_body, VALUE v_matrix, VALUE v_reapply_forces, VALUE v_group) {
@@ -1576,21 +1581,21 @@ VALUE MSNewton::Body::copy(VALUE self, VALUE v_body, VALUE v_matrix, VALUE v_rea
 	NewtonBodySetCentreOfMass(new_body, &com[0]);
 
 	BodyData* new_data = new BodyData;
-	new_data->add_force = dVector(0.0f, 0.0f, 0.0f);
+	new_data->add_force;
 	new_data->add_force_state = false;
-	new_data->set_force = dVector(0.0f, 0.0f, 0.0f);
+	new_data->set_force;
 	new_data->set_force_state = false;
-	new_data->add_torque = dVector(0.0f, 0.0f, 0.0f);
+	new_data->add_torque;
 	new_data->add_torque_state = false;
-	new_data->set_torque = dVector(0.0f, 0.0f, 0.0f);
+	new_data->set_torque;
 	new_data->set_torque_state = false;
-	new_data->add_force2 = dVector(0.0f, 0.0f, 0.0f);
+	new_data->add_force2;
 	new_data->add_force2_state = false;
-	new_data->set_force2 = dVector(0.0f, 0.0f, 0.0f);
+	new_data->set_force2;
 	new_data->set_force2_state = false;
-	new_data->add_torque2 = dVector(0.0f, 0.0f, 0.0f);
+	new_data->add_torque2;
 	new_data->add_torque2_state = false;
-	new_data->set_torque2 = dVector(0.0f, 0.0f, 0.0f);
+	new_data->set_torque2;
 	new_data->set_torque2_state = false;
 	new_data->dynamic = body_data->dynamic;
 	new_data->bstatic = body_data->bstatic;

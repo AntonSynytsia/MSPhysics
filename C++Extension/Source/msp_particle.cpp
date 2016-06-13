@@ -133,7 +133,7 @@ bool MSPhysics::Particle::c_update_particle(ParticleData* data, dFloat timestep)
 }
 
 void MSPhysics::Particle::c_draw_particle(ParticleData* data, VALUE v_view, VALUE v_bb, const dVector& camera_eye) {
-	dVector normal = Util::vectors_identical(camera_eye, data->position) ? Z_AXIS : camera_eye - data->position;
+	dVector normal(Util::vectors_identical(camera_eye, data->position) ? Z_AXIS : camera_eye - data->position);
 	//VALUE v_pts = c_points_on_circle3d(data->position, data->radius, normal, data->num_seg, data->rot_angle);
 	rb_funcall(v_bb, INTERN_ADD, 1, Util::point_to_value2(data->position));
 	//rb_funcall(v_view, INTERN_SDRAWING_COLOR, 1, Util::color_to_value(data->color, data->alpha));
@@ -141,7 +141,8 @@ void MSPhysics::Particle::c_draw_particle(ParticleData* data, VALUE v_view, VALU
 	//rb_funcall(v_view, INTERN_DRAW, 2, V_GL_POLYGON, v_pts);
 
 	/*VALUE v_pts = rb_ary_new2(data->num_seg);
-	dMatrix cmatrix = Util::matrix_from_pin_dir(data->position, normal);
+	dMatrix cmatrix;
+	Util::matrix_from_pin_dir(data->position, normal, cmatrix);
 	dFloat offset = PI2 / data->num_seg;
 	for (unsigned int i = 0; i < data->num_seg; ++i) {
 		dFloat angle = data->rot_angle + i * offset;
@@ -152,7 +153,8 @@ void MSPhysics::Particle::c_draw_particle(ParticleData* data, VALUE v_view, VALU
 
 	/*VALUE v_pts = rb_ary_new2(data->num_seg+2);
 	rb_ary_store(v_pts, 0, Util::point_to_value2(data->position));
-	dMatrix cmatrix = Util::matrix_from_pin_dir(data->position, normal);
+	dMatrix cmatrix;
+	Util::matrix_from_pin_dir(data->position, normal, cmatrix);
 	for (unsigned int i = 0; i < data->num_seg; ++i) {
 		dVector pt(data->pts[i*2] * data->radius, data->pts[i*2+1] * data->radius, 0.0f);
 		rb_ary_store(v_pts, i+1, Util::point_to_value2(cmatrix.TransformVector(pt)));
@@ -161,7 +163,8 @@ void MSPhysics::Particle::c_draw_particle(ParticleData* data, VALUE v_view, VALU
 	rb_funcall(v_view, INTERN_DRAW, 2, V_GL_TRIANGLE_FAN, v_pts);*/ // 42/45 at 6
 
 	VALUE v_pts = rb_ary_new2(data->num_seg);
-	dMatrix cmatrix = Util::matrix_from_pin_dir(data->position, normal);
+	dMatrix cmatrix;
+	Util::matrix_from_pin_dir(data->position, normal, cmatrix);
 	for (unsigned int i = 0; i < data->num_seg; ++i) {
 		dVector pt(data->pts[i*2] * data->radius, data->pts[i*2+1] * data->radius, 0.0f);
 		rb_ary_store(v_pts, i, Util::point_to_value2(cmatrix.TransformVector(pt)));
@@ -182,7 +185,8 @@ VALUE MSPhysics::Particle::c_points_on_circle2d(const dVector& origin, dFloat ra
 }
 
 VALUE MSPhysics::Particle::c_points_on_circle3d(const dVector& origin, dFloat radius, const dVector& normal, unsigned int num_seg, dFloat rot_angle) {
-	dMatrix cmatrix = Util::matrix_from_pin_dir(origin, normal);
+	dMatrix cmatrix;
+	Util::matrix_from_pin_dir(origin, normal, cmatrix);
 	dFloat ra = rot_angle * DEG_TO_RAD;
 	dFloat offset = PI * 2.0f / num_seg;
 	VALUE v_pts = rb_ary_new2(num_seg);

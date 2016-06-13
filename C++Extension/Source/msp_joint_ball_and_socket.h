@@ -42,7 +42,6 @@ public:
 	static void submit_constraints(const NewtonJoint* joint, dgFloat32 timestep, int thread_index);
 	static void get_info(const NewtonJoint* const joint, NewtonJointRecord* const info);
 	static void on_destroy(JointData* data);
-	static void on_connect(JointData* data);
 	static void on_disconnect(JointData* data);
 
 	// Ruby Functions

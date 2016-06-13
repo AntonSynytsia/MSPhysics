@@ -30,8 +30,10 @@ module MSPhysics
       @joint_type = MSPhysics::Joint.optimize_joint_name(joint_type)
       raise(TypeError, 'Given joint type is invalid!', caller) unless @joint_type
       dir = File.dirname(__FILE__)
-      @path = File.join(dir, 'models', @joint_type.to_s + '.skp')
-      raise(TypeError, 'Given joint type is invalid!', caller) unless File.exists?(@path)
+      dir.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+      @path = File.join(dir, 'models')
+      @full_path = File.join(@path, @joint_type.to_s + '.skp')
+      raise(TypeError, 'Given joint type is invalid!', caller) unless File.exists?(@full_path)
       words = @joint_type.to_s.split('_')
       for i in 0...words.size
         words[i].capitalize!
@@ -46,19 +48,26 @@ module MSPhysics
       @ydown = 0
       @shift_down_time = nil
       @layer_color = Sketchup::Color.new(44, 44, 164)
+      @active = false
       Sketchup.active_model.select_tool(self)
     end
 
     # @!visibility private
 
 
+    def is_active?
+      return @active
+    end
+
     def activate
       Sketchup::set_status_text('Length', SB_VCB_LABEL)
       reset(nil)
+      @active = true
     end
 
     def deactivate(view)
       view.invalidate if @drawn
+      @active = false
     end
 
     def onCancel(flag, view)
@@ -87,7 +96,7 @@ module MSPhysics
           type = ents.parent.instances.first.get_attribute('MSPhysics', 'Type', nil)
           raise(TypeError, 'Cannot create a recursively defined joint!', caller) if type == 'Joint'
         end
-        cd = model.definitions.load(@path)
+        cd = model.definitions.load(@full_path)
         tra = Geom::Transformation.new(pt1, pt1.vector_to(pt2))
         ts = Geom::Transformation.scaling(MSPhysics.get_joint_scale)
         layer = model.layers['MSPhysics Joints']
@@ -95,11 +104,22 @@ module MSPhysics
           layer = model.layers.add('MSPhysics Joints')
           layer.color = @layer_color if Sketchup.version.to_i > 13
         end
-        ent = ents.add_instance(cd, tra * ts)
-        ent.layer = layer
-        assign_attributes(ent)
+        if @joint_type == :curvy_slider || @joint_type == :curvy_piston
+          curve_path = File.join(@path, 'curve.skp')
+          curve_cd = model.definitions.load(curve_path)
+          inst = ents.add_group
+          inst2 = inst.entities.add_instance(cd, ts)
+          inst2.layer = layer
+          inst3 = inst.entities.add_instance(curve_cd, Geom::Transformation.new())
+          inst3.explode
+          inst.move!(tra)
+        else
+          inst = ents.add_instance(cd, tra * ts)
+        end
+        inst.layer = layer
+        assign_attributes(inst)
         model.selection.clear
-        model.selection.add(ent)
+        model.selection.add(inst)
       rescue Exception => e
         model.abort_operation
         ::UI.messagebox(e)
@@ -202,7 +222,7 @@ module MSPhysics
       return unless @ip2.valid?
       begin
         value = text.to_l
-      rescue
+      rescue Exception => e
         ::UI.beep
         puts "Cannot convert '#{text}' to length."
         value = nil

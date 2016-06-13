@@ -10,6 +10,16 @@ namespace MSNewton {
 
 class MSNewton::World {
 private:
+	// Structures
+	typedef struct DrawData {
+		VALUE v_view;
+		VALUE v_bb;
+		dFloat scale;
+	};
+
+	// Constants
+	static const VALUE V_GL_LINE_LOOP;
+
 	// Callback Functions
 	static void destructor_callback(const NewtonWorld* const world);
 	static int aabb_overlap_callback(const NewtonMaterial* const material, const NewtonBody* const body0, const NewtonBody* const body1, int thread_index);
@@ -20,6 +30,7 @@ private:
 	static int body_iterator(const NewtonBody* const body, void* const user_data);
 	static void collision_copy_constructor_callback(const NewtonWorld* const world, NewtonCollision* const collision, const NewtonCollision* const source_collision);
 	static void collision_destructor_callback(const NewtonWorld* const world, const NewtonCollision* const collision);
+	static void draw_collision_iterator(void* const user_data, int vertex_count, const dFloat* const face_array, int face_id);
 
 	// Helper Functions
 	static void c_update_magnets(const NewtonWorld* world);
@@ -79,6 +90,7 @@ public:
 	static VALUE get_joints(VALUE self, VALUE v_world);
 	static VALUE get_joint_datas(VALUE self, VALUE v_world);
 	static VALUE get_default_material_id(VALUE self, VALUE v_world);
+	static VALUE draw_collision_wireframe(VALUE self, VALUE v_world, VALUE v_view, VALUE v_bb, VALUE v_sleep_color, VALUE v_active_color, VALUE v_line_width, VALUE v_line_stipple);
 };
 
 void Init_msp_world(VALUE mNewton);

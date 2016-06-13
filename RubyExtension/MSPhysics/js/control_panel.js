@@ -69,15 +69,15 @@ function remove_sliders() {
   $( '#table-crs' ).empty();
 }
 
-function init() {
+$( document ).ready(function() {
   callback('init');
   size_changed();
-}
-
-$( document ).ready( function() {
-  init();
 });
 
-$( window ).unload( function() {
+$( window ).unload(function() {
   remove_sliders();
+});
+
+$( document ).mouseleave(function() {
+  callback("mouse_leave");
 });

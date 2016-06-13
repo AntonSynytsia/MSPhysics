@@ -24,7 +24,7 @@
 
 #include "dgBodyMasterList.h"
 
-#define DG_MAX_BOUND						dgFloat32 (1.0e15f)
+#define DG_MAX_BOUND						dgFloat32 (1.0e20f)
 #define DG_MIN_BOUND						(-DG_MAX_BOUND)
 
 

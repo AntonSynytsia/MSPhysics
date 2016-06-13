@@ -23,9 +23,8 @@ void MSNewton::Motor::submit_constraints(const NewtonJoint* joint, dgFloat32 tim
 	MotorData* cj_data = (MotorData*)joint_data->cj_data;
 
 	// Calculate position of pivot points and Jacobian direction vectors in global space.
-	dMatrix matrix0;
-	dMatrix matrix1;
-	Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1);
+	dMatrix matrix0, matrix1, matrix2;
+	MSNewton::Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1, matrix2);
 
 	// Calculate angle, omega, and acceleration.
 	dFloat last_angle = cj_data->ai->get_angle();
@@ -80,16 +79,16 @@ void MSNewton::Motor::submit_constraints(const NewtonJoint* joint, dgFloat32 tim
 	dVector q1(matrix1.m_posit + matrix1.m_right.Scale(MIN_JOINT_PIN_LENGTH));
 
 	// Add two constraints row perpendicular to the pin vector.
-	dVector q2(q0 + matrix0.m_front.Scale((q1 - q0) % matrix0.m_front));
-	NewtonUserJointAddLinearRow(joint, &q0[0], &q2[0], &matrix1.m_front[0]);
+	//dVector q2(q0 + matrix0.m_front.Scale((q1 - q0) % matrix0.m_front));
+	NewtonUserJointAddLinearRow(joint, &q0[0], &q1[0], &matrix1.m_front[0]);
 	if (joint_data->ctype == CT_FLEXIBLE)
 		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
 		NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 
-	q2 = q0 + matrix0.m_up.Scale((q1 - q0) % matrix0.m_up);
-	NewtonUserJointAddLinearRow(joint, &q0[0], &q2[0], &matrix1.m_up[0]);
+	//q2 = q0 + matrix0.m_up.Scale((q1 - q0) % matrix0.m_up);
+	NewtonUserJointAddLinearRow(joint, &q0[0], &q1[0], &matrix1.m_up[0]);
 	if (joint_data->ctype == CT_FLEXIBLE)
 		NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
 	else if (joint_data->ctype == CT_ROBUST)
@@ -143,14 +142,22 @@ void MSNewton::Motor::on_destroy(JointData* joint_data) {
 	delete cj_data;
 }
 
-void MSNewton::Motor::on_connect(JointData* joint_data) {
-}
-
 void MSNewton::Motor::on_disconnect(JointData* joint_data) {
 	MotorData* cj_data = (MotorData*)joint_data->cj_data;
 	cj_data->ai->set_angle(0.0f);
 	cj_data->cur_omega = 0.0f;
 	cj_data->cur_accel = 0.0f;
+}
+
+void MSNewton::Motor::adjust_pin_matrix_proc(JointData* joint_data, dMatrix& pin_matrix) {
+	dMatrix matrix;
+	dVector centre;
+	NewtonBodyGetMatrix(joint_data->child, &matrix[0][0]);
+	NewtonBodyGetCentreOfMass(joint_data->child, &centre[0]);
+	centre = matrix.TransformVector(centre);
+	centre = pin_matrix.UntransformVector(centre);
+	dVector point(0.0f, 0.0f, centre.m_z);
+	pin_matrix.m_posit = pin_matrix.TransformVector(point);
 }
 
 
@@ -185,8 +192,8 @@ VALUE MSNewton::Motor::create(VALUE self, VALUE v_joint) {
 	joint_data->submit_constraints = submit_constraints;
 	joint_data->get_info = get_info;
 	joint_data->on_destroy = on_destroy;
-	joint_data->on_connect = on_connect;
 	joint_data->on_disconnect = on_disconnect;
+	//~ joint_data->adjust_pin_matrix_proc = adjust_pin_matrix_proc;
 
 	return Util::to_value(joint_data);
 }

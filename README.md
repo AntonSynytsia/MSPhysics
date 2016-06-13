@@ -53,6 +53,7 @@ folder. Make sure to download and install AMS Library!
     - <i>C:/Users/[User Name]/AppData/Roaming/SketchUp/SketchUp 20XY/SketchUp/</i>
 	
 When extracted and posted in the plugins folder, the content should be resembled in the following way:
+
 <i>.../Plugins/</i>
 * <i>MSPhysics</i> folder
 * <i>MSPhysics.rb</i> file
@@ -62,7 +63,7 @@ When extracted and posted in the plugins folder, the content should be resembled
 
 ## Version
 
-* MSPhysics 0.7.3
+* MSPhysics 0.8.0
 * NewtonDynamics 3.14
 * SDL 2.0.4
 * SDL_Mixer 2.0.1
@@ -70,7 +71,7 @@ When extracted and posted in the plugins folder, the content should be resembled
 
 ## Release Date
 
-May 25, 2016
+June 12, 2016
 
 
 ## Licence

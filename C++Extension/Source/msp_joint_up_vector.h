@@ -31,8 +31,6 @@ public:
 	static void submit_constraints(const NewtonJoint* joint, dgFloat32 timestep, int thread_index);
 	static void get_info(const NewtonJoint* const joint, NewtonJointRecord* const info);
 	static void on_destroy(JointData* joint_data);
-	static void on_connect(JointData* joint_data);
-	static void on_disconnect(JointData* joint_data);
 
 	// Ruby Functions
 	static VALUE is_valid(VALUE self, VALUE v_joint);
@@ -44,7 +42,7 @@ public:
 	static VALUE get_damp(VALUE self, VALUE v_joint);
 	static VALUE set_damp(VALUE self, VALUE v_joint, VALUE v_damp);
 	static VALUE enable_damper(VALUE self, VALUE v_joint, VALUE v_state);
-	static VALUE is_damper_enabled(VALUE self, VALUE v_joint);
+	static VALUE damper_enabled(VALUE self, VALUE v_joint);
 };
 
 void Init_msp_up_vector(VALUE mNewton);

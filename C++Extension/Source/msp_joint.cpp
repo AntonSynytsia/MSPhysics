@@ -19,7 +19,7 @@ const dFloat MSNewton::Joint::STIFFNESS_RATIO2 = 0.01f;
 const dFloat MSNewton::Joint::ANGULAR_LIMIT_EPSILON = 0.1f * DEG_TO_RAD;
 const dFloat MSNewton::Joint::LINEAR_LIMIT_EPSILON = 0.001f;
 const char* MSNewton::Joint::TYPE_NAME = "MSPhysicsJoint";
-const dFloat MSNewton::Joint::CUSTOM_LARGE_VALUE = 1.0e15f;
+const dFloat MSNewton::Joint::CUSTOM_LARGE_VALUE = 1.0e20f;
 
 std::map<NewtonSkeletonContainer*, bool> MSNewton::Joint::valid_skeletons;
 std::map<VALUE, std::map<JointData*, bool>> MSNewton::Joint::map_group_to_joints;
@@ -102,6 +102,11 @@ void MSNewton::Joint::on_pin_matrix_changed(JointData* joint_data) {
 		joint_data->on_pin_matrix_changed(joint_data);
 }
 
+void MSNewton::Joint::adjust_pin_matrix_proc(JointData* joint_data, dMatrix& pin_matrix) {
+	if (joint_data->adjust_pin_matrix_proc != nullptr)
+		joint_data->adjust_pin_matrix_proc(joint_data, pin_matrix);
+}
+
 void MSNewton::Joint::skeleton_destructor(const NewtonSkeletonContainer* const skeleton) {
 	valid_skeletons.erase((NewtonSkeletonContainer*)skeleton);
 }
@@ -114,28 +119,33 @@ void MSNewton::Joint::skeleton_destructor(const NewtonSkeletonContainer* const s
 */
 
 void MSNewton::Joint::c_calculate_local_matrix(JointData* joint_data) {
-	dMatrix pin_matrix;
-	dMatrix matrix0;
-	dMatrix matrix1;
+	dMatrix pin_matrix, matrix0, matrix1;
 	NewtonBodyGetMatrix(joint_data->child, &matrix0[0][0]);
 	if (joint_data->parent != nullptr) {
 		NewtonBodyGetMatrix(joint_data->parent, &matrix1[0][0]);
 		pin_matrix = joint_data->pin_matrix * matrix1;
 	}
 	else
-		pin_matrix = joint_data->pin_matrix;
+		pin_matrix = dMatrix(joint_data->pin_matrix);
+	joint_data->local_matrix2 = joint_data->parent != nullptr ? pin_matrix * matrix1.Inverse() : dMatrix(pin_matrix);
+	adjust_pin_matrix_proc(joint_data, pin_matrix);
 	joint_data->local_matrix0 = pin_matrix * matrix0.Inverse();
 	joint_data->local_matrix1 = joint_data->parent != nullptr ? pin_matrix * matrix1.Inverse() : pin_matrix;
 }
 
-void MSNewton::Joint::c_calculate_global_matrix(JointData* joint_data, dMatrix& matrix0, dMatrix& matrix1) {
-	dMatrix child_matrix;
-	NewtonBodyGetMatrix(joint_data->child, &child_matrix[0][0]);
-	dMatrix parent_matrix;
-	if (joint_data->parent != nullptr)
-		NewtonBodyGetMatrix(joint_data->parent, &parent_matrix[0][0]);
-	matrix0 = joint_data->local_matrix0 * child_matrix;
-	matrix1 = joint_data->parent != nullptr ? joint_data->local_matrix1 * parent_matrix : joint_data->local_matrix1;
+void MSNewton::Joint::c_calculate_global_matrix(JointData* joint_data, dMatrix& matrix0, dMatrix& matrix1, dMatrix& matrix2) {
+	dMatrix matrix;
+	NewtonBodyGetMatrix(joint_data->child, &matrix[0][0]);
+	matrix0 = joint_data->local_matrix0 * matrix;
+	if (joint_data->parent != nullptr) {
+		NewtonBodyGetMatrix(joint_data->parent, &matrix[0][0]);
+		matrix1 = joint_data->local_matrix1 * matrix;
+		matrix2 = joint_data->local_matrix2 * matrix;
+	}
+	else {
+		matrix1 = joint_data->local_matrix1;
+		matrix2 = joint_data->local_matrix2;
+	}
 }
 
 dFloat MSNewton::Joint::c_calculate_angle(const dVector& dir, const dVector& cosDir, const dVector& sinDir, dFloat& sinAngle, dFloat& cosAngle) {
@@ -148,6 +158,16 @@ dFloat MSNewton::Joint::c_calculate_angle(const dVector& dir, const dVector& cos
 	dFloat sinAngle;
 	dFloat cosAngle;
 	return c_calculate_angle(dir, cosDir, sinDir, sinAngle, cosAngle);
+}
+
+void MSNewton::Joint::c_get_pin_matrix(JointData* joint_data, dMatrix& matrix_out) {
+	if (joint_data->parent != nullptr && Util::is_body_valid(joint_data->parent) == true) {
+		dMatrix parent_matrix;
+		NewtonBodyGetMatrix(joint_data->parent, &parent_matrix[0][0]);
+		matrix_out = joint_data->pin_matrix * parent_matrix;
+	}
+	else
+		matrix_out = joint_data->pin_matrix;
 }
 
 JointData* MSNewton::Joint::c_create(const NewtonWorld* world, const NewtonBody* parent, dMatrix pin_matrix, unsigned int dof, VALUE v_group) {
@@ -171,6 +191,7 @@ JointData* MSNewton::Joint::c_create(const NewtonWorld* world, const NewtonBody*
 	joint_data->pin_matrix = pin_matrix;
 	joint_data->local_matrix0;
 	joint_data->local_matrix1;
+	joint_data->local_matrix2;
 	joint_data->user_data = rb_ary_new();
 	joint_data->cj_data = nullptr;
 	joint_data->submit_constraints = nullptr;
@@ -181,6 +202,7 @@ JointData* MSNewton::Joint::c_create(const NewtonWorld* world, const NewtonBody*
 	joint_data->on_collidable_changed = nullptr;
 	joint_data->on_stiffness_changed = nullptr;
 	joint_data->on_pin_matrix_changed = nullptr;
+	joint_data->adjust_pin_matrix_proc = nullptr;
 
 	rb_gc_register_address(&joint_data->user_data);
 
@@ -411,14 +433,14 @@ VALUE MSNewton::Joint::set_user_data(VALUE self, VALUE v_joint, VALUE v_user_dat
 VALUE MSNewton::Joint::get_breaking_force(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint(v_joint);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(joint_data->world);
-	return Util::to_value(joint_data->breaking_force * world_data->inverse_scale3);
+	return Util::to_value(joint_data->breaking_force * world_data->inverse_scale4);
 }
 
 VALUE MSNewton::Joint::set_breaking_force(VALUE self, VALUE v_joint, VALUE v_force) {
 	JointData* joint_data = Util::value_to_joint(v_joint);
 	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(joint_data->world);
-	joint_data->breaking_force = Util::clamp_min(Util::value_to_dFloat(v_force), 0.0f) * world_data->scale3;
-	return Util::to_value(joint_data->breaking_force * world_data->inverse_scale3);
+	joint_data->breaking_force = Util::clamp_min(Util::value_to_dFloat(v_force), 0.0f) * world_data->scale4;
+	return Util::to_value(joint_data->breaking_force * world_data->inverse_scale4);
 }
 
 

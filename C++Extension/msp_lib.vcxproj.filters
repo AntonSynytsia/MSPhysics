@@ -26,6 +26,9 @@
 	<ClCompile Include="Source\msp_joint_spring.cpp"><Filter>Joints</Filter></ClCompile>
 	<ClCompile Include="Source\msp_joint_universal.cpp"><Filter>Joints</Filter></ClCompile>
 	<ClCompile Include="Source\msp_joint_up_vector.cpp"><Filter>Joints</Filter></ClCompile>
+	<ClCompile Include="Source\msp_joint_plane.cpp"><Filter>Joints</Filter></ClCompile>
+	<ClCompile Include="Source\msp_joint_curvy_slider.cpp"><Filter>Joints</Filter></ClCompile>
+	<ClCompile Include="Source\msp_joint_curvy_piston.cpp"><Filter>Joints</Filter></ClCompile>
 	<ClCompile Include="Source\msp_sdl.cpp" />
 	<ClCompile Include="Source\msp_sdl_mixer.cpp" />
 	<ClCompile Include="Source\msp_sound.cpp" />
@@ -63,6 +66,9 @@
 	<ClInclude Include="Source\msp_joint_spring.h"><Filter>Joints</Filter></ClInclude>
 	<ClInclude Include="Source\msp_joint_universal.h"><Filter>Joints</Filter></ClInclude>
 	<ClInclude Include="Source\msp_joint_up_vector.h"><Filter>Joints</Filter></ClInclude>
+	<ClInclude Include="Source\msp_joint_plane.h"><Filter>Joints</Filter></ClInclude>
+	<ClInclude Include="Source\msp_joint_curvy_slider.h"><Filter>Joints</Filter></ClInclude>
+	<ClInclude Include="Source\msp_joint_curvy_piston.h"><Filter>Joints</Filter></ClInclude>
 	<ClInclude Include="Source\msp_sdl.h" />
 	<ClInclude Include="Source\msp_sdl_mixer.h" />
 	<ClInclude Include="Source\msp_sound.h" />

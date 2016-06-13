@@ -946,13 +946,13 @@ void dgWorld::StepDynamics (dgFloat32 timestep)
 //xxx *=1;
 
 	//xxxxx();
+	//SerializeToFile ("xxx.bin");
 
 	dTimeTrackerEvent(__FUNCTION__);
 	dgAssert (m_inUpdate == 0);
-//SerializeToFile ("xxx.bin");
+	dgAssert (GetThreadCount() >= 1);
 
 	m_inUpdate ++;
-	dgAssert (GetThreadCount() >= 1);
 
 	m_broadPhase->UpdateContacts (timestep);
 	UpdateDynamics (timestep);
@@ -964,6 +964,7 @@ void dgWorld::StepDynamics (dgFloat32 timestep)
 			listener.m_onListenerUpdate (this, listener.m_userData, timestep);
 		}
 	}
+
 	m_inUpdate --;
 }
 

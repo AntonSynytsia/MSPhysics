@@ -23,13 +23,11 @@ void MSNewton::Slider::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 	SliderData* cj_data = (SliderData*)joint_data->cj_data;
 
 	// Calculate position of pivot points and Jacobian direction vectors in global space.
-	dMatrix matrix0;
-	dMatrix matrix1;
-	Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1);
+	dMatrix matrix0, matrix1, matrix2;
+	MSNewton::Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1, matrix2);
 
 	const dVector& pos0 = matrix0.m_posit;
 	dVector pos1(matrix1.m_posit + matrix1.m_right.Scale((pos0 - matrix1.m_posit) % matrix1.m_right));
-	//dVector pos1(matrix1.m_posit);
 
 	// Calculate position, velocity, and acceleration
 	dFloat last_pos = cj_data->cur_pos;
@@ -107,9 +105,9 @@ void MSNewton::Slider::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 	NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 
 	// Add limits and friction
-	if (cj_data->limits_enabled == true && cj_data->cur_pos < cj_data->min) {
+	if (cj_data->limits_enabled == true && cj_data->cur_pos < cj_data->min - Joint::LINEAR_LIMIT_EPSILON) {
 		const dVector& s0 = matrix0.m_posit;
-		dVector s1(s0 + matrix1.m_right.Scale(cj_data->min + Joint::LINEAR_LIMIT_EPSILON - cj_data->cur_pos));
+		dVector s1(s0 + matrix1.m_right.Scale(cj_data->min - cj_data->cur_pos));
 		NewtonUserJointAddLinearRow(joint, &s0[0], &s1[0], &matrix1.m_right[0]);
 		NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
 		if (joint_data->ctype == CT_FLEXIBLE)
@@ -118,9 +116,9 @@ void MSNewton::Slider::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
-	else if (cj_data->limits_enabled == true && cj_data->cur_pos > cj_data->max) {
+	else if (cj_data->limits_enabled == true && cj_data->cur_pos > cj_data->max + Joint::LINEAR_LIMIT_EPSILON) {
 		const dVector& s0 = matrix0.m_posit;
-		dVector s1(s0 + matrix1.m_right.Scale(cj_data->max - Joint::LINEAR_LIMIT_EPSILON - cj_data->cur_pos));
+		dVector s1(s0 + matrix1.m_right.Scale(cj_data->max - cj_data->cur_pos));
 		NewtonUserJointAddLinearRow(joint, &s0[0], &s1[0], &matrix1.m_right[0]);
 		NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
 		if (joint_data->ctype == CT_FLEXIBLE)
@@ -130,15 +128,18 @@ void MSNewton::Slider::submit_constraints(const NewtonJoint* joint, dgFloat32 ti
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
 	else {
-		NewtonUserJointAddLinearRow(joint, &matrix0.m_posit[0], &matrix0.m_posit[0], &matrix1.m_right[0]);
-		BodyData* cbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
+		dVector point(matrix1.UntransformVector(matrix0.m_posit));
+		point.m_z = 0.0f;
+		point = matrix1.TransformVector(point);
+		NewtonUserJointAddLinearRow(joint, &point[0], &matrix1.m_posit[0], &matrix1.m_right[0]);
 		dFloat power = cj_data->friction * cj_data->controller;
+		/*BodyData* cbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
 		if (cbody_data->bstatic == false && cbody_data->mass >= MIN_MASS)
 			power *= cbody_data->mass;
 		else {
 			BodyData* pbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
 			if (pbody_data->bstatic == false && pbody_data->mass >= MIN_MASS) power *= pbody_data->mass;
-		}
+		}*/
 		NewtonUserJointSetRowMinimumFriction(joint, -power);
 		NewtonUserJointSetRowMaximumFriction(joint, power);
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
@@ -176,14 +177,19 @@ void MSNewton::Slider::on_destroy(JointData* joint_data) {
 	delete cj_data;
 }
 
-void MSNewton::Slider::on_connect(JointData* joint_data) {
-}
-
 void MSNewton::Slider::on_disconnect(JointData* joint_data) {
 	SliderData* cj_data = (SliderData*)joint_data->cj_data;
 	cj_data->cur_pos = 0.0f;
 	cj_data->cur_vel = 0.0f;
 	cj_data->cur_accel = 0.0f;
+}
+
+void MSNewton::Slider::adjust_pin_matrix_proc(JointData* joint_data, dMatrix& pin_matrix) {
+	dMatrix matrix;
+	dVector centre;
+	NewtonBodyGetMatrix(joint_data->child, &matrix[0][0]);
+	NewtonBodyGetCentreOfMass(joint_data->child, &centre[0]);
+	pin_matrix.m_posit = matrix.TransformVector(centre);
 }
 
 
@@ -219,8 +225,8 @@ VALUE MSNewton::Slider::create(VALUE self, VALUE v_joint) {
 	joint_data->submit_constraints = submit_constraints;
 	joint_data->get_info = get_info;
 	joint_data->on_destroy = on_destroy;
-	joint_data->on_connect = on_connect;
 	joint_data->on_disconnect = on_disconnect;
+	//~ joint_data->adjust_pin_matrix_proc = adjust_pin_matrix_proc;
 
 	return Util::to_value(joint_data);
 }
@@ -292,14 +298,16 @@ VALUE MSNewton::Slider::limits_enabled(VALUE self, VALUE v_joint) {
 VALUE MSNewton::Slider::get_friction(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SLIDER);
 	SliderData* cj_data = (SliderData*)joint_data->cj_data;
-	return Util::to_value(cj_data->friction);
+	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(joint_data->world);
+	return Util::to_value(cj_data->friction * world_data->inverse_scale4);
 }
 
 VALUE MSNewton::Slider::set_friction(VALUE self, VALUE v_joint, VALUE v_friction) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_SLIDER);
 	SliderData* cj_data = (SliderData*)joint_data->cj_data;
-	cj_data->friction = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_friction), 0.0f);
-	return Util::to_value(cj_data->friction);
+	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(joint_data->world);
+	cj_data->friction = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_friction), 0.0f) * world_data->scale4;
+	return Util::to_value(cj_data->friction * world_data->inverse_scale4);
 }
 
 VALUE MSNewton::Slider::get_controller(VALUE self, VALUE v_joint) {

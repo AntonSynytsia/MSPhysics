@@ -14,13 +14,11 @@ private:
 	static const dFloat DEFAULT_MIN;
 	static const dFloat DEFAULT_MAX;
 	static const bool DEFAULT_LIMITS_ENABLED;
-	static const dFloat DEFAULT_ACCEL;
-	static const dFloat DEFAULT_DAMP;
-	static const dFloat DEFAULT_STRENGTH;
+	static const dFloat DEFAULT_RATE;
+	static const dFloat DEFAULT_POWER;
 	static const dFloat DEFAULT_REDUCTION_RATIO;
 	static const dFloat DEFAULT_CONTROLLER;
 	static const bool DEFAULT_CONTROLLER_ENABLED;
-	static const bool DEFAULT_SP_MODE_ENABLED;
 
 public:
 	// Structures
@@ -32,21 +30,19 @@ public:
 		dFloat min;
 		dFloat max;
 		bool limits_enabled;
-		dFloat accel;
-		dFloat damp;
+		dFloat rate;
 		dFloat reduction_ratio;
-		dFloat strength;
+		dFloat power;
 		dFloat controller;
 		bool controller_enabled;
-		bool sp_mode_enabled;
 	} ServoData;
 
 	// Callback Functions
 	static void submit_constraints(const NewtonJoint* joint, dgFloat32 timestep, int thread_index);
 	static void get_info(const NewtonJoint* const joint, NewtonJointRecord* const info);
 	static void on_destroy(JointData* joint_data);
-	static void on_connect(JointData* joint_data);
 	static void on_disconnect(JointData* joint_data);
+	static void adjust_pin_matrix_proc(JointData* joint_data, dMatrix& pin_matrix);
 
 	// Ruby Functions
 	static VALUE is_valid(VALUE self, VALUE v_joint);
@@ -60,18 +56,14 @@ public:
 	static VALUE set_max(VALUE self, VALUE v_joint, VALUE v_max);
 	static VALUE enable_limits(VALUE self, VALUE v_joint, VALUE v_state);
 	static VALUE limits_enabled(VALUE self, VALUE v_joint);
-	static VALUE get_accel(VALUE self, VALUE v_joint);
-	static VALUE set_accel(VALUE self, VALUE v_joint, VALUE v_accel);
-	static VALUE get_damp(VALUE self, VALUE v_joint);
-	static VALUE set_damp(VALUE self, VALUE v_joint, VALUE v_damp);
-	static VALUE get_strength(VALUE self, VALUE v_joint);
-	static VALUE set_strength(VALUE self, VALUE v_joint, VALUE v_damp);
+	static VALUE get_rate(VALUE self, VALUE v_joint);
+	static VALUE set_rate(VALUE self, VALUE v_joint, VALUE v_rate);
+	static VALUE get_power(VALUE self, VALUE v_joint);
+	static VALUE set_power(VALUE self, VALUE v_joint, VALUE v_power);
 	static VALUE get_reduction_ratio(VALUE self, VALUE v_joint);
 	static VALUE set_reduction_ratio(VALUE self, VALUE v_joint, VALUE v_reduction_ratio);
 	static VALUE get_controller(VALUE self, VALUE v_joint);
 	static VALUE set_controller(VALUE self, VALUE v_joint, VALUE v_controller);
-	static VALUE enable_sp_mode(VALUE self, VALUE v_joint, VALUE v_state);
-	static VALUE sp_mode_enabled(VALUE self, VALUE v_joint);
 };
 
 void Init_msp_servo(VALUE mNewton);

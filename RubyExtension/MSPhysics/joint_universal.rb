@@ -74,13 +74,13 @@ module MSPhysics
 
     # Determine whether min & max angle limits along joint Z-axis are enabled.
     # @return [Boolean]
-    def limits_enabled1?
-      MSPhysics::Newton::Universal.limits_enabled1?(@address)
+    def limits1_enabled?
+      MSPhysics::Newton::Universal.limits1_enabled?(@address)
     end
 
     # Enable/disable min & max angle limits along joint Z-axis.
     # @param [Boolean] state
-    def limits_enabled1=(state)
+    def limits1_enabled=(state)
       MSPhysics::Newton::Universal.enable_limits1(@address, state)
     end
 
@@ -129,13 +129,13 @@ module MSPhysics
 
     # Determine whether min & max angle limits along joint X-axis are enabled.
     # @return [Boolean]
-    def limits_enabled2?
-      MSPhysics::Newton::Universal.limits_enabled2?(@address)
+    def limits2_enabled?
+      MSPhysics::Newton::Universal.limits2_enabled?(@address)
     end
 
     # Enable/disable min & max angle limits along joint X-axis.
     # @param [Boolean] state
-    def limits_enabled2=(state)
+    def limits2_enabled=(state)
       MSPhysics::Newton::Universal.enable_limits2(@address, state)
     end
 
@@ -146,8 +146,7 @@ module MSPhysics
       MSPhysics::Newton::Universal.get_friction(@address)
     end
 
-    # Set rotational friction.
-    # @note This feature has an effect only if "rotate-back" is disabled.
+    # Set angular friction.
     # @note The actual friction is <tt>friction * controller</tt>.
     # @param [Numeric] value A value greater than or equal to zero.
     def friction=(value)

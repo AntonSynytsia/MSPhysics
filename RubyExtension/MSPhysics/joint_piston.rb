@@ -6,8 +6,8 @@ module MSPhysics
     DEFAULT_MIN = -10.0
     DEFAULT_MAX = 10.0
     DEFAULT_LIMITS_ENABLED = false
-    DEFAULT_LINEAR_RATE = 40.0
-    DEFAULT_STRENGTH = 0.0
+    DEFAULT_RATE = 40.0
+    DEFAULT_POWER = 0.0
     DEFAULT_REDUCTION_RATIO = 0.1
     DEFAULT_CONTROLLER = nil
 
@@ -24,8 +24,8 @@ module MSPhysics
       MSPhysics::Newton::Piston.set_min(@address, DEFAULT_MIN)
       MSPhysics::Newton::Piston.set_max(@address, DEFAULT_MAX)
       MSPhysics::Newton::Piston.enable_limits(@address, DEFAULT_LIMITS_ENABLED)
-      MSPhysics::Newton::Piston.set_linear_rate(@address, DEFAULT_LINEAR_RATE)
-      MSPhysics::Newton::Piston.set_strength(@address, DEFAULT_STRENGTH)
+      MSPhysics::Newton::Piston.set_rate(@address, DEFAULT_RATE)
+      MSPhysics::Newton::Piston.set_power(@address, DEFAULT_POWER)
       MSPhysics::Newton::Piston.set_reduction_ratio(@address, DEFAULT_REDUCTION_RATIO)
       MSPhysics::Newton::Piston.set_controller(@address, DEFAULT_CONTROLLER)
     end
@@ -86,78 +86,66 @@ module MSPhysics
 
     # Get maximum linear rate in meters per second.
     # @return [Numeric] A value greater than or equal to zero.
-    def linear_rate
-      MSPhysics::Newton::Piston.get_linear_rate(@address)
+    def rate
+      MSPhysics::Newton::Piston.get_rate(@address)
     end
 
-    # Set maximum linear rate in meters per second,
+    # Set maximum linear rate in meters per second.
     # @param [Numeric] value A value greater than or equal to zero.
-    def linear_rate=(value)
-      MSPhysics::Newton::Piston.set_linear_rate(@address, value)
+    def rate=(value)
+      MSPhysics::Newton::Piston.set_rate(@address, value)
     end
 
-    # Get joint power to mass ratio.
-    # @note The actual power in Joules per second can be determined by
-    #   multiplying strength with the mass of the connected body. If the mass of
-    #   the connected body is zero or if its static, then the power can be
-    #   determined by multiplying strength with the mass of the parent body.
-    #   However, if it turns out that both parent and child bodies are static
-    #   or have a mass of zero, which is unlikely, the strength resembles power.
-    # @note A strength value of zero represents infinite power.
+    # Get movement power in Watts.
+    # @note A power value of zero represents maximum power.
     # @return [Numeric] A value greater than or equal to zero.
-    def strength
-      MSPhysics::Newton::Piston.get_strength(@address)
+    def power
+      MSPhysics::Newton::Piston.get_power(@address)
     end
 
-    # Set joint power to mass ratio.
-    # @note The actual power in Joules per second can be determined by
-    #   multiplying strength with the mass of the connected body. If the mass of
-    #   the connected body is zero or if its static, then the power can be
-    #   determined by multiplying strength with the mass of the parent body.
-    #   However, if it turns out that both parent and child bodies are static
-    #   or have a mass of zero, which is unlikely, the strength resembles power.
-    # @note A strength value of zero represents infinite power.
+    # Set movement power in Watts.
+    # @note A power value of zero represents maximum power.
     # @param [Numeric] value A value greater than or equal to zero.
-    def strength=(value)
-      MSPhysics::Newton::Piston.set_strength(@address, value)
+    def power=(value)
+      MSPhysics::Newton::Piston.set_power(@address, value)
     end
 
     # Get linear reduction ratio.
-    # @note Reduction ratio is a feature that reduces linear rate of a piston
-    #   joint when piston current position nears its desired position. Linear
-    #   reduction starts acting upon the linear rate of a piston joint when the
-    #   difference between the current position and the desired position of the
-    #   piston joint is less than <tt>linear_rate * reduction_ratio</tt> meters.
-    # @note A reduction ratio of zero will disable the reduction.
-    # @note A typical reduction ratio is 0.1.
+    # @note Reduction ratio is a feature that reduces linear rate of the joint
+    #   when its current position nears its desired position. Linear reduction
+	#   ratio starts acting upon the linear rate of the joint when the
+	#	difference between the current position and the desired position of the
+    #   joint is less than <tt>rate * reduction_ratio</tt> meters.
+    # @note A reduction ratio of zero disables the reduction feature.
+    # @note A typical reduction ratio value is 0.1.
     # @return [Numeric] A value between 0.0 and 1.0.
     def reduction_ratio
       MSPhysics::Newton::Piston.get_reduction_ratio(@address)
     end
 
     # Get linear reduction ratio.
-    # @note Reduction ratio is a feature that reduces linear rate of a piston
-    #   joint when piston current position nears its desired position. Linear
-    #   reduction starts acting upon the linear rate of a piston joint when the
-    #   difference between the current position and the desired position of the
-    #   piston joint is less than <tt>linear_rate * reduction_ratio</tt> meters.
-    # @note A reduction ratio of zero will disable the reduction.
-    # @note A typical reduction ratio is 0.1.
+    # @note Reduction ratio is a feature that reduces linear rate of the joint
+    #   when its current position nears its desired position. Linear reduction
+	#   ratio starts acting upon the linear rate of the joint when the
+	#	difference between the current position and the desired position of the
+    #   joint is less than <tt>rate * reduction_ratio</tt> meters.
+    # @note A reduction ratio of zero disables the reduction feature.
+    # @note A typical reduction ratio value is 0.1.
     # @param [Numeric] value A value between 0.0 and 1.0.
     def reduction_ratio=(value)
       MSPhysics::Newton::Piston.set_reduction_ratio(@address, value)
     end
 
-    # Get piston controller, a desired position in meters. Nil is returned if
-    # piston is turned off.
-    # @return [Numeric, nil]
+    # Get piston controller.
+    # @return [Numeric, nil] Desired position in meters or +nil+ if piston is
+    #   turned off.
     def controller
       MSPhysics::Newton::Piston.get_controller(@address)
     end
 
-    # Set piston controller, a desired position in meters. Pass nil to
-    # turn off the piston.
-    # @param [Numeric, nil] value
+    # Set piston controller.
+    # @param [Numeric, nil] value Desired position in meters or +nil+ to turn
+    #   off the piston.
     def controller=(value)
       MSPhysics::Newton::Piston.set_controller(@address, value)
     end

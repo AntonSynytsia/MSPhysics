@@ -24,11 +24,9 @@ void MSNewton::BallAndSocket::submit_constraints(const NewtonJoint* joint, dgFlo
 	JointData* joint_data = (JointData*)NewtonJointGetUserData(joint);
 	BallAndSocketData* cj_data = (BallAndSocketData*)joint_data->cj_data;
 
-	dMatrix matrix0;
-	dMatrix matrix1;
-
 	// Calculate the position of the pivot point and the Jacobian direction vectors, in global space.
-	MSNewton::Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1);
+	dMatrix matrix0, matrix1, matrix2;
+	MSNewton::Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1, matrix2);
 
 	// Calculate current cone angle.
 	const dVector& cone_dir0 = matrix0.m_right;
@@ -38,8 +36,10 @@ void MSNewton::BallAndSocket::submit_constraints(const NewtonJoint* joint, dgFlo
 	dVector lateral_dir;
 	if (dAbs(cur_cone_angle_cos) > 0.99995f)
 		lateral_dir = matrix0.m_up;
-	else
+	else {
 		lateral_dir = cone_dir0 * cone_dir1;
+		Util::normalize_vector(lateral_dir);
+	}
 	// Calculate current twist angle.
 	dFloat sin_angle;
 	dFloat cos_angle;
@@ -79,13 +79,13 @@ void MSNewton::BallAndSocket::submit_constraints(const NewtonJoint* joint, dgFlo
 
 	// Calculate friction
 	dFloat power = cj_data->friction * dAbs(cj_data->controller);
-	BodyData* cbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
+	/*BodyData* cbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
 	if (cbody_data->bstatic == false && cbody_data->mass >= MIN_MASS)
 		power *= cbody_data->mass;
 	else {
 		BodyData* pbody_data = (BodyData*)NewtonBodyGetUserData(joint_data->child);
 		if (pbody_data->bstatic == false && pbody_data->mass >= MIN_MASS) power *= pbody_data->mass;
-	}
+	}*/
 
 	// Handle cone angle
 	if (cj_data->cone_limits_enabled == true && (cj_data->max_cone_angle < 1.0e-4f)) {
@@ -104,9 +104,9 @@ void MSNewton::BallAndSocket::submit_constraints(const NewtonJoint* joint, dgFlo
 			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
-	else if (cj_data->cone_limits_enabled == true && (cj_data->cur_cone_angle - cj_data->max_cone_angle) > Joint::ANGULAR_LIMIT_EPSILON) {
+	else if (cj_data->cone_limits_enabled == true && cj_data->cur_cone_angle > cj_data->max_cone_angle) {
 		// Handle in case current cone angle is greater than max cone angle
-		NewtonUserJointAddAngularRow(joint, cj_data->cur_cone_angle-cj_data->max_cone_angle, &lateral_dir[0]);
+		NewtonUserJointAddAngularRow(joint, cj_data->cur_cone_angle - cj_data->max_cone_angle, &lateral_dir[0]);
 		NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
 		if (joint_data->ctype == CT_FLEXIBLE)
 			NewtonUserJointSetRowSpringDamperAcceleration(joint, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
@@ -151,7 +151,7 @@ void MSNewton::BallAndSocket::submit_constraints(const NewtonJoint* joint, dgFlo
 			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
-	else if (cj_data->twist_limits_enabled == true && (cur_twist_angle - cj_data->min_twist_angle) < -Joint::ANGULAR_LIMIT_EPSILON) {
+	else if (cj_data->twist_limits_enabled == true && cur_twist_angle < cj_data->min_twist_angle - Joint::ANGULAR_LIMIT_EPSILON) {
 		// Handle in case current twist angle is less than min
 		NewtonUserJointAddAngularRow(joint, cj_data->min_twist_angle - cur_twist_angle, &matrix0.m_right[0]);
 		NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
@@ -161,7 +161,7 @@ void MSNewton::BallAndSocket::submit_constraints(const NewtonJoint* joint, dgFlo
 			NewtonUserJointSetRowAcceleration(joint, NewtonUserCalculateRowZeroAccelaration(joint));
 		NewtonUserJointSetRowStiffness(joint, joint_data->stiffness);
 	}
-	else if (cj_data->twist_limits_enabled == true && (cur_twist_angle - cj_data->max_twist_angle) > Joint::ANGULAR_LIMIT_EPSILON) {
+	else if (cj_data->twist_limits_enabled == true && cur_twist_angle > cj_data->max_twist_angle + Joint::ANGULAR_LIMIT_EPSILON) {
 		// Handle in case current twist angle is greater than max
 		NewtonUserJointAddAngularRow(joint, cj_data->max_twist_angle - cur_twist_angle, &matrix0.m_right[0]);
 		NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
@@ -202,9 +202,6 @@ void MSNewton::BallAndSocket::get_info(const NewtonJoint* const joint, NewtonJoi
 void MSNewton::BallAndSocket::on_destroy(JointData* data) {
 	BallAndSocketData* cj_data = (BallAndSocketData*)data->cj_data;
 	delete cj_data;
-}
-
-void MSNewton::BallAndSocket::on_connect(JointData* data) {
 }
 
 void MSNewton::BallAndSocket::on_disconnect(JointData* data) {
@@ -251,7 +248,6 @@ VALUE MSNewton::BallAndSocket::create(VALUE self, VALUE v_joint) {
 	data->submit_constraints = submit_constraints;
 	data->get_info = get_info;
 	data->on_destroy = on_destroy;
-	data->on_connect = on_connect;
 	data->on_disconnect = on_disconnect;
 
 	return Util::to_value(data);
@@ -341,14 +337,16 @@ VALUE MSNewton::BallAndSocket::get_cur_twist_angle(VALUE self, VALUE v_joint) {
 VALUE MSNewton::BallAndSocket::get_friction(VALUE self, VALUE v_joint) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
 	BallAndSocketData* cj_data = (BallAndSocketData*)joint_data->cj_data;
-	return Util::to_value(cj_data->friction);
+	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(joint_data->world);
+	return Util::to_value(cj_data->friction * world_data->inverse_scale5);
 }
 
 VALUE MSNewton::BallAndSocket::set_friction(VALUE self, VALUE v_joint, VALUE v_friction) {
 	JointData* joint_data = Util::value_to_joint2(v_joint, JT_BALL_AND_SOCKET);
 	BallAndSocketData* cj_data = (BallAndSocketData*)joint_data->cj_data;
-	cj_data->friction = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_friction), 0.0f);
-	return Util::to_value(cj_data->friction);
+	WorldData* world_data = (WorldData*)NewtonWorldGetUserData(joint_data->world);
+	cj_data->friction = Util::clamp_min<dFloat>(Util::value_to_dFloat(v_friction), 0.0f) * world_data->scale5;
+	return Util::to_value(cj_data->friction * world_data->inverse_scale5);
 }
 
 VALUE MSNewton::BallAndSocket::get_controller(VALUE self, VALUE v_joint) {

@@ -41,14 +41,19 @@ public:
 		dFloat controller;
 		dFloat desired_start_angle;
 		bool temp_disable_limits;
+		NewtonJoint* sc;
 	} HingeData;
 
 	// Callback Functions
 	static void submit_constraints(const NewtonJoint* joint, dgFloat32 timestep, int thread_index);
+	static void sc_submit_constraints(const NewtonJoint* joint, dgFloat32 timestep, int thread_index);
+	static void sc_get_info(const NewtonJoint* const joint, NewtonJointRecord* const info);
+	static void sc_destructor(const NewtonJoint* joint);
 	static void get_info(const NewtonJoint* const joint, NewtonJointRecord* const info);
 	static void on_destroy(JointData* joint_data);
 	static void on_connect(JointData* joint_data);
 	static void on_disconnect(JointData* joint_data);
+	static void adjust_pin_matrix_proc(JointData* joint_data, dMatrix& pin_matrix);
 
 	// Ruby Functions
 	static VALUE is_valid(VALUE self, VALUE v_joint);

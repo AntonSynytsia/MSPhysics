@@ -827,6 +827,9 @@
     <ClCompile Include="Source\msp_joint_spring.cpp" />
     <ClCompile Include="Source\msp_joint_universal.cpp" />
     <ClCompile Include="Source\msp_joint_up_vector.cpp" />
+	<ClCompile Include="Source\msp_joint_plane.cpp" />
+	<ClCompile Include="Source\msp_joint_curvy_slider.cpp" />
+	<ClCompile Include="Source\msp_joint_curvy_piston.cpp" />
     <ClCompile Include="Source\msp_sdl.cpp" />
     <ClCompile Include="Source\msp_sdl_mixer.cpp" />
     <ClCompile Include="Source\msp_sound.cpp" />
@@ -868,6 +871,9 @@
     <ClInclude Include="Source\msp_joint_spring.h" />
     <ClInclude Include="Source\msp_joint_universal.h" />
     <ClInclude Include="Source\msp_joint_up_vector.h" />
+	<ClInclude Include="Source\msp_joint_plane.h" />
+	<ClInclude Include="Source\msp_joint_curvy_slider.h" />
+	<ClInclude Include="Source\msp_joint_curvy_piston.h" />
     <ClInclude Include="Source\msp_sdl.h" />
     <ClInclude Include="Source\msp_sdl_mixer.h" />
     <ClInclude Include="Source\msp_sound.h" />

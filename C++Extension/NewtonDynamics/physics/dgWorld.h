@@ -209,7 +209,6 @@ class dgWorld
 
 	void Update (dgFloat32 timestep);
 	void UpdateAsync (dgFloat32 timestep);
-	
 	void StepDynamics (dgFloat32 timestep);
 	
 	dgInt32 Collide (const dgCollisionInstance* const collisionA, const dgMatrix& matrixA, 
