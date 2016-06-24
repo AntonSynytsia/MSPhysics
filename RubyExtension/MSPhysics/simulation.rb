@@ -35,6 +35,17 @@ module MSPhysics
         Sketchup.active_model.select_tool nil
         true
       end
+      
+      # Create a Simulation instance for external frame-by-frame
+      # @return [Simulation]
+      def external_control
+        return false if is_active?
+        MSPhysics::Replay.reset
+        exc_tool = Simulation.new
+        exc_tool.configure_for_external_control
+        Sketchup.active_model.select_tool(exc_tool)
+        exc_tool
+	    end
 
     end # class << self
 
@@ -150,6 +161,7 @@ module MSPhysics
       @joystick_data = {}
       @joybutton_data = {}
       @joypad_data = 0
+      @disable_timer = false
       @@instance = self
     end
 
@@ -2785,8 +2797,10 @@ module MSPhysics
       view.invalidate
       # Start the update timer
       if Simulation.is_active?
-        #@update_timer = AMS::Timer.start(0, true){ do_on_update }
-        @update_timer = ::UI.start_timer(0, true) { do_on_update }
+        if (!@disable_timer)
+          #@update_timer = AMS::Timer.start(0, true){ do_on_update }
+          @update_timer = ::UI.start_timer(0, true) { do_on_update }
+        end
       end
     end
 
@@ -3408,6 +3422,17 @@ module MSPhysics
     def swp_on_mouse_wheel_tilt(x,y, dir)
       call_event(:onMouseWheelTilt, x, y, dir) unless @paused
       0
+    end
+    
+    def configure_for_external_control
+      @disable_timer = true
+      @mode = 1
+    end
+    
+    def next_frames(frame_count)
+      for i in 0..frame_count
+        do_on_update()
+      end
     end
 
   end # class Simulation
