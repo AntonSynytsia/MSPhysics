@@ -15,7 +15,7 @@ html {
 }
 
 body {
-  width: 36em;
+  width: 40em;
   background: #633cb2;
   background: -moz-linear-gradient(top,  #633cb2 0%, #aa99cc 100%);
   background: -webkit-linear-gradient(top,  #633cb2 0%,#aa99cc 100%);
@@ -64,16 +64,25 @@ table {
   font-weight: bold;
   color: #FFF;
   font-size: 1.0em !important;
-  width: 10em;
+  width: 12em;
 }
 
 .controller_value {
   color: #FFF;
-  background: none;
-  border: none;
+  background: rgba(255,255,255, 0.1);
+  border: 1px solid rgba(160,160,160, 0.2);
+  border-radius: 3px;
   font-weight: bold;
   font-size: 1.0em !important;
+  text-indent: 0.5em;
   width: 7em;
+  height: 1.5em;
+  margin-top: 4px;
+}
+
+.controller_value::selection {
+  color: #0f0f0f;
+  background: #fff2a8;
 }
 
 .main_form {
@@ -89,19 +98,27 @@ table {
   font-size: 0.9em;
 }
 
+.note {
+  clear: both;
+  position: relative;
+  color: #E6E6E6;
+  padding-left: 1em;
+  font-size: 1.0em !important;
+}
+
 table.struct_table {
   border: none;
-  padding: 0em;
-  margin: 0em;
+  padding: 0;
+  margin: 0;
 }
 
 table.struct_table tr td {
   border: none;
-  margin: 0em;
+  margin: 0;
 }
 
 table.struct_table tr {
-  padding: 0em;
+  padding: 0;
 }
 
 table.struct_table td {

@@ -1,5 +1,7 @@
 [Homepage](http://sketchucation.com/forums/viewtopic.php?f=323&t=56852)
 
+[Wiki](https://github.com/AntonSynytsia/MSPhysics/wiki)
+
 [GitHub](https://github.com/AntonSynytsia/MSPhysics)
 
 [Documentation](http://www.rubydoc.info/github/AntonSynytsia/MSPhysics/index)
@@ -19,7 +21,7 @@ having mouse wheel serve as a shortcut for the native zoom in/out operation, it
 can be intercepted and serve as a command to switch weapons for instance. All
 such operations might seem a fantasy, but thanks to Microsoft Windows API, which
 is heavily implemented in AMS Library, gaining control over user input is
-possible. Along the lines, MSPhysics uses NewtonDynamics 3.14 by Juleo Jerez in
+possible. Along the lines, MSPhysics uses NewtonDynamics 3.14 by Julio Jerez in
 order to produce fast and realistic physics effects. Compared to Newton 1.53,
 which was used by SketchyPhysics, Newton 3.14 is faster and more advanced. In
 many ways the goal of this project is to bring SketchyPhysics back to life.
@@ -33,11 +35,10 @@ many ways the goal of this project is to bring SketchyPhysics back to life.
 
 ## Compatibility and Requirements
 
-* Microsoft Windows XP, Vista, 7, 8, or 10.
-  This plugin will not work on Mac OS X as many of the techniques and features
-  are achieved through Windows API.
+* Microsoft Windows XP or later.
+* Mac OS X 10.5+.
 * SketchUp 6 or later. SU2016 64bit is recommended!
-* [AMS_Library 3.2.0 +](http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835)
+* [AMS_Library 3.3.0 +](http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835)
 
 
 ## Installation
@@ -63,7 +64,7 @@ When extracted and posted in the plugins folder, the content should be resembled
 
 ## Version
 
-* MSPhysics 0.8.0
+* MSPhysics 0.9.0
 * NewtonDynamics 3.14
 * SDL 2.0.4
 * SDL_Mixer 2.0.1
@@ -71,7 +72,7 @@ When extracted and posted in the plugins folder, the content should be resembled
 
 ## Release Date
 
-June 12, 2016
+July 10, 2016
 
 
 ## Licence

@@ -1,5 +1,6 @@
 module MSPhysics
 
+  # An abstract for all joints.
   # @since 1.0.0
   class Joint
 
@@ -10,35 +11,40 @@ module MSPhysics
 
     class << self
 
-      # Optimize joint name.
-      # @param [Symbol, String] name Joint name.
-      # @return [Symbol, nil] Proper name if successful.
-      def optimize_joint_name(name)
-        name = name.to_s.downcase.gsub(/\s|_/, '')
-        MSPhysics::JOINT_TYPES.keys.each { |type|
-          return type if type.to_s.gsub(/_/, '') == name
-        }
-        nil
+      # Get joint by address.
+      # @param [Fixnum] address
+      # @return [Joint, nil] A Joint object if successful.
+      # @raise [TypeError] if the address is invalid.
+      def joint_by_address
+        data = MSPhysics::Newton::Joint.get_user_data(address.to_i)
+        data.is_a?(MSPhysics::Joint) ? data : nil
+      end
+
+      # Get all joints.
+      # @note Joints that do not have a {Joint} instance are not included in the
+      #   array.
+      # @return [Array<Joint>]
+      def all_joints
+        MSPhysics::Newton.get_all_joints() { |ptr, data| data.is_a?(MSPhysics::Joint) ? data : nil }
       end
 
     end # class << self
 
-    # Create joint.
     # @param [MSPhysics::World] world
     # @param [MSPhysics::Body, nil] parent
-    # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
-    #   Of the given matrix, matrix origin should represent pin origin, and
-    #   matrix Z-axis should represent pin up.
-    # @param [Fixnum] dof Maximum degrees of freedom.
+    # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation
+    #   in global space. Matrix origin is interpreted as the pin position.
+    #   Matrix z-axis is interpreted as the pin direction.
     # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group_inst
-    def initialize(world, parent, pin_tra, dof, group_inst = nil)
+    def initialize(world, parent, pin_tra, group_inst = nil)
+      if self.class == MSPhysics::Joint
+        raise(TypeError, "Creating an instance of the Joint abstract class is not allowed!", caller)
+      end
       MSPhysics::World.validate(world)
-      MSPhysics::Body.validate(parent) if parent
-      parent_address = parent ? parent.get_address : nil
-      @world = world
-      @address = MSPhysics::Newton::Joint.create(world.get_address, parent_address, pin_tra, dof, group_inst)
+      MSPhysics::Body.validate(parent, world) if parent
+      parent_address = parent ? parent.address : nil
+      @address = MSPhysics::Newton::Joint.create(world.address, parent_address, pin_tra, group_inst)
       MSPhysics::Newton::Joint.set_user_data(@address, self)
-
       MSPhysics::Newton::Joint.set_constraint_type(@address, DEFAULT_CONSTRAINT_TYPE)
       MSPhysics::Newton::Joint.set_stiffness(@address, DEFAULT_STIFFNESS)
       MSPhysics::Newton::Joint.set_bodies_collidable(@address, DEFAULT_BODIES_COLLIDABLE)
@@ -46,7 +52,13 @@ module MSPhysics
       @name = ''
     end
 
-    # Get joint address.
+    # Determine whether joint is valid.
+    # @return [Boolean]
+    def valid?
+      MSPhysics::Newton::Joint.is_valid?(@address)
+    end
+
+    # Get pointer the joint.
     # @return [Fixnum]
     def address
       @address
@@ -61,7 +73,8 @@ module MSPhysics
     # Get the world the joint is associated to.
     # @return [MSPhysics::World]
     def world
-      @world
+      world_address = MSPhysics::Newton::Joint.get_world(@address)
+      MSPhysics::Newton::World.get_user_data(world_address)
     end
 
     # Destroy joint.
@@ -70,18 +83,12 @@ module MSPhysics
       MSPhysics::Newton::Joint.destroy(@address)
     end
 
-    # Determine whether joint is valid.
-    # @return [Boolean]
-    def valid?
-      MSPhysics::Newton::Joint.is_valid?(@address)
-    end
-
     # Connect joint to its desired child body.
     # @param [MSPhysics::Body] child
     # @return [Boolean] success
     def connect(child)
-      MSPhysics::Body.validate(child)
-      MSPhysics::Newton::Joint.connect(@address, child.get_address)
+      MSPhysics::Body.validate(child, self.world)
+      MSPhysics::Newton::Joint.connect(@address, child.address)
     end
 
     # Disconnect joint from its child body.
@@ -131,14 +138,14 @@ module MSPhysics
     # @return [MSPhysics::Body, nil]
     def parent
       address = MSPhysics::Newton::Joint.get_parent(@address)
-      address ? MSPhysics::Body.get_body_by_address(address) : nil
+      address ? MSPhysics::Body.body_by_address(address) : nil
     end
 
     # Get joint child body.
     # @return [MSPhysics::Body, nil]
     def child
       address = MSPhysics::Newton::Joint.get_child(@address)
-      address ? MSPhysics::Body.get_body_by_address(address) : nil
+      address ? MSPhysics::Body.body_by_address(address) : nil
     end
 
     # Get joint pin transformation in global space.
@@ -152,19 +159,6 @@ module MSPhysics
     # @return [Geom::Transformation] New matrix.
     def set_pin_matrix(matrix)
       MSPhysics::Newton::Joint.set_pin_matrix(@address, matrix)
-    end
-
-    # Get joint pin direction in global space.
-    # @return [Geom::Vector3d]
-    def get_direction
-      MSPhysics::Newton::Joint.get_direction(@address)
-    end
-
-    # Set joint pin direction in global space.
-    # @param [Geom::Vector3d] dir
-    # @return [void]
-    def set_direction(dir)
-      MSPhysics::Newton::Joint.set_direction(@address, dir)
     end
 
     # Determine whether parent body is collidable with its child body.

@@ -1,6 +1,15 @@
-- Make compatible with Mac OS X
-- Implement cloth and soft bodies interface
-- Implement user mesh collision interface
-- Add geared joints interface
-- Add fracture/split interface
-- Make Replay compatible with LightUp, Vray, Twilight, and Thea Render
+- Implement cloth and soft bodies interface.
+- Implement user mesh collision interface.
+- Add fracture/split interface.
+- Make Replay compatible with LightUp, Vray, and Thea Render.
+- Allow scaling the dialog.
+- Saving replay data into groups causes extreme lag. Also when emitted bodies go past end, they all disappear.
+- Get emitter and material changes on indigo working.
+- CurvySlider spins out of control on exact solver. Also connected bodies flip at particular points if rotation is disabled and alignment enabled.
+- Servo joint wobbles back and forth on iterative solver with low number of passes.
+- BallAndSocket joint is unstable when limits are enabled.
+- Add our own convex decomposition algorithm.
+- Add more checkbox options to simulation tab: fullscreen mode, game mode, undo on end, and hide joint layer.
+- Get keyboard, mouse, and MIDI working under Mac OS X. Also disable toolbars when active model is nil.
+- Add watermark text displaying version.
+- Split Simulation into Simulation and SimulationTool.

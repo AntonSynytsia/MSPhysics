@@ -14,12 +14,12 @@ module MSPhysics
     # Create a servo joint.
     # @param [MSPhysics::World] world
     # @param [MSPhysics::Body, nil] parent
-    # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
-    #   Of the given matrix, matrix origin should represent pin origin, and
-    #   matrix Z-AXIS should represent pin up.
+    # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation
+    #   in global space. Matrix origin is interpreted as the pin position.
+    #   Matrix z-axis is interpreted as the pin direction.
     # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group
     def initialize(world, parent, pin_tra, group = nil)
-      super(world, parent, pin_tra, 6, group)
+      super(world, parent, pin_tra, group)
       MSPhysics::Newton::Servo.create(@address)
       MSPhysics::Newton::Servo.set_min(@address, DEFAULT_MIN)
       MSPhysics::Newton::Servo.set_max(@address, DEFAULT_MAX)
@@ -115,8 +115,8 @@ module MSPhysics
     # Get angular reduction ratio.
     # @note Reduction ratio is a feature that reduces angular rate of the joint
     #   when its current angle nears its desired angle. Angular reduction ratio
-	#   starts acting upon the angular rate of the joint when the difference
-	#	between the current angle and the desired angle of the joint is less
+    #   starts acting upon the angular rate of the joint when the difference
+    #   between the current angle and the desired angle of the joint is less
     #   than <tt>rate * reduction_ratio</tt> radians.
     # @note A reduction ratio of zero disables the reduction feature.
     # @note A typical reduction ratio value is 0.1.
@@ -128,8 +128,8 @@ module MSPhysics
     # Set angular reduction ratio.
     # @note Reduction ratio is a feature that reduces angular rate of the joint
     #   when its current angle nears its desired angle. Angular reduction ratio
-	#   starts acting upon the angular rate of the joint when the difference
-	#	between the current angle and the desired angle of the joint is less
+    #   starts acting upon the angular rate of the joint when the difference
+    #   between the current angle and the desired angle of the joint is less
     #   than <tt>rate * reduction_ratio</tt> radians.
     # @note A reduction ratio of zero disables the reduction feature.
     # @note A typical reduction ratio value is 0.1.

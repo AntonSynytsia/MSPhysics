@@ -19,7 +19,7 @@ module MSPhysics
       # @return [Boolean] success
       def add(material)
         AMS.validate_type(material, MSPhysics::Material)
-        @instances[material.get_name] = material
+        @instances[material.name] = material
         true
       end
 
@@ -43,22 +43,16 @@ module MSPhysics
       # @note Case sensitive.
       # @param [String] name
       # @return [Material, nil]
-      def get_by_name(name)
+      def material_by_name(name)
         @instances[name]
       end
 
       # Get all material names.
       # @return [Array<String>]
-      def get_names
+      def names
         @instances.keys
       end
 
-      # Get all Material objects.
-      # @return [Array<Material>]
-      def get_materials
-        @instances.values
-      end
-
-    end # proxy class
+    end # class << self
   end # module Materials
 end # module MSPhysics

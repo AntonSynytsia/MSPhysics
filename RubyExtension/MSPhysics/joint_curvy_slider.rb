@@ -5,6 +5,7 @@ module MSPhysics
 
     DEFAULT_LINEAR_FRICTION = 0.0
     DEFAULT_ANGULAR_FRICTION = 0.0
+    DEFAULT_ALIGNMENT_POWER = 0.0
     DEFAULT_CONTROLLER = 1.0
     DEFAULT_LOOP_ENABLED = false
     DEFAULT_ALIGNMENT_ENABLED = true
@@ -13,15 +14,16 @@ module MSPhysics
     # Create a CurvySlider joint.
     # @param [MSPhysics::World] world
     # @param [MSPhysics::Body, nil] parent
-    # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
-    #   Of the given matrix, matrix origin should represent pin origin, and
-    #   matrix Z-axis should represent pin up.
+    # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation
+    #   in global space. Matrix origin is interpreted as the pin position.
+    #   Matrix z-axis is interpreted as the pin direction.
     # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group
     def initialize(world, parent, pin_tra, group = nil)
-      super(world, parent, pin_tra, 6, group)
+      super(world, parent, pin_tra, group)
       MSPhysics::Newton::CurvySlider.create(@address)
       MSPhysics::Newton::CurvySlider.set_linear_friction(@address, DEFAULT_LINEAR_FRICTION)
       MSPhysics::Newton::CurvySlider.set_angular_friction(@address, DEFAULT_ANGULAR_FRICTION)
+      MSPhysics::Newton::CurvySlider.set_alignment_power(@address, DEFAULT_ALIGNMENT_POWER)
       MSPhysics::Newton::CurvySlider.set_controller(@address, DEFAULT_CONTROLLER)
       MSPhysics::Newton::CurvySlider.enable_loop(@address, DEFAULT_LOOP_ENABLED)
       MSPhysics::Newton::CurvySlider.enable_alignment(@address, DEFAULT_ALIGNMENT_ENABLED)
@@ -180,6 +182,21 @@ module MSPhysics
     # @param [Boolean] state
     def alignment_enabled=(state)
       MSPhysics::Newton::CurvySlider.enable_alignment(@address, state)
+    end
+
+    # Get alignment power.
+    # @note Has an effect only if alignment is enabled.
+    # @return [Numeric]
+    def alignment_power
+      MSPhysics::Newton::CurvySlider.get_alignment_power(@address)
+    end
+
+    # Set alignment power.
+    # @note Has an effect only if alignment is enabled.
+    # @param [Numeric] value A value greater than or equal to zero. Pass zero to
+    #   use maximum power.
+    def alignment_power=(value)
+      MSPhysics::Newton::CurvySlider.set_alignment_power(@address, value)
     end
 
     # Determine whether the rotation along the point on curve is enabled.

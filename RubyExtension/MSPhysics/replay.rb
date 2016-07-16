@@ -502,7 +502,7 @@ module MSPhysics
           data = @tgroups_data[group]
         end
         unless data[:definition]
-          data[:definition] = MSPhysics::Group.get_definition(group)
+          data[:definition] = AMS::Group.get_definition(group)
         end
         data[pframe] = {
           :transformation => group.transformation,
@@ -629,6 +629,18 @@ module MSPhysics
         record_camera(pframe)
         record_render(pframe)
         record_shadow(pframe)
+      end
+
+      # Record groups, camera, materials, layers, render, and shadow based on
+      # whether their replay is enabled.
+      # @param [Fixnum] pframe
+      def record_all2(pframe)
+        record_groups(pframe) if @replay_groups
+        record_materials(pframe) if @replay_materials
+        record_layers(pframe) if @replay_layers
+        record_camera(pframe) if @replay_camera
+        record_render(pframe) if @replay_render
+        record_shadow(pframe) if @replay_shadow
       end
 
       # Activate recorded data.
@@ -1162,7 +1174,7 @@ module MSPhysics
             end
             data[info[0]] = sdata
           }
-          data[:definition] = MSPhysics::Group.get_definition(e)
+          data[:definition] = AMS::Group.get_definition(e)
           data[:start_frame] = group_data[0] if group_data[0].is_a?(Numeric)
           data[:end_frame] = group_data[1] if group_data[1].is_a?(Numeric)
           @groups_data[e] = data
@@ -2414,17 +2426,23 @@ end}
         end
       end
 
+      # @!visibility private
+      def init
+        Sketchup.add_observer(MSPhysics::Replay::AppObserver.new)
+        MSPhysics::Replay.load_replay_proc
+      end
+
     end # class << self
 
     # @!visibility private
     class AppObserver < ::Sketchup::AppObserver
 
       def onNewModel(model)
-        MSPhysics::Replay.load_replay_proc
+        MSPhysics::Replay.load_replay_proc if model
       end
 
       def onOpenModel(model)
-        MSPhysics::Replay.load_replay_proc
+        MSPhysics::Replay.load_replay_proc if model
       end
 
     end # class AppObserver

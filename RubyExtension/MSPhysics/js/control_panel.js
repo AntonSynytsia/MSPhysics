@@ -1,11 +1,27 @@
-var sliders = {};
+var g_sliders = {};
+var g_interval_timer = null;
 
 function callback(v_name, v_data) {
   if (!v_data) v_data = '';
   window.location.href = 'skp:' + v_name + '@' + v_data;
 }
 
-function size_changed() {
+function init() {
+  var w = $( window ).width();
+  var h = $( window ).height();
+  var data = '['+w+','+h+']';
+  callback('init', data);
+}
+
+function uninit() {
+  remove_sliders();
+  if (g_interval_timer != null) {
+    clearInterval(g_interval_timer);
+    g_interval_timer = null;
+  }
+}
+
+function update_size() {
   var w = $( 'body' ).width();
   var h = $( 'body' ).height();
   var data = '['+w+','+h+']';
@@ -13,7 +29,7 @@ function size_changed() {
 }
 
 function add_slider(v_name, v_default_value, v_min, v_max, v_step) {
-  if (v_name in sliders) return false;
+  if (v_name in g_sliders) return false;
   //var v_name2 = v_name.replace(/\s+/g, '_');
   var text = "<tr id=\"tcrs-" + v_name + "\">"
   text += "<td><div class=\"controller_name\">" + v_name + "</div></td>"
@@ -26,7 +42,7 @@ function add_slider(v_name, v_default_value, v_min, v_max, v_step) {
   $( '#table-crs' ).append(text);
   var slider = new dhtmlXSlider({
     parent: "scrs-" + v_name,
-    size:   164,
+    size:   188,
     step:   v_step,
     min:    v_min,
     max:    v_max,
@@ -37,23 +53,32 @@ function add_slider(v_name, v_default_value, v_min, v_max, v_step) {
   var i_id = "[id=\"icrs-" + v_name + "\"]";
   var l_id = "[id=\"lcrs-" + v_name + "\"]";
   slider.attachEvent("onChange", function(value) {
-    $( i_id ).val( $( l_id ).val() );
+    //$( i_id ).val( $( l_id ).val() );
+    $( i_id ).val( value );
   });
-  $( i_id ).on("change", function() {
+  $( i_id ).on('change', function() {
     var res = parseFloat( $(this).val() );
     if (isNaN(res)) res = 0;
     slider.setValue(res);
     $( this ).val( $( l_id ).val());
   });
   $( i_id ).val( $( l_id ).val() );
-  sliders[v_name] = slider;
+  g_sliders[v_name] = slider;
+  return true;
+}
+
+function update_slider(v_name) {
+  if (!(v_name in g_sliders)) return false;
+  var i_id = "[id=\"icrs-" + v_name + "\"]";
+  var l_id = "[id=\"lcrs-" + v_name + "\"]";
+  $( i_id ).val( $( l_id ).val() );
   return true;
 }
 
 function remove_slider(v_name) {
-  if (!(v_name in sliders)) return false;
-  sliders[v_name].unload();
-  delete sliders[v_name];
+  if (!(v_name in g_sliders)) return false;
+  g_sliders[v_name].unload();
+  delete g_sliders[v_name];
   //var v_name2 = v_name.replace(/\s+/g, '_');
   var t_id = "[id=\"tcrs-" + v_name + "\"]";
   $( t_id ).empty();
@@ -62,22 +87,26 @@ function remove_slider(v_name) {
 }
 
 function remove_sliders() {
-  for (name in sliders) {
-    sliders[name].unload();
+  for (name in g_sliders) {
+    g_sliders[name].unload();
   }
-  sliders = {};
+  g_sliders = {};
   $( '#table-crs' ).empty();
 }
 
 $( document ).ready(function() {
-  callback('init');
-  size_changed();
+  window.setTimeout(init, 10); // Timeout is needed because without it the event might not be triggered on Mac OS X.
+  g_interval_timer = setInterval(function() { callback('update_note') }, 1000);
 });
 
 $( window ).unload(function() {
-  remove_sliders();
+  uninit();
+});
+
+$( document ).mouseenter(function() {
+  callback('mouse_enter');
 });
 
 $( document ).mouseleave(function() {
-  callback("mouse_leave");
+  callback('mouse_leave');
 });

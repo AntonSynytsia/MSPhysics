@@ -67,6 +67,12 @@
                     <td><label class="spacing_tab" for="simulation-bodies">Bodies</label></td>
                     <td><input id="simulation-bodies" type="checkbox"></input></td>
                   </tr>
+                  <tr><td colspan="2"><p class="heading">Links</p></td></tr>
+                  <tr><td><ul style="padding-left:2em;" type="circle">
+                    <li><a class="link" href="http://sketchucation.com/forums/viewtopic.php?f=323&t=56852" target="_blank">MSPhysics Homepage</a></li>
+                    <li><a class="link" href="https://github.com/AntonSynytsia/MSPhysics/wiki" target="_blank">MSPhysics Wiki</a></li>
+                    <li><a class="link" href="https://3dwarehouse.sketchup.com/search.html?q=msphysics&backendClass=entity" target="_blank">MSPhysics Models</a></li>
+                  </ul></td></tr>
                 </table>
               </td>
               <td>
@@ -135,7 +141,7 @@
               </td>
             </tr>
           </table>
-          <div class="credit">Powered by <a href="http://newtondynamics.com/forum/newton.php" target="_blank">Newton Dynamics</a> by Juleo Jerez</div>
+          <div class="credit">Powered by <a href="http://newtondynamics.com/forum/newton.php" target="_blank">Newton Dynamics</a> by Julio Jerez</div>
         </div>
         <div id="tab2" class="tab">
           <div id="tab2-none">
@@ -279,9 +285,8 @@
                       <td><input id="body-angular_damping" class="custom-text numeric-input" type="text"></input></td>
                     </tr>
                     <tr class="vertical_spacing"></tr>
-                    <tr>
-                      <td colspan="2" align="right"><button id="body-assign_to_all" title="Assign identical attributes to all bodies with the same name.">Assign to All with Same Name</button></td>
-                    </tr>
+                    <tr><td colspan="2" align="right"><button id="body-assign_props_to_all" title="Assign identical shape, states, properties, thruster, and emitter to all bodies with the same name.">Assign Props to All with Same Name</button></td></tr>
+                    <tr><td colspan="2" align="right"><button id="body-assign_script_to_all" title="Assign identical script to all bodies with the same name.">Assign Script to All with Same Name</button></td></tr>
                   </table>
                 </td>
               </tr>
@@ -506,8 +511,8 @@
                 <div class="content spacing_tab">
                   <ul style="padding-left:1em;" type="circle">
                     <li><p class="description">Joints work best with the world solver model set to exact or iterative 64 passes. In other solvers they may appear weak or unstable.</p></li>
-                    <li><p class="description">Two functions, <em1>simulation.get_joint_by_name(name)</em1> and <em1>simulation.get_joints_by_name(name)</em1>, may be used to acquire Joint instances by their names in the script context of a body.</p></li>
-                    <li><p class="description">Other functions, like <em1>this.get_connected_joints</em1>, <em1>this.get_contained_joints</em1> and <em1>this.get_connected_bodies</em1>, may be used to acquire all related joints and bodies in the script context of a body.</p></li>
+                    <li><p class="description">Two functions, <em1>simulation.find_joint_by_name(name)</em1> and <em1>simulation.find_joints_by_name(name)</em1>, may be used to acquire Joint instances by their names in the script context of a body.</p></li>
+                    <li><p class="description">Other functions, like <em1>this.connected_joints</em1>, <em1>this.contained_joints</em1> and <em1>this.connected_bodies</em1>, may be used to acquire all related joints and bodies in the script context of a body.</p></li>
                   </ul>
                 </div>
               </div>
@@ -531,6 +536,7 @@
                   <td><input id="fixed-adjust_to-none" type="radio" name="fixed-adjust_to" value="none" style="float:right;"></input></td>
                 </tr>
               </table>
+              <div id="fixed-geared_joints_field"></div>
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
@@ -594,6 +600,7 @@
                   <td><input id="hinge-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
               </table>
+              <div id="hinge-geared_joints_field"></div>
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
@@ -648,6 +655,7 @@
                   <td colspan="2"><button id="motor-generate_slider" title="Generate slider controller based on the current parameters.">Generate Slider Controller</button></td>
                 </tr>
               </table>
+              <div id="motor-geared_joints_field"></div>
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
@@ -703,6 +711,7 @@
                   <td colspan="2"><button id="servo-generate_slider" title="Generate slider controller based on the current parameters.">Generate Slider Controller</button></td>
                 </tr>
               </table>
+              <div id="servo-geared_joints_field"></div>
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
@@ -711,6 +720,7 @@
                     <li class="description">The <em2>Controller</em2> argument also accepts <em1>nil</em1> as the parameter, which turns off the joint.</li>
                     <li class="description">The desired angle is clamped between min and max limits if the limits are enabled.</li>
                     <li class="description">The <em2>Reduction Ratio</em2> may be used to decelerate angular rate when servo nears its desired angle.</li>
+                    <li class="description">This joint works best on exact solver model or iterative with 64 passes.</li>
                   </ul>
                 </div>
               </div>
@@ -754,6 +764,7 @@
                   <td><input id="slider-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
               </table>
+              <div id="slider-geared_joints_field"></div>
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
@@ -814,6 +825,7 @@
                   <td colspan="2"><button id="piston-generate_slider" title="Generate slider controller based on the current parameters.">Generate Slider Controller</button></td>
                 </tr>
               </table>
+              <div id="piston-geared_joints_field"></div>
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
@@ -877,6 +889,7 @@
                   <td><input id="spring-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
               </table>
+              <div id="spring-geared_joints_field"></div>
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
@@ -910,6 +923,7 @@
                   <td><input id="up_vector-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
               </table>
+              <div id="up_vector-geared_joints_field"></div>
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
@@ -977,6 +991,7 @@
                   <td><input id="corkscrew-angular_friction" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
               </table>
+              <div id="corkscrew-geared_joints_field"></div>
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
@@ -1028,6 +1043,7 @@
                   <td><input id="ball_and_socket-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
               </table>
+              <div id="ball_and_socket-geared_joints_field"></div>
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
@@ -1084,6 +1100,7 @@
                   <td><input id="universal-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
               </table>
+              <div id="universal-geared_joints_field"></div>
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
@@ -1108,6 +1125,10 @@
                   <td><label for="curvy_slider-angular_friction">Angular Friction</label></td>
                   <td><input id="curvy_slider-angular_friction" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
+                <tr title="The alignment power. Pass 0.0 to use maximum power. This option has an effect only if alignment is enabled.">
+                  <td><label for="curvy_slider-alignment_power">Alignment Power</label></td>
+                  <td><input id="curvy_slider-alignment_power" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
                 <tr title="Enable/disable rotation along the current point on curve.">
                   <td><label for="curvy_slider-enable_rotation">Rotation</label></td>
                   <td><input id="curvy_slider-enable_rotation" type="checkbox"></input></td>
@@ -1125,6 +1146,7 @@
                   <td><input id="curvy_slider-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
               </table>
+              <div id="curvy_slider-geared_joints_field"></div>
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
@@ -1135,6 +1157,7 @@
                     <li class="description">The magnitude of the linear and angular friction can be controlled with the controller.</li>
                     <li class="description">The actual linear friction is, <em1>linear_friction • controller</em1>.</li>
                     <li class="description">The actual angular friction is, <em1>angular_friction • controller</em1>.</li>
+                    <li class="description">This joint works best on iterative solver model, particularly 4 or more passes.</li>
                   </ul>
                 </div>
               </div>
@@ -1165,6 +1188,10 @@
                   <td><label for="curvy_piston-power">Power</label></td>
                   <td><input id="curvy_piston-power" class="custom-text numeric-input" type="text"></input></td>
                 </tr>
+                <tr title="The alignment power. Pass 0.0 to use maximum power. This option has an effect only if alignment is enabled.">
+                  <td><label for="curvy_piston-alignment_power">Alignment Power</label></td>
+                  <td><input id="curvy_piston-alignment_power" class="custom-text numeric-input" type="text"></input></td>
+                </tr>
                 <tr title="The linear reduction ratio, a numeric value between 0.0 and 1.0. This feature reduces linear rate when current position nears the desired position, for the purpose of achieving a smooth stop. A value of 0.0 disables linear reduction. A value greater than zero enables linear reduction and acts accordingly based on the ratio. A typical reduction ratio is 0.1.">
                   <td><label for="curvy_piston-reduction_ratio">Reduction Ratio</label></td>
                   <td><input id="curvy_piston-reduction_ratio" class="custom-text numeric-input" type="text"></input></td>
@@ -1189,7 +1216,11 @@
                   <td><label for="curvy_piston-controller">Controller</label></td>
                   <td><input id="curvy_piston-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
+                <tr>
+                  <td colspan="2"><button id="curvy_piston-generate_slider" title="Generate slider controller based on the current parameters and curve length.">Generate Slider Controller</button></td>
+                </tr>
               </table>
+              <div id="curvy_piston-geared_joints_field"></div>
               <div>
                 <label class="expander description"><em5>Notes</em5></label>
                 <div class="content spacing_tab">
@@ -1201,6 +1232,7 @@
                     <li class="description">The <em2>Controller</em2> argument also accepts <em1>nil</em1> as the parameter, which turns off the joint.</li>
                     <li class="description">The desired position is clamped between min and max limits if the limits are enabled.</li>
                     <li class="description">The <em2>Reduction Ratio</em2> may be used to decelerate linear rate when piston nears its desired position.</li>
+                    <li class="description">This joint works best on iterative solver model, particularly 4 or more passes.</li>
                   </ul>
                 </div>
               </div>

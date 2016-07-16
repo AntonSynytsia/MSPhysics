@@ -1,43 +1,80 @@
 module MSPhysics
+
+  # @since 1.0.0
   module ControlPanel
 
     @dialog = nil
     @handle = nil
-    @update_size = true
     @title = 'MSPhysics Control Panel'
     @size = [0,0]
+    @border_size = [0,0]
     @sliders = {}
+    @mouse_over = false
+    @init_called = false
 
     class << self
 
+      # Acquire handle to the control panel.
+      # @return [Fixnum, nil]
+      def handle
+        @handle
+      end
+
       # Open/close MSPhysics control panel.
       # @param [Boolean] state
-      # @return [Boolean] success
-      def show(state)
-        return false if (state ? true : false) == is_visible?
+      def visible=(state)
+        return false if (state ? true : false) == self.visible?
         if state
-          @dialog = ::UI::WebDialog.new(@title, false, nil, 300, 300, 800, 600, false)
-          @update_size = true
+          iws = [300, 300]
+          @dialog = ::UI::WebDialog.new(@title, false, @title, iws.x, iws.y, 800, 600, false)
           # Callbacks
-          @dialog.add_action_callback('init'){ |dlg, params|
-            @update_size = false
+          @dialog.add_action_callback('init') { |dlg, params|
+            unless @init_called
+              @init_called = true
+              ds = eval(params)
+              #@border_size = [iws.x - ds.x, iws.y - ds.y]
+              if RUBY_PLATFORM =~ /mswin|mingw/i && @handle
+                ws = AMS::Window.get_size(@handle)
+                cr = AMS::Window.get_client_rect(@handle)
+                cs = [cr[2] - cr[0], cr[3] - cr[1]]
+                @border_size = [ws.x - cs.x, ws.y - cs.y]
+              else
+                @border_size = [2, 24]
+              end
+            end
             @sliders.each { |name, data|
-			  generate_slider_html(name)
+              generate_slider_html(name, false)
             }
-            @update_size = true
+            dlg.execute_script("update_size();")
           }
-          @dialog.add_action_callback('size_changed'){ |dlg, params|
+          @dialog.add_action_callback('size_changed') { |dlg, params|
             @size = eval(params)
-            update_placement if @update_size
+            update_placement
+          }
+          @dialog.add_action_callback('mouse_enter') { |dlg, params|
+            @mouse_over = true
           }
           @dialog.add_action_callback('mouse_leave') { |dlg, params|
-            AMS::Sketchup.activate
+            @mouse_over = false
+            AMS::Sketchup.activate if RUBY_PLATFORM =~ /mswin|mingw/i
           }
-          @dialog.set_on_close {
-            AMS::Sketchup.include_dialog(@handle)
-            @dialog = nil
-            @handle = nil
-            AMS::Sketchup.remove_observer(self)
+          @dialog.add_action_callback('update_note') { |dlg, params|
+            next if RUBY_PLATFORM !~ /mswin|mingw/i
+            cmd = ""
+            if AMS::Sketchup.is_main_window_active?
+              cmd << "$('#note1').css('display', 'none');"
+              cmd << "$('#note2').css('display', 'none');"
+              cmd << "$('#note3').fadeIn(750);"
+            elsif AMS::Window.is_active?(@handle)
+              cmd << "$('#note1').css('display', 'none');"
+              cmd << "$('#note3').css('display', 'none');"
+              cmd << "$('#note2').fadeIn(750);"
+            else
+              cmd << "$('#note2').css('display', 'none');"
+              cmd << "$('#note3').css('display', 'none');"
+              cmd << "$('#note1').fadeIn(750);"
+            end
+            dlg.execute_script(cmd)
           }
           # Set content
           dir = File.dirname(__FILE__)
@@ -46,16 +83,29 @@ module MSPhysics
           @dialog.set_file(url)
           # Show dialog
           RUBY_PLATFORM =~ /mswin|mingw/i ? @dialog.show : @dialog.show_modal
+          # Assign the on_close callback. Important: This must be called after
+          # showing dialog in order to work on Mac OS X.
+          @dialog.set_on_close {
+            if RUBY_PLATFORM =~ /mswin|mingw/i
+              AMS::Sketchup.include_dialog(@handle)
+              AMS::Sketchup.remove_observer(self)
+            end
+            @dialog.execute_script('uninit();')
+            @dialog = nil
+            @handle = nil
+            @mouse_over = false
+            @init_called = false
+          }
           # Find dialog window handle
-          @handle = AMS::Sketchup.find_window_by_caption(@title)
+          @handle = RUBY_PLATFORM =~ /mswin|mingw/i ? AMS::Sketchup.find_window_by_caption(@title) : nil
           if @handle
             # Add observer
             AMS::Sketchup.add_observer(self)
             # Remove dialog caption and borders
             layered = AMS::System.get_windows_version < 6.0 ? 0 : 0x00080000
             style_ex = 0x00010000 | layered # WS_EX_CONTROLPARENT | WS_EX_LAYERED
-            style = 0x54000000 # WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
-            #style = 0x94000000 # WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS
+            #style = 0x54000000 # WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
+            style = 0x94000000 # WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS
             AMS::Window.lock_update(@handle)
             AMS::Window.set_long(@handle, -20, style_ex)
             AMS::Window.set_long(@handle, -16, style)
@@ -73,7 +123,7 @@ module MSPhysics
 
       # Determine whether control panel is visible.
       # @return [Boolean]
-      def is_visible?
+      def visible?
         @dialog ? true : false
       end
 
@@ -85,7 +135,7 @@ module MSPhysics
       # @param [Numeric] step Snap step.
       # @return [Boolean] success
       def add_slider(name, default_value = 0, min = 0, max = 1, step = 0.01)
-        cname = name.to_s.inspect[1...-1]
+        cname = name.to_s.gsub(/[\\\"\'\v\n\t\r\f]/, '')
         return false if @sliders[cname] != nil
         @sliders[cname] = {
           :default_value => default_value.to_f,
@@ -112,7 +162,7 @@ module MSPhysics
       def remove_sliders
         size = @sliders.size
         @sliders.clear
-        @dialog.execute_script("remove_sliders(); size_changed();") if @dialog
+        @dialog.execute_script("remove_sliders(); update_size();") if @dialog
         size
       end
 
@@ -129,7 +179,7 @@ module MSPhysics
       #   doesn't exist.
       def get_slider_value(name)
         return unless @dialog
-        cname = name.to_s.inspect[1...-1]
+        cname = name.to_s.gsub(/[\\\"\'\v\n\t\r\f]/, '')
         data = @sliders[cname]
         return unless data
         res = @dialog.get_element_value("lcrs-" + cname)
@@ -142,46 +192,53 @@ module MSPhysics
       # @return [Boolean] success
       def set_slider_value(name, value)
         return false unless @dialog
-        cname = name.to_s.inspect[1...-1]
+        cname = name.to_s.gsub(/[\\\"\'\v\n\t\r\f]/, '')
         data = @sliders[cname]
         return false unless data
         return false if @dialog.get_element_value("lcrs-" + cname).empty?
-        cmd = "sliders[\"#{cname}\"].setValue(#{value.to_f});"
+        cmd = "sliders[\"#{cname}\"].setValue(#{value.to_f}); update_slider(\"#{cname}\");"
         @dialog.execute_script(cmd)
         true
       end
+
 
       # @!visibility private
 
 
-      def generate_slider_html(name)
+      def generate_slider_html(name, update_size = true)
         return false unless @dialog
-        cname = name.to_s.inspect[1...-1]
+        cname = name.to_s.gsub(/[\\\"\'\v\n\t\r\f]/, '')
         data = @sliders[cname]
         return false unless data
         return false unless @dialog.get_element_value("lcrs-" + cname).empty?
         cmd = "add_slider(\"#{cname}\", #{data[:default_value]}, #{data[:min]}, #{data[:max]}, #{data[:step]});"
-        cmd << "size_changed();"
+        cmd << "update_size();" if update_size
         @dialog.execute_script(cmd)
         true
       end
 
-      def degenerate_slider_html(name)
+      def degenerate_slider_html(name, update_size = true)
         return false unless @dialog
-        cname = name.to_s.inspect[1...-1]
+        cname = name.to_s.gsub(/[\\\"\'\v\n\t\r\f]/, '')
         return false if @dialog.get_element_value("lcrs-" + cname).empty?
         cmd = "remove_slider(\"#{cname}\");"
-        cmd << "size_changed();"
+        cmd << "update_size();" if update_size
         @dialog.execute_script(cmd)
         true
       end
 
       def update_placement
         return false unless @dialog
-        vr = AMS::Sketchup.get_viewport_rect
-        x = vr[2] - @size[0]
-        y = vr[3] - @size[1]
-        AMS::Window.set_pos(@handle, 0, x, y, @size[0], @size[1], 0x0234)
+        wsx = @border_size.x + @size.x
+        wsy = @border_size.y + @size.y
+        if RUBY_PLATFORM =~ /mswin|mingw/i && @handle
+          vr = AMS::Sketchup.get_viewport_rect
+          x = vr[2] - wsx
+          y = vr[3] - wsy
+          AMS::Window.set_pos(@handle, 0, x, y, wsx, wsy, 0x0234)
+        else
+          @dialog.set_size(wsx, wsy)
+        end
         true
       end
 

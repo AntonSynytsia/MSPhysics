@@ -6,6 +6,7 @@ module MSPhysics
     DEFAULT_ANGULAR_FRICTION = 0.0
     DEFAULT_RATE = 40.0
     DEFAULT_POWER = 0.0
+    DEFAULT_ALIGNMENT_POWER = 0.0
     DEFAULT_REDUCTION_RATIO = 0.1
     DEFAULT_CONTROLLER = nil
     DEFAULT_LOOP_ENABLED = false
@@ -15,16 +16,17 @@ module MSPhysics
     # Create a CurvyPiston joint.
     # @param [MSPhysics::World] world
     # @param [MSPhysics::Body, nil] parent
-    # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
-    #   Of the given matrix, matrix origin should represent pin origin, and
-    #   matrix Z-axis should represent pin up.
+    # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation
+    #   in global space. Matrix origin is interpreted as the pin position.
+    #   Matrix z-axis is interpreted as the pin direction.
     # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group
     def initialize(world, parent, pin_tra, group = nil)
-      super(world, parent, pin_tra, 6, group)
+      super(world, parent, pin_tra, group)
       MSPhysics::Newton::CurvyPiston.create(@address)
       MSPhysics::Newton::CurvyPiston.set_angular_friction(@address, DEFAULT_ANGULAR_FRICTION)
       MSPhysics::Newton::CurvyPiston.set_rate(@address, DEFAULT_RATE)
       MSPhysics::Newton::CurvyPiston.set_power(@address, DEFAULT_POWER)
+      MSPhysics::Newton::CurvyPiston.set_alignment_power(@address, DEFAULT_ALIGNMENT_POWER)
       MSPhysics::Newton::CurvyPiston.set_reduction_ratio(@address, DEFAULT_REDUCTION_RATIO)
       MSPhysics::Newton::CurvyPiston.set_controller(@address, DEFAULT_CONTROLLER)
       MSPhysics::Newton::CurvyPiston.enable_loop(@address, DEFAULT_LOOP_ENABLED)
@@ -226,6 +228,21 @@ module MSPhysics
     # @param [Boolean] state
     def alignment_enabled=(state)
       MSPhysics::Newton::CurvyPiston.enable_alignment(@address, state)
+    end
+
+    # Get alignment power.
+    # @note Has an effect only if alignment is enabled.
+    # @return [Numeric]
+    def alignment_power
+      MSPhysics::Newton::CurvyPiston.get_alignment_power(@address)
+    end
+
+    # Set alignment power.
+    # @note Has an effect only if alignment is enabled.
+    # @param [Numeric] value A value greater than or equal to zero. Pass zero to
+    #   use maximum power.
+    def alignment_power=(value)
+      MSPhysics::Newton::CurvyPiston.set_alignment_power(@address, value)
     end
 
     # Determine whether the rotation along the point on curve is enabled.

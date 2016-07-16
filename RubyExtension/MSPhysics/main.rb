@@ -7,41 +7,67 @@ end
 
 dir = File.dirname(__FILE__)
 dir.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
-ops = (RUBY_PLATFORM =~ /mswin|mingw/i) ? 'win' : 'mac'
+ops = (RUBY_PLATFORM =~ /mswin|mingw/i) ? 'win' : 'osx'
 bit = (Sketchup.respond_to?('is_64bit?') && Sketchup.is_64bit?) ? '64' : '32'
 ver = RUBY_VERSION[0..2]
 ext = (RUBY_PLATFORM =~ /mswin|mingw/i) ? '.so' : '.bundle'
 
-# Load SDL and SDL Mixer DLLs
-use_sdl = true
-libraries = %w(libogg libvorbis libogg-0 libvorbis-0 libvorbisfile-3 libmikmod-2 libmodplug-1 SDL2 SDL2_mixer smpeg2 libFLAC-8)
-info = ""
-libraries.each { |name|
-  path = File.join(dir, ops+bit, name + '.dll')
-  res = AMS::DLL.load_library(path)
-  use_sdl = false if res == nil || res == 0
-  info << "#{name} - #{res}\n"
-}
-# Uncomment to see results of the loaded libraries.
-#UI.messagebox info
-
 # Load MSPhysics Library
+if RUBY_PLATFORM =~ /mswin|mingw/i
+  env_paths_ary = ENV['PATH'].split(';')
+  env_paths_ary << File.join(dir, ops+bit).gsub("/", "\\")
+  ENV['PATH'] = env_paths_ary.join(';')
+end
+lib_path = File.join(dir, ops+bit, ver, 'msp_lib' + ext)
+lib_path.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+lib_loaded = false
+lib_errors = []
+if File.exists?(lib_path)
+  begin
+    require lib_path
+    lib_loaded = true
+  rescue Exception => e
+    lib_errors << e
+  end
+else
+  lib_errors << LoadError.new("MSPhysics library file, \"#{lib_path}\", is missing!")
+end
+unless lib_loaded
+  lib_path_no_sdl = File.join(dir, ops+bit, ver, 'msp_lib_no_sdl' + ext)
+  lib_path_no_sdl.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+  if File.exists?(lib_path_no_sdl)
+    begin
+      require lib_path_no_sdl
+      lib_loaded = true
+    rescue Exception => e
+      lib_errors << e
+    end
+  else
+    lib_errors << LoadError.new("MSPhysics library file, \"#{lib_path_no_sdl}\", is missing!")
+  end
+end
+unless lib_loaded
+  msg = "An exception occurred while loading MSPhysics library. "
+  msg << "The exception occurred due to one or more of the following reasons:\n"
+  lib_errors.each { |e|
+    msg << "- #{e.class}: #{e.message}\n"
+  }
+  raise(Exception, msg, caller)
+end
 
-require File.join(dir, ops+bit, ver, (use_sdl ? 'msp_lib' : 'msp_lib_no_sdl') + ext)
-
-require File.join(dir, 'geometry.rb')
-require File.join(dir, 'group.rb')
 require File.join(dir, 'collision.rb')
 require File.join(dir, 'contact.rb')
 require File.join(dir, 'hit.rb')
 require File.join(dir, 'script_exception.rb')
-require File.join(dir, 'common.rb')
-require File.join(dir, 'controller.rb')
+require File.join(dir, 'common_context.rb')
+require File.join(dir, 'controller_context.rb')
+require File.join(dir, 'body_context.rb')
 require File.join(dir, 'body.rb')
 require File.join(dir, 'world.rb')
 require File.join(dir, 'material.rb')
 require File.join(dir, 'materials.rb')
 require File.join(dir, 'joint.rb')
+require File.join(dir, 'double_joint.rb')
 require File.join(dir, 'joint_hinge.rb')
 require File.join(dir, 'joint_motor.rb')
 require File.join(dir, 'joint_servo.rb')
@@ -55,6 +81,9 @@ require File.join(dir, 'joint_up_vector.rb')
 require File.join(dir, 'joint_fixed.rb')
 require File.join(dir, 'joint_curvy_slider.rb')
 require File.join(dir, 'joint_curvy_piston.rb')
+require File.join(dir, 'djoint_linear_gear.rb')
+require File.join(dir, 'djoint_angular_gear.rb')
+require File.join(dir, 'djoint_rack_and_pinion.rb')
 require File.join(dir, 'simulation.rb')
 require File.join(dir, 'settings.rb')
 require File.join(dir, 'dialog.rb')
@@ -68,7 +97,7 @@ require File.join(dir, 'scene_data.rb')
 module MSPhysics
 
   DEFAULT_SIMULATION_SETTINGS = {
-    :solver_model           => 0,
+    :solver_model           => 4,
     :friction_model         => 0,
     :update_rate            => 2,
     :update_timestep        => 1/60.0,
@@ -135,12 +164,12 @@ module MSPhysics
   }
 
   CURSOR_ORIGINS = {
-    :select                 => [3,6],
-    :select_plus            => [3,6],
-    :select_minus           => [3,6],
-    :select_plus_minus      => [3,6],
-    :hand                   => [3,6],
-    :grab                   => [3,6],
+    :select                 => [3,8],
+    :select_plus            => [3,8],
+    :select_minus           => [3,8],
+    :select_plus_minus      => [3,8],
+    :hand                   => [3,8],
+    :grab                   => [3,8],
     :target                 => [15,15]
   }
 
@@ -148,23 +177,31 @@ module MSPhysics
   EMBEDDED_SOUND_FORMATS = %w(wav aiff riff ogg voc mp3 mp2).freeze
 
   JOINT_TYPES = {
-    #:none               => 0,
-    :hinge              => 1,
-    :motor              => 2,
-    :servo              => 3,
-    :slider             => 4,
-    :piston             => 5,
-    :up_vector          => 6,
-    :spring             => 7,
-    :corkscrew          => 8,
-    :ball_and_socket    => 9,
-    :universal          => 10,
-    :fixed              => 11,
-    :curvy_slider       => 12,
-    :curvy_piston       => 13
+    0  => 'none',
+    1  => 'hinge',
+    2  => 'motor',
+    3  => 'servo',
+    4  => 'slider',
+    5  => 'piston',
+    6  => 'up_vector',
+    7  => 'spring',
+    8  => 'corkscrew',
+    9  => 'ball_and_socket',
+    10 => 'universal',
+    11 => 'fixed',
+    12 => 'curvy_slider',
+    13 => 'curvy_piston'
   }.freeze
 
-  JOINT_NAMES = %w(hinge motor servo slider piston up_vector spring corkscrew ball_and_socket universal fixed curvy_slider curvy_piston).freeze
+  DOUBLE_JOINT_TYPES = {
+    0  => 'none',
+    1  => 'linear_gear',
+    2  => 'angular_gear',
+    3  => 'rack_and_pinion'
+  }.freeze
+
+  JOINT_NAMES = JOINT_TYPES.values.freeze
+  DOUBLE_JOINT_NAMES = DOUBLE_JOINT_TYPES.values.freeze
 
   DEFAULT_JOINT_SCALE = 1.0
 
@@ -172,8 +209,6 @@ module MSPhysics
 
   DEFAULT_ANGLE_UNITS = 'deg'
   DEFAULT_POSITION_UNITS = 'cm'
-
-  EPSILON = 1.0e-6
 
   class << self
 
@@ -301,204 +336,20 @@ module MSPhysics
 
     # Get version of the Newton Dynamics physics SDK.
     # @return [String]
-    def get_newton_version
+    def newton_version
       MSPhysics::Newton.get_version
     end
 
     # Get float size of the Newton Dynamics physics SDK.
     # @return [Fixnum]
-    def get_newton_float_size
+    def newton_float_size
       MSPhysics::Newton.get_float_size
     end
 
     # Get memory used by the Newton Dynamics physics SDK at the current time.
     # @return [Fixnum]
-    def get_newton_memory_used
+    def newton_memory_used
       MSPhysics::Newton.get_memory_used
-    end
-
-    # Create copy of a camera object.
-    # @param [Sketchup::Camera] camera
-    # @return [Sketchup::Camera]
-    def duplicate_camera(camera)
-      c = Sketchup::Camera.new(camera.eye, camera.target, camera.up)
-      c.aspect_ratio = camera.aspect_ratio
-      c.perspective = camera.perspective?
-      if camera.perspective?
-        c.focal_length = camera.focal_length
-        c.fov = camera.fov
-        c.image_width = camera.image_width
-      else
-        c.height = camera.height
-      end
-      c.description = camera.description
-      return c
-    end
-
-    # Transition between two cameras.
-    # @param [Sketchup::Camera] c1
-    # @param [Sketchup::Camera] c2
-    # @param [Numeric] ratio A value between 0.0 and 1.0
-    # @return [Sketchup::Camera] Interpolated camera
-    def transition_camera(c1, c2, ratio)
-      ratio = AMS.clamp(ratio.to_f, 0.0, 1.0)
-      t1 = Geom::Transformation.new(c1.xaxis, c1.direction, c1.up, c1.eye)
-      t2 = Geom::Transformation.new(c2.xaxis, c2.direction, c2.up, c2.eye)
-      t3 = Geom::Transformation.interpolate(t1, t2, ratio)
-      c3 = Sketchup::Camera.new(t3.origin, t3.origin + t3.yaxis, t3.zaxis)
-      c3.aspect_ratio = c1.aspect_ratio + (c2.aspect_ratio - c1.aspect_ratio) * ratio
-      c3.perspective = c2.perspective?
-      t = c1.perspective?
-      if c3.perspective?
-        c1.perspective = true
-        c3.focal_length = c1.focal_length + (c2.focal_length - c1.focal_length) * ratio
-        c3.fov = c1.fov + (c2.fov - c1.fov) * ratio
-        c3.image_width = c1.image_width + (c2.image_width - c1.image_width) * ratio
-      else
-        c1.perspective = false
-        c3.height = c1.height + (c2.height - c1.height) * ratio
-      end
-      c1.perspective = t
-      c3.description = ratio == 0 ? c1.description : c2.description
-      return c3
-    end
-
-    # Transition between two colors.
-    # @param [Sketchup::Color] c1
-    # @param [Sketchup::Color] c2
-    # @param [Numeric] ratio A value between 0.0 and 1.0
-    # @return [Sketchup::Color] Interpolated color
-    def transition_color(c1, c2, ratio)
-      ratio = AMS.clamp(ratio.to_f, 0.0, 1.0)
-      return Sketchup::Color.new(
-        (c1.red + (c2.red - c1.red) * ratio).to_i,
-        (c1.green + (c2.green - c1.green) * ratio).to_i,
-        (c1.blue + (c2.blue - c1.blue) * ratio).to_i,
-        (c1.alpha + (c2.alpha - c1.alpha) * ratio).to_i)
-    end
-
-    # Transition between two points.
-    # @param [Geom::Point3d] p1
-    # @param [Geom::Point3d] p2
-    # @param [Numeric] ratio A value between 0.0 and 1.0
-    # @return [Geom::Point3d] Interpolated point
-    def transition_point(p1, p2, ratio)
-      ratio = AMS.clamp(ratio.to_f, 0.0, 1.0)
-      return Geom::Point3d.new(
-        p1.x + (p2.x - p1.x) * ratio,
-        p1.y + (p2.y - p1.y) * ratio,
-        p1.z + (p2.z - p1.z) * ratio)
-    end
-
-    # Transition between two vectors.
-    # @param [Geom::Vector3d] v1
-    # @param [Geom::Vector3d] v2
-    # @param [Numeric] ratio A value between 0.0 and 1.0
-    # @return [Geom::Vector3d] Interpolated vector
-    def transition_vector(v1, v2, ratio)
-      ratio = AMS.clamp(ratio.to_f, 0.0, 1.0)
-      return v1.clone if (v1 == v2)
-      if v1.length < EPSILON || v2.length < EPSILON || v1.samedirection?(v2)
-        return Geom::Vector3d.new(
-          v1.x + (v2.x - v1.x) * ratio,
-          v1.y + (v2.y - v1.y) * ratio,
-          v1.z + (v2.z - v1.z) * ratio)
-      else
-        v3 = v1.parallel?(v2) ? v1.axes[0] : v1.cross(v2)
-        t = Geom::Transformation.new(ORIGIN, v3, v1)
-        v2l = v2.transform(t.inverse)
-        theta = Math.acos(v2l.y / v2l.length)
-        theta = -theta if v2l.z < 0
-        rtheta = theta * ratio
-        rlength = v1.length + (v2.length - v1.length) * ratio
-        v3l = Geom::Vector3d.new(0, Math.cos(rtheta) * rlength, Math.sin(rtheta) * rlength)
-        return v3l.transform(t)
-      end
-    end
-
-    # Transition between two transformation matrices.
-    # @param [Geom::Transformation] t1
-    # @param [Geom::Transformation] t2
-    # @param [Numeric] ratio A value between 0.0 and 1.0
-    # @return [Geom::Transformation] Interpolated transformation
-    def transition_transformation(t1, t2, ratio)
-      Geom::Transformation.interpolate(t1, t2, AMS.clamp(ratio.to_f, 0.0, 1.0))
-    end
-
-    # Transition between two numbers.
-    # @param [Numeric] n1
-    # @param [Numeric] n2
-    # @param [Numeric] ratio A value between 0.0 and 1.0
-    # @return [Numeric] Interpolated number
-    def transition_number(n1, n2, ratio)
-      n1 + (n2 - n1) * AMS.clamp(ratio.to_f, 0.0, 1.0)
-    end
-
-    # Get points on circle in 2D.
-    # @param [Array<Numeric>] origin
-    # @param [Numeric] radius
-    # @param [Fixnum] num_seg Number of segments.
-    # @param [Numeric] rot_angle Rotate angle in degrees.
-    # @return [Array<Geom::Point3d>] An array of points on circle.
-    def points_on_circle2d(origin, radius, num_seg = 16, rot_angle = 0)
-      ra = rot_angle.degrees
-      offset = Math::PI*2/num_seg.to_i
-      pts = []
-      for n in 0...num_seg.to_i
-        angle = ra + (n*offset)
-        pts << Geom::Point3d.new(Math.cos(angle)*radius + origin.x, Math.sin(angle)*radius + origin.y, 0)
-      end
-      pts
-    end
-
-    # Get points on circle in 3D.
-    # @param [Array<Numeric>, Geom::Point3d] origin
-    # @param [Array<Numeric>, Geom::Vector3d] normal
-    # @param [Numeric] radius
-    # @param [Fixnum] num_seg Number of segments.
-    # @param [Numeric] rot_angle Rotate angle in degrees.
-    # @return [Array<Geom::Point3d>] An array of points on circle.
-    def points_on_circle3d(origin, radius, normal = Z_AXIS, num_seg = 16, rot_angle = 0)
-      # Get the x and y axes
-      origin = Geom::Point3d.new(origin) unless origin.is_a?(Geom::Point3d)
-      normal = Geom::Vector3d.new(normal) unless normal.is_a?(Geom::Vector3d)
-      xaxis = normal.axes[0]
-      yaxis = normal.axes[1]
-      xaxis.length = radius
-      yaxis.length = radius
-      # Compute points
-      ra = rot_angle.degrees
-      offset = Math::PI*2/num_seg.to_i
-      pts = []
-      for n in 0...num_seg.to_i
-        angle = ra + (n*offset)
-        vec = Geom.linear_combination(Math.cos(angle)*radius, xaxis, Math.sin(angle)*radius, yaxis)
-        pts << origin + vec
-      end
-      pts
-    end
-
-    # Blend colors.
-    # @param [Numeric] ratio between 0.0 and 1.0.
-    # @param [Array<Sketchup::Color, String, Array>] colors An array of colors to blend.
-    # @return [Sketchup::Color]
-    def blend_colors(ratio, colors = ['white', 'black'])
-      if colors.empty?
-        raise(TypeError, 'Expected at least one color, but got none.', caller)
-      end
-      return Sketchup::Color.new(colors[0]) if colors.size == 1
-      ratio = MSPhysics.clamp(ratio, 0, 1)
-      cr = (colors.length-1)*ratio
-      dec = cr-cr.to_i
-      if dec == 0
-        Sketchup::Color.new(colors[cr])
-      else
-        a = colors[cr.to_i].to_a
-        b = colors[cr.ceil].to_a
-        a[3] = 255 unless a[3]
-        b[3] = 255 unless b[3]
-        Sketchup::Color.new(((b[0]-a[0])*dec+a[0]).to_i, ((b[1]-a[1])*dec+a[1]).to_i, ((b[2]-a[2])*dec+a[2]).to_i, ((b[3]-a[3])*dec+a[3]).to_i)
-      end
     end
 
     # Create a watermark text.
@@ -564,7 +415,7 @@ module MSPhysics
     # Get watermark text by name.
     # @param [String] name
     # @return [Sketchup::Text, nil] A text object if the text exists.
-    def get_watermark_text_by_name(name)
+    def find_watermark_text_by_name(name)
       Sketchup.active_model.entities.each { |e|
         return e if e.is_a?(Sketchup::Text) && e.get_attribute('MSPhysics', 'name') == name.to_s
       }
@@ -573,29 +424,12 @@ module MSPhysics
 
     # Get all watermark texts.
     # @return [Array<Sketchup::Text>]
-    def get_all_watermark_texts
+    def all_watermark_texts
       texts = []
       Sketchup.active_model.entities.each { |e|
         texts << e if e.is_a?(Sketchup::Text) && e.get_attribute('MSPhysics', 'name') != nil
       }
       texts
-    end
-
-    # Round number up to a particular decimal point.
-    # @param [Numeric] number
-    # @param [Fixnum] precision
-    # @return [Numeric]
-    def round(number, precision = 0)
-      if RUBY_VERSION =~ /1.8/
-        if precision.to_i == 0
-          number.round
-        else
-          mag = 10**precision.to_i
-          (number * mag).round / mag
-        end
-      else
-        number.round(precision.to_i)
-      end
     end
 
     private
@@ -623,9 +457,6 @@ module MSPhysics
 end # module MSPhysics
 
 unless file_loaded?(__FILE__)
-  # Register Observers
-  Sketchup.add_observer(MSPhysics::Dialog::AppObserver.new)
-  Sketchup.add_observer(MSPhysics::Replay::AppObserver.new)
   # Setup audio
   if MSPhysics.sdl_used?
     sdl = MSPhysics::SDL
@@ -648,10 +479,11 @@ unless file_loaded?(__FILE__)
     pt = MSPhysics::CURSOR_ORIGINS[name]
     MSPhysics::CURSORS[name] = UI.create_cursor(File.join(path, name.to_s + '.png'), pt[0], pt[1])
   }
-  # Activate replay
-  MSPhysics::Replay.load_replay_proc
+  # Initialize stuff
+  MSPhysics::Dialog.init
+  MSPhysics::Replay.init
 
-  # Create some materials
+  # Create some contact materials
   # Coefficients are defined from material to material contacts. Material to
   # another material coefficients are automatically calculated by averaging out
   # the coefficients of both.
@@ -701,11 +533,11 @@ unless file_loaded?(__FILE__)
   sim = MSPhysics::Simulation
   sim_toolbar = UI::Toolbar.new 'MSPhysics'
 
-  cmd = UI::Command.new('Toggle UI'){
-    MSPhysics::Dialog.show( !MSPhysics::Dialog.is_visible? )
+  cmd = UI::Command.new('Toggle UI') {
+    MSPhysics::Dialog.visible = !MSPhysics::Dialog.visible?
   }
   cmd.set_validation_proc {
-    MSPhysics::Dialog.is_visible? ? MF_CHECKED : MF_UNCHECKED
+    MSPhysics::Dialog.visible? ? MF_CHECKED : MF_UNCHECKED
   }
   cmd.menu_text = cmd.tooltip = 'Toggle UI'
   cmd.status_bar_text = 'Show/Hide MSPhysics UI.'
@@ -713,12 +545,12 @@ unless file_loaded?(__FILE__)
   cmd.large_icon = limg_path + 'ui.png'
   sim_toolbar.add_item(cmd)
 
-  cmd = UI::Command.new('Toggle Play'){
-    sim.is_active? ? sim.instance.toggle_play : sim.start
+  cmd = UI::Command.new('Toggle Play') {
+    sim.active? ? sim.instance.toggle_play : sim.start
   }
   cmd.set_validation_proc {
-    if sim.is_active?
-      sim.instance.is_playing? ? MF_CHECKED : MF_UNCHECKED
+    if sim.active?
+      sim.instance.playing? ? MF_CHECKED : MF_UNCHECKED
     else
       MF_ENABLED
     end
@@ -729,11 +561,11 @@ unless file_loaded?(__FILE__)
   cmd.large_icon = limg_path + 'toggle_play.png'
   sim_toolbar.add_item(cmd)
 
-  cmd = UI::Command.new('Reset'){
+  cmd = UI::Command.new('Reset') {
     sim.reset
   }
   cmd.set_validation_proc {
-    sim.is_active? ? MF_ENABLED : MF_GRAYED
+    sim.active? ? MF_ENABLED : MF_GRAYED
   }
   cmd.menu_text = cmd.tooltip = 'Reset'
   cmd.status_bar_text = 'Reset simulation.'
@@ -747,20 +579,20 @@ unless file_loaded?(__FILE__)
   # Create MSPhysics Joints Toolbar
   joints_toolbar = UI::Toolbar.new 'MSPhysics Joints'
 
-  cmd = UI::Command.new('cmd'){
+  cmd = UI::Command.new('cmd') {
     tool = MSPhysics::JointConnectionTool
-    tool.is_active? ? tool.deactivate : tool.activate
+    tool.active? ? tool.deactivate : tool.activate
   }
   cmd.menu_text = cmd.tooltip = 'Joint Connection Tool'
   cmd.status_bar_text = 'Activate/Deactivate joint connection tool.'
   cmd.set_validation_proc {
-    MSPhysics::JointConnectionTool.is_active? ? MF_CHECKED : MF_UNCHECKED
+    MSPhysics::JointConnectionTool.active? ? MF_CHECKED : MF_UNCHECKED
   }
   cmd.small_icon = simg_path + 'toggle_connect.png'
   cmd.large_icon = limg_path + 'toggle_connect.png'
   joints_toolbar.add_item(cmd)
 
-  cmd = UI::Command.new('Scale MSPhysics Joints'){
+  cmd = UI::Command.new('Scale MSPhysics Joints') {
     scale = MSPhysics.get_joint_scale
     prompts = ['Scale']
     defaults = [sprintf("%0.2f", scale)]
@@ -779,9 +611,8 @@ unless file_loaded?(__FILE__)
 
   joints_toolbar.add_separator
 
-  MSPhysics::JOINT_TYPES.values.sort.each { |value|
-    type = RUBY_VERSION =~ /1.8/ ? MSPhysics::JOINT_TYPES.index(value) : MSPhysics::JOINT_TYPES.key(value)
-    name = type.to_s
+  MSPhysics::JOINT_TYPES.each { |id, name|
+    next if id == 0
     words = name.split('_')
     for i in 0...words.size
       words[i].capitalize!
@@ -789,10 +620,10 @@ unless file_loaded?(__FILE__)
     ename = words.join(' ')
     jt = nil
     cmd = UI::Command.new('cmd') {
-      jt = MSPhysics::JointTool.new(type)
+      jt = MSPhysics::JointTool.new(name)
     }
     cmd.set_validation_proc {
-      jt != nil && jt.is_active? ? MF_CHECKED : MF_UNCHECKED
+      jt != nil && jt.active? ? MF_CHECKED : MF_UNCHECKED
     }
     cmd.menu_text = cmd.tooltip = ename
     cmd.status_bar_text = "Add #{ename} joint."
@@ -807,7 +638,7 @@ unless file_loaded?(__FILE__)
   # Create Replay Toolbar
   replay_toolbar = UI::Toolbar.new 'MSPhysics Replay'
 
-  cmd = UI::Command.new('Toggle Record'){
+  cmd = UI::Command.new('Toggle Record') {
     MSPhysics::Replay.record_enabled = !MSPhysics::Replay.record_enabled?
   }
   cmd.set_validation_proc {
@@ -819,7 +650,7 @@ unless file_loaded?(__FILE__)
   cmd.large_icon = limg_path + 'replay_record.png'
   replay_toolbar.add_item(cmd)
 
-  cmd = UI::Command.new('Toggle Camera Replay'){
+  cmd = UI::Command.new('Toggle Camera Replay') {
     MSPhysics::Replay.camera_replay_enabled = !MSPhysics::Replay.camera_replay_enabled?
   }
   cmd.set_validation_proc {
@@ -831,7 +662,7 @@ unless file_loaded?(__FILE__)
   cmd.large_icon = limg_path + 'replay_camera.png'
   replay_toolbar.add_item(cmd)
 
-  cmd = UI::Command.new('Play'){
+  cmd = UI::Command.new('Play') {
     if MSPhysics::Replay.active?
       if MSPhysics::Replay.paused? || MSPhysics::Replay.reversed?
         MSPhysics::Replay.reversed = false
@@ -859,7 +690,7 @@ unless file_loaded?(__FILE__)
   cmd.large_icon = limg_path + 'replay_play.png'
   replay_toolbar.add_item(cmd)
 
-  cmd = UI::Command.new('Reverse'){
+  cmd = UI::Command.new('Reverse') {
     if MSPhysics::Replay.active?
       if MSPhysics::Replay.paused? || !MSPhysics::Replay.reversed?
         MSPhysics::Replay.reversed = true
@@ -887,7 +718,7 @@ unless file_loaded?(__FILE__)
   cmd.large_icon = limg_path + 'replay_reverse.png'
   replay_toolbar.add_item(cmd)
 
-  cmd = UI::Command.new('Pause'){
+  cmd = UI::Command.new('Pause') {
     if MSPhysics::Replay.paused?
       MSPhysics::Replay.play
     else
@@ -908,7 +739,7 @@ unless file_loaded?(__FILE__)
   cmd.large_icon = limg_path + 'replay_pause.png'
   replay_toolbar.add_item(cmd)
 
-  cmd = UI::Command.new('Reset'){
+  cmd = UI::Command.new('Reset') {
     MSPhysics::Replay.reset
   }
   cmd.set_validation_proc {
@@ -920,7 +751,7 @@ unless file_loaded?(__FILE__)
   cmd.large_icon = limg_path + 'replay_reset.png'
   replay_toolbar.add_item(cmd)
 
-  cmd = UI::Command.new('Stop'){
+  cmd = UI::Command.new('Stop') {
     MSPhysics::Replay.stop
   }
   cmd.set_validation_proc {
@@ -932,7 +763,7 @@ unless file_loaded?(__FILE__)
   cmd.large_icon = limg_path + 'replay_stop.png'
   replay_toolbar.add_item(cmd)
 
-  inc_spd_cmd = UI::Command.new('Increase Speed'){
+  inc_spd_cmd = UI::Command.new('Increase Speed') {
     v = MSPhysics::Replay.speed
     MSPhysics::Replay.speed = v + (v < 10.0 ? (v < 2.0 ? (v < 0.1 ? 0.01 : 0.1) : 1.0) : 10.0)
   }
@@ -946,7 +777,7 @@ unless file_loaded?(__FILE__)
   inc_spd_cmd.large_icon = limg_path + 'replay_increase_speed.png'
   replay_toolbar.add_item(inc_spd_cmd)
 
-  dec_spd_cmd = UI::Command.new('Decrease Speed'){
+  dec_spd_cmd = UI::Command.new('Decrease Speed') {
     v = MSPhysics::Replay.speed
     MSPhysics::Replay.speed = v - (v > 10.0 ? 10.0 : (v > 2.0 ? 1.0 : (v > 0.1 ? 0.1 : 0.01)))
   }
@@ -962,7 +793,7 @@ unless file_loaded?(__FILE__)
 
   cmd = UI::Command.new('Clear Data') {
     MSPhysics::Replay.clear_active_data
-    MSPhysics::Replay.clear_data_from_model(!MSPhysics::Simulation.is_active?)
+    MSPhysics::Replay.clear_data_from_model(!MSPhysics::Simulation.active?)
   }
   cmd.set_validation_proc {
     MSPhysics::Replay.active_data_valid? && !MSPhysics::Replay.active? ? MF_ENABLED : MF_GRAYED
@@ -1016,21 +847,21 @@ unless file_loaded?(__FILE__)
         shape_menu = body_menu.add_submenu('Shape')
         default_shape = MSPhysics::DEFAULT_BODY_SETTINGS[:shape]
         ['Box', 'Sphere', 'Cone', 'Cylinder', 'Chamfer Cylinder', 'Capsule', 'Convex Hull', 'Null', 'Compound', 'Compound from CD', 'Static Mesh'].each { |shape|
-          item = shape_menu.add_item(shape){
+          item = shape_menu.add_item(shape) {
             op = 'MSPhysics Body - Change Shape'
             Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
             MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Shape', shape)
             model.commit_operation
             MSPhysics::Dialog.update_body_state
           }
-          shape_menu.set_validation_proc(item){
+          shape_menu.set_validation_proc(item) {
             MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Shape', default_shape) == shape ? MF_CHECKED : MF_UNCHECKED
           }
         }
 
         mat_menu = body_menu.add_submenu('Material')
         default_mat = MSPhysics::DEFAULT_BODY_SETTINGS[:material_name]
-        item = mat_menu.add_item(default_mat){
+        item = mat_menu.add_item(default_mat) {
           op = 'MSPhysics Body - Change Material'
           Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
           ['Material', 'Density', 'Static Friction', 'Dynamic Friction', 'Enable Friction', 'Elasticity', 'Softness'].each { |option|
@@ -1039,37 +870,37 @@ unless file_loaded?(__FILE__)
           model.commit_operation
           MSPhysics::Dialog.update_body_state
         }
-        mat_menu.set_validation_proc(item){
+        mat_menu.set_validation_proc(item) {
           MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Material', default_mat) == default_mat ? MF_CHECKED : MF_UNCHECKED
         }
-        item = mat_menu.add_item('Custom'){
+        item = mat_menu.add_item('Custom') {
           op = 'MSPhysics Body - Change Material'
           Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
           MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Material', 'Custom')
           model.commit_operation
           MSPhysics::Dialog.update_body_state
         }
-        mat_menu.set_validation_proc(item){
+        mat_menu.set_validation_proc(item) {
           MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Material', default_mat) == 'Custom' ? MF_CHECKED : MF_UNCHECKED
         }
         mat_menu.add_separator
-        materials = MSPhysics::Materials.sort { |a, b| a.get_name <=> b.get_name }
+        materials = MSPhysics::Materials.sort { |a, b| a.name <=> b.name }
         materials.each { |material|
-          item = mat_menu.add_item(material.get_name){
+          item = mat_menu.add_item(material.name) {
             op = 'MSPhysics Body - Change Material'
             Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
-            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Material', material.get_name)
-            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Density', material.get_density)
-            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Static Friction', material.get_static_friction)
-            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Dynamic Friction', material.get_dynamic_friction)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Material', material.name)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Density', material.density)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Static Friction', material.static_friction)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Dynamic Friction', material.dynamic_friction)
             MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Enable Friction', true)
-            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Elasticity', material.get_elasticity)
-            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Softness', material.get_softness)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Elasticity', material.elasticity)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Softness', material.softness)
             model.commit_operation
             MSPhysics::Dialog.update_body_state
           }
-          mat_menu.set_validation_proc(item){
-            MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Material', default_mat) == material.get_name ? MF_CHECKED : MF_UNCHECKED
+          mat_menu.set_validation_proc(item) {
+            MSPhysics.get_attribute(bodies, 'MSPhysics Body', 'Material', default_mat) == material.name ? MF_CHECKED : MF_UNCHECKED
           }
         }
       end
@@ -1204,7 +1035,7 @@ unless file_loaded?(__FILE__)
         text = buoyancy_planes.size > 1 ? "#{buoyancy_planes.size} Buoyancy Planes" : "Buoyancy Plane"
         bp_menu = msp_menu.add_submenu(text)
       end
-      bp_menu.add_item("Properties"){
+      bp_menu.add_item("Properties") {
         default = MSPhysics::DEFAULT_BUOYANCY_PLANE_SETTINGS
         prompts = ['Density (kg/m³)', 'Viscosity (0.0 - 1.0)', 'Current X', 'Current Y', 'Current Z']
         dict = 'MSPhysics Buoyancy Plane'
@@ -1310,7 +1141,7 @@ unless file_loaded?(__FILE__)
 
   plugin_menu.add_separator
 
-  plugin_menu.add_item('Create Buoyancy Plane'){
+  plugin_menu.add_item('Create Buoyancy Plane') {
     default = MSPhysics::DEFAULT_BUOYANCY_PLANE_SETTINGS
     prompts = ['Density (kg/m³)', 'Viscosity (0.0 - 1.0)', 'Current X', 'Current Y', 'Current Z']
     defaults = [default[:density], default[:viscosity], default[:current_x], default[:current_y], default[:current_z]]
@@ -1355,7 +1186,7 @@ unless file_loaded?(__FILE__)
       }
     }
   }
-  plugin_menu.add_item('Delete All Attributes'){
+  plugin_menu.add_item('Delete All Attributes') {
     msg = "This option removes all MSPhysics assigned properties, scripts, and record of connected joints.\n"
     msg << "Do you want to proceed?"
     choice = UI.messagebox(msg, MB_YESNO)
@@ -1368,7 +1199,7 @@ unless file_loaded?(__FILE__)
     end
   }
 
-  plugin_menu.add_item('Purge Unused'){
+  plugin_menu.add_item('Purge Unused') {
     model = Sketchup.active_model
     op = 'MSPhysics - Purge Unused'
     Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
@@ -1390,13 +1221,17 @@ unless file_loaded?(__FILE__)
     }
   end
 
-  plugin_menu.add_item('About'){
+  plugin_menu.add_item('Wiki') {
+    UI.openURL("https://github.com/AntonSynytsia/MSPhysics/wiki")
+  }
+
+  plugin_menu.add_item('About') {
     msg = "MSPhysics #{MSPhysics::VERSION} -- #{MSPhysics::RELEASE_DATE}\n"
     msg << "Powered by the Newton Dynamics #{MSPhysics::Newton.get_version} physics SDK by Julio Jerez.\n"
-    msg << "Copyright MIT © 2015-2016, Anton Synytsia.\n"
-    msg << "Credits to\n"
-    msg << "- Chris Phillips for ideas from SketchyPhysics.\n"
-    msg << "- István Nagy (PituPhysics) for examples and testing.\n"
+    msg << "Copyright MIT © 2015-2016, Anton Synytsia.\n\n"
+    msg << "Credits to:\n"
+    msg << "  - Chris Phillips for ideas from SketchyPhysics.\n"
+    msg << "  - István Nagy (PituPhysics) for examples and testing.\n"
     UI.messagebox(msg)
   }
 

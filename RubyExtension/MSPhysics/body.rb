@@ -1,21 +1,27 @@
 module MSPhysics
 
   # The Body class represents a physics body in simulation. Every body in
-  # simulation is designed to have its own Body object. The Body class consists
-  # of various functions that allow you to control it in physics world.
+  # simulation is designed to have its own Body object.
   # @since 1.0.0
-  class Body < Common
+  class Body
     class << self
 
       # Verify that body is valid.
       # @api private
       # @param [Body] body
+      # @param [World, nil] world A world the body ought to belong to or +nil+.
       # @raise [TypeError] if body is invalid or destroyed.
       # @return [void]
-      def validate(body)
+      def validate(body, world = nil)
         AMS.validate_type(body, MSPhysics::Body)
-        unless body.is_valid?
+        unless body.valid?
           raise(TypeError, "Body #{body} is invalid/destroyed!", caller)
+        end
+        if world != nil
+          AMS.validate_type(world, MSPhysics::World)
+          if body.world.address != world.address
+            raise(TypeError, "Body #{body} belongs to a different world!", caller)
+          end
         end
       end
 
@@ -23,29 +29,39 @@ module MSPhysics
       # @api private
       # @param [Body] body1
       # @param [Body] body2
+      # @param [World, nil] world A world the body ought to belong to or +nil+.
       # @return [void]
       # @raise [TypeError] if at least one body is invalid or destroyed.
       # @raise [TypeError] if both bodies link to the same address.
-      def validate2(body1, body2)
+      def validate2(body1, body2, world = nil)
         AMS.validate_type(body1, MSPhysics::Body)
         AMS.validate_type(body2, MSPhysics::Body)
-        unless body1.is_valid?
+        unless body1.valid?
           raise(TypeError, "Body1 #{body1} is invalid/destroyed!", caller)
         end
-        unless body2.is_valid?
+        unless body2.valid?
           raise(TypeError, "Body1 #{body1} is invalid/destroyed!", caller)
         end
-        if body1.get_address == body2.get_address
+        if body1.address == body2.address
           raise(TypeError, "Body1 #{body1} and body2 #{body2} link to the same address. Expected two unique bodies!", caller)
+        end
+        if world != nil
+          AMS.validate_type(world, MSPhysics::World)
+          if body1.world.address != world.address
+            raise(TypeError, "Body1 #{body1} belongs to a different world!", caller)
+          end
+          if body2.world.address != world.address
+            raise(TypeError, "Body2 #{body2} belongs to a different world!", caller)
+          end
         end
       end
 
       # Get body by body address.
       # @param [Fixnum] address
       # @return [Body, nil]
-      def get_body_by_address(address)
+      def body_by_address(address)
         data = MSPhysics::Newton::Body.get_user_data(address.to_i)
-        data.is_a?(Body) ? data : nil
+        data.is_a?(MSPhysics::Body) ? data : nil
       end
 
       # Determine if the bounding boxes of two bodies overlap.
@@ -54,7 +70,7 @@ module MSPhysics
       # @return [Boolean]
       def bodies_aabb_overlap?(body1, body2)
         validate2(body1, body2)
-        MSPhysics::Newton::Bodies.aabb_overlap?(body1.get_address, body2.get_address)
+        MSPhysics::Newton::Bodies.aabb_overlap?(body1.address, body2.address)
       end
 
       # Determine if two bodies can collide with each other.
@@ -63,7 +79,7 @@ module MSPhysics
       # @return [Boolean]
       def bodies_collidable?(body1, body2)
         validate2(body1, body2)
-        MSPhysics::Newton::Bodies.collidable?(body1.get_address, body2.get_address)
+        MSPhysics::Newton::Bodies.collidable?(body1.address, body2.address)
       end
 
       # Determine if two bodies are in contact.
@@ -72,7 +88,7 @@ module MSPhysics
       # @return [Boolean]
       def bodies_touching?(body1, body2)
         validate2(body1, body2)
-        MSPhysics::Newton::Bodies.touching?(body1.get_address, body2.get_address)
+        MSPhysics::Newton::Bodies.touching?(body1.address, body2.address)
       end
 
       # Get closest collision points between two bodies.
@@ -82,34 +98,26 @@ module MSPhysics
       # @param [Body] body1
       # @param [Body] body2
       # @return [Array<Geom::Point3d>, nil] +[contact_pt1, contact_pt2]+
-      def get_closest_points(body1, body2)
+      def closest_points(body1, body2)
         validate2(body1, body2)
-        MSPhysics::Newton::Bodies.get_closest_points(body1.get_address, body2.get_address)
+        MSPhysics::Newton::Bodies.get_closest_points(body1.address, body2.address)
       end
 
       # Get contact force between two bodies.
       # @param [Body] body1
       # @param [Body] body2
       # @return [Geom::Vector3d] force in newtons (kg*m/s/s).
-      def get_force_between_bodies(body1, body2)
+      def force_between_bodies(body1, body2)
         validate2(body1, body2)
-        MSPhysics::Newton::Bodies.get_force_in_between(body1.get_address, body2.get_address)
+        MSPhysics::Newton::Bodies.get_force_in_between(body1.address, body2.address)
       end
 
       # Get all bodies.
-      # @note Bodies that don't have a {Body} instance are not included in the
+      # @note Bodies that do not have a {Body} instance are not included in the
       #   array.
-      # @return [Array<World>]
-      def get_all_bodies
-        bodies = []
-        ovs = MSPhysics::Newton.is_object_validation_enabled?
-        MSPhysics::Newton.enable_object_validation(false)
-        Newton.get_all_bodies.each { |address|
-          data = MSPhysics::Newton::Body.get_user_data(address)
-          bodies << data if data.is_a?(Body)
-        }
-        MSPhysics::Newton.enable_object_validation(ovs)
-        bodies
+      # @return [Array<Body>]
+      def all_bodies
+        MSPhysics::Newton.get_all_bodies() { |ptr, data| data.is_a?(MSPhysics::Body) ? data : nil }
       end
 
     end # class << self
@@ -153,187 +161,126 @@ module MSPhysics
       if args[0].is_a?(MSPhysics::World)
         MSPhysics::World.validate(args[0])
         MSPhysics::Collision.validate_entity(args[1])
-        @_group = args[1]
-        @_collision_shape = args[2].to_s.downcase.gsub(' ', '_')
-        collision = MSPhysics::Collision.create(args[0], @_group, @_collision_shape)
-        @_address = MSPhysics::Newton::Body.create_dynamic(args[0].get_address, collision, @_group.transformation, args[0].get_default_material_id, @_group)
-        if @_collision_shape == 'null'
-          bb = MSPhysics::Group.get_bounding_box_from_faces(@_group, true, nil) { |e|
+        @group = args[1]
+        @collision_shape = args[2].to_s.downcase.gsub(' ', '_')
+        collision = MSPhysics::Collision.create(args[0], @group, @collision_shape)
+        @address = MSPhysics::Newton::Body.create_dynamic(args[0].address, collision, @group.transformation, args[0].default_material_id, @group)
+        if @collision_shape == 'null'
+          bb = AMS::Group.get_bounding_box_from_faces(@group, true, nil) { |e|
             e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
           }
-          scale = MSPhysics::Geometry.get_matrix_scale(@_group.transformation)
+          scale = AMS::Geometry.get_matrix_scale(@group.transformation)
           c = bb.center
           c.x *= scale.x
           c.y *= scale.y
           c.z *= scale.z
-          MSPhysics::Newton::Body.set_centre_of_mass(@_address, c)
+          MSPhysics::Newton::Body.set_centre_of_mass(@address, c)
         end
         MSPhysics::Newton::Collision.destroy(collision)
       else
         # Create a clone of an existing body.
         Body.validate(args[0])
-        unless args[0].get_group.valid?
+        unless args[0].group.valid?
           raise(TypeError, 'The specified body references a deleted entity. Copying bodies with erased entities is not acceptable!', caller)
         end
-        definition = MSPhysics::Group.get_definition(args[0].get_group)
-        @_group = Sketchup.active_model.entities.add_instance(definition, args[0].get_group.transformation)
-        @_group.material = args[0].get_group.material
-        @_address = MSPhysics::Newton::Body.copy(args[0].get_address, args[1], args[2], @_group)
-        @_group.transformation = MSPhysics::Newton::Body.get_matrix(@_address)
-        @_collision_shape = args[0].get_collision_shape
+        definition = AMS::Group.get_definition(args[0].group)
+        @group = Sketchup.active_model.entities.add_instance(definition, args[0].group.transformation)
+        @group.material = args[0].group.material
+        @address = MSPhysics::Newton::Body.copy(args[0].address, args[1], args[2], @group)
+        @group.transformation = MSPhysics::Newton::Body.get_matrix(@address)
+        @collision_shape = args[0].collision_shape
       end
-      destructor = Proc.new {
-        @_group = nil
-        @_events.clear
-      }
-      MSPhysics::Newton::Body.set_destructor_proc(@_address, destructor)
-      MSPhysics::Newton::Body.set_user_data(@_address, self)
-      @_events = {
-        :onStart                => nil,
-        :onUpdate               => nil,
-        :onPreUpdate            => nil,
-        :onPostUpdate           => nil,
-        :onEnd                  => nil,
-        :onDraw                 => nil,
-        :onPlay                 => nil,
-        :onPause                => nil,
-        :onTouch                => nil,
-        :onTouching             => nil,
-        :onUntouch              => nil,
-        :onClick                => nil,
-        :onDrag                 => nil,
-        :onUnclick              => nil,
-        :onKeyDown              => nil,
-        :onKeyUp                => nil,
-        :onKeyExtended          => nil,
-        :onMouseMove            => nil,
-        :onLButtonDown          => nil,
-        :onLButtonUp            => nil,
-        :onLButtonDoubleClick   => nil,
-        :onRButtonDown          => nil,
-        :onRButtonUp            => nil,
-        :onRButtonDoubleClick   => nil,
-        :onMButtonDown          => nil,
-        :onMButtonUp            => nil,
-        :onMButtonDoubleClick   => nil,
-        :onXButton1Down         => nil,
-        :onXButton1Up           => nil,
-        :onXButton1DoubleClick  => nil,
-        :onXButton2Down         => nil,
-        :onXButton2Up           => nil,
-        :onXButton2DoubleClick  => nil,
-        :onMouseWheelRotate     => nil,
-        :onMouseWheelTilt       => nil
-      }
-      @_script_state = true
-      @_look_at_constraint = nil
+      MSPhysics::Newton::Body.set_user_data(@address, self)
+      @context = MSPhysics::BodyContext.new(self)
+      @look_at_joint = nil
     end
 
-    # Determine if the body is valid - not destroyed.
+    # Determine whether this body is valid - not destroyed.
     # @return [Boolean]
-    def is_valid?
-      MSPhysics::Newton::Body.is_valid?(@_address)
+    def valid?
+      MSPhysics::Newton::Body.is_valid?(@address)
     end
 
-    # Get body pointer.
+    # Get pointer to the body.
     # @return [Fixnum]
-    def get_address
-      Body.validate(self)
-      @_address
-    end
-
-    # Get world in which the body was created.
-    # @return [World]
-    def get_world
-      Body.validate(self)
-      world_address = MSPhysics::Newton::Body.get_world(@_address)
-      MSPhysics::Newton::World.get_user_data(world_address)
-    end
-
-    # Get contact material id.
-    # @return [Fixnum]
-    def get_material_id
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_material_id(@_address)
-    end
-
-    # Set contact material id.
-    # @param [Fixnum] id
-    # @return [Fixnum]
-    def set_material_id(id)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_material_id(@_address, id)
-    end
-
-    # Get an address of the collision associated with the body.
-    # @return [Fixnum]
-    def get_collision_address
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_collision(@_address)
-    end
-
-    # Get collision shape of the body.
-    # @return [String]
-    def get_collision_shape
-      Body.validate(self)
-      @_collision_shape.clone
+    def address
+      @address
     end
 
     # Get the group/component associated with the body.
     # @return [Sketchup::Group, Sketchup::ComponentInstance]
-    def get_group
-      Body.validate(self)
-      @_group
+    def group
+      @group
+    end
+
+    # Get an address of the collision associated with the body.
+    # @return [Fixnum]
+    def collision_address
+      MSPhysics::Newton::Body.get_collision(@address)
+    end
+
+    # Get collision shape of the body.
+    # @return [String]
+    def collision_shape
+      @collision_shape.dup
+    end
+
+    # Get world in which the body was created.
+    # @return [World]
+    def world
+      world_address = MSPhysics::Newton::Body.get_world(@address)
+      MSPhysics::Newton::World.get_user_data(world_address)
+    end
+
+    # Get the associated context.
+    # @return [BodyContext]
+    def context
+      @context
     end
 
     # Destroy the body.
-    # @param [Boolean] erase_entity Whether to erase an entity associated with
-    #   the body.
+    # @param [Boolean] erase_entity Whether to erase the group/component
+    #   associated with the body.
     # @return [nil]
     def destroy(erase_entity = false)
-      Body.validate(self)
-      @_group.erase! if @_group.valid? && erase_entity
-      MSPhysics::Newton::Body.destroy(@_address)
+      @group.erase! if @group.valid? && erase_entity
+      MSPhysics::Newton::Body.destroy(@address)
     end
 
-    # Get continuous collision state of the body. If continuous collision check
-    # is enabled, the body avoids passing other bodies at high speeds and
-    # avoids penetrating into other bodies.
-    # @return [Boolean] +true+ if continuous collision check is on, +false+ if
-    #    continuous collision check is off.
-    def get_continuous_collision_state
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_continuous_collision_state(@_address)
+    # Determine whether continuous collision check is enabled for this body.
+    # Continuous collision check prevents this body from passing through other
+    # bodies at high speeds.
+    # @return [Boolean] Returns +true+ if continuous collision check is on;
+    #   +false+ if continuous collision check is off.
+    def continuous_collision_check_enabled?
+      MSPhysics::Newton::Body.get_continuous_collision_state(@address)
     end
 
-    # Set continuous collision state of the body. Enabling continuous collision
-    # prevents the body from passing other bodies at high speeds and prevents
-    # the body from penetrating into other bodies.
-    # @note This is known to affect performance. Be cautions when using. When
-    #   performing box stacks it's better to reduce simulation update step, to
-    #   1/256 for instance, rather than enabling continuous collision mode as
-    #   smaller update step will keep simulation running smoothly and avoid
-    #   penetration at the same time.
-    # @param [Boolean] state +true+ to set continuous collision check on,
-    #   +false+ to set continuous collision check off.
+    # Enable/disable continuous collision check for this body. Continuous
+    # collision check prevents this body from passing through other bodies at
+    # high speeds.
+    # @note Continuous collision check is known to affect performance. Be
+    #   cautions when using it. When performing box stacks it's better to reduce
+    #   simulation update step, to 1/256 for instance, rather than enabling
+    #   continuous collision check as smaller update step will keep simulation
+    #   running smoothly while avoiding penetration at the same time.
+    # @param [Boolean] state Pass +true+ to enable continuous collision check;
+    #   +false+ to disable continuous collision check.
     # @return [Boolean] The newly assigned state.
-    def set_continuous_collision_state(state)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_continuous_collision_state(@_address, state)
+    def continuous_collision_check_enabled=(state)
+      MSPhysics::Newton::Body.set_continuous_collision_state(@address, state)
+    end
+
+    # Get body matrix with no scale factors.
+    # @return [Geom::transformation]
+    def normal_matrix
+      MSPhysics::Newton::Body.get_normal_matrix(@address)
     end
 
     # Get body transformation matrix.
     # @return [Geom::Transformation]
     def get_matrix
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_matrix(@_address)
-    end
-
-    # Get body matrix with no scale factors.
-    # @return [Geom::transformation]
-    def get_normal_matrix
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_normal_matrix(@_address)
+      MSPhysics::Newton::Body.get_matrix(@address)
     end
 
     # Set body transformation matrix.
@@ -343,9 +290,8 @@ module MSPhysics
     #   each other.
     # @raise [TypeError] if some or all matrix axis have a scale of zero.
     def set_matrix(matrix)
-      Body.validate(self)
-      res = MSPhysics::Newton::Body.set_matrix(@_address, matrix)
-      @_group.move!(MSPhysics::Newton::Body.get_matrix(@_address)) if @_group.valid?
+      res = MSPhysics::Newton::Body.set_matrix(@address, matrix)
+      @group.move!(MSPhysics::Newton::Body.get_matrix(@address)) if @group.valid?
       res
     end
 
@@ -355,8 +301,7 @@ module MSPhysics
     #   * 1 - get body's centre of mass in global space.
     # @return [Geom::Point3d]
     def get_position(mode = 0)
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_position(@_address, mode.to_i)
+      MSPhysics::Newton::Body.get_position(@address, mode.to_i)
     end
 
     # Set body position.
@@ -376,7 +321,6 @@ module MSPhysics
     #       space.
     # @return [Geom::Point3d] The newly assigned position.
     def set_position(*args)
-      Body.validate(self)
       mode = 0
       if args.size == 4
         point = [args[0], args[1], args[2]]
@@ -391,25 +335,23 @@ module MSPhysics
       else
         raise(ArgumentError, "Wrong number of arguments! Expected 1..4 arguments, but got #{args.size}.", caller)
       end
-      res = MSPhysics::Newton::Body.set_position(@_address, point, mode)
-      @_group.move!(MSPhysics::Newton::Body.get_matrix(@_address)) if @_group.valid?
+      res = MSPhysics::Newton::Body.set_position(@address, point, mode)
+      @group.move!(MSPhysics::Newton::Body.get_matrix(@address)) if @group.valid?
       res
     end
 
     # Get body orientation in form of the unit quaternion.
     # @return [Array<Numeric>] An array of four numeric values:
     #   +[q0, q1, q2, q3]+ - +[x,y,z,w]+.
-    def get_rotation
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_rotation(@_address)
+    def rotation
+      MSPhysics::Newton::Body.get_rotation(@address)
     end
 
     # Get body orientation in form of the three Euler angles.
     # @return [Geom::Vector3d] An vector of three Euler angles expressed in
     #   radians: +(roll, yaw, pitch)+.
     def get_euler_angles
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_euler_angles(@_address)
+      MSPhysics::Newton::Body.get_euler_angles(@address)
     end
 
     # Set body orientation via the three Euler angles.
@@ -423,7 +365,6 @@ module MSPhysics
     #   @param [Numeric] pitch
     # @return [Geom::Vector3d] The newly assigned Euler angles.
     def set_euler_angles(*args)
-      Body.validate(self)
       if args.size == 3
         data = [args[0], args[1], args[2]]
       elsif args.size == 1
@@ -431,8 +372,8 @@ module MSPhysics
       else
         raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
       end
-      res = MSPhysics::Newton::Body.set_euler_angles(@_address, data)
-      @_group.move!(MSPhysics::Newton::Body.get_matrix(@_address)) if @_group.valid?
+      res = MSPhysics::Newton::Body.set_euler_angles(@address, data)
+      @group.move!(MSPhysics::Newton::Body.get_matrix(@address)) if @group.valid?
       res
     end
 
@@ -440,8 +381,7 @@ module MSPhysics
     # @return [Geom::Vector3d] The magnitude of the velocity vector is
     #   represented in meters per second.
     def get_velocity
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_velocity(@_address)
+      MSPhysics::Newton::Body.get_velocity(@address)
     end
 
     # Set global linear velocity of the body.
@@ -454,7 +394,6 @@ module MSPhysics
     #   @param [Numeric] vz Velocity in meters per second along Z-axis.
     # @return [Geom::Vector3d] The newly assigned velocity vector.
     def set_velocity(*args)
-      Body.validate(self)
       if args.size == 3
         data = [args[0], args[1], args[2]]
       elsif args.size == 1
@@ -462,7 +401,7 @@ module MSPhysics
       else
         raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
       end
-      MSPhysics::Newton::Body.set_velocity(@_address, data)
+      MSPhysics::Newton::Body.set_velocity(@address, data)
     end
 
     # Get global angular velocity of the body.
@@ -474,8 +413,7 @@ module MSPhysics
     # @return [Geom::Vector3d] The magnitude of the omega vector is represented
     #   in radians per second.
     def get_omega
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_omega(@_address)
+      MSPhysics::Newton::Body.get_omega(@address)
     end
 
     # Set global angular velocity of the body.
@@ -488,7 +426,6 @@ module MSPhysics
     #   @param [Numeric] vz Omega in radians per second along Z-axis.
     # @return [Geom::Vector3d] The newly assigned omega vector.
     def set_omega(*args)
-      Body.validate(self)
       if args.size == 3
         data = [args[0], args[1], args[2]]
       elsif args.size == 1
@@ -496,7 +433,7 @@ module MSPhysics
       else
         raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
       end
-      MSPhysics::Newton::Body.set_omega(@_address, data)
+      MSPhysics::Newton::Body.set_omega(@address, data)
     end
 
     # Get centre of mass of the body in local coordinates.
@@ -505,8 +442,7 @@ module MSPhysics
     # @return [Geom::Point3d]
     # @see #get_position
     def get_centre_of_mass
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_centre_of_mass(@_address)
+      MSPhysics::Newton::Body.get_centre_of_mass(@address)
     end
 
     # Set centre of mass of the body in local coordinates.
@@ -519,7 +455,6 @@ module MSPhysics
     #   @param [Numeric] pz Z position in local space.
     # @return [Geom::Point3d] The newly assigned centre of mass.
     def set_centre_of_mass(*args)
-      Body.validate(self)
       if args.size == 3
         data = [args[0], args[1], args[2]]
       elsif args.size == 1
@@ -527,121 +462,101 @@ module MSPhysics
       else
         raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
       end
-      MSPhysics::Newton::Body.set_centre_of_mass(@_address, data)
+      MSPhysics::Newton::Body.set_centre_of_mass(@address, data)
     end
 
     # Get body mass in kilograms (kg).
     # @return [Numeric]
-    def get_mass
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_mass(@_address)
+    def mass
+      MSPhysics::Newton::Body.get_mass(@address)
     end
 
     # Set body mass in kilograms (kg).
     # @note Mass and density are correlated. If you change mass the density will
     #   automatically be recalculated.
-    # @param [Numeric] mass
-    # @return [Numeric] The newly assigned mass.
-    def set_mass(mass)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_mass(@_address, mass)
+    # @param [Numeric] value
+    def mass=(value)
+      MSPhysics::Newton::Body.set_mass(@address, value)
     end
 
     # Get body density in kilograms per cubic meter (kg / m^3).
     # @return [Numeric]
-    def get_density
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_density(@_address)
+    def density
+      MSPhysics::Newton::Body.get_density(@address)
     end
 
     # Set body density in kilograms per cubic meter (kg / m^3).
     # @note Density and mass are correlated. If you change density the mass will
     #   automatically be recalculated.
-    # @param [Numeric] density
-    # @return [Numeric] The newly assigned density.
-    def set_density(density)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_density(@_address, density)
+    # @param [Numeric] value
+    def density=(value)
+      MSPhysics::Newton::Body.set_density(@address, value)
     end
 
     # Get body volume in cubic meters (m^3).
     # @return [Numeric]
-    def get_volume
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_volume(@_address)
+    def volume
+      MSPhysics::Newton::Body.get_volume(@address)
     end
 
     # Set body volume in cubic meters (m^3).
     # @note Volume and mass are correlated. If you change volume the mass will
     #   automatically be recalculated.
-    # @param [Numeric] volume
-    # @return [Numeric] The newly assigned volume.
-    def set_volume(volume)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_volume(@_address, volume.to_f)
+    # @param [Numeric] value
+    def volume=(value)
+      MSPhysics::Newton::Body.set_volume(@address, value)
     end
 
     # Reset/recalculate body volume and mass.
     # @param [Numeric] density
     # @return [Boolean] success
     def reset_mass_properties(density)
-      Body.validate(self)
-      MSPhysics::Newton::Body.reset_mass_properties(@_address, density.to_f)
+      MSPhysics::Newton::Body.reset_mass_properties(@address, density)
     end
 
     # Determine whether body is static.
     # @return [Boolean]
-    def is_static?
-      Body.validate(self)
-      MSPhysics::Newton::Body.is_static?(@_address)
+    def static?
+      MSPhysics::Newton::Body.is_static?(@address)
     end
 
     # Set body static.
     # @param [Boolean] state +true+ to set body static, +false+ to set body
     #   dynamic.
-    # @return [Boolean] The newly assigned state.
-    def set_static(state)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_static(@_address, state)
+    def static=(state)
+      MSPhysics::Newton::Body.set_static(@address, state)
     end
 
     # Determine whether body is collidable.
     # @return [Boolean]
-    def is_collidable?
-      Body.validate(self)
-      MSPhysics::Newton::Body.is_collidable?(@_address)
+    def collidable?
+      MSPhysics::Newton::Body.is_collidable?(@address)
     end
 
     # Set body collidable.
     # @param [Boolean] state +true+ to set body collidable, +false+ to set body
     #   non-collidable.
-    # @return [Boolean] The newly assigned state.
-    def set_collidable(state)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_collidable(@_address, state)
+    def collidable=(state)
+      MSPhysics::Newton::Body.set_collidable(@address, state)
     end
 
     # Determine whether body is frozen.
     # @return [Boolean]
-    def is_frozen?
-      Body.validate(self)
-      MSPhysics::Newton::Body.is_frozen?(@_address)
+    def frozen?
+      MSPhysics::Newton::Body.is_frozen?(@address)
     end
 
     # Set body collidable.
     # @param [Boolean] state +true+ to freeze the body, +false+ unfreeze the
     #   body.
-    # @return [Boolean] The newly assigned state.
-    def set_frozen(state)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_frozen(@_address, state)
+    def frozen=(state)
+      MSPhysics::Newton::Body.set_frozen(@address, state)
     end
 
     # Determine whether body is sleeping. Sleeping bodies are bodies at rest.
     # @return [Boolean]
-    def is_sleeping?
-      Body.validate(self)
-      MSPhysics::Newton::Body.is_sleeping?(@_address)
+    def sleeping?
+      MSPhysics::Newton::Body.is_sleeping?(@address)
     end
 
     # Set body sleeping.
@@ -649,18 +564,15 @@ module MSPhysics
     #   by equilibrium.
     # @param [Boolean] state +true+ to set body sleeping, +false+ to set body
     #   active.
-    # @return [Boolean] The newly assigned state.
-    def set_sleeping(state)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_sleeping(@_address, state)
+    def sleeping=(state)
+      MSPhysics::Newton::Body.set_sleeping(@address, state)
     end
 
     # Get the auto-sleep state of the body.
     # @return [Boolean] +true+ if body auto-sleep is on, +false+ if body
     #   auto-sleep is off.
-    def get_auto_sleep_state
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_auto_sleep_state(@_address)
+    def auto_sleep_enabled?
+      MSPhysics::Newton::Body.get_auto_sleep_state(@address)
     end
 
     # Set auto sleep state of the body. Auto sleep enables body to automatically
@@ -671,19 +583,16 @@ module MSPhysics
     #   application may want to control the activation/deactivation of the body.
     # @param [Boolean] state +true+ to set body auto-sleep on, or +false+ to set
     #   body auto-sleep off.
-    # @return [Boolean] The newly assigned state.
-    def set_auto_sleep_state(state)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_auto_sleep_state(@_address, state)
+    def auto_sleep_enabled=(state)
+      MSPhysics::Newton::Body.set_auto_sleep_state(@address, state)
     end
 
     # Determine whether this body is non-collidable with a particular body.
     # @param [Body] body The body to test.
     # @return [Boolean] +true+ if this body is non-collidable with the given
     #   body, +false+ if this body is collidable with the given body.
-    def is_non_collidable_with?(body)
-      Body.validate2(self, body)
-      MSPhysics::Newton::Body.is_non_collidable_with?(@_address, body.get_address)
+    def non_collidable_with?(body)
+      MSPhysics::Newton::Body.is_non_collidable_with?(@address, body.address)
     end
 
     # Set this body non-collidable with a particular body.
@@ -693,194 +602,158 @@ module MSPhysics
     # @return [Boolean] The newly assigned state.
     def set_non_collidable_with(body, state)
       Body.validate2(self, body)
-      MSPhysics::Newton::Body.set_non_collidable_with(@_address, body.get_address, state)
+      MSPhysics::Newton::Body.set_non_collidable_with(@address, body.address, state)
     end
 
     # Get all bodies that are non-collidable with this body; the bodies that
     # were set non-collidable by the {#set_non_collidable_with} function.
     # @return [Array<Body>] An array of non-collidable bodies.
-    def get_non_collidable_bodies
-      Body.validate(self)
-      bodies = []
-      MSPhysics::Newton::Body.get_non_collidable_bodies(@_address).each { |address|
-        body = MSPhysics::Newton::Body.get_user_data(address)
-        bodies << body if body.is_a?(Body)
+    def non_collidable_bodies
+      MSPhysics::Newton::Body.get_non_collidable_bodies(@address) { |ptr, data|
+        data.is_a?(MSPhysics::Body) ? data : nil
       }
-      bodies
     end
 
     # Remove all bodies from the non-collidable list; the bodies that were set
     # non-collidable by the {#set_non_collidable_with} function.
     # @return [Fixnum] The number of bodies unmarked.
     def clear_non_collidable_bodies
-      Body.validate(self)
-      MSPhysics::Newton::Body.clear_non_collidable_bodies(@_address)
+      MSPhysics::Newton::Body.clear_non_collidable_bodies(@address)
     end
 
     # Get body coefficient of restitution - bounciness - rebound ratio.
     # @return [Numeric] A value between 0.01 and 2.00.
-    def get_elasticity
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_elasticity(@_address)
+    def elasticity
+      MSPhysics::Newton::Body.get_elasticity(@address)
     end
 
     # Set body coefficient of restitution - bounciness - rebound ratio.
     # @example A basketball has a rebound ratio of 0.83. This means the new
     #   height of a basketball is 83% of original height within each bounce.
     # @param [Numeric] coefficient A value between 0.01 and 2.00.
-    # @return [Numeric] The newly assigned coefficient ratio.
-    def set_elasticity(coefficient)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_elasticity(@_address, coefficient.to_f)
+    def elasticity=(coefficient)
+      MSPhysics::Newton::Body.set_elasticity(@address, coefficient)
     end
 
     # Get contact softness coefficient of the body.
     # @return [Numeric] A value between 0.01 and 1.00.
-    def get_softness
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_softness(@_address)
+    def softness
+      MSPhysics::Newton::Body.get_softness(@address)
     end
 
     # Set contact softness coefficient of the body.
     # @param [Numeric] coefficient A value between 0.01 and 1.00.
-    # @return [Numeric] The newly assigned coefficient.
-    def set_softness(coefficient)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_softness(@_address, coefficient.to_f)
+    def softness=(coefficient)
+      MSPhysics::Newton::Body.set_softness(@address, coefficient)
     end
 
     # Get static friction coefficient of the body.
     # @return [Numeric] A value between 0.01 and 2.00.
-    def get_static_friction
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_static_friction(@_address)
+    def static_friction
+      MSPhysics::Newton::Body.get_static_friction(@address)
     end
 
     # Set static friction coefficient of the body.
     # @param [Numeric] coefficient A value between 0.01 and 2.00.
-    # @return [Numeric] The newly assigned coefficient.
-    def set_static_friction(coefficient)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_static_friction(@_address, coefficient.to_f)
+    def static_friction=(coefficient)
+      MSPhysics::Newton::Body.set_static_friction(@address, coefficient)
     end
 
     # Get dynamic friction coefficient of the body.
     # @return [Numeric] A value between 0.01 and 2.00.
-    def get_dynamic_friction
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_dynamic_friction(@_address)
+    def dynamic_friction
+      MSPhysics::Newton::Body.get_dynamic_friction(@address)
     end
 
     # Set dynamic friction coefficient of the body.
     # @param [Numeric] coefficient A value between 0.01 and 2.00.
-    # @return [Numeric] The newly assigned coefficient.
-    def set_dynamic_friction(coefficient)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_dynamic_friction(@_address, coefficient.to_f)
+    def dynamic_friction=(coefficient)
+      MSPhysics::Newton::Body.set_dynamic_friction(@address, coefficient)
     end
 
     # Get friction state of the body.
     # @return [Boolean] +true+ if body friction is enabled, +false+ if body
     #   friction is disabled.
-    def get_friction_state
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_friction_state(@_address)
+    def friction_enabled?
+      MSPhysics::Newton::Body.get_friction_state(@address)
     end
 
     # Set friction state of the body.
     # @param [Boolean] state +true+ to enable body friction, +false+ to disable
     #   body friction.
-    # @return [Boolean] The newly assigned state.
-    def set_friction_state(state)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_friction_state(@_address, state)
+    def friction_enabled=(state)
+      MSPhysics::Newton::Body.set_friction_state(@address, state)
     end
 
     # Get the maximum magnet force in Newton to be applied on surrounding
     # magnetic bodies.
     # @return [Numeric]
-    def get_magnet_force
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_magnet_force(@_address)
+    def magnet_force
+      MSPhysics::Newton::Body.get_magnet_force(@address)
     end
 
     # Set the maximum magnet force in Newton to be applied on surrounding
     # magnetic bodies.
     # @param [Numeric] force
-    # @return [Numeric] The newly assigned magnet force.
-    def set_magnet_force(force)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_magnet_force(@_address, force.to_f)
+    def magnet_force=(force)
+      MSPhysics::Newton::Body.set_magnet_force(@address, force)
     end
 
     # Get the maximum magnet range in meters. Magnet force is distributed along
     # the magnet range. Magnetic bodies outside the magnet range are not
     # affected.
     # @return [Numeric]
-    def get_magnet_range
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_magnet_range(@_address)
+    def magnet_range
+      MSPhysics::Newton::Body.get_magnet_range(@address)
     end
 
     # Set the maximum magnet range in meters. Magnet force is distributed along
     # the magnet range. Magnetic bodies outside the magnet range are not
     # affected.
     # @param [Numeric] range
-    # @return [Numeric] The newly assigned magnet range.
-    def set_magnet_range(range)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_magnet_range(@_address, range.to_f)
+    def magnet_range=(range)
+      MSPhysics::Newton::Body.set_magnet_range(@address, range)
     end
 
     # Determine whether body is magnetic.
     # @return [Boolean]
-    def is_magnetic?
-      Body.validate(self)
-      MSPhysics::Newton::Body.is_magnetic?(@_address)
+    def magnetic?
+      MSPhysics::Newton::Body.is_magnetic?(@address)
     end
 
     # Set body magnetic. Magnetic bodies will be affected by other bodies with
     # magnetism.
     # @param [Boolean] state +true+ to set body magnetic, +false+ to set body
     #   non-magnetic.
-    # @return [Boolean] The newly assigned state.
-    def set_magnetic(state)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_magnetic(@_address, state)
+    def magnetic=(state)
+      MSPhysics::Newton::Body.set_magnetic(@address, state)
     end
 
     # Get world axes aligned bounding box (AABB) of the body.
     # @return [Geom::BoundingBox]
-    def get_bounding_box
-      Body.validate(self)
+    def aabb
       bb = Geom::BoundingBox.new
-      bb.add MSPhysics::Newton::Body.get_aabb(@_address)
+      bb.add MSPhysics::Newton::Body.get_aabb(@address)
       bb
     end
 
-    alias get_aabb get_bounding_box
-
     # Get the linear viscous damping coefficient applied to the body.
     # @return [Numeric] A coefficient value between 0.0 and 1.0.
-    def get_linear_damping
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_linear_damping(@_address)
+    def linear_damping
+      MSPhysics::Newton::Body.get_linear_damping(@address)
     end
 
     # Set the linear viscous damping coefficient applied to the body.
     # @param [Numeric] damp A coefficient value between 0.0 and 1.0.
-    # @return [Numeric] The newly assigned linear damping.
-    def set_linear_damping(damp)
-      Body.validate(self)
-      MSPhysics::Newton::Body.set_linear_damping(@_address, damp.to_f)
+    def linear_damping=(damp)
+      MSPhysics::Newton::Body.set_linear_damping(@address, damp.to_f)
     end
 
     # Get the angular viscous damping coefficient applied to the body.
     # @return [Geom::Vector3d] Each axis represents a coefficient value between
     #   0.0 and 1.0.
     def get_angular_damping
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_angular_damping(@_address)
+      MSPhysics::Newton::Body.get_angular_damping(@address)
     end
 
     # Set the angular viscous damping coefficient applied to the body.
@@ -893,7 +766,6 @@ module MSPhysics
     #   @param [Numeric] dz Z-axis damping coefficient, a value b/w 0.0 and 1.0.
     # @return [Geom::Vector3d] The newly assigned angular damping.
     def set_angular_damping(*args)
-      Body.validate(self)
       if args.size == 3
         data = [args[0], args[1], args[2]]
       elsif args.size == 1
@@ -901,16 +773,15 @@ module MSPhysics
       else
         raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
       end
-      MSPhysics::Newton::Body.set_angular_damping(@_address, data)
+      MSPhysics::Newton::Body.set_angular_damping(@address, data)
     end
 
     # Get velocity at a specific point on the body.
     # @param [Geom::Point3d, Array<Numeric>] point A point in global space.
     # @return [Geom::Vector3d] Velocity at the given point. The magnitude of
     #   velocity is retrieved in meters per second (m/s).
-    def get_point_velocity(point)
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_point_velocity(@_address, point)
+    def point_velocity(point)
+      MSPhysics::Newton::Body.get_point_velocity(@address, point)
     end
 
     # Add force to a specific point on the body.
@@ -920,8 +791,7 @@ module MSPhysics
     #   assumed in newtons (kg*m/s/s).
     # @return [Boolean] success
     def add_point_force(point, force)
-      Body.validate(self)
-      MSPhysics::Newton::Body.add_point_force(@_address, point, force)
+      MSPhysics::Newton::Body.add_point_force(@address, point, force)
     end
 
     # Add an impulse to a specific point on the body.
@@ -932,8 +802,7 @@ module MSPhysics
     #   (m/s).
     # @return [Boolean] success
     def add_impulse(center, delta_vel)
-      Body.validate(self)
-      MSPhysics::Newton::Body.add_impulse(@_address, center, delta_vel)
+      MSPhysics::Newton::Body.add_impulse(@address, center, delta_vel)
     end
 
     # @!group Force Control Functions
@@ -942,8 +811,7 @@ module MSPhysics
     # update.
     # @return [Geom::Vector3d]
     def get_force
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_force(@_address)
+      MSPhysics::Newton::Body.get_force(@address)
     end
 
     # Get the net force, in Newtons, applied on the body on the last world
@@ -951,8 +819,7 @@ module MSPhysics
     # @return [Geom::Vector3d] The magnitude of force is retrieved in newtons
     #   (kg*m/s/s).
     def get_force_acc
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_force_acc(@_address)
+      MSPhysics::Newton::Body.get_force_acc(@address)
     end
 
     # Apply force on the body in Newtons (kg * m/s/s).
@@ -973,7 +840,6 @@ module MSPhysics
     # @return [Boolean] success
     # @see #add_force2
     def add_force(*args)
-      Body.validate(self)
       if args.size == 3
         data = [args[0], args[1], args[2]]
       elsif args.size == 1
@@ -981,7 +847,7 @@ module MSPhysics
       else
         raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
       end
-      MSPhysics::Newton::Body.add_force(@_address, data)
+      MSPhysics::Newton::Body.add_force(@address, data)
     end
 
     # Apply force on the body in Newtons (kg * m/s/s).
@@ -1002,7 +868,6 @@ module MSPhysics
     # @return [Boolean] success
     # @see #add_force
     def add_force2(*args)
-      Body.validate(self)
       if args.size == 3
         data = [args[0], args[1], args[2]]
       elsif args.size == 1
@@ -1010,7 +875,7 @@ module MSPhysics
       else
         raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
       end
-      MSPhysics::Newton::Body.add_force2(@_address, data)
+      MSPhysics::Newton::Body.add_force2(@address, data)
     end
 
     # Apply force on the body in Newton (kg * m/s/s).
@@ -1031,7 +896,6 @@ module MSPhysics
     # @return [Boolean] success
     # @see #set_force2
     def set_force(*args)
-      Body.validate(self)
       if args.size == 3
         data = [args[0], args[1], args[2]]
       elsif args.size == 1
@@ -1039,7 +903,7 @@ module MSPhysics
       else
         raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
       end
-      MSPhysics::Newton::Body.set_force(@_address, data)
+      MSPhysics::Newton::Body.set_force(@address, data)
     end
 
     # Apply force on the body in Newton (kg * m/s/s).
@@ -1060,7 +924,6 @@ module MSPhysics
     # @return [Boolean] success
     # @see #set_force
     def set_force2(*args)
-      Body.validate(self)
       if args.size == 3
         data = [args[0], args[1], args[2]]
       elsif args.size == 1
@@ -1068,23 +931,21 @@ module MSPhysics
       else
         raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
       end
-      MSPhysics::Newton::Body.set_force2(@_address, data)
+      MSPhysics::Newton::Body.set_force2(@address, data)
     end
 
     # Get the net torque, in Newton-meters, applied on the body after the last
     # world update.
     # @return [Geom::Vector3d]
     def get_torque
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_torque(@_address)
+      MSPhysics::Newton::Body.get_torque(@address)
     end
 
     # Get the net torque, in Newton-meters, applied on the body on the last
     # world update.
     # @return [Geom::Vector3d]
     def get_torque_acc
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_torque_acc(@_address)
+      MSPhysics::Newton::Body.get_torque_acc(@address)
     end
 
     # Apply torque on the body in Newton-meters (kg * m/s/s * m).
@@ -1105,7 +966,6 @@ module MSPhysics
     # @return [Boolean] success
     # @see #add_torque2
     def add_torque(*args)
-      Body.validate(self)
       if args.size == 3
         data = [args[0], args[1], args[2]]
       elsif args.size == 1
@@ -1113,7 +973,7 @@ module MSPhysics
       else
         raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
       end
-      MSPhysics::Newton::Body.add_torque(@_address, data)
+      MSPhysics::Newton::Body.add_torque(@address, data)
     end
 
     # Apply torque on the body in Newton-meters (kg * m/s/s * m).
@@ -1134,7 +994,6 @@ module MSPhysics
     # @return [Boolean] success
     # @see #add_torque
     def add_torque2(*args)
-      Body.validate(self)
       if args.size == 3
         data = [args[0], args[1], args[2]]
       elsif args.size == 1
@@ -1142,7 +1001,7 @@ module MSPhysics
       else
         raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
       end
-      MSPhysics::Newton::Body.add_torque2(@_address, data)
+      MSPhysics::Newton::Body.add_torque2(@address, data)
     end
 
     # Apply torque on the body in Newton-meters (kg * m/s/s * m).
@@ -1163,7 +1022,6 @@ module MSPhysics
     # @return [Boolean] success
     # @see #set_torque2
     def set_torque(*args)
-      Body.validate(self)
       if args.size == 3
         data = [args[0], args[1], args[2]]
       elsif args.size == 1
@@ -1171,7 +1029,7 @@ module MSPhysics
       else
         raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
       end
-      MSPhysics::Newton::Body.set_torque(@_address, data)
+      MSPhysics::Newton::Body.set_torque(@address, data)
     end
 
     # Apply torque on the body in Newton-meters (kg * m/s/s * m).
@@ -1192,7 +1050,6 @@ module MSPhysics
     # @return [Boolean] success
     # @see #set_torque
     def set_torque2(*args)
-      Body.validate(self)
       if args.size == 3
         data = [args[0], args[1], args[2]]
       elsif args.size == 1
@@ -1200,7 +1057,7 @@ module MSPhysics
       else
         raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
       end
-      MSPhysics::Newton::Body.set_torque2(@_address, data)
+      MSPhysics::Newton::Body.set_torque2(@address, data)
     end
 
     # @!endgroup
@@ -1209,63 +1066,43 @@ module MSPhysics
     # Get total force generated from contacts on the body.
     # @return [Geom::Vector3d] Magnitude of the net force is retrieved in
     #   newtons (kg*m/s/s).
-    def get_net_contact_force
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_net_contact_force(@_address)
+    def net_contact_force
+      MSPhysics::Newton::Body.get_net_contact_force(@address)
     end
 
     # Get all contacts on the body.
     # @param [Boolean] inc_non_collidable Whether to include contacts from
     #   non-collidable bodies.
     # @return [Array<Contact>]
-    def get_contacts(inc_non_collidable)
-      Body.validate(self)
-      contacts = []
-      ovs = MSPhysics::Newton.is_object_validation_enabled?
-      MSPhysics::Newton.enable_object_validation(false)
-      MSPhysics::Newton::Body.get_contacts(@_address, inc_non_collidable).each { |data|
-        body = MSPhysics::Newton::Body.get_user_data(data[0])
-        if body.is_a?(Body)
-          contacts << Contact.new(body, data[1], data[2], data[3], data[4])
-        end
+    def contacts(inc_non_collidable)
+      MSPhysics::Newton::Body.get_contacts(@address, inc_non_collidable) { |ptr, data, point, normal, force, speed|
+        data.is_a?(MSPhysics::Body) ? MSPhysics::Contact.new(data, point, normal, force, speed) : nil
       }
-      MSPhysics::Newton.enable_object_validation(ovs)
-      contacts
     end
 
     # Get all bodies that are in contact with this body.
     # @param [Boolean] inc_non_collidable Whether to include contacts from
     #   non-collidable bodies.
     # @return [Array<Body>]
-    def get_touching_bodies(inc_non_collidable)
-      Body.validate(self)
-      bodies = []
-      ovs = MSPhysics::Newton.is_object_validation_enabled?
-      MSPhysics::Newton.enable_object_validation(false)
-      MSPhysics::Newton::Body.get_touching_bodies(@_address, inc_non_collidable).each { |address|
-        data = MSPhysics::Newton::Body.get_user_data(address)
-        bodies << data if data.is_a?(Body)
+    def touching_bodies(inc_non_collidable)
+      MSPhysics::Newton::Body.get_touching_bodies(@address, inc_non_collidable) { |ptr, data|
+        data.is_a?(MSPhysics::Body) ? data : nil
       }
-      MSPhysics::Newton.enable_object_validation(ovs)
-      bodies
     end
 
     # Determine if this body is in contact with another body.
     # @param [Body] body A body to test.
     # @return [Boolean]
-    def is_touching_with?(body)
-      Body.validate2(self, body)
-      MSPhysics::Newton::Bodies.touching?(@_address, body.get_address)
+    def touching_with?(body)
+      MSPhysics::Newton::Bodies.touching?(@address, body.address)
     end
 
     # Get all contact points on the body.
     # @param [Boolean] inc_non_collidable Whether to included contacts from
     #   non-collidable bodies.
     # @return [Array<Geom::Point3d>]
-    def get_contact_points(inc_non_collidable)
-      Body.validate(self)
-      points = []
-      MSPhysics::Newton::Body.get_contact_points(@_address, inc_non_collidable)
+    def contact_points(inc_non_collidable)
+      MSPhysics::Newton::Body.get_contact_points(@address, inc_non_collidable)
     end
 
     # @!endgroup
@@ -1273,9 +1110,8 @@ module MSPhysics
     # Get collision faces of the body.
     # @return [Array<Array<Geom::Point3d>>] An array of faces. Each face
     #   represents an array of points. Points are coordinated in global space.
-    def get_collision_faces
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_collision_faces(@_address)
+    def collision_faces
+      MSPhysics::Newton::Body.get_collision_faces(@address)
     end
 
     # Get collision faces of the body.
@@ -1285,9 +1121,8 @@ module MSPhysics
     #  global space. The second element represents face centroid in global
     #  space. The third element represents face normal in global space. And the
     #  last element represents face area in inches squared.
-    def get_collision_faces2
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_collision_faces2(@_address)
+    def collision_faces2
+      MSPhysics::Newton::Body.get_collision_faces2(@address)
     end
 
     # Get collision faces of the body.
@@ -1296,9 +1131,8 @@ module MSPhysics
     #  represents face centroid in global space. The second element represents
     #  face normal in global space. And the last element represents face area in
     #  inches squared.
-    def get_collision_faces3
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_collision_faces3(@_address)
+    def collision_faces3
+      MSPhysics::Newton::Body.get_collision_faces3(@address)
     end
 
     # Apply pick and drag on the body.
@@ -1310,8 +1144,7 @@ module MSPhysics
     # @param [Numeric] damp Pick and drag damper.
     # @return [Boolean] success
     def apply_pick_and_drag(pick_pt, dest_pt, stiffness, damp)
-      Body.validate(self)
-      MSPhysics::Newton::Body.apply_pick_and_drag(@_address, pick_pt, dest_pt, stiffness, damp)
+      MSPhysics::Newton::Body.apply_pick_and_drag(@address, pick_pt, dest_pt, stiffness, damp)
     end
 
     # Apply buoyancy on the body.
@@ -1327,8 +1160,7 @@ module MSPhysics
     #   between 0.0 and 1.0.
     # @return [Boolean] success
     def apply_buoyancy(plane_origin, plane_normal = Z_AXIS, current = [0,0,0], density = 997.04, linear_viscosity = 0.01, angular_viscosity = 0.01)
-      Body.validate(self)
-      MSPhysics::Newton::Body.apply_buoyancy(@_address, plane_origin, plane_normal, density, linear_viscosity, angular_viscosity)
+      MSPhysics::Newton::Body.apply_buoyancy(@address, plane_origin, plane_normal, density, linear_viscosity, angular_viscosity)
     end
 
     # Apply fluid resistance on a body. The resistance force and torque is based
@@ -1337,8 +1169,7 @@ module MSPhysics
     # @return [Array<(Geom::Vector3d, Geom::Vector3d)>, nil] The net force and
     #   torque applied on the body or nil if body is static or not dynamic.
     def apply_fluid_resistance(density = 1.225)
-      Body.validate(self)
-      MSPhysics::Newton::Body.apply_fluid_resistance(@_address, density)
+      MSPhysics::Newton::Body.apply_fluid_resistance(@address, density)
     end
 
     # Create a copy of the body.
@@ -1352,7 +1183,6 @@ module MSPhysics
     #     uniform.
     # @return [Body] A new body object.
     def copy(*args)
-      Body.validate(self)
       if args.size == 1
         Body.new(self, nil, args[0])
       elsif args.size == 2
@@ -1364,62 +1194,38 @@ module MSPhysics
 
     # Enable/disable gravitational force on this body.
     # @param [Boolean] state
-    # @return [Boolean] The new state
-    def enable_gravity(state)
-      Body.validate(self)
-      MSPhysics::Newton::Body.enable_gravity(@_address, state)
+    def gravity_enabled=(state)
+      MSPhysics::Newton::Body.enable_gravity(@address, state)
     end
 
     # Determine if gravitational force is enabled on this body.
     # @return [Boolean]
-    def is_gravity_enabled?
-      Body.validate(self)
-      MSPhysics::Newton::Body.is_gravity_enabled?(@_address)
+    def gravity_enabled?
+      MSPhysics::Newton::Body.is_gravity_enabled?(@address)
     end
 
     # Get joints whose parent bodies associate to this body.
-    # @return [Array<Joint>]
-    def get_contained_joints
-      Body.validate(self)
-      joints = []
-      ovs = MSPhysics::Newton.is_object_validation_enabled?
-      MSPhysics::Newton.enable_object_validation(false)
-      MSPhysics::Newton::Body.get_contained_joints(@_address).each { |joint_address|
-        data = MSPhysics::Newton::Joint.get_user_data(joint_address)
-        joints << data if data.is_a?(MSPhysics::Joint)
+    # @return [Array<Joint, DoubleJoint>]
+    def contained_joints
+      MSPhysics::Newton::Body.get_contained_joints(@address) { |ptr, data|
+        data.is_a?(MSPhysics::Joint) || data.is_a?(MSPhysics::DoubleJoint) ? data : nil
       }
-      MSPhysics::Newton.enable_object_validation(ovs)
-      joints
     end
 
     # Get joints whose child bodies associate to this body.
-    # @return [Array<Joint>]
-    def get_connected_joints
-      Body.validate(self)
-      joints = []
-      ovs = MSPhysics::Newton.is_object_validation_enabled?
-      MSPhysics::Newton.enable_object_validation(false)
-      MSPhysics::Newton::Body.get_connected_joints(@_address).each { |joint_address|
-        data = MSPhysics::Newton::Joint.get_user_data(joint_address)
-        joints << data if data.is_a?(MSPhysics::Joint)
+    # @return [Array<Joint, DoubleJoint>]
+    def connected_joints
+      MSPhysics::Newton::Body.get_connected_joints(@address) { |ptr, data|
+        data.is_a?(MSPhysics::Joint) || data.is_a?(MSPhysics::DoubleJoint) ? data : nil
       }
-      MSPhysics::Newton.enable_object_validation(ovs)
-      joints
     end
 
     # Get all bodies connected to this body through joints.
     # @return [Array<Body>]
-    def get_connected_bodies
-      Body.validate(self)
-      bodies = []
-      ovs = MSPhysics::Newton.is_object_validation_enabled?
-      MSPhysics::Newton.enable_object_validation(false)
-      MSPhysics::Newton::Body.get_connected_bodies(@_address).each { |body_address|
-        data = MSPhysics::Newton::Body.get_user_data(body_address)
-        bodies << data if data.is_a?(MSPhysics::Body)
+    def connected_bodies
+      MSPhysics::Newton::Body.get_connected_bodies(@address) { |ptr, data|
+        data.is_a?(MSPhysics::Body) ? data : nil
       }
-      MSPhysics::Newton.enable_object_validation(ovs)
-      bodies
     end
 
     # Get body collision scale.
@@ -1427,8 +1233,7 @@ module MSPhysics
     # @return [Geom::Vector3d] A vector representing the X-axis, Y-axis, and
     #   Z-axis scale factors of the collision.
     def get_collision_scale
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_collision_scale(@_address)
+      MSPhysics::Newton::Body.get_collision_scale(@address)
     end
 
     # Set body collision scale.
@@ -1446,7 +1251,6 @@ module MSPhysics
     # @return [Geom::Vector3d] A vector representing the new X-axis, Y-axis, and
     #   Z-axis scale factors of the body collision.
     def set_collision_scale(*args)
-      Body.validate(self)
       if args.size == 3
         data = [args[0], args[1], args[2]]
       elsif args.size == 1
@@ -1454,8 +1258,8 @@ module MSPhysics
       else
         raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
       end
-      res = MSPhysics::Newton::Body.set_collision_scale(@_address, data)
-      @_group.move!(MSPhysics::Newton::Body.get_matrix(@_address)) if @_group.valid?
+      res = MSPhysics::Newton::Body.set_collision_scale(@address, data)
+      @group.move!(MSPhysics::Newton::Body.get_matrix(@address)) if @group.valid?
       res
     end
 
@@ -1463,18 +1267,16 @@ module MSPhysics
     # @note Does not include group scale.
     # @return [Geom::Vector3d] A vector representing the default X-axis, Y-axis,
     #   and Z-axis scale factors of the collision.
-    def get_default_collision_scale
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_default_collision_scale(@_address)
+    def default_collision_scale
+      MSPhysics::Newton::Body.get_default_collision_scale(@address)
     end
 
     # Get scale of the body matrix that is a product of group scale and
     # collision scale.
     # @return [Geom::Vector3d] A vector representing the X-axis, Y-axis, and
     #   Z-axis scale factors of the actual body matrix.
-    def get_actual_matrix_scale
-      Body.validate(self)
-      MSPhysics::Newton::Body.get_actual_matrix_scale(@_address)
+    def actual_matrix_scale
+      MSPhysics::Newton::Body.get_actual_matrix_scale(@address)
     end
 
     # Make the body's Z-axis to look in a particular direction.
@@ -1486,446 +1288,30 @@ module MSPhysics
     # @example
     #   onUpdate {
     #     if (key(' ') == 1)
-    #       look_at(this.get_group.transformation.origin.vector_to(ORIGIN), 1500, 200)
+    #       dir = this.group.transformation.origin.vector_to(ORIGIN)
+    #       this.look_at(dir, 1500, 200)
     #     else
-    #       look_at(nil)
+    #       this.look_at(nil)
     #     end
     #   }
     def look_at(pin_dir, accel = 1500, damp = 200)
-      Body.validate(self)
       if pin_dir.nil?
-        if @_look_at_constraint && @_look_at_constraint.valid?
-          @_look_at_constraint.destroy
-          @_look_at_constraint = nil
+        if @look_at_joint && @look_at_joint.valid?
+          @look_at_joint.destroy
+          @look_at_joint = nil
         end
         return
       end
       pin_dir = Geom::Vector3d.new(pin_dir) unless pin_dir.is_a?(Geom::Vector3d)
-      if @_look_at_constraint.nil? || !@_look_at_constraint.valid?
-        @_look_at_constraint = MSPhysics::UpVector.new(get_world, nil, Geom::Transformation.new(ORIGIN, @_group.transformation.zaxis))
-        @_look_at_constraint.connect(self)
+      if @look_at_joint.nil? || !@look_at_joint.valid?
+        @look_at_joint = MSPhysics::UpVector.new(self.world, nil, Geom::Transformation.new(ORIGIN, @group.transformation.zaxis))
+        @look_at_joint.connect(self)
       end
-      @_look_at_constraint.set_pin_dir(pin_dir.transform(@_look_at_constraint.get_pin_matrix.inverse))
-      @_look_at_constraint.accel = accel
-      @_look_at_constraint.damp = damp
-      @_look_at_constraint.damper_enabled = true
+      @look_at_joint.set_pin_dir(pin_dir.transform(@look_at_joint.get_pin_matrix.inverse))
+      @look_at_joint.accel = accel
+      @look_at_joint.damp = damp
+      @look_at_joint.damper_enabled = true
     end
 
-    # Assign a block of code to an event or a list of events.
-    # @example
-    #   on(:keyDown, :keyUp, :keyExtended){ |key, value, char|
-    #     simulation.log_line(key)
-    #   }
-    # @param [Symbol, String] events
-    # @yield A block of code.
-    # @return [Fixnum] The number of events assigned.
-    def on(*events, &block)
-      Body.validate(self)
-      count = 0
-      events.flatten.each{ |evt|
-        evt = evt.to_s.downcase
-        evt.insert(0, 'on') if evt[0..1] != 'on'
-        found = false
-        @_events.keys.each{ |key|
-          next if key.to_s.downcase != evt
-          evt = key
-          found = true
-          break
-        }
-        next unless found
-        @_events[evt] = block
-        count += 1
-      }
-      state = @_events[:onTouch] || @_events[:onTouching] || @_events[:onUntouch]
-      MSPhysics::Newton::Body.set_record_touch_data_state(@_address, state)
-      count
-    end
-
-    # Get a Proc object assigned to an event.
-    # @param [Symbol, String] event
-    # @return [Proc, nil] A Proc object or +nil+ if there is no procedure to an
-    #   event.
-    def get_proc(event)
-      Body.validate(self)
-      @_events[event.to_sym]
-    end
-
-    # Assign a Proc object to an event.
-    # @param [Symbol, String] event
-    # @param [Proc, nil] proc A Proc object or +nil+ to remove procedure from an
-    #   event.
-    # @return [Boolean] success
-    def set_proc(event, proc)
-      Body.validate(self)
-      AMS.validate_type(proc, Proc, NilClass)
-      return false unless @_events.keys.include?(event.to_sym)
-      @_events[event.to_sym] = proc
-      if event.to_s =~ /onTouch|onTouching|onUntouch/
-        state = @_events[:onTouch] || @_events[:onTouching] || @_events[:onUntouch]
-        MSPhysics::Newton::Body.set_record_touch_data_state(@_address, state)
-      end
-      true
-    end
-
-    # Determine whether particular event has a Proc object.
-    # @param [Symbol, String] event
-    # @return [Boolean]
-    def is_proc_assigned?(event)
-      Body.validate(self)
-      @_events[event.to_sym] != nil
-    end
-
-    # Trigger an event.
-    # @api private
-    # @param [Symbol, String] event Event name.
-    # @param [*args] args Event arguments.
-    # @return [Boolean] success
-    def call_event(event, *args)
-      Body.validate(self)
-      return false unless @_script_state
-      evt = @_events[event.to_sym]
-      return false unless evt
-      begin
-        evt.call(*args)
-      rescue Exception => e
-        ref = nil
-        test = MSPhysics::SCRIPT_NAME + ':'
-        err_message = e.message
-        err_backtrace = e.backtrace
-        if RUBY_VERSION !~ /1.8/
-          err_message.force_encoding("UTF-8")
-          err_backtrace.each { |i| i.force_encoding("UTF-8") }
-        end
-        err_backtrace.each { |location|
-          if location.include?(test)
-            ref = location
-            break
-          end
-        }
-        ref = err_message if !ref && err_message.include?(test)
-        line = ref ? ref.split(test, 2)[1].split(':', 2)[0].to_i : nil
-        msg = "#{e.class.to_s[0] =~ /a|e|i|o|u/i ? 'An' : 'A'} #{e.class} has occurred while calling body #{event} event#{line ? ', line ' + line.to_s : nil}:\n#{err_message}"
-        raise MSPhysics::ScriptException.new(msg, err_backtrace, @_group, line)
-      end
-      true
-    end
-
-    # Determine whether body script is enabled.
-    # @return [Boolean] +true+ if enabled, +false+ if disabled.
-    def get_script_state
-      Body.validate(self)
-      @_script_state
-    end
-
-    # Enable/disable body script. Disabling script will prevent all events of
-    # the body from being called.
-    # @param [Boolean] state
-    # @return [Boolean] The newly assigned state.
-    def set_script_state(state)
-      Body.validate(self)
-      @_script_state = state ? true : false
-    end
-
-    # @!group Simulation Events
-
-    # Assign a block of code to the onStart event.
-    # @yield This event is triggered once when simulation starts, hence when the
-    #   frame is zero. No transformation updates are made at this point.
-    def onStart(&block)
-      set_proc(:onStart, block)
-    end
-
-    # Assign a block of code to the onUpdate event.
-    # @yield This event is triggered every frame after the simulation starts,
-    #   hence when the frame is greater than zero. Specifically, it is called
-    #   after the world update.
-    def onUpdate(&block)
-      set_proc(:onUpdate, block)
-    end
-
-    # Assign a block of code to the onPreUpdate event.
-    # @yield This event is triggered every frame prior to the world update.
-    def onPreUpdate(&block)
-      set_proc(:onPreUpdate, block)
-    end
-
-    # Assign a block of code to the onUpdate event.
-    # @yield This event is triggered every frame after the {#onUpdate} event is
-    #   called.
-    def onPostUpdate(&block)
-      set_proc(:onPostUpdate, block)
-    end
-
-    # Assign a block of code to the onEnd event.
-    # @yield This event is triggered once when simulation ends; right before the
-    #   bodies are moved back to their starting transformation.
-    def onEnd(&block)
-      set_proc(:onEnd, block)
-    end
-
-    # Assign a block of code to the onDraw event.
-    # @yield This event is triggered whenever the view is redrawn, even when
-    #   simulation is paused.
-    # @yieldparam [Sketchup::View] view
-    # @yieldparam [Geom::BoundingBox] bb
-    # @example
-    #   onDraw { |view, bb|
-    #     pts = [[0,0,100], [100,100,100]]
-    #     # Add points to the view bounding box to prevent the line from being
-    #     # clipped.
-    #     bb.add(pts)
-    #     # Now, draw the line in red.
-    #     view.drawing_color = 'red'
-    #     view.draw(GL_LINES, pts)
-    #   }
-    def onDraw(&block)
-      set_proc(:onDraw, block)
-    end
-
-    # Assign a block of code to the onPlay event.
-    # @yield This event is triggered when simulation is played. It is not called
-    #   when simulation starts.
-    def onPlay(&block)
-      set_proc(:onPlay, block)
-    end
-
-    # Assign a block of code to the onPause event.
-    # @yield This event is triggered when simulation is paused.
-    def onPause(&block)
-      set_proc(:onPause, block)
-    end
-
-    # Assign a block of code to the onTouch event.
-    # @yield This event is triggered when this body comes in contact with
-    #   another body.
-    # @yieldparam [Body] toucher
-    # @yieldparam [Geom::Point3d] point
-    # @yieldparam [Geom::Vector3d] normal
-    # @yieldparam [Geom::Vector3d] force in Newtons.
-    # @yieldparam [Numeric] speed in meters per second.
-    def onTouch(&block)
-      set_proc(:onTouch, block)
-    end
-
-    # Assign a block of code to the onTouching event.
-    # @yield This event is triggered every frame when the body is in an extended
-    #   contact with another body.
-    # @yieldparam [Body] toucher
-    # @yieldparam [Geom::Point3d] point
-    # @yieldparam [Geom::Vector3d] normal
-    def onTouching(&block)
-      set_proc(:onTouching, block)
-    end
-
-    # Assign a block of code to the onUntouch event.
-    # @yield This event is triggered when particular body is no longer in
-    #   contact with another body. When this procedure is triggered it doesn't
-    #   always mean the body is free from all contacts. This means particular
-    #   +toucher+ has stopped touching the body.
-    # @note Sometimes you may want to know whether particular body is in contact
-    #   with another body. Relying on events is not always the best technique.
-    #   To determine whether this body is in contact with another body, use
-    #   {#is_touching_with?}, or {#get_touching_bodies} to get all contacting
-    #   bodies in particular.
-    # @yieldparam [Body] toucher
-    def onUntouch(&block)
-      set_proc(:onUntouch, block)
-    end
-
-    # Assign a block of code to the onClick event.
-    # @yield This event is triggered when the body is clicked.
-    # @yieldparam [Geom::Point3d] pos Clicked position in global space.
-    def onClick(&block)
-      set_proc(:onClick, block)
-    end
-
-    # Assign a block of code to the onDrag event.
-    # @yield This event is triggered whenever the body is dragged by a mouse.
-    def onDrag(&block)
-      set_proc(:onDrag, block)
-    end
-
-    # Assign a block of code to the onUnclick event.
-    # @yield This event is triggered when the body is unclicked.
-    def onUnclick(&block)
-      set_proc(:onUnclick, block)
-    end
-
-    # @!endgroup
-    # @!group User Input Events
-
-    # Assign a block of code to the onKeyDown event.
-    # @yield This event is called when the key is pressed.
-    # @yieldparam [String] key Virtual key name.
-    # @yieldparam [Fixnum] val Virtual key constant value.
-    # @yieldparam [String] char Actual key character.
-    def onKeyDown(&block)
-      set_proc(:onKeyDown, block)
-    end
-
-    # Assign a block of code to the onKeyUp event.
-    # @yield This event is called when the key is released.
-    # @yieldparam [String] key Virtual key name.
-    # @yieldparam [Fixnum] val Virtual key constant value.
-    # @yieldparam [String] char Actual key character.
-    def onKeyUp(&block)
-      set_proc(:onKeyUp, block)
-    end
-    # Assign a block of code to the onKeyExtended event.
-    # @yield This event is called when the key is held down.
-    # @yieldparam [String] key Virtual key name.
-    # @yieldparam [Fixnum] val Virtual key constant value.
-    # @yieldparam [String] char Actual key character.
-    def onKeyExtended(&block)
-      set_proc(:onKeyExtended, block)
-    end
-
-    # Assign a block of code to the onMouseMove event.
-    # @yield This event is called when the mouse is moved.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onMouseMove(&block)
-      set_proc(:onMouseMove, block)
-    end
-
-    # Assign a block of code to the onLButtonDown event.
-    # @yield This event is called when the left mouse button is pressed.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onLButtonDown(&block)
-      set_proc(:onLButtonDown, block)
-    end
-
-    # Assign a block of code to the onLButtonUp event.
-    # @yield This event is called when the left mouse button is released.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onLButtonUp(&block)
-      set_proc(:onLButtonUp, block)
-    end
-
-    # Assign a block of code to the onLButtonDoubleClick event.
-    # @yield This event is called when the left mouse button is double clicked.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onLButtonDoubleClick(&block)
-      set_proc(:onLButtonDoubleClick, block)
-    end
-
-    # Assign a block of code to the onRButtonDown event.
-    # @yield This event is called when the right mouse button is pressed.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onRButtonDown(&block)
-      set_proc(:onRButtonDown, block)
-    end
-
-    # Assign a block of code to the onRButtonUp event.
-    # @yield This event is called when the right mouse button is released.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onRButtonUp(&block)
-      set_proc(:onRButtonUp, block)
-    end
-
-    # Assign a block of code to the onRButtonDoubleClick event.
-    # @yield This event is called when the right mouse button is double clicked.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onRButtonDoubleClick(&block)
-      set_proc(:onRButtonDoubleClick, block)
-    end
-
-    # Assign a block of code to the onMButtonDown event.
-    # @yield This event is called when the middle mouse button is pressed.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onMButtonDown(&block)
-      set_proc(:onMButtonDown, block)
-    end
-
-    # Assign a block of code to the onMButtonUp event.
-    # @yield This event is called when the middle mouse button is released.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onMButtonUp(&block)
-      set_proc(:onMButtonUp, block)
-    end
-
-    # Assign a block of code to the onMButtonDoubleClick event.
-    # @yield This event is called when the middle mouse button is double clicked.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onMButtonDoubleClick(&block)
-      set_proc(:onMButtonDoubleClick, block)
-    end
-
-    # Assign a block of code to the onXButton1Down event.
-    # @yield This event is called when the X1 mouse button is pressed.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onXButton1Down(&block)
-      set_proc(:onXButton1Down, block)
-    end
-
-    # Assign a block of code to the onXButton1Up event.
-    # @yield This event is called when the X1 mouse button is released.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onXButton1Up(&block)
-      set_proc(:onXButton1Up, block)
-    end
-
-    # Assign a block of code to the onXButton1DoubleClick event.
-    # @yield This event is called when the X1 mouse button is double clicked.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onXButton1DoubleClick(&block)
-      set_proc(:onXButton1DoubleClick, block)
-    end
-
-    # Assign a block of code to the onXButton2Down event.
-    # @yield This event is called when the X2 mouse button is pressed.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onXButton2Down(&block)
-      set_proc(:onXButton2Down, block)
-    end
-
-    # Assign a block of code to the onXButton2Up event.
-    # @yield This event is called when the X2 mouse button is released.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onXButton2Up(&block)
-      set_proc(:onXButton2Up, block)
-    end
-
-    # Assign a block of code to the onXButton2DoubleClick event.
-    # @yield This event is called when the X2 mouse button is double clicked.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    def onXButton2DoubleClick(&block)
-      set_proc(:onXButton2DoubleClick, block)
-    end
-
-    # Assign a block of code to the onMouseWheelRotate event.
-    # @yield This event is called when the mouse wheel is rotated.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    # @yieldparam [Fixnum] dir Rotate direction: +-1+ - down, +1+ - up.
-    def onMouseWheelRotate(&block)
-      set_proc(:onMouseWheelRotate, block)
-    end
-
-    # Assign a block of code to the onMouseWheelTilt event.
-    # @yield This event is called when the mouse wheel is tilted.
-    # @yieldparam [Fixnum] x
-    # @yieldparam [Fixnum] y
-    # @yieldparam [Fixnum] dir Tilt direction: +-1+ - left, +1+ - right.
-    def onMouseWheelTilt(&block)
-      set_proc(:onMouseWheelTilt, block)
-    end
-
-    # @!endgroup
   end # class Body
 end # module MSPhysics

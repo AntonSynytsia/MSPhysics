@@ -9,7 +9,7 @@ function is_int(n) {
   return typeof n === 'number' && parseFloat(n) == parseInt(n, 10) && !isNaN(n);
 }
 
-function type(obj){
+function type(obj) {
   return Object.prototype.toString.call(obj).slice(8, -1);
 }
 
@@ -36,18 +36,15 @@ function init() {
 }
 
 function editor_set_script(code) {
-  // window.aceEditor.focus();
+  //window.aceEditor.focus();
   $( '#temp_script_area' ).val(code);
   window.aceEditor.getSession().getUndoManager().reset;
   window.aceEditor.getSession().setValue(code);
 }
 
 function editor_set_cursor(row, col) {
-  var timer = setInterval(function() {
-    window.aceEditor.gotoLine(row, col, true);
-    last_cursor = [row, col];
-    window.clearInterval(timer);
-  }, 50);
+  window.aceEditor.gotoLine(row, col, true);
+  last_cursor = [row, col];
 }
 
 function editor_select_current_line() {
@@ -70,7 +67,7 @@ function update_size() {
   if (value < 0) value = 0;
   document.getElementById('editor').style.height = value + 'px';
   var data = '['+w+','+h+']';
-  callback('update_size', data);
+  callback('size_changed', data);
   // Repeat because it doesn't always work.
   var h = $('#body').outerHeight(true);
   var value = $(window).height() - h + $('#editor').innerHeight() + editor_size_offset;
@@ -78,7 +75,7 @@ function update_size() {
   document.getElementById('editor').style.height = value + 'px';
   window.aceEditor.resize();
   var data = '['+w+','+h+']';
-  callback('update_size', data);
+  callback('size_changed', data);
   size_updating = false;
 }
 
@@ -91,8 +88,15 @@ function update_size2() {
   if (value < 0) value = 0;
   document.getElementById('editor').style.height = value + 'px';
   var data = '['+w+','+h+']';
-  callback('update_size', data);
+  callback('size_changed', data);
   size_updating = false;
+}
+
+function update_editor_size() {
+  var w = $( window ).width();
+  var h = $( window ).height();
+  var data = '['+w+','+h+']';
+  callback('editor_size_changed', data);
 }
 
 function assign_joint_click_event() {
@@ -110,13 +114,92 @@ function assign_joint_click_event() {
   });
 }
 
+function update_input_events() {
+  $('.numeric-input').off();
+  $('.fixnum-input').off();
+  $('.controller-input').off();
+  $('.text-input').off();
+  $('input[type=checkbox], input[type=radio]').off();
+  $('button').off();
+
+  // Validate numeric input.
+  /*$('.numeric-input').on('keypress', function(evt) {
+    var key = evt.keyCode || evt.which;
+    key = String.fromCharCode( key );
+    var regex = /[0-9]|\.|\-/;
+    if( !regex.test(key) ) {
+      evt.returnValue = false;
+      if(evt.preventDefault) evt.preventDefault();
+    }
+  });*/
+
+  // $('.numeric-input').attr("maxlength", 64);
+
+  $('.numeric-input').on('focusout', function() {
+    try {
+      with (Math) {
+        var num = eval(this.value);
+      }
+      if (typeof num != 'number' || num === NaN || num === Infinity) throw 0;
+    }
+    catch(err) {
+      var num = 0.0;
+    }
+    var data = '["'+this.id+'",'+num+']';
+    callback('numeric_input_changed', data);
+  });
+
+  $('.fixnum-input').on('focusout', function() {
+    try {
+      with (Math) {
+        var num = eval(this.value);
+      }
+      if (typeof num != 'number' || num === NaN || num === Infinity) throw 0;
+    }
+    catch(err) {
+      var num = 0.0;
+    }
+    var data = '["'+this.id+'",'+num+']';
+    callback('fixnum_input_changed', data);
+  });
+
+  $('.controller-input').on('focusout', function() {
+    callback('controller_input_changed', this.id);
+  });
+
+  $('.text-input').on('focusout', function() {
+    callback('text_input_changed', this.id);
+  });
+
+  $('.numeric-input').on('focusin', function() {
+    callback('numeric_input_focused', this.id);
+  });
+
+  // Process checkbox and radio input triggers.
+  $('input[type=checkbox], input[type=radio]').on('change', function() {
+    if (this.id == 'editor-read_only') {
+      window.aceEditor.setReadOnly(this.checked)
+    }
+    else if (this.id == 'editor-print_margin') {
+      window.aceEditor.setShowPrintMargin(this.checked)
+    }
+    var data = '["'+this.id+'",'+this.checked+']';
+    callback('check_input_changed', data);
+  });
+
+  // Process button clicks
+  $('button').on('click', function() {
+    callback('button_clicked', this.id);
+  });
+}
+
 $(document).ready( function() {
 
   // Determine browser for compatibility
   var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
 
   // Initialize
-  window.setTimeout(init, 0);
+  window.setTimeout(init, 10); // Timeout is needed because without it the event might not be triggered on Mac OS X.
 
   // Initialize Chosen
   var config = {
@@ -135,7 +218,7 @@ $(document).ready( function() {
 
   $('.expander').click(function() {
     for (i = 1; i < 8; i++) {
-      window.setTimeout(function(){ update_size2() }, i * 25);
+      window.setTimeout(function() { update_size2() }, i * 25);
     }
   });
 
@@ -218,11 +301,11 @@ $(document).ready( function() {
     // Change/remove current tab to active
     $(this).parent('li').addClass('active').siblings().removeClass('active');
     var tab_id = currentAttrValue.charAt(currentAttrValue.length-1);
-    if( tab_id != active_tab_id ){
+    if( tab_id != active_tab_id ) {
       active_tab_id = tab_id;
       callback('tab_changed', tab_id);
     }
-    window.setTimeout(function(){ update_size() }, 0);
+    window.setTimeout(function() { update_size() }, 0);
     e.preventDefault();
   });
 
@@ -240,73 +323,8 @@ $(document).ready( function() {
       if (value < 0) value = 0;
       container.style.height = value + 'px';
       editor.resize();
-      callback('editor_size_changed');
+      update_editor_size();
     }
-  });
-
-  // Validate numeric input.
-  /*$('.numeric-input').keypress(function(evt) {
-    var key = evt.keyCode || evt.which;
-    key = String.fromCharCode( key );
-    var regex = /[0-9]|\.|\-/;
-    if( !regex.test(key) ) {
-      evt.returnValue = false;
-      if(evt.preventDefault) evt.preventDefault();
-    }
-  });*/
-
-  // $('.numeric-input').attr("maxlength", 64);
-
-  $('.numeric-input').focusout( function() {
-    try {
-      with (Math) {
-        var num = eval(this.value);
-      }
-      if (typeof num != 'number' || num === NaN || num === Infinity) throw 0;
-    }
-    catch(err) {
-      var num = 0.0;
-    }
-    var data = '["'+this.id+'",'+num+']';
-    callback('numeric_input_changed', data);
-  });
-
-  $('.fixnum-input').focusout( function() {
-    try {
-      with (Math) {
-        var num = eval(this.value);
-      }
-      if (typeof num != 'number' || num === NaN || num === Infinity) throw 0;
-    }
-    catch(err) {
-      var num = 0.0;
-    }
-    var data = '["'+this.id+'",'+num+']';
-    callback('fixnum_input_changed', data);
-  });
-
-  $('.controller-input').focusout( function() {
-    callback('controller_input_changed', this.id);
-  });
-
-  $('.text-input').focusout( function() {
-    callback('text_input_changed', this.id);
-  });
-
-  $('.numeric-input').focusin( function() {
-    callback('numeric_input_focused', this.id);
-  });
-
-  // Process checkbox and radio input triggers.
-  $('input[type=checkbox], input[type=radio]').change( function() {
-    if (this.id == 'editor-read_only') {
-      editor.setReadOnly(this.checked)
-    }
-    else if (this.id == 'editor-print_margin') {
-      editor.setShowPrintMargin(this.checked)
-    }
-    var data = '["'+this.id+'",'+this.checked+']';
-    callback('check_input_changed', data);
   });
 
   $('.drop-down').on('change', function(evt, params) {
@@ -337,9 +355,5 @@ $(document).ready( function() {
     callback('sound_select_changed', this.value);
   });
 
-  // Process button clicks
-  $('button').click( function() {
-    callback('button_clicked', this.id);
-  });
-
+  update_input_events();
 });

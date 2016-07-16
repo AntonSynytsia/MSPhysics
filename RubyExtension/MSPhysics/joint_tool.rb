@@ -5,6 +5,7 @@ module MSPhysics
 
     class << self
 
+      # @return [Fixnum]
       def generate_uniq_id
         ids = []
         Sketchup.active_model.definitions.each { |cd|
@@ -27,18 +28,17 @@ module MSPhysics
     # @param [Symbol, String] joint_type See {MSPhysics::JOINT_TYPES} for valid
     #  joint types.
     def initialize(joint_type)
-      @joint_type = MSPhysics::Joint.optimize_joint_name(joint_type)
-      raise(TypeError, 'Given joint type is invalid!', caller) unless @joint_type
+      @joint_type = joint_type.to_s
       dir = File.dirname(__FILE__)
       dir.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
       @path = File.join(dir, 'models')
-      @full_path = File.join(@path, @joint_type.to_s + '.skp')
+      @full_path = File.join(@path, @joint_type + '.skp')
       raise(TypeError, 'Given joint type is invalid!', caller) unless File.exists?(@full_path)
-      words = @joint_type.to_s.split('_')
+      words = @joint_type.split('_')
       for i in 0...words.size
         words[i].capitalize!
       end
-      @joint_name = words.join() #words.join(' ')
+      @joint_name = words.join()
       @ip1 = Sketchup::InputPoint.new
       @ip2 = Sketchup::InputPoint.new
       @ip = Sketchup::InputPoint.new
@@ -52,11 +52,12 @@ module MSPhysics
       Sketchup.active_model.select_tool(self)
     end
 
+
     # @!visibility private
 
 
-    def is_active?
-      return @active
+    def active?
+      @active
     end
 
     def activate
@@ -104,7 +105,7 @@ module MSPhysics
           layer = model.layers.add('MSPhysics Joints')
           layer.color = @layer_color if Sketchup.version.to_i > 13
         end
-        if @joint_type == :curvy_slider || @joint_type == :curvy_piston
+        if @joint_type == 'curvy_slider' || @joint_type == 'curvy_piston'
           curve_path = File.join(@path, 'curve.skp')
           curve_cd = model.definitions.load(curve_path)
           inst = ents.add_group

@@ -267,6 +267,17 @@ table {
   font-size: 9px !important;
 }
 
+.link {
+  color: #0B1AE6;
+  font-weight: normal;
+  font-size: 10px !important;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
 #editor {
   position: relative !important;
   border: 1px solid lightgray;

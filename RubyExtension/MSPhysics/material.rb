@@ -29,85 +29,80 @@ module MSPhysics
 
     # Get material name.
     # @return [String]
-    def get_name
+    def name
       @name
     end
 
     # Get material density in kilograms per cubic meter (kg/m^3).
     # @return [Numeric]
-    def get_density
+    def density
       @density
     end
 
     # Set material density in kilograms per cubic meter (kg/m^3).
-    # @param [Numeric] density
-    # @return [Numeric] The new density.
-    def set_density(density)
-      @density = AMS.clamp(density, 0.001, nil)
+    # @param [Numeric] value
+    def density=(value)
+      @density = AMS.clamp(value, 0.001, nil)
     end
 
     # Get material static friction coefficient.
     # @return [Numeric] A value between 0.01 and 2.00.
-    def get_static_friction
+    def static_friction
       @static_friction
     end
 
     # Set material static friction coefficient.
     # @param [Numeric] coefficient A value between 0.01 and 2.00.
-    # @return [Numeric] The new coefficient.
-    def set_static_friction(coefficient)
+    def static_friction=(coefficient)
       @static_friction = AMS.clamp(coefficient, 0.01, 2.00)
     end
 
     # Get material dynamic friction coefficient.
     # @return [Numeric] A value between 0.01 and 2.00.
-    def get_dynamic_friction
+    def dynamic_friction
       @dynamic_friction
     end
 
     # Set material dynamic friction coefficient.
     # @param [Numeric] coefficient A value between 0.01 and 2.00.
-    # @return [Numeric] The new coefficient.
-    def set_dynamic_friction(coefficient)
+    def dynamic_friction=(coefficient)
       @dynamic_friction = AMS.clamp(coefficient, 0.01, 2.00)
     end
 
     # Get material coefficient of restitution - bounciness.
     # @return [Numeric] A value between 0.01 and 2.00.
-    def get_elasticity
+    def elasticity
       @elasticity
     end
 
     # Set material coefficient of restitution - bounciness.
     # @param [Numeric] coefficient A value between 0.01 and 2.00.
-    # @return [Numeric] The new coefficient.
-    def set_elasticity(coefficient)
+    def elasticity=(coefficient)
       @elasticity = AMS.clamp(coefficient, 0.01, 2.00)
     end
 
     # Get material softness coefficient.
     # @return [Numeric] A value between 0.01 and 1.00.
-    def get_softness
+    def softness
       @softness
     end
 
     # Set material softness coefficient.
     # @param [Numeric] coefficient A value between 0.01 and 1.00.
-    # @return [Numeric] The new coefficient.
-    def set_softness(coefficient)
+    def softness=(coefficient)
       @softness = AMS.clamp(coefficient, 0.01, 1.00)
     end
 
-    # Determine whether current material has the same properties as another
+    # Determine whether thi material has the same properties as another
     # material.
     # @param [Material] other_material
     # @return [Boolean]
     def equals?(other_material)
-      ( other_material.get_density == @density &&
-        other_material.get_static_friction == @static_friction &&
-        other_material.get_dynamic_friction == @dynamic_friction &&
-        other_material.get_elasticity == @elasticity &&
-        other_material.get_softness == @softness )
+      ( other_material.density == @density &&
+        other_material.static_friction == @static_friction &&
+        other_material.dynamic_friction == @dynamic_friction &&
+        other_material.elasticity == @elasticity &&
+        other_material.softness == @softness )
     end
 
   end # class Material

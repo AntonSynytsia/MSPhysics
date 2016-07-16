@@ -1,4 +1,8 @@
 # Overview
+This overview focus more on scripting rather than the general use. You may click
+on the [Wiki](https://github.com/AntonSynytsia/MSPhysics/wiki) link for
+information about the general use.
+
 
 ## Scripting Documentation
 Scripting in MSPhysics is very similar to SketchyPhysics. The process is very
@@ -6,9 +10,9 @@ simple; you select a desired group, open MSPhysics UI, and activate the
 scripting tab. Every group, being part of simulation, has its own body context,
 an instance of {MSPhysics::Body} class. <tt>MSPhysis::Body</tt> class contains
 a set of useful functions and events, allowing user to have control over body in
-physics world.
+physics world. Refer to a simple tutorial below to get more familiar with
+scripting.
 
-To get more familiar with scripting lets refer to a simple tutorial below.
 
 ## Controllable Sphere Tutorial
 In this tutorial we will create a sphere and control it with keyboard.
@@ -21,7 +25,7 @@ In this tutorial we will create a sphere and control it with keyboard.
    and paste this code in it:
 
         onUpdate {
-          mag = this.get_mass() * 5 # Force strength and magnitude.
+          mag = this.mass * 5 # Force strength and magnitude.
           # leftx() returns a value ranging from -1.0 to 1.0, depending on the state
           # of A and D keys or the horizontal position of the left joystick.
           h = leftx()
@@ -57,7 +61,7 @@ In this tutorial we will create a sphere and control it with keyboard.
           MSPhysics::Simulation.instance.world.some_world_method
         }
 
-* See {MSPhysics::Common} for various functions accessible in the body and
+* See {MSPhysics::CommonContext} for various functions accessible in the body and
   controller contexts.
   Access from the controller context: <tt>some_common_method</tt>.
   Access from the body context:
@@ -66,18 +70,18 @@ In this tutorial we will create a sphere and control it with keyboard.
           some_common_method
         }
 
-* See {MSPhysics::Body} for various function of accessible from every body in
+* See {MSPhysics::BodyContext} for various function of accessible from every body in
   simulation. Access from the body context:
 
         onUpdate { # onUpdate is a body context method
           this.some_body_method
           # Or (putting this in front is not necessary)
-          some_body_method
+          some_context_method
           # Or (Accessing methods from other bodies)
-          world.get_bodies[some_index].some_body_method
+          world.bodies[some_index].some_body_method
         }
 
-* See {MSPhysics::Controller} for various functions accessible in the
+* See {MSPhysics::ControllerContext} for various functions accessible in the
   controllers. Access from the controller context:
   <tt>some_controller_method</tt>
 
@@ -111,10 +115,11 @@ simulation.
 Deleted entities/bodies in simulation are handled safely. Deleting an entity
 that belongs to some Body instance will keep simulation running, however,
 referenced body will remain alive until simulation is complete. To destroy the
-referenced body, call <tt>Body.#destroy</tt>. One may also call
-<tt>Body.#destroy(true)</tt> to destroy body and the referenced entity at once.
+referenced body, call <tt>Body.#destroy</tt>. You may also call
+<tt>Body.#destroy(true)</tt> to destroy body along with referenced entity at
+once.
 
-Calling any methods of a destroyed body, except for the <tt>Body.#is_valid?</tt>
+Calling any methods of a destroyed body, except for the <tt>Body.#valid?</tt>
 method, will result in a TypeError causing simulation to reset. It is a good
 practice to check if body is valid prior to using its functions.
 
@@ -207,10 +212,10 @@ adding to Body Script tab:
 1. Enable game mode. <i>Game mode</i> disables pick-and-drag tool and gives
    scripter full control over user input. For instance, the mouse wheel could be
    used to switch weapons, rather than being a shortcut for a zoom tool. This
-   can be done with the <tt>MSPhysics::Simulation.set_mode}</tt> command:
+   can be done with the <tt>MSPhysics::Simulation.#mode=}</tt> command:
 
         onStart {
-          simulation.set_mode(1)
+          simulation.mode = 1
           # ...
         }
         onMouseWheelRotate { |x, y, dir|
@@ -255,23 +260,23 @@ can be played of various formats, meanwhile sound is limited to a few formats.
 Use <tt>simulation.play_music</tt> in body context to play music. Use
 <tt>simulation.play_sound</tt> in body context to play sound.
 
-To play sound in 3d, use <tt>simulation.set_sound_position</tt> command:
+To play sound in 3d, use <tt>simulation.position_sound</tt> command:
 
     onKeyDown { |k, v, c|
       channel = simulation.play_sound("ping") # Play sound and get channel
-      pos = this.get_group.bounds.center # Sound position in global space
+      pos = this.group.bounds.center # Sound position in global space
       range = 500 # Hearing range in meters
       if channel != nil
-        simulation.set_sound_position(channel, pos, 500)
+        simulation.position_sound(channel, pos, 500)
       end
     }
 
 
 ## Joystick
 Joystick is accessible from the common context which is inherited by the body
-and controller context. See {MSPhysics::Common} for various functions and their
-examples about joystick. Here is a simple example which outputs the state of the
-left joystick onto screen:
+and controller context. See {MSPhysics::CommonContext} for various functions and
+their examples about joystick. Here is a simple example which outputs the state
+of the left joystick onto screen:
 
     onUpdate {
       x = joystick(:leftx)
@@ -292,7 +297,7 @@ bodies once they come in contact with each other:
 
     # Paste this script into 'body1'
     onStart {
-      @joint = MSPhysics::Fixed.new(this.world, this, this.get_matrix, this.get_group)
+      @joint = MSPhysics::Fixed.new(this.world, this, this.get_matrix, this.group)
       # Disconnect joint when the applied force is reaches or passes the desired
       # breaking force.
       #@joint.breaking_force = 50000
@@ -301,14 +306,14 @@ bodies once they come in contact with each other:
     onTouch { |toucher, point, normal, force, speed|
       # Check if the touching body is 'body2' and connect only if the joint is
       # not already connected.
-      if toucher.get_group.name == 'body2' && @joint.valid? && !@joint.connected?
+      if toucher.group.name == 'body2' && @joint.valid? && !@joint.connected?
         @joint.connect(toucher)
       end
       # Once the joint is connected it can be disconnected with @joint.disconnect command.
     }
 
 MSPhysics has many joints and all of them can be created and controlled with the
-MSPhysics API. Here are links documentation for all joints:
+MSPhysics API. Here are documentation links for all joints:
 
 * {MSPhysics::Joint} an abstract of common functions for all joints.
 * {MSPhysics::Hinge}
@@ -324,3 +329,35 @@ MSPhysics API. Here are links documentation for all joints:
 * {MSPhysics::Fixed}
 * {MSPhysics::CurvySlider}
 * {MSPhysics::CurvyPiston}
+
+
+## Geared Constraints
+Use the joint connector tool to create gears between joints. This can be done by
+activating the joint connector tool, selecting the desired joint, holding down
+the CTRL key, and selecting the other desired joint. Ratios may be adjusted in
+the MSPhysics UI.
+
+Linear gears can be made between:
+
+- slider & slider
+- slider & piston
+
+Angular gears can be made between:
+
+- hinge & hinge
+- hinge & motor
+- hinge & servo
+
+Rack and pinion gears can be made between:
+
+- slider & hinge
+- slider & motor
+- slider & servo
+- piston & hinge
+
+The geared constraints can also be created with the API. Here are the
+documentation links for all geared constraints:
+* {MSPhysics::DoubleJoint} an abstract of common functions for all gears.
+* {MSPhysics::LinearGear}
+* {MSPhysics::AngularGear}
+* {MSPhysics::RackAndPinion}

@@ -1,4 +1,6 @@
 module MSPhysics
+
+  # @since 1.0.0
   class SceneData
 
     # @overload initialize()
@@ -31,7 +33,7 @@ module MSPhysics
         model.rendering_options.each { |k, v| @rendering_options[k] = v }
         model.shadow_info.each { |k, v| @shadow_info[k] = v }
         @style = model.styles.selected_style
-        @camera = MSPhysics.duplicate_camera(model.active_view.camera)
+        @camera = duplicate_camera(model.active_view.camera)
       elsif args.size == 1
         page = args[0]
         AMS.validate_type(page, Sketchup::Page)
@@ -43,7 +45,7 @@ module MSPhysics
         page.rendering_options.each { |k, v| @rendering_options[k] = v }
         page.shadow_info.each { |k, v| @shadow_info[k] = v }
         @style = page.style
-        @camera = MSPhysics.duplicate_camera(page.camera)
+        @camera = duplicate_camera(page.camera)
         @use_axes = page.use_axes?
         @use_hidden_entities = page.use_hidden?
         @use_hidden_layers = page.use_hidden_layers?
@@ -56,6 +58,24 @@ module MSPhysics
       end
     end
 
+    # Create copy of a camera object.
+    # @param [Sketchup::Camera] camera
+    # @return [Sketchup::Camera]
+    def duplicate_camera(camera)
+      c = Sketchup::Camera.new(camera.eye, camera.target, camera.up)
+      c.aspect_ratio = camera.aspect_ratio
+      c.perspective = camera.perspective?
+      if camera.perspective?
+        c.focal_length = camera.focal_length
+        c.fov = camera.fov
+        c.image_width = camera.image_width
+      else
+        c.height = camera.height
+      end
+      c.description = camera.description
+      return c
+    end
+
     # Transition between this and the desired scene data.
     # @param [SceneData] scene_data Other scene data
     # @param [Numeric] ratio A value between 0.0 and 1.0.
@@ -65,7 +85,7 @@ module MSPhysics
       ratio = AMS.clamp(ratio, 0, 1)
       model = Sketchup.active_model
       if scene_data.use_axes? && Sketchup.version.to_i >= 16
-        tra = MSPhysics.transition_transformation(@axes, scene_data.axes, ratio)
+        tra = AMS::Geometry.transition_transformation(@axes, scene_data.axes, ratio)
         model.axes.set(tra.origin, tra.xaxis, tra.yaxis, tra.zaxis)
       end
       if scene_data.use_hidden_entities?
@@ -96,9 +116,9 @@ module MSPhysics
           s2v = scene_data.rendering_options[mk]
           if s1v.class == mv.class && s2v.class == mv.class
             if mv.is_a?(Sketchup::Color)
-              model.rendering_options[mk] = MSPhysics.transition_color(s1v, s2v, ratio)
+              model.rendering_options[mk] = AMS::Geometry.transition_color(s1v, s2v, ratio)
             elsif mv.is_a?(Numeric)
-              v = MSPhysics.transition_number(s1v, s2v, ratio)
+              v = AMS::Geometry.transition_number(s1v, s2v, ratio)
               model.rendering_options[mk] = mv.is_a?(Fixnum) ? v.round : v
             elsif mv.is_a?(TrueClass) || mv.is_a?(FalseClass) || mv.is_a?(String) || mv.is_a?(Symbol)
               model.rendering_options[mk] = ratio == 0 ? s1v : s2v
@@ -112,7 +132,7 @@ module MSPhysics
           s2v = scene_data.shadow_info[mk]
           if s1v.class == mv.class && s2v.class == mv.class
             if mv.is_a?(Numeric) && mk !~ /time_t/i
-              v = MSPhysics.transition_number(s1v, s2v, ratio)
+              v = AMS::Geometry.transition_number(s1v, s2v, ratio)
               model.shadow_info[mk] = mv.is_a?(Fixnum) ? v.round : v
             elsif mv.is_a?(Time)
               s1v = s1v.getutc
@@ -136,7 +156,7 @@ module MSPhysics
               #model.shadow_info[mk] = Time.new(tdd.year, tdd.month, tdd.day, hour % 24, min, sec, ratio == 0 ? s1v.utc_offset : s2v.utc_offset)
               model.shadow_info[mk] = Time.utc(tdd.year, tdd.month, tdd.day, hour % 24, min, sec, 1)
             elsif mv.is_a?(Geom::Vector3d)
-              model.rendering_options[mk] = MSPhysics.transition_vector(s1v, s2v, ratio)
+              model.rendering_options[mk] = AMS::Geometry.transition_vector(s1v, s2v, ratio)
             elsif mv.is_a?(TrueClass) || mv.is_a?(FalseClass) || mv.is_a?(String) || mv.is_a?(Symbol)
               model.shadow_info[mk] = ratio == 0 ? s1v : s2v
             end
@@ -144,7 +164,7 @@ module MSPhysics
         }
       end
       if scene_data.use_camera?
-        model.active_view.camera = MSPhysics.transition_camera(@camera, scene_data.camera, ratio)
+        model.active_view.camera = AMS::Geometry.transition_camera(@camera, scene_data.camera, ratio)
       end
     end
 

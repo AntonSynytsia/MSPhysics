@@ -29,20 +29,19 @@
 #   - MSPhysics Toolbars
 #
 # Compatibility and Requirements
-#   - Microsoft Windows XP, Vista, 7, 8, or 10.
-#     This plugin will not work on Mac OS X as many of the techniques and
-#     features are achieved via the Windows API.
+#   - Microsoft Windows XP or later.
+#   - Mac OS X 10.5+.
 #   - SketchUp 6 or later. SU2016 64bit is recommended!
-#   - AMS Library 3.2.0 or later.
+#   - AMS Library 3.3.0 or later.
 #
 # Version
-#   - MSPhysics 0.8.0
+#   - MSPhysics 0.9.0
 #   - NewtonDynamics 3.14
 #   - SDL 2.0.4
 #   - SDL_mixer 2.0.1
 #
 # Release Date
-#   June 12, 2016
+#   July 10, 2016
 #
 # Licence
 #   MIT © 2015-2016, Anton Synytsia
@@ -50,7 +49,7 @@
 # Credits
 #   - Julio Jerez for the NewtonDynamics physics engine.
 #   - Chris Phillips for ideas from SketchyPhysics.
-# - István Nagy (PituPhysics) for examples and testing.
+#   - István Nagy (PituPhysics) for examples and testing.
 #
 # ------------------------------------------------------------------------------
 
@@ -59,20 +58,14 @@ require 'extensions.rb'
 
 load_me = true
 
-# Verify operation system.
-if RUBY_PLATFORM !~ /mswin|mingw/i
-  load_me = false
-  UI.messagebox("'MSPhysics' extension is not compatible on your platform. Only Microsoft Windows platforms are supported. In that case 'MSPhysics' will not be loaded.")
-end
-
 # Load and verify AMS Library.
 if load_me
   begin
     require 'ams_Lib/main.rb'
-    raise 'Outdated library!' if AMS::Lib::VERSION.to_f < 3.2
+    raise 'Outdated library!' if AMS::Lib::VERSION.to_f < 3.3
   rescue StandardError, LoadError
     load_me = false
-    msg = "'MSPhysics' extension requires AMS Library version 3.2.0 or later. 'MSPhysics' extension will not work without the library installed. Would you like to get to the library's download page?"
+    msg = "'MSPhysics' extension requires AMS Library version 3.3.0 or later. 'MSPhysics' extension will not work without the library installed. Would you like to get to the library's download page?"
     if UI.messagebox(msg, MB_YESNO) == IDYES
       UI.openURL('http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835')
     end
@@ -84,13 +77,13 @@ if load_me
   module MSPhysics
 
     NAME         = 'MSPhysics'.freeze
-    VERSION      = '0.8.0'.freeze
-    RELEASE_DATE = 'June 12, 2016'.freeze
+    VERSION      = '0.9.0'.freeze
+    RELEASE_DATE = 'July 10, 2016'.freeze
 
     # Create the extension.
     @extension = SketchupExtension.new NAME, 'MSPhysics/main.rb'
 
-    desc = "MSPhysics is a physics simulation plugin similar to SketchyPhysics."
+    desc = "MSPhysics is a realtime physics simulation plugin similar to SketchyPhysics."
 
     # Attach some nice info.
     @extension.description = desc

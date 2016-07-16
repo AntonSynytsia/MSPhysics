@@ -17,12 +17,12 @@ module MSPhysics
     # Create a hinge joint.
     # @param [MSPhysics::World] world
     # @param [MSPhysics::Body, nil] parent
-    # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation.
-    #   Of the given matrix, matrix origin should represent pin origin, and
-    #   matrix Z-axis should represent pin up.
+    # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation
+    #   in global space. Matrix origin is interpreted as the pin position.
+    #   Matrix z-axis is interpreted as the pin direction.
     # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group
     def initialize(world, parent, pin_tra, group = nil)
-      super(world, parent, pin_tra, 6, group)
+      super(world, parent, pin_tra, group)
       MSPhysics::Newton::Hinge.create(@address)
       MSPhysics::Newton::Hinge.set_min(@address, DEFAULT_MIN)
       MSPhysics::Newton::Hinge.set_max(@address, DEFAULT_MAX)

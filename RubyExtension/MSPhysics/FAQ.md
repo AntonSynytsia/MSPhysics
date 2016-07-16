@@ -14,10 +14,10 @@ stable scripting API and a huge scripting documentation.
 
 
 ## Does it work on Mac OS X?
-No, MSPhysics does not work on Mac OS X, as a lot of MSPhysics features depend
-on Microsoft Windows API. Mac API greatly differs from the Windows API. A
-compatible version might be developed in the future, but it will be limited in
-features.
+Yes, since version 0.9.0, MSPhysics has been made compatible with Mac OS X 10.5
+or later. Some of the features, such as receiving keyboard and mouse events, are
+only possible with Windows, but most of the other general features are up and
+running just fine.
 
 
 ## How it works?

@@ -1,4 +1,0 @@
-LIBRARY
-
-EXPORTS
-	Init_msp_lib_no_sdl
