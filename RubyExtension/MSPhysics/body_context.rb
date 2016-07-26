@@ -66,11 +66,11 @@ module MSPhysics
     # @return [Fixnum] The number of events assigned.
     def on(*events, &block)
       count = 0
-      events.flatten.each{ |evt|
+      events.flatten.each { |evt|
         evt = evt.to_s.downcase
         evt.insert(0, 'on') if evt[0..1] != 'on'
         found = false
-        @__events.keys.each{ |key|
+        @__events.keys.each { |key|
           next if key.to_s.downcase != evt
           evt = key
           found = true
@@ -248,7 +248,8 @@ module MSPhysics
     # @note Sometimes you may want to know whether particular body is in contact
     #   with another body. Relying on events is not always the best technique.
     #   To determine whether this body is in contact with another body, use
-    #   {this.touching_with?(some_other_body)} or {this.touching_bodies}.
+    #   <tt>this.touching_with?(some_other_body)</tt> or
+    #   <tt>this.touching_bodies</tt>.
     # @yieldparam [Body] toucher
     def onUntouch(&block)
       set_event_proc(:onUntouch, block)
