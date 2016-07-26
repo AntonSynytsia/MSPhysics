@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="en">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
@@ -37,10 +37,26 @@
               <td>
                 <table class="struct_table">
                   <col width="80%" />
-                  <tr><td colspan="2"><p class="heading">Mode</p></td></tr>
+                  <tr><td colspan="2"><p class="heading">Settings</p></td></tr>
                   <tr title="Enable/disable continuous collision check for all bodies. Continuous collision check prevents bodies from passing each other at high speeds.">
                     <td><label class="spacing_tab" for="simulation-continuous_collision">Continuous Collision</label></td>
                     <td><input id="simulation-continuous_collision" type="checkbox"></input></td>
+                  </tr>
+                  <tr title="Switch to fullscreen when simulation starts. Use ESC key to end simulation. (Windows Only!)">
+                    <td><label class="spacing_tab" for="simulation-full_screen_mode">Fullscreen Mode</label></td>
+                    <td><input id="simulation-full_screen_mode" type="checkbox"></input></td>
+                  </tr>
+                  <tr title="Game mode disables pick and drag tool and the zoom in/out shortcut associated with the mouse wheel, reserving all mouse operations for other use. This option is useful for creating FPS-related games. (Windows Only!)">
+                    <td><label class="spacing_tab" for="simulation-game_mode">Game Mode</label></td>
+                    <td><input id="simulation-game_mode" type="checkbox"></input></td>
+                  </tr>
+                  <tr title="Hide the 'MSPhysics Joints' layer when simulation starts and unhide it when simulation ends.">
+                    <td><label class="spacing_tab" for="simulation-hide_joint_layer">Hide Joint Layer</label></td>
+                    <td><input id="simulation-hide_joint_layer" type="checkbox"></input></td>
+                  </tr>
+                  <tr title="Trigger an undo command when simulation resets. This undoes all model changes that occur during simulation.">
+                    <td><label class="spacing_tab" for="simulation-undo_on_end">Undo on End</label></td>
+                    <td><input id="simulation-undo_on_end" type="checkbox"></input></td>
                   </tr>
                   <tr><td colspan="2"><p class="heading">Debug Draw</p></td></tr>
                   <tr title="Draw collision wireframe of all bodies.">
@@ -67,12 +83,6 @@
                     <td><label class="spacing_tab" for="simulation-bodies">Bodies</label></td>
                     <td><input id="simulation-bodies" type="checkbox"></input></td>
                   </tr>
-                  <tr><td colspan="2"><p class="heading">Links</p></td></tr>
-                  <tr><td><ul style="padding-left:2em;" type="circle">
-                    <li><a class="link" href="http://sketchucation.com/forums/viewtopic.php?f=323&t=56852" target="_blank">MSPhysics Homepage</a></li>
-                    <li><a class="link" href="https://github.com/AntonSynytsia/MSPhysics/wiki" target="_blank">MSPhysics Wiki</a></li>
-                    <li><a class="link" href="https://3dwarehouse.sketchup.com/search.html?q=msphysics&backendClass=entity" target="_blank">MSPhysics Models</a></li>
-                  </ul></td></tr>
                 </table>
               </td>
               <td>
@@ -1246,7 +1256,7 @@
             <tr><td><select id="sound-list" class="sound-list" size="12"></select></td></tr>
             <tr><td>
               <div id="sound-no_sdl" style="display: none;">
-                <p class="description" align="center"><em8>SDL is not supported on your system, so playing music and sounds won't work!</em8></p>
+                <p class="description" align="center"><em8>SDL is not supported on your system. Playing music and sounds won't work!</em8></p>
               </div>
             </td></tr>
             <tr>

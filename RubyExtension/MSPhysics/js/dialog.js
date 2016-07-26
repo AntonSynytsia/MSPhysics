@@ -303,7 +303,7 @@ $(document).ready( function() {
     var tab_id = currentAttrValue.charAt(currentAttrValue.length-1);
     if( tab_id != active_tab_id ) {
       active_tab_id = tab_id;
-      callback('tab_changed', tab_id);
+      window.setTimeout(function() { callback('tab_changed', tab_id); }, 0);
     }
     window.setTimeout(function() { update_size() }, 0);
     e.preventDefault();

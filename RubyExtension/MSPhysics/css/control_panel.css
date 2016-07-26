@@ -69,7 +69,9 @@ table {
 
 .controller_value {
   color: #FFF;
+  background: rgb(162,142,201); /* Fallback */
   background: rgba(255,255,255, 0.1);
+  border: 1px solid rgb(167,153,194); /* Fallback */
   border: 1px solid rgba(160,160,160, 0.2);
   border-radius: 3px;
   font-weight: bold;

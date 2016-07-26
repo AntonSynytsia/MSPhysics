@@ -1,3 +1,11 @@
+## 0.9.1 - July 26, 2016
+- Reworked the replay animation tool. Now replay is faster than before. Also,
+  replay data is compressed with Zlib, which reduces model/file size by a
+  significant factor.
+- Added fullscreen mode, game mode, undo on end, and hide joint layer options to
+  the UI dialog.
+- Minor bug fixes and improvements.
+
 ## 0.9.0 - July 10, 2016
 - Compatibility with Mac OS X 10.5+; still limited when it comes to managing
   keyboard, mouse, and MIDI, but the most important stuff is working just fine.

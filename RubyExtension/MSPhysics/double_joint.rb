@@ -10,7 +10,7 @@ module MSPhysics
       # @param [Fixnum] address
       # @return [DoubleJoint, nil] A DoubleJoint object if successful.
       # @raise [TypeError] if the address is invalid.
-      def double_joint_by_address
+      def double_joint_by_address(address)
         data = MSPhysics::Newton::DoubleJoint.get_user_data(address.to_i)
         data.is_a?(MSPhysics::DoubleJoint) ? data : nil
       end

@@ -2,14 +2,14 @@
 - Implement user mesh collision interface.
 - Add fracture/split interface.
 - Make Replay compatible with LightUp, Vray, and Thea Render.
-- Allow scaling the dialog.
-- Saving replay data into groups causes extreme lag. Also when emitted bodies go past end, they all disappear.
-- Get emitter and material changes on indigo working.
-- CurvySlider spins out of control on exact solver. Also connected bodies flip at particular points if rotation is disabled and alignment enabled.
-- Servo joint wobbles back and forth on iterative solver with low number of passes.
-- BallAndSocket joint is unstable when limits are enabled.
+- Get material changes working with SkIndigo.
+- Fix the improver behavior with CurvySlider spinning out of control on the exact solver.
+- Fix the improver behavior with CurvySlider where connected bodies flip at particular points if rotation is disabled and alignment enabled.
+- Fix the improver behavior with Servo wobbling back and forth on the iterative solver with low number of passes.
+- Fix the improver behavior with BallAndSocket being unstable when limits are enabled.
 - Add our own convex decomposition algorithm.
-- Add more checkbox options to simulation tab: fullscreen mode, game mode, undo on end, and hide joint layer.
-- Get keyboard, mouse, and MIDI working under Mac OS X. Also disable toolbars when active model is nil.
-- Add watermark text displaying version.
+- Get keyboard, mouse, and MIDI working under Mac OS X. Also control toolbars based on the active model.
+- Add watermark text displaying MSPhysics version.
 - Split Simulation into Simulation and SimulationTool.
+- Add feature to scale the UI dialog.
+- Create a layout for the documentation.

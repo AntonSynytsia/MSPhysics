@@ -142,7 +142,7 @@ module MSPhysics
           end
         }
         ref = err_message if !ref && err_message.include?(test)
-        line = ref ? ref.split(test, 2)[1].split(':', 2)[0].to_i : nil
+        line = ref ? ref.split(test, 2)[1].split(/\:/, 2)[0].to_i : nil
         msg = "#{e.class.to_s[0] =~ /a|e|i|o|u/i ? 'An' : 'A'} #{e.class} has occurred while calling body #{event} event#{line ? ', line ' + line.to_s : nil}:\n#{err_message}"
         raise MSPhysics::ScriptException.new(msg, err_backtrace, @__body.group, line)
       end

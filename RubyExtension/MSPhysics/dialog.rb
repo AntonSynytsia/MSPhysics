@@ -151,7 +151,7 @@ module MSPhysics
             cmd << "$('#body-entity_index').val('#{ model.entities.to_a.index(@selected_body) }');"
             # Display Controllers
             ['Thruster Controller', 'Emitter Controller'].each { |option|
-              property = option.downcase.gsub(' ', '_')
+              property = option.downcase.gsub(/\s/, '_')
               script = @selected_body.get_attribute('MSPhysics Body', option)
               script = '0.0' if script.nil?
               cmd << "$('#body-#{ property }').val(#{script.inspect});"
@@ -173,7 +173,7 @@ module MSPhysics
             cmd << "$('#body-material').trigger('chosen:updated');"
             # Display state and other check-box properties
             ['Ignore', 'Collidable', 'Static', 'Frozen', 'Auto Sleep', 'Enable Friction', 'Magnetic', 'Enable Script', 'Continuous Collision', 'Enable Gravity', 'Thruster Lock Axis', 'Emitter Lock Axis', 'Enable Thruster', 'Enable Emitter', 'Connect Closest Joints'].each { |option|
-              property = option.downcase.gsub(' ', '_')
+              property = option.downcase.gsub(/\s/, '_')
               default_state = default[property.to_sym]
               state = @selected_body.get_attribute('MSPhysics Body', option, default_state) ? true : false
               cmd << "$('#body-#{ property }').prop('checked', #{ state });"
@@ -183,7 +183,7 @@ module MSPhysics
             cmd << "$('#body-name').val(#{attr.inspect});"
             # Display numeric properties
             ['Density', 'Mass', 'Static Friction', 'Kinetic Friction', 'Dynamic Friction', 'Elasticity', 'Softness', 'Magnet Force', 'Magnet Range', 'Linear Damping', 'Angular Damping'].each { |option|
-              property = option.downcase.gsub(' ', '_')
+              property = option.downcase.gsub(/\s/, '_')
               attr = @selected_body.get_attribute('MSPhysics Body', option, default[property.to_sym])
               value = nil
               begin
@@ -195,7 +195,7 @@ module MSPhysics
             }
             # Display fixnum properties
             ['Emitter Rate', 'Emitter Lifetime'].each { |option|
-              property = option.downcase.gsub(' ', '_')
+              property = option.downcase.gsub(/\s/, '_')
               attr = @selected_body.get_attribute('MSPhysics Body', option, default[property.to_sym])
               value = nil
               begin
@@ -684,7 +684,7 @@ module MSPhysics
               cmd << "$('##{joint_type2}-geared_joints_field').append(\""
               cmd2 = ""
               geared_data.each { |gear_type, data|
-                words = DOUBLE_JOINT_TYPES[gear_type].split('_')
+                words = DOUBLE_JOINT_TYPES[gear_type].split(/\_/)
                 for i in 0...words.size
                   words[i].capitalize!
                 end
@@ -983,8 +983,8 @@ module MSPhysics
           @dialog.add_action_callback('check_input_changed') { |dlg, params|
             settings = MSPhysics::Settings
             id, value = data = eval(params)
-            dict, attr = id.split('-', 2)
-            words = attr.split('_')
+            dict, attr = id.split(/\-/, 2)
+            words = attr.split(/\_/)
             for i in 0...words.size
               words[i].capitalize!
             end
@@ -995,6 +995,14 @@ module MSPhysics
               case attr
               when 'continuous_collision'
                 settings.continuous_collision_check_enabled = value
+              when 'full_screen_mode'
+                settings.full_screen_mode_enabled = value
+              when 'game_mode'
+                settings.game_mode_enabled = value
+              when 'hide_joint_layer'
+                settings.hide_joint_layer_enabled = value
+              when 'undo_on_end'
+                settings.undo_on_end_enabled = value
               when 'collision_wireframe'
                 settings.collision_wireframe_visible = value
               when 'axes'
@@ -1022,12 +1030,12 @@ module MSPhysics
               if @selected_joint && @selected_joint.valid?
                 if dict == 'joint' && attr =~ /constraint_type/i
                   if @selected_joint && @selected_joint.valid? && value
-                    mode = attr.split('-', 2)[1]
+                    mode = attr.split(/\-/, 2)[1]
                     ctype = (mode == 'standard' ? 0 : (mode == 'flexible' ? 1 : 2))
                     @selected_joint.set_attribute('MSPhysics Joint', 'Constraint Type', ctype)
                   end
                 elsif dict == 'fixed' && attr =~ /adjust_to/i
-                  mode = attr.split('-', 2)[1]
+                  mode = attr.split(/\-/, 2)[1]
                   ctype = (mode == 'none' ? 0 : (mode == 'child' ? 1 : 2))
                   @selected_joint.set_attribute('MSPhysics Joint', 'Adjust To', ctype)
                 else
@@ -1268,8 +1276,8 @@ module MSPhysics
           }
           @dialog.add_action_callback('numeric_input_changed') { |dlg, params|
             id, value = eval(params)
-            dict, attr = id.split('-', 2)
-            words = attr.split('_')
+            dict, attr = id.split(/\-/, 2)
+            words = attr.split(/\_/)
             for i in 0...words.size
               words[i].capitalize!
             end
@@ -1316,7 +1324,7 @@ module MSPhysics
               if @selected_joint && @selected_joint.valid?
                 joint = @geared_joints[attr]
                 if joint && joint.valid?
-                  gear_type = attr.split('_').first.to_i
+                  gear_type = attr.split(/\_/).first.to_i
                   MSPhysics::JointConnectionTool.set_gear_ratio(@selected_joint, joint, gear_type, value)
                 end
               end
@@ -1326,8 +1334,8 @@ module MSPhysics
           }
           @dialog.add_action_callback('fixnum_input_changed') { |dlg, params|
             id, value = eval(params)
-            dict, attr = id.split('-', 2)
-            words = attr.split('_')
+            dict, attr = id.split(/\-/, 2)
+            words = attr.split(/\_/)
             for i in 0...words.size
               words[i].capitalize!
             end
@@ -1352,8 +1360,8 @@ module MSPhysics
             dlg.execute_script("$('##{id}').val('#{ value.to_i }')")
           }
           @dialog.add_action_callback('numeric_input_focused') { |dlg, params|
-            dict, attr = params.split('-', 2)
-            words = attr.split('_')
+            dict, attr = params.split(/\-/, 2)
+            words = attr.split(/\_/)
             for i in 0...words.size
               words[i].capitalize!
             end
@@ -1376,7 +1384,7 @@ module MSPhysics
             when 'joint', *MSPhysics::JOINT_NAMES
               if @selected_joint && @selected_joint.valid?
                 begin
-                  #default = eval("MSPhysics::#{dict.split('_').map { |w| w.capitalize }.join}::DEFAULT_#{attr.upcase}")
+                  #default = eval("MSPhysics::#{dict.split(/\_/).map { |w| w.capitalize }.join}::DEFAULT_#{attr.upcase}")
                   default = get_joint_default_value(@selected_joint, option)
                 rescue Exception => e
                   default = 0
@@ -1387,7 +1395,7 @@ module MSPhysics
               if @selected_joint && @selected_joint.valid?
                 joint = @geared_joints[attr]
                 if joint && joint.valid?
-                  gear_type = attr.split('_').first.to_i
+                  gear_type = attr.split(/\_/).first.to_i
                   MSPhysics::JointConnectionTool.get_gear_ratio(@selected_joint, joint, gear_type)
                 end
               end
@@ -1398,8 +1406,8 @@ module MSPhysics
             end
           }
           @dialog.add_action_callback('controller_input_changed') { |dlg, id|
-            dict, attr = id.split('-', 2)
-            words = attr.split('_')
+            dict, attr = id.split(/\-/, 2)
+            words = attr.split(/\_/)
             for i in 0...words.size
               words[i].capitalize!
             end
@@ -1419,8 +1427,8 @@ module MSPhysics
             end
           }
           @dialog.add_action_callback('text_input_changed') { |dlg, id|
-            dict, attr = id.split('-', 2)
-            words = attr.split('_')
+            dict, attr = id.split(/\-/, 2)
+            words = attr.split(/\_/)
             for i in 0...words.size
               words[i].capitalize!
             end
@@ -1446,8 +1454,8 @@ module MSPhysics
           }
           @dialog.add_action_callback('select_input_changed') { |dlg, params|
             id, value = eval(params)
-            dict, attr = id.split('-', 2)
-            words = attr.split('_')
+            dict, attr = id.split(/\-/, 2)
+            words = attr.split(/\_/)
             for i in 0...words.size
               words[i].capitalize!
             end
@@ -1562,7 +1570,7 @@ module MSPhysics
           }
           @dialog.add_action_callback('joint_label_selected') { |dlg, params|
             if (params =~ /Internal::/) == 0
-              fid = params.split("Internal::", 2)[1]
+              fid = params.split('Internal::', 2)[1]
               jdata = @body_internal_joints[fid]
               if jdata && jdata[0] && jdata[0].valid?
                 @selected_joint = jdata[0]
@@ -1576,7 +1584,7 @@ module MSPhysics
                 dlg.execute_script("setTimeout(function() { activate_tab(4); update_size(); }, 250);")
               end
             elsif (params =~ /Connected::/) == 0
-              fid = params.split("Connected::", 2)[1]
+              fid = params.split('Connected::', 2)[1]
               jdata = @body_connected_joints[fid]
               if jdata && jdata[0] && jdata[0].valid?
                 @selected_joint = jdata[0]
@@ -1590,7 +1598,7 @@ module MSPhysics
                 dlg.execute_script("setTimeout(function() { activate_tab(4); update_size(); }, 250);")
               end
             elsif (params =~ /Geared::/) == 0
-              fid = params.split("Geared::", 2)[1]
+              fid = params.split('Geared::', 2)[1]
               joint = @geared_joints[fid]
               if joint && joint.valid?
                 @selected_joint = joint
@@ -1620,7 +1628,7 @@ module MSPhysics
           # Assign the on_close callback. Important: This must be called after
           # showing dialog in order to work on Mac OS X.
           @dialog.set_on_close() {
-            @dialog.execute_script("document.activeElement.blur(); update_editor_size();")
+            @dialog.execute_script("update_editor_size(); if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();")
             @dialog = nil
             @handle = nil
             @init_called = false
@@ -1634,6 +1642,9 @@ module MSPhysics
           }
           # Find dialog window handle
           @handle = RUBY_PLATFORM =~ /mswin|mingw/i ? AMS::Sketchup.find_window_by_caption(@title) : nil
+          if @handle
+            AMS::Sketchup.ignore_dialog(@handle)
+          end
           # Set dialog style
           update_dialog_style
         else
@@ -1685,7 +1696,7 @@ module MSPhysics
         unless MSPhysics.sdl_used?
           raise(TypeError, "SDL is not supported on your system!", caller)
         end
-        name = File.basename(path, File.extname(path)).gsub("'", " ")
+        name = File.basename(path, File.extname(path)).gsub(/\'/, ' ')
         size = File.size(path) * 1.0e-6
         if size > 100
           raise(TypeError, "Selected file, \"#{File.basename(path)}\", is #{sprintf("%0.2f", size)} megabytes in size. File size must be no more than 100 megabytes!", caller)

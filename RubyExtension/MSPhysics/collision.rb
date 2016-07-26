@@ -90,7 +90,7 @@ module MSPhysics
       def create(world, entity, shape = :convex_hull, transform = false)
         MSPhysics::World.validate(world)
         validate_entity(entity)
-        shape = shape.to_s.downcase.gsub(' ', '_').to_sym
+        shape = shape.to_s.downcase.gsub(/\s/, '_').to_sym
         case shape
           when :box
             create_box(world, entity, transform)

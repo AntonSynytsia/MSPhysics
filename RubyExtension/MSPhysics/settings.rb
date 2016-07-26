@@ -28,6 +28,71 @@ module MSPhysics
         sim.continuous_collision_check_enabled = state if sim
       end
 
+      # Determine whether fullscreen mode is enabled.
+      # @return [Boolean]
+      def full_screen_mode_enabled?
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Fullscreen Mode', false)
+        return attr ? true : false
+      end
+
+      # Enable/disable fullscreen mode.
+      # @param [Boolean] state
+      def full_screen_mode_enabled=(state)
+        state = state ? true : false
+        Sketchup.active_model.set_attribute('MSPhysics', 'Fullscreen Mode', state)
+        sim = MSPhysics::Simulation.instance
+        sim.view_full_screen(state) if sim
+      end
+
+      # Determine whether game mode is enabled.
+      # @return [Boolean]
+      def game_mode_enabled?
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Game Mode', false)
+        return attr ? true : false
+      end
+
+      # Enable/disable game mode.
+      # @param [Boolean] state
+      def game_mode_enabled=(state)
+        state = state ? true : false
+        Sketchup.active_model.set_attribute('MSPhysics', 'Game Mode', state)
+        sim = MSPhysics::Simulation.instance
+        sim.mode = state ? 1 : 0 if sim
+      end
+
+      # Determine whether the hide-joint-layer option is enabled.
+      # @return [Boolean]
+      def hide_joint_layer_enabled?
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Hide Joint Layer', false)
+        return attr ? true : false
+      end
+
+      # Enable/disable the hide-joint-layer option.
+      # @param [Boolean] state
+      def hide_joint_layer_enabled=(state)
+        state = state ? true : false
+        Sketchup.active_model.set_attribute('MSPhysics', 'Hide Joint Layer', state)
+        if MSPhysics::Simulation.instance
+          layer = Sketchup.active_model.layers['MSPhysics Joints']
+          layer.visible = !state if layer && layer.visible? == state
+        end
+      end
+
+      # Determine whether the undo-on-end option is enabled.
+      # @return [Boolean]
+      def undo_on_end_enabled?
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Undo on End', false)
+        return attr ? true : false
+      end
+
+      # Enable/disable the undo-on-end option.
+      # @param [Boolean] state
+      def undo_on_end_enabled=(state)
+        state = state ? true : false
+        Sketchup.active_model.set_attribute('MSPhysics', 'Undo on End', state)
+        sim = MSPhysics::Simulation.instance
+        sim.undo_on_reset = state if sim
+      end
 
       # Get simulation solver model.
       # @return [Fixnum] 0 - exact, n - iterative.
@@ -241,6 +306,10 @@ module MSPhysics
       def apply_settings
         return false unless MSPhysics::Simulation.active?
         self.continuous_collision_check_enabled = self.continuous_collision_check_enabled?
+        self.full_screen_mode_enabled = self.full_screen_mode_enabled?
+        self.game_mode_enabled = self.game_mode_enabled?
+        self.hide_joint_layer_enabled = true if self.hide_joint_layer_enabled?
+        self.undo_on_end_enabled = self.undo_on_end_enabled?
         self.solver_model = self.solver_model
         self.friction_model = self.friction_model
         self.update_timestep = self.update_timestep

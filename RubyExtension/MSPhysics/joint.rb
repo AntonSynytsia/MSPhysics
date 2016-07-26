@@ -15,7 +15,7 @@ module MSPhysics
       # @param [Fixnum] address
       # @return [Joint, nil] A Joint object if successful.
       # @raise [TypeError] if the address is invalid.
-      def joint_by_address
+      def joint_by_address(address)
         data = MSPhysics::Newton::Joint.get_user_data(address.to_i)
         data.is_a?(MSPhysics::Joint) ? data : nil
       end

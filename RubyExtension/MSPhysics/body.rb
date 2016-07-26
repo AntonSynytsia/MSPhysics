@@ -162,7 +162,7 @@ module MSPhysics
         MSPhysics::World.validate(args[0])
         MSPhysics::Collision.validate_entity(args[1])
         @group = args[1]
-        @collision_shape = args[2].to_s.downcase.gsub(' ', '_')
+        @collision_shape = args[2].to_s.downcase.gsub(/\s/, '_')
         collision = MSPhysics::Collision.create(args[0], @group, @collision_shape)
         @address = MSPhysics::Newton::Body.create_dynamic(args[0].address, collision, @group.transformation, args[0].default_material_id, @group)
         if @collision_shape == 'null'

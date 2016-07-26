@@ -34,7 +34,7 @@ module MSPhysics
       @path = File.join(dir, 'models')
       @full_path = File.join(@path, @joint_type + '.skp')
       raise(TypeError, 'Given joint type is invalid!', caller) unless File.exists?(@full_path)
-      words = @joint_type.split('_')
+      words = @joint_type.split(/\_/)
       for i in 0...words.size
         words[i].capitalize!
       end

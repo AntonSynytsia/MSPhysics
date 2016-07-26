@@ -377,9 +377,8 @@ module MSPhysics
       end
 
       # Gear joint A to joint B.
-      # @param [Sketchup::Group, Sketchup::ComponentInstance] joint
-      # @param [Fixnum] gear_id
-      # @param [Fixnum] gear_type
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] jointA
+      # @param [Sketchup::Group, Sketchup::ComponentInstance] jointB
       # @param [Numeric, nil] gear_ratio
       # @return [Boolean] success
       def gear_joints(jointA, jointB, gear_type, gear_ratio = nil)

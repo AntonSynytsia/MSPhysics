@@ -12,10 +12,22 @@ bit = (Sketchup.respond_to?('is_64bit?') && Sketchup.is_64bit?) ? '64' : '32'
 ver = RUBY_VERSION[0..2]
 ext = (RUBY_PLATFORM =~ /mswin|mingw/i) ? '.so' : '.bundle'
 
+# Load external libraries
+begin
+  require 'zlib'
+rescue LoadError => e
+  require File.join(dir, 'external', 'zlib')
+end
+
 # Load MSPhysics Library
+orig_env_paths = ENV['PATH']
 if RUBY_PLATFORM =~ /mswin|mingw/i
-  env_paths_ary = ENV['PATH'].split(';')
-  env_paths_ary << File.join(dir, ops+bit).gsub("/", "\\")
+  # Append dlls path to the ENV['PATH'] variable so that msp_lib.so knows where
+  # to find the required dlls. This is only necessary on the windows side.
+  # For particular reasons, it's a good practice to reset the variable, and this
+  # is done way below, after initiating SDL libraries.
+  env_paths_ary = ENV['PATH'].split(/\;/)
+  env_paths_ary << File.join(dir, ops+bit).gsub(/\//, "\\")
   ENV['PATH'] = env_paths_ary.join(';')
 end
 lib_path = File.join(dir, ops+bit, ver, 'msp_lib' + ext)
@@ -96,6 +108,8 @@ require File.join(dir, 'scene_data.rb')
 # @since 1.0.0
 module MSPhysics
 
+  TEMP_DIR = RUBY_PLATFORM =~ /mswin|mingw/i ? ENV["TEMP"].gsub(/\\/, '/') : ENV["TMPDIR"].gsub(/\\/, '/')
+
   DEFAULT_SIMULATION_SETTINGS = {
     :solver_model           => 4,
     :friction_model         => 0,
@@ -150,8 +164,8 @@ module MSPhysics
     :material_name          => 'MSPhysics Buoyancy'
   }
 
-  SCRIPT_NAME = 'MSPhysics Script'.freeze
-  CONTROLLER_NAME = 'MSPhysics Controller'.freeze
+  SCRIPT_NAME = 'MSPhysicsScript'.freeze
+  CONTROLLER_NAME = 'MSPhysicsController'.freeze
 
   CURSORS = {
     :select                 => 0,
@@ -473,6 +487,8 @@ unless file_loaded?(__FILE__)
       sdl.quit
     }
   end
+  # Reset the ENV['PATH'] variable
+  ENV['PATH'] = orig_env_paths if RUBY_PLATFORM =~ /mswin|mingw/i
   # Create cursors
   path = File.join(dir, 'images/cursors')
   MSPhysics::CURSORS.keys.each { |name|
@@ -480,8 +496,11 @@ unless file_loaded?(__FILE__)
     MSPhysics::CURSORS[name] = UI.create_cursor(File.join(path, name.to_s + '.png'), pt[0], pt[1])
   }
   # Initialize stuff
-  MSPhysics::Dialog.init
-  MSPhysics::Replay.init
+  #t = UI.start_timer(1, false) {
+    #UI.stop_timer(t)
+    MSPhysics::Dialog.init
+    MSPhysics::Replay.init
+  #}
 
   # Create some contact materials
   # Coefficients are defined from material to material contacts. Material to
@@ -611,9 +630,9 @@ unless file_loaded?(__FILE__)
 
   joints_toolbar.add_separator
 
-  MSPhysics::JOINT_TYPES.each { |id, name|
+  MSPhysics::JOINT_TYPES.sort.each { |id, name|
     next if id == 0
-    words = name.split('_')
+    words = name.split(/\_/)
     for i in 0...words.size
       words[i].capitalize!
     end
@@ -651,10 +670,12 @@ unless file_loaded?(__FILE__)
   replay_toolbar.add_item(cmd)
 
   cmd = UI::Command.new('Toggle Camera Replay') {
-    MSPhysics::Replay.camera_replay_enabled = !MSPhysics::Replay.camera_replay_enabled?
+    state = !MSPhysics::Replay.camera_record_enabled?
+    MSPhysics::Replay.camera_record_enabled = state
+    MSPhysics::Replay.camera_replay_enabled = state
   }
   cmd.set_validation_proc {
-    MSPhysics::Replay.camera_replay_enabled? ? MF_CHECKED : MF_UNCHECKED
+    MSPhysics::Replay.camera_record_enabled? ? MF_CHECKED : MF_UNCHECKED
   }
   cmd.menu_text = cmd.tooltip = 'Toggle Camera Replay'
   cmd.status_bar_text = 'Enable/disable camera replay.'
@@ -906,7 +927,7 @@ unless file_loaded?(__FILE__)
       end
       if (bodies.size == 1)
         state_opts.each { |option|
-          default_state = MSPhysics::DEFAULT_BODY_SETTINGS[option.downcase.gsub(' ', '_').to_sym]
+          default_state = MSPhysics::DEFAULT_BODY_SETTINGS[option.downcase.gsub(/\s/, '_').to_sym]
           item = state_menu.add_item(option) {
             op = 'MSPhysics Body - Change State'
             Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
@@ -1115,8 +1136,13 @@ unless file_loaded?(__FILE__)
   }
 
   item = plugin_menu.add_item('Replay Settings') {
-    prompts = ['Replay Materials', 'Replay Layers', 'Replay Camera', 'Replay Render', 'Replay Shadow']
+    prompts = ['Record Materials', 'Record Layers', 'Record Camera', 'Record Render', 'Record Shadow', 'Replay Materials', 'Replay Layers', 'Replay Camera', 'Replay Render', 'Replay Shadow']
     defaults = [
+      MSPhysics::Replay.materials_record_enabled? ? 'Yes' : 'No',
+      MSPhysics::Replay.layers_record_enabled? ? 'Yes' : 'No',
+      MSPhysics::Replay.camera_record_enabled? ? 'Yes' : 'No',
+      MSPhysics::Replay.render_record_enabled? ? 'Yes' : 'No',
+      MSPhysics::Replay.shadow_record_enabled? ? 'Yes' : 'No',
       MSPhysics::Replay.materials_replay_enabled? ? 'Yes' : 'No',
       MSPhysics::Replay.layers_replay_enabled? ? 'Yes' : 'No',
       MSPhysics::Replay.camera_replay_enabled? ? 'Yes' : 'No',
@@ -1124,19 +1150,20 @@ unless file_loaded?(__FILE__)
       MSPhysics::Replay.shadow_replay_enabled? ? 'Yes' : 'No'
     ]
     yn = 'Yes|No'
-    drop_downs = [yn, yn, yn, yn, yn]
+    drop_downs = [yn, yn, yn, yn, yn, yn, yn, yn, yn, yn]
     input = UI.inputbox(prompts, defaults, drop_downs, 'Replay Settings')
     next unless input
-    MSPhysics::Replay.materials_replay_enabled = input[0] == 'Yes'
-    MSPhysics::Replay.layers_replay_enabled = input[1] == 'Yes'
-    MSPhysics::Replay.camera_replay_enabled = input[2] == 'Yes'
-    MSPhysics::Replay.render_replay_enabled = input[3] == 'Yes'
-    MSPhysics::Replay.shadow_replay_enabled = input[4] == 'Yes'
-    model = Sketchup.active_model
-    op = 'MSPhysics Replay - Save Settings'
-    Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
-    MSPhysics::Replay.save_replay_settings
-    model.commit_operation
+    MSPhysics::Replay.materials_record_enabled = input[0] == 'Yes'
+    MSPhysics::Replay.layers_record_enabled = input[1] == 'Yes'
+    MSPhysics::Replay.camera_record_enabled = input[2] == 'Yes'
+    MSPhysics::Replay.render_record_enabled = input[3] == 'Yes'
+    MSPhysics::Replay.shadow_record_enabled = input[4] == 'Yes'
+    MSPhysics::Replay.materials_replay_enabled = input[5] == 'Yes'
+    MSPhysics::Replay.layers_replay_enabled = input[6] == 'Yes'
+    MSPhysics::Replay.camera_replay_enabled = input[7] == 'Yes'
+    MSPhysics::Replay.render_replay_enabled = input[8] == 'Yes'
+    MSPhysics::Replay.shadow_replay_enabled = input[9] == 'Yes'
+    MSPhysics::Replay.save_replay_settings(true)
   }
 
   plugin_menu.add_separator
@@ -1221,8 +1248,18 @@ unless file_loaded?(__FILE__)
     }
   end
 
+  plugin_menu.add_separator
+
+  plugin_menu.add_item('Homepage') {
+    UI.openURL("http://sketchucation.com/forums/viewtopic.php?f=323&t=56852")
+  }
+
   plugin_menu.add_item('Wiki') {
     UI.openURL("https://github.com/AntonSynytsia/MSPhysics/wiki")
+  }
+
+  plugin_menu.add_item('Models') {
+    UI.openURL("https://3dwarehouse.sketchup.com/search.html?q=msphysics&backendClass=entity")
   }
 
   plugin_menu.add_item('About') {
@@ -1231,7 +1268,7 @@ unless file_loaded?(__FILE__)
     msg << "Copyright MIT © 2015-2016, Anton Synytsia.\n\n"
     msg << "Credits to:\n"
     msg << "  - Chris Phillips for ideas from SketchyPhysics.\n"
-    msg << "  - István Nagy (PituPhysics) for examples and testing.\n"
+    msg << "  - István Nagy (PituPhysics) for testing.\n"
     UI.messagebox(msg)
   }
 

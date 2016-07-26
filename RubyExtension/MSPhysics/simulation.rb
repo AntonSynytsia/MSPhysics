@@ -665,7 +665,7 @@ module MSPhysics
             end
           }
           ref = err_message if !ref && err_message.include?(test)
-          line = ref ? ref.split(test, 2)[1].split(':', 2)[0].to_i : nil
+          line = ref ? ref.split(test, 2)[1].split(/\:/, 2)[0].to_i : nil
           msg = "#{e.class.to_s[0] =~ /a|e|i|o|u/i ? 'An' : 'A'} #{e.class} has occurred while evaluating entity script#{line ? ', line ' + line.to_s : nil}:\n#{err_message}"
           raise MSPhysics::ScriptException.new(msg, err_backtrace, group, line)
         end if script.is_a?(String)
@@ -915,7 +915,7 @@ module MSPhysics
     #  * <tt>""</tt> - solid line
     # @return [void]
     def draw2d(type, points, color = 'black', width = 1, stipple = '')
-      type = case type.to_s.downcase.gsub(/\s/i, '_').to_sym
+      type = case type.to_s.downcase.gsub(/\s/, '_').to_sym
         when :points
           GL_POINTS
         when :lines
@@ -946,7 +946,7 @@ module MSPhysics
     # @param (see #draw2d)
     # @return (see #draw2d)
     def draw3d(type, points, color = 'black', width = 1, stipple = '')
-      type = case type.to_s.downcase.gsub(/\s/i, '_').to_sym
+      type = case type.to_s.downcase.gsub(/\s/, '_').to_sym
         when :points
           GL_POINTS
         when :lines
@@ -1974,7 +1974,7 @@ module MSPhysics
       end
       # Record replay animation
       if MSPhysics::Replay.record_enabled?
-        MSPhysics::Replay.record_all2(@frame)
+        MSPhysics::Replay.record_all(@frame)
       end
       # Redraw view
       view.show_frame
@@ -2712,9 +2712,9 @@ module MSPhysics
       page = model.pages.selected_page
       if page
         desc = page.description.downcase
-        sentences = desc.split('.')
+        sentences = desc.split(/\./)
         sentences.each { |sentence|
-          words = sentence.split(' ')
+          words = sentence.split(/\s/)
           if words.size >= 3 && words[0] == 'camera'
             if words[1] == 'follow'
               ent = find_group_by_name(words[2])
@@ -2827,13 +2827,13 @@ module MSPhysics
       # Set original perspective
       camera.perspective = opts[3]
       # Reset rendering options
-      @rendering_options.each { |k, v| model.rendering_options[k] = v }
+      #~ @rendering_options.each { |k, v| model.rendering_options[k] = v }
       @rendering_options.clear
       # Reset shadow info
-      @shadow_info.each { |k, v| model.shadow_info[k] = v }
+      #~ @shadow_info.each { |k, v| model.shadow_info[k] = v }
       @shadow_info.clear
       # Reset layer visibility
-      @layers.each { |l, s| l.visible = s if l.valid? && l.visible? != s }
+      #~ @layers.each { |l, s| l.visible = s if l.valid? && l.visible? != s }
       @layers.clear
       # Clear selection
       model.selection.clear
@@ -2902,10 +2902,10 @@ module MSPhysics
       # Save replay animation data
       if MSPhysics::Replay.recorded_data_valid? && ::UI.messagebox("Would you like to save recorded simulation for the replay?", MB_YESNO) == IDYES
         MSPhysics::Replay.save_recorded_data
-        if ::UI.messagebox("Would you like to smoothen recorded camera?", MB_YESNO) == IDYES
-          MSPhysics::Replay.smooth_camera_data1(25)
+        if MSPhysics::Replay.camera_data_valid? && ::UI.messagebox("Would you like to smoothen recorded camera?", MB_YESNO) == IDYES
+          MSPhysics::Replay.smooth_camera_data(25)
         end
-        #MSPhysics::Replay.save_data_to_model(true)
+        MSPhysics::Replay.save_data_to_model(true)
       end
       MSPhysics::Replay.clear_recorded_data
       # Start garbage collection

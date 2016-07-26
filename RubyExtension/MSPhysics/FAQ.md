@@ -31,7 +31,7 @@ MSPhysics is not compatible with SketchyPhysics. Both plugins may be installed
 alongside, but each will act as a separate tool; all attributes differ. To have
 one model working on both MSPhysics and SketchyPhysics simply assign similar
 scripts and properties to both MSPhysics and SketchyPhysics UI. However, one
-version may lack features of the other...
+plugin may lack the features of the other or vise versa.
 
 
 ## Is MSPhysics written to compete with SketchyPhysics?
