@@ -2800,6 +2800,8 @@ module MSPhysics
       MSPhysics::CommonContext.clear_vars
       # Remove observer
       AMS::Sketchup.remove_observer(self) if RUBY_PLATFORM =~ /mswin|mingw/i
+      # Unset from fullscreen mode
+      view_full_screen(false) if MSPhysics::Settings.full_screen_mode_enabled?
       # Purge unused
       model.definitions.purge_unused
       #~ model.materials.purge_unused
@@ -2905,7 +2907,11 @@ module MSPhysics
         if MSPhysics::Replay.camera_data_valid? && ::UI.messagebox("Would you like to smoothen recorded camera?", MB_YESNO) == IDYES
           MSPhysics::Replay.smooth_camera_data(25)
         end
-        MSPhysics::Replay.save_data_to_model(true)
+        begin
+          MSPhysics::Replay.save_data_to_file(true)
+        rescue Exception => e
+          puts 'Failed to save replay data to file!'
+        end
       end
       MSPhysics::Replay.clear_recorded_data
       # Start garbage collection

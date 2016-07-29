@@ -61,7 +61,7 @@ resembled in the following way:
 
 ## Version
 
-* MSPhysics 0.9.1
+* MSPhysics 0.9.2
 * NewtonDynamics 3.14
 * SDL 2.0.4
 * SDL_Mixer 2.0.1
@@ -69,7 +69,7 @@ resembled in the following way:
 
 ## Release Date
 
-July 26, 2016
+July 28, 2016
 
 
 ## Licence
@@ -81,4 +81,4 @@ July 26, 2016
 
 * **Julio Jerez** for the [NewtonDynamics](http://newtondynamics.com/forum/index.php) physics SDK.
 * **Chris Phillips** for ideas from [SketchyPhysics](https://code.google.com/p/sketchyphysics/).
-* **István Nagy (PituPhysics)** for testing.
+* **István Nagy (PituPhysics)** and **Faust07** for testing.

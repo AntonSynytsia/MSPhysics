@@ -1,3 +1,9 @@
+## 0.9.2 - July 28, 2016
+- Fixed the bug in fullscreen checkbox option. Thanks to Faust07 for report.
+- Added statusbar notifications when Replay is being loaded/saved.
+- For size, performance, and stability purposes Replay information is now saved
+  into a separate file, named <b>[model_name].mspreplay</b>.
+
 ## 0.9.1 - July 26, 2016
 - Reworked the replay animation tool. Now replay is faster than before. Also,
   replay data is compressed with Zlib, which reduces model/file size by a
@@ -51,7 +57,7 @@
 
 ## 0.7.3 - May 25, 2016
 - Implemented latest Newton version which fixes static mesh collision bug.
-- Fixed bug in replay after stopping animation. Thanks to faust07 for report.
+- Fixed bug in replay after stopping animation. Thanks to Faust07 for report.
 - Added a feature to save replay into model.
 - Added joystick support.
 

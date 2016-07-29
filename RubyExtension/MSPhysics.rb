@@ -25,19 +25,18 @@
 #   - MSPhysics Toolbars
 #
 # Compatibility and Requirements
-#   - Microsoft Windows XP or later.
-#   - Mac OS X 10.5+.
+#   - Microsoft Windows XP or later / Mac OS X 10.5+.
 #   - SketchUp 6 or later. SU2016 64bit is recommended!
 #   - AMS Library 3.3.0 or later.
 #
 # Version
-#   - MSPhysics 0.9.1
+#   - MSPhysics 0.9.2
 #   - NewtonDynamics 3.14
 #   - SDL 2.0.4
 #   - SDL_mixer 2.0.1
 #
 # Release Date
-#   July 26, 2016
+#   July 28, 2016
 #
 # Licence
 #   MIT © 2015-2016, Anton Synytsia
@@ -45,7 +44,7 @@
 # Credits
 #   - Julio Jerez for the NewtonDynamics physics engine.
 #   - Chris Phillips for ideas from SketchyPhysics.
-#   - István Nagy (PituPhysics) for testing.
+#   - István Nagy (PituPhysics) and Faust07 for testing.
 #
 # ------------------------------------------------------------------------------
 
@@ -61,7 +60,7 @@ if load_me
     raise 'Outdated library!' if AMS::Lib::VERSION.to_f < 3.3
   rescue StandardError, LoadError
     load_me = false
-    msg = "'MSPhysics' extension requires AMS Library version 3.3.0 or later. 'MSPhysics' extension will not work without the library installed. Would you like to get to the library's download page?"
+    msg = "'MSPhysics' extension requires AMS Library version 3.3.0 or later. 'MSPhysics' extension will not work without the library installed. Would you like to visit the library's download page?"
     if UI.messagebox(msg, MB_YESNO) == IDYES
       UI.openURL('http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835')
     end
@@ -73,13 +72,13 @@ if load_me
   module MSPhysics
 
     NAME         = 'MSPhysics'.freeze
-    VERSION      = '0.9.1'.freeze
-    RELEASE_DATE = 'July 26, 2016'.freeze
+    VERSION      = '0.9.2'.freeze
+    RELEASE_DATE = 'July 28, 2016'.freeze
 
     # Create the extension.
     @extension = SketchupExtension.new NAME, 'MSPhysics/main.rb'
 
-    desc = "MSPhysics is a realtime physics simulation plugin similar to SketchyPhysics."
+    desc = "A realtime physics simulation plugin similar to SketchyPhysics."
 
     # Attach some nice info.
     @extension.description = desc

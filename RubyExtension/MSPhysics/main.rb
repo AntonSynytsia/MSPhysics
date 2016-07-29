@@ -815,6 +815,7 @@ unless file_loaded?(__FILE__)
   cmd = UI::Command.new('Clear Data') {
     MSPhysics::Replay.clear_active_data
     MSPhysics::Replay.clear_data_from_model(!MSPhysics::Simulation.active?)
+    MSPhysics::Replay.clear_data_from_file
   }
   cmd.set_validation_proc {
     MSPhysics::Replay.active_data_valid? && !MSPhysics::Replay.active? ? MF_ENABLED : MF_GRAYED
@@ -1268,7 +1269,7 @@ unless file_loaded?(__FILE__)
     msg << "Copyright MIT © 2015-2016, Anton Synytsia.\n\n"
     msg << "Credits to:\n"
     msg << "  - Chris Phillips for ideas from SketchyPhysics.\n"
-    msg << "  - István Nagy (PituPhysics) for testing.\n"
+    msg << "  - István Nagy (PituPhysics) and Faust07 for testing.\n"
     UI.messagebox(msg)
   }
 

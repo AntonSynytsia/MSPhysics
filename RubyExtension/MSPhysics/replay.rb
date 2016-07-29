@@ -913,8 +913,12 @@ module MSPhysics
       # @param [Boolean] wrap_in_op Whether to wrap in operation.
       # @return [Boolean] success
       def save_data_to_model(wrap_in_op = true)
+        op_started = false
         return false unless active_data_valid?
         model = Sketchup.active_model
+        dict = 'MSPhysics Replay'
+        # Notify
+        Sketchup.status_text = "Saving Replay data to model. This might take a while..."
         # Start operation
         if wrap_in_op
           if Sketchup.version.to_i > 6
@@ -922,8 +926,8 @@ module MSPhysics
           else
             model.start_operation('Saving MSPhysics Replay')
           end
+          op_started = true
         end
-        dict = 'MSPhysics Replay'
         # Create temporary variables to store unique information.
         fgroups_data = {}
         fmaterials_data = {}
@@ -1089,7 +1093,7 @@ module MSPhysics
               else
                 res = v.inspect
               end
-              res.gsub!(/\s/, '')
+              #res.gsub!(/\s/, '')
               res.gsub!('Infinity', '1.0/0.0')
               res.gsub!('NaN', '0.0/0.0')
               gz << "#{k.inspect}=>#{res},"
@@ -1145,7 +1149,7 @@ module MSPhysics
               else
                 res = v.inspect
               end
-              res.gsub!(/\s/, '')
+              #res.gsub!(/\s/, '')
               res.gsub!('Infinity', '1.0/0.0')
               res.gsub!('NaN', '0.0/0.0')
               gz << "#{k.inspect}=>#{res},"
@@ -1190,7 +1194,7 @@ module MSPhysics
               else
                 res = v.inspect
               end
-              res.gsub!(/\s/, '')
+              #res.gsub!(/\s/, '')
               res.gsub!('Infinity', '1.0/0.0')
               res.gsub!('NaN', '0.0/0.0')
               gz << "#{k.inspect}=>#{res},"
@@ -1230,7 +1234,7 @@ module MSPhysics
             else
               res = v.inspect
             end
-            res.gsub!(/\s/, '')
+            #res.gsub!(/\s/, '')
             res.gsub!('Infinity', '1.0/0.0')
             res.gsub!('NaN', '0.0/0.0')
             gz << "#{k.inspect}=>#{res},"
@@ -1270,7 +1274,7 @@ module MSPhysics
             else
               res = v.inspect
             end
-            res.gsub!(/\s/, '')
+            #res.gsub!(/\s/, '')
             res.gsub!('Infinity', '1.0/0.0')
             res.gsub!('NaN', '0.0/0.0')
             gz << "#{k.inspect}=>#{res},"
@@ -1312,7 +1316,7 @@ module MSPhysics
             else
               res = v.inspect
             end
-            res.gsub!(/\s/, '')
+            #res.gsub!(/\s/, '')
             res.gsub!('Infinity', '1.0/0.0')
             res.gsub!('NaN', '0.0/0.0')
             gz << "#{k.inspect}=>#{res},"
@@ -1329,10 +1333,11 @@ module MSPhysics
         model.set_attribute(dict, 'Shadow Data', res.unpack('l*'))
         model.set_attribute(dict, 'Shadow Data Chop Count', chop_count)
         gz.close
-        # End operation
-        model.commit_operation if wrap_in_op
         # Return success
-        true
+        return true
+      ensure
+        # End operation
+        model.commit_operation if op_started
       end
 
       # Load saved data from model.
@@ -1340,6 +1345,8 @@ module MSPhysics
       def load_data_from_model
         model = Sketchup.active_model
         dict = 'MSPhysics Replay'
+        # Notify
+        Sketchup.status_text = "Loading Replay data from model. This might take a while..."
         # Clear active data
         @groups_data.clear
         @materials_data.clear
@@ -1510,6 +1517,7 @@ module MSPhysics
         model.commit_operation if wrap_in_op
       end
 
+
       # Smoothen the camera transitioning.
       # @param [Fixnum] interval
       # @return [Boolean] success
@@ -1557,6 +1565,526 @@ module MSPhysics
           end
           break if pframe >= @camera_data[:end_frame]
         end
+        true
+      end
+
+      # Save active data into file.
+      # @param [Boolean] wrap_in_op Whether to wrap in operation.
+      # @return [Boolean] success
+      def save_data_to_file(wrap_in_op = true)
+        op_started = false
+        model = Sketchup.active_model
+        return false unless model.path
+        dict = 'MSPhysics Replay'
+        # Parse path to the current model.
+        model_path = model.path.gsub(/\\/, '/')
+        mspr_path = File.dirname(model_path)
+        mspr_name = File.basename(model_path, '.skp') + '.mspreplay'
+        mspr_fpath = File.join(mspr_path, mspr_name)
+        # Start operation
+        if wrap_in_op
+          if Sketchup.version.to_i > 6
+            model.start_operation('Saving MSPhysics Replay', true)
+          else
+            model.start_operation('Saving MSPhysics Replay')
+          end
+          op_started = true
+        end
+        # Notify
+        Sketchup.status_text = "Saving Replay data to file. This might take a while..."
+        # Create temporary variables to store unique information.
+        fgroups_data = {}
+        fmaterials_data = {}
+        flayers_data = {}
+        fcamera_data = {}
+        frender_data = {}
+        fshadow_data = {}
+        # Filter groups data
+        @groups_data.each { |group, data|
+          gdata = {}
+          gdata[:id] = data[:id]
+          gdata[:definition] = data[:definition] if data[:definition]
+          gdata[:start_frame] = data[:start_frame] if data[:start_frame]
+          gdata[:end_frame] = data[:end_frame] if data[:end_frame]
+          last = {}
+          data.each { |pframe, fdata|
+            next unless pframe.is_a?(Fixnum)
+            sdata = {}
+            fdata.each { |k, v|
+              if v.is_a?(Sketchup::Material) || v.is_a?(Sketchup::Layer)
+                v2 = v.__id__
+              elsif v.is_a?(Geom::Transformation)
+                v2 = v.to_a
+              else
+               v2 = v
+              end
+              next if last.has_key?(k) && last[k] == v2
+              sdata[k] = v
+              last[k] = v2
+            }
+            gdata[pframe] = sdata unless sdata.empty?
+          }
+          fgroups_data[group] = gdata
+        }
+        # Filter materials data
+        @materials_data.each { |material, data|
+          gdata = {}
+          gdata[:id] = data[:id]
+          gdata[:start_frame] = data[:start_frame] if data[:start_frame]
+          gdata[:end_frame] = data[:end_frame] if data[:end_frame]
+          last = {}
+          data.each { |pframe, fdata|
+            next unless pframe.is_a?(Fixnum)
+            sdata = {}
+            fdata.each { |k, v|
+              v2 = v.is_a?(Sketchup::Color) ? v.to_a : v
+              next if last.has_key?(k) && last[k] == v2
+              sdata[k] = v
+              last[k] = v2
+            }
+            gdata[pframe] = sdata unless sdata.empty?
+          }
+          fmaterials_data[material] = gdata
+        }
+        # Filter layers data
+        @layers_data.each { |layer, data|
+          gdata = {}
+          gdata[:id] = data[:id]
+          gdata[:start_frame] = data[:start_frame] if data[:start_frame]
+          gdata[:end_frame] = data[:end_frame] if data[:end_frame]
+          last = {}
+          data.each { |pframe, fdata|
+            next unless pframe.is_a?(Fixnum)
+            sdata = {}
+            fdata.each { |k, v|
+              v2 = v.is_a?(Sketchup::Color) ? v.to_a : v
+              next if last.has_key?(k) && last[k] == v2
+              sdata[k] = v
+              last[k] = v2
+            }
+            gdata[pframe] = sdata unless sdata.empty?
+          }
+          flayers_data[layer] = gdata
+        }
+        # Filter camera data
+        fcamera_data[:start_frame] = @camera_data[:start_frame] if @camera_data[:start_frame]
+        fcamera_data[:end_frame] = @camera_data[:end_frame] if @camera_data[:end_frame]
+        last = {}
+        @camera_data.each { |pframe, fdata|
+          next unless pframe.is_a?(Fixnum)
+          sdata = {}
+          fdata.each { |k, v|
+            next if last.has_key?(k) && last[k] == v
+            sdata[k] = v
+            last[k] = v
+          }
+          fcamera_data[pframe] = sdata unless sdata.empty?
+        }
+        # Filter render data
+        frender_data[:start_frame] = @render_data[:start_frame] if @render_data[:start_frame]
+        frender_data[:end_frame] = @render_data[:end_frame] if @render_data[:end_frame]
+        last = {}
+        @render_data.each { |pframe, fdata|
+          next unless pframe.is_a?(Fixnum)
+          sdata = {}
+          fdata.each { |k, v|
+            v2 = v.is_a?(Sketchup::Color) ? v.to_a : v
+            next if last.has_key?(k) && last[k] == v2
+            sdata[k] = v
+            last[k] = v2
+          }
+          frender_data[pframe] = sdata unless sdata.empty?
+        }
+        # Filter shadow data
+        fshadow_data[:start_frame] = @shadow_data[:start_frame] if @shadow_data[:start_frame]
+        fshadow_data[:end_frame] = @shadow_data[:end_frame] if @shadow_data[:end_frame]
+        last = {}
+        @shadow_data.each { |pframe, fdata|
+          next unless pframe.is_a?(Fixnum)
+          sdata = {}
+          fdata.each { |k, v|
+            v2 = v.is_a?(Sketchup::Color) ? v.to_a : v
+            next if last.has_key?(k) && last[k] == v2
+            sdata[k] = v
+            last[k] = v2
+          }
+          fshadow_data[pframe] = sdata unless sdata.empty?
+        }
+        # Create a Zlib writer instance
+        gz = Zlib::GzipWriter.open(mspr_fpath, Zlib::BEST_SPEED, Zlib::FILTERED)
+        #gz = File.open(mspr_fpath, 'w')
+        gz.write "{"
+        # Save main info
+        gz.write ":start_frame=>#{@start_frame}," if @start_frame
+        gz.write ":end_frame=>#{@end_frame}," if @end_frame
+        # Save groups
+        str = ":groups_data=>{"
+        fgroups_data.each { |group, data|
+          next if !(((group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentInstance)) && group.valid?) || (data[:definition] && data[:definition].valid?))
+          str << "#{data[:id]}=>{"
+          str << ":start_frame=>#{data[:start_frame]}," if data[:start_frame]
+          str << ":end_frame=>#{data[:end_frame]}," if data[:end_frame]
+          data.each { |pframe, fdata|
+            next unless pframe.is_a?(Fixnum)
+            str << "#{pframe}=>{"
+            fdata.each { |k, v|
+              res = nil
+              if v.is_a?(Length)
+                res = v.to_f.to_s
+              elsif v.is_a?(Numeric)
+                res = v.to_s
+              elsif v.is_a?(Sketchup::Layer)
+                if flayers_data[v]
+                  res = flayers_data[v][:id].to_s
+                elsif v.valid?
+                  res = v.entityID.to_s
+                else
+                  next
+                end
+              elsif v.is_a?(Sketchup::Material)
+                if fmaterials_data[v]
+                  res = fmaterials_data[v][:id].to_s
+                elsif v.valid?
+                  res = v.entityID.to_s
+                else
+                  next
+                end
+              elsif v.is_a?(Sketchup::Color)
+                res = "Sketchup::Color.new(#{v.red},#{v.green},#{v.blue},#{v.alpha})"
+              elsif v.is_a?(Geom::Transformation)
+                res = "Geom::Transformation.new(#{v.to_a.inspect})"
+              elsif v.is_a?(Geom::Point3d)
+                res = "Geom::Point3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
+              elsif v.is_a?(Geom::Vector3d)
+                res = "Geom::Vector3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
+              else
+                res = v.inspect
+              end
+              #res.gsub!(/\s/, '')
+              res.gsub!('Infinity', '1.0/0.0')
+              res.gsub!('NaN', '0.0/0.0')
+              str << "#{k.inspect}=>#{res},"
+            }
+            str << "},"
+          }
+          str << "},"
+          if (group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentInstance)) && group.valid?
+            group.set_attribute(dict, 'ID', data[:id])
+          else
+            ids = data[:definition].get_attribute(dict, 'IDs')
+            if ids.is_a?(Array)
+              ids << data[:id]
+            else
+              ids = [data[:id]]
+            end
+            data[:definition].set_attribute(dict, 'IDs', ids)
+          end
+        }
+        str << "},"
+        gz.write(str)
+        # Save materials
+        saved_mats = {}
+        str = ":materials_data=>{"
+        fmaterials_data.each { |material, data|
+          if material.is_a?(Sketchup::Material) && material.valid?
+            material.set_attribute(dict, 'ID', data[:id])
+            saved_mats[material] = true
+          end
+          str << "#{data[:id]}=>{"
+          str << ":start_frame=>#{data[:start_frame]}," if data[:start_frame]
+          str << ":end_frame=>#{data[:end_frame]}," if data[:end_frame]
+          data.each { |pframe, fdata|
+            next unless pframe.is_a?(Fixnum)
+            str << "#{pframe}=>{"
+            fdata.each { |k, v|
+              res = nil
+              if v.is_a?(Length)
+                res = v.to_f.to_s
+              elsif v.is_a?(Numeric)
+                res = v.to_s
+              elsif v.is_a?(Sketchup::Color)
+                res = "Sketchup::Color.new(#{v.red},#{v.green},#{v.blue},#{v.alpha})"
+              else
+                res = v.inspect
+              end
+              #res.gsub!(/\s/, '')
+              res.gsub!('Infinity', '1.0/0.0')
+              res.gsub!('NaN', '0.0/0.0')
+              str << "#{k.inspect}=>#{res},"
+            }
+            str << "},"
+          }
+          str << "},"
+        }
+        str << "},"
+        gz.write(str)
+        # Save layers
+        saved_lays = {}
+        str = ":layers_data=>{"
+        flayers_data.each { |layer, data|
+          if layer.is_a?(Sketchup::Layer) && layer.valid?
+            layer.set_attribute(dict, 'ID', data[:id])
+            saved_lays[layer] = true
+          end
+          str << "#{data[:id]}=>{"
+          str << ":start_frame=>#{data[:start_frame]}," if data[:start_frame]
+          str << ":end_frame=>#{data[:end_frame]}," if data[:end_frame]
+          data.each { |pframe, fdata|
+            next unless pframe.is_a?(Fixnum)
+            str << "#{pframe}=>{"
+            fdata.each { |k, v|
+              res = nil
+              if v.is_a?(Length)
+                res = v.to_f.to_s
+              elsif v.is_a?(Numeric)
+                res = v.to_s
+              elsif v.is_a?(Sketchup::Color)
+                res = "Sketchup::Color.new(#{v.red},#{v.green},#{v.blue},#{v.alpha})"
+              else
+                res = v.inspect
+              end
+              #res.gsub!(/\s/, '')
+              res.gsub!('Infinity', '1.0/0.0')
+              res.gsub!('NaN', '0.0/0.0')
+              str << "#{k.inspect}=>#{res},"
+            }
+            str << "},"
+          }
+          str << "},"
+        }
+        str << "},"
+        gz.write(str)
+        # Save camera
+        str = ":camera_data=>{"
+        str << ":start_frame=>#{fcamera_data[:start_frame]}," if fcamera_data[:start_frame]
+        str << ":end_frame=>#{fcamera_data[:end_frame]}," if fcamera_data[:end_frame]
+        fcamera_data.each { |pframe, fdata|
+          next unless pframe.is_a?(Fixnum)
+          str << "#{pframe}=>{"
+          fdata.each { |k, v|
+            res = nil
+            if v.is_a?(Length)
+              res = v.to_f.to_s
+            elsif v.is_a?(Numeric)
+              res = v.to_s
+            elsif v.is_a?(Geom::Point3d)
+              res = "Geom::Point3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
+            elsif v.is_a?(Geom::Vector3d)
+              res = "Geom::Vector3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
+            else
+              res = v.inspect
+            end
+            #res.gsub!(/\s/, '')
+            res.gsub!('Infinity', '1.0/0.0')
+            res.gsub!('NaN', '0.0/0.0')
+            str << "#{k.inspect}=>#{res},"
+          }
+          str << "},"
+        }
+        str << "},"
+        gz.write(str)
+        # Save render
+        str = ":render_data=>{"
+        str << ":start_frame=>#{frender_data[:start_frame]}," if frender_data[:start_frame]
+        str << ":end_frame=>#{frender_data[:end_frame]}," if frender_data[:end_frame]
+        frender_data.each { |pframe, fdata|
+          next unless pframe.is_a?(Fixnum)
+          str << "#{pframe}=>{"
+          fdata.each { |k, v|
+            res = nil
+            if v.is_a?(Length)
+              res = v.to_f.to_s
+            elsif v.is_a?(Numeric)
+              res = v.to_s
+            elsif v.is_a?(Sketchup::Color)
+              res = "Sketchup::Color.new(#{v.red},#{v.green},#{v.blue},#{v.alpha})"
+            elsif v.is_a?(Geom::Point3d)
+              res = "Geom::Point3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
+            elsif v.is_a?(Geom::Vector3d)
+              res = "Geom::Vector3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
+            else
+              res = v.inspect
+            end
+            #res.gsub!(/\s/, '')
+            res.gsub!('Infinity', '1.0/0.0')
+            res.gsub!('NaN', '0.0/0.0')
+            str << "#{k.inspect}=>#{res},"
+          }
+          str << "},"
+        }
+        str << "},"
+        gz.write(str)
+        # Save shadow
+        str = ":shadow_data=>{"
+        str << ":start_frame=>#{fshadow_data[:start_frame]}," if fshadow_data[:start_frame]
+        str << ":end_frame=>#{fshadow_data[:end_frame]}," if fshadow_data[:end_frame]
+        fshadow_data.each { |pframe, fdata|
+          next unless pframe.is_a?(Fixnum)
+          str << "#{pframe}=>{"
+          fdata.each { |k, v|
+            res = nil
+            if v.is_a?(Length)
+              res = v.to_f.to_s
+            elsif v.is_a?(Numeric)
+              res = v.to_s
+            elsif v.is_a?(Time)
+              next
+            elsif v.is_a?(Sketchup::Color)
+              res = "Sketchup::Color.new(#{v.red},#{v.green},#{v.blue},#{v.alpha})"
+            elsif v.is_a?(Geom::Point3d)
+              res = "Geom::Point3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
+            elsif v.is_a?(Geom::Vector3d)
+              res = "Geom::Vector3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
+            else
+              res = v.inspect
+            end
+            #res.gsub!(/\s/, '')
+            res.gsub!('Infinity', '1.0/0.0')
+            res.gsub!('NaN', '0.0/0.0')
+            str << "#{k.inspect}=>#{res},"
+          }
+          str << "},"
+        }
+        str << "}}"
+        gz.write(str)
+        # Close the Zlib writer instance
+        gz.close
+        # Return success
+        return true
+      ensure
+        # End operation
+        model.commit_operation if op_started
+      end
+
+      # Load saved data from file.
+      # @return [Boolean] success
+      def load_data_from_file
+        model = Sketchup.active_model
+        return false unless model.path
+        dict = 'MSPhysics Replay'
+        # Parse path to the current model.
+        model_path = model.path.gsub(/\\/, '/')
+        mspr_path = File.dirname(model_path)
+        mspr_name = File.basename(model_path, '.skp') + '.mspreplay'
+        mspr_fpath = File.join(mspr_path, mspr_name)
+        # Return if file doesn't exist.
+        return false unless File.exists?(mspr_fpath)
+        # Notify
+        Sketchup.status_text = "Loading Replay data from file. This might take a while..."
+        # Clear active data
+        @groups_data.clear
+        @materials_data.clear
+        @layers_data.clear
+        @camera_data.clear
+        @render_data.clear
+        @shadow_data.clear
+        # Create a Zlib reader instance
+        gz = Zlib::GzipReader.open(mspr_fpath)
+        #gz = File.open(mspr_fpath, 'r')
+        begin
+          mspr_data = eval(gz.read)
+        ensure
+          gz.close
+        end
+        # Load general info
+        @start_frame = mspr_data[:start_frame].is_a?(Fixnum) ? mspr_data[:start_frame] : nil
+        @end_frame = mspr_data[:end_frame].is_a?(Fixnum) ? mspr_data[:end_frame] : nil
+        # Load IDs
+        id_to_grp = {}
+        id_to_def = {}
+        id_to_mat = {}
+        id_to_lay = {}
+        model.entities.each { |e|
+          if e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)
+            id = e.get_attribute(dict, 'ID')
+            id_to_grp[id] = e if id.is_a?(Fixnum)
+          end
+        }
+        model.definitions.each { |d|
+          ids = d.get_attribute(dict, 'IDs')
+          if ids.is_a?(Array)
+            ids.each { |id|
+              id_to_def[id] = d if id.is_a?(Fixnum)
+            }
+          end
+        }
+        model.materials.each { |mat|
+          id = mat.get_attribute(dict, 'ID')
+          id_to_mat[id] = mat if id.is_a?(Fixnum)
+        }
+        model.layers.each { |lay|
+          id = lay.get_attribute(dict, 'ID')
+          id_to_lay[id] = lay if id.is_a?(Fixnum)
+        }
+        # Load groups
+        mspr_data[:groups_data].each { |id, gdata|
+          g = id_to_grp[id]
+          d = id_to_def[id]
+          gdata[:id] = id
+          gdata[:definition] = d if d
+          gdata.each { |pframe, fdata|
+            next unless pframe.is_a?(Fixnum)
+            if fdata[:layer].is_a?(Fixnum)
+              lay = id_to_lay[fdata[:layer]]
+              if lay
+                fdata[:layer] = lay
+              else
+                fdata.delete(:layer)
+              end
+            end
+            if fdata[:material].is_a?(Fixnum)
+              mat = id_to_mat[fdata[:material]]
+              fdata[:material] = mat if mat
+            end
+          }
+          @groups_data[g ? g : id] = gdata
+        }
+        # Load materials
+        mspr_data[:materials_data].each { |id, gdata|
+          g = id_to_mat[id]
+          gdata[:id] = id
+          @materials_data[g ? g : id] = gdata
+        }
+        # Load layers
+        mspr_data[:layers_data].each { |id, gdata|
+          g = id_to_lay[id]
+          gdata[:id] = id
+          @layers_data[g ? g : id] = gdata
+        }
+        # Load camera
+        @camera_data = mspr_data[:camera_data]
+        # Load render
+        @render_data = mspr_data[:render_data]
+        # Load shadow
+        @shadow_data = mspr_data[:shadow_data]
+        # Flatten all data
+        flatten_active_data
+        # Return success
+        true
+      end
+
+      # Clear saved data from file.
+      # @note This attempts to delete the file if permissions are granted.
+      # @return [Boolean] success
+      def clear_data_from_file
+        model = Sketchup.active_model
+        return false unless model.path
+        dict = 'MSPhysics Replay'
+        # Parse path to the current model.
+        model_path = model.path.gsub(/\\/, '/')
+        mspr_path = File.dirname(model_path)
+        mspr_name = File.basename(model_path, '.skp') + '.mspreplay'
+        mspr_fpath = File.join(mspr_path, mspr_name)
+        # Return if file doesn't exist.
+        return false unless File.exists?(mspr_fpath)
+        begin
+          File.delete(mspr_fpath)
+        rescue
+          File.open(mspr_fpath, 'w') { |f| f.truncate(0) }
+        rescue
+          return false
+        end
+        # Return success
         true
       end
 
@@ -1971,7 +2499,11 @@ module MSPhysics
           count += 1
         end
         reset unless called_while_active
-        save_data_to_model(true)
+        begin
+          save_data_to_file(true)
+        rescue Exception => e
+          puts 'Failed to save replay data to file!'
+        end
         # Set original settings
         @replay_groups = orig_rep_grp
         @replay_materials = orig_rep_mat
@@ -2498,12 +3030,13 @@ end}
         MSPhysics::Replay.reset_replay_settings
         begin
           MSPhysics::Replay.load_replay_settings
-          MSPhysics::Replay.load_data_from_model
+          MSPhysics::Replay.load_data_from_file
         rescue Exception => e
           MSPhysics::Replay.clear_recorded_data
           MSPhysics::Replay.clear_active_data
           MSPhysics::Replay.reset_replay_settings
-          MSPhysics::Replay.clear_data_from_model
+          MSPhysics::Replay.clear_data_from_model(true)
+          MSPhysics::Replay.clear_data_from_file
           err_message = e.message
           err_backtrace = e.backtrace
           if RUBY_VERSION !~ /1.8/
