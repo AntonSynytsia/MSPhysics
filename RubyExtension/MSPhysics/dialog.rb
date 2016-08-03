@@ -1049,14 +1049,14 @@ module MSPhysics
             when 'sound-add'
               path = ::UI.openpanel('Add Sound File', @default_sound_path)
               if path
-                path.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+                path.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
                 @default_sound_path = path
                 begin
                   add_sound(path)
                   update_sound_state
                 rescue TypeError => e
                   err_message = e.message
-                  err_message.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+                  err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
                   ::UI.messagebox(err_message)
                 end
               end
@@ -1620,7 +1620,7 @@ module MSPhysics
           }
           # Set content
           dir = File.dirname(__FILE__)
-          dir.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+          dir.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
           url = File.join(dir, 'html/dialog.html')
           @dialog.set_file(url)
           # Show dialog

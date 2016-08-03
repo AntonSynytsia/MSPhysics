@@ -13,3 +13,4 @@
 - Split Simulation into Simulation and SimulationTool.
 - Add feature to scale the UI dialog.
 - Create a layout for the documentation.
+- Verify that touch events work properly.

@@ -655,8 +655,8 @@ module MSPhysics
           err_message = e.message
           err_backtrace = e.backtrace
           if RUBY_VERSION !~ /1.8/
-            err_message.force_encoding("UTF-8")
-            err_backtrace.each { |i| i.force_encoding("UTF-8") }
+            err_message.force_encoding('UTF-8')
+            err_backtrace.each { |i| i.force_encoding('UTF-8') }
           end
           err_backtrace.each { |location|
             if location.include?(test)
@@ -1373,7 +1373,7 @@ module MSPhysics
       mats = model.materials
       @particles.each { |opts|
         next true if opts[:type] == 1
-        if opts[:group].valid?
+        if opts[:group] && opts[:group].valid?
           opts[:group].material = nil
           opts[:group].erase!
         end
@@ -1655,8 +1655,8 @@ module MSPhysics
       err_message = e.message
       err_backtrace = e.backtrace
       if RUBY_VERSION !~ /1.8/
-        err_message.force_encoding("UTF-8")
-        err_backtrace.each { |i| i.force_encoding("UTF-8") }
+        err_message.force_encoding('UTF-8')
+        err_backtrace.each { |i| i.force_encoding('UTF-8') }
       end
       puts "An exception occurred while updating particles.\n#{e.class}:\n#{err_message}\nTrace:\n#{err_backtrace.join("\n")}"
     end
@@ -1721,7 +1721,7 @@ module MSPhysics
           value = @controller_context.instance_eval(data[:controller], CONTROLLER_NAME, 0)
         rescue Exception => e
           err_message = e.message
-          err_message.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+          err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
           puts "An exception occurred while evaluating thruster controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{err_message}"
         end
         return unless Simulation.active?
@@ -1740,7 +1740,7 @@ module MSPhysics
           end
         rescue Exception => e
           err_message = e.message
-          err_message.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+          err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
           puts "An exception occurred while assigning thruster controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{err_message}"
         end
         false
@@ -1754,7 +1754,7 @@ module MSPhysics
           value = @controller_context.instance_eval(data[:controller], CONTROLLER_NAME, 0)
         rescue Exception => e
           err_message = e.message
-          err_message.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+          err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
           puts "An exception occurred while evaluating emitter controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{err_message}"
         end
         return unless Simulation.active?
@@ -1775,7 +1775,7 @@ module MSPhysics
           end
         rescue Exception => e
           err_message = e.message
-          err_message.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+          err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
           puts "An exception occurred while assigning emitter controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{err_message}"
         end
         false
@@ -1812,7 +1812,7 @@ module MSPhysics
           value = @controller_context.instance_eval(controller, CONTROLLER_NAME, 0)
         rescue Exception => e
           err_message = e.message
-          err_message.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+          err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
           puts "An exception occurred while evaluating joint controller!\nController:\n#{controller}\n#{e.class}:\n#{err_message}"
         end
         return unless Simulation.active?
@@ -1833,7 +1833,7 @@ module MSPhysics
           end
         rescue Exception => e
           err_message = e.message
-          err_message.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+          err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
           puts "An exception occurred while assigning joint controller!\nController:\n#{controller}\n#{e.class}:\n#{err_message}"
         end
         false
@@ -2462,8 +2462,8 @@ module MSPhysics
                 err_message = e.message
                 err_backtrace = e.backtrace
                 if RUBY_VERSION !~ /1.8/
-                  err_message.force_encoding("UTF-8")
-                  err_backtrace.each { |i| i.force_encoding("UTF-8") }
+                  err_message.force_encoding('UTF-8')
+                  err_backtrace.each { |i| i.force_encoding('UTF-8') }
                 end
                 puts "An exception occurred while creating a joint from #{cent}!\n#{e.class}:\n#{err_message}\nTrace:\n#{err_backtrace.join("\n")}"
               end
@@ -2479,8 +2479,8 @@ module MSPhysics
               err_message = e.message
               err_backtrace = e.backtrace
               if RUBY_VERSION !~ /1.8/
-                err_message.force_encoding("UTF-8")
-                err_backtrace.each { |i| i.force_encoding("UTF-8") }
+                err_message.force_encoding('UTF-8')
+                err_backtrace.each { |i| i.force_encoding('UTF-8') }
               end
               puts "An exception occurred while creating a joint from #{ent}!\n#{e.class}:\n#{err_message}\nTrace:\n#{err_backtrace.join("\n")}"
             end
@@ -2502,8 +2502,8 @@ module MSPhysics
             err_message = e.message
             err_backtrace = e.backtrace
             if RUBY_VERSION !~ /1.8/
-              err_message.force_encoding("UTF-8")
-              err_backtrace.each { |i| i.force_encoding("UTF-8") }
+              err_message.force_encoding('UTF-8')
+              err_backtrace.each { |i| i.force_encoding('UTF-8') }
             end
             puts "An exception occurred while creating a joint from #{jent}!\n#{e.class}:\n#{err_message}\nTrace:\n#{err_backtrace.join("\n")}"
           end
@@ -2660,8 +2660,8 @@ module MSPhysics
             err_message = e.message
             err_backtrace = e.backtrace
             if RUBY_VERSION !~ /1.8/
-              err_message.force_encoding("UTF-8")
-              err_backtrace.each { |i| i.force_encoding("UTF-8") }
+              err_message.force_encoding('UTF-8')
+              err_backtrace.each { |i| i.force_encoding('UTF-8') }
             end
             #~ puts "Entity at index #{index} was not added to simulation:\n#{e.class}:\n#{err_message}\nTrace:\n#{err_backtrace.join("\n")}\n\n"
             puts "Entity at index #{index} was not added to simulation:\n#{e.class}:\n#{err_message}\n\n"
@@ -2879,8 +2879,8 @@ module MSPhysics
         err_message = @error.message
         err_backtrace = @error.backtrace
         if RUBY_VERSION !~ /1.8/
-          err_message.force_encoding("UTF-8")
-          err_backtrace.each { |i| i.force_encoding("UTF-8") }
+          err_message.force_encoding('UTF-8')
+          err_backtrace.each { |i| i.force_encoding('UTF-8') }
         end
         msg = "MSPhysics Simulation has been aborted due to an error!\n#{@error.class}:\n#{err_message}"
         puts "#{msg}\nTrace:\n#{err_backtrace.join("\n")}\n\n"

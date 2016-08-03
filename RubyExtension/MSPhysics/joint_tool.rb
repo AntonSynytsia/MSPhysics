@@ -30,7 +30,7 @@ module MSPhysics
     def initialize(joint_type)
       @joint_type = joint_type.to_s
       dir = File.dirname(__FILE__)
-      dir.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+      dir.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
       @path = File.join(dir, 'models')
       @full_path = File.join(@path, @joint_type + '.skp')
       raise(TypeError, 'Given joint type is invalid!', caller) unless File.exists?(@full_path)

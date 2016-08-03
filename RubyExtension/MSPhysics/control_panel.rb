@@ -78,7 +78,7 @@ module MSPhysics
           }
           # Set content
           dir = File.dirname(__FILE__)
-          dir.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+          dir.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
           url = File.join(dir, 'html/control_panel.html')
           @dialog.set_file(url)
           # Show dialog

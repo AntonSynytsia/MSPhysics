@@ -132,8 +132,8 @@ module MSPhysics
         err_message = e.message
         err_backtrace = e.backtrace
         if RUBY_VERSION !~ /1.8/
-          err_message.force_encoding("UTF-8")
-          err_backtrace.each { |i| i.force_encoding("UTF-8") }
+          err_message.force_encoding('UTF-8')
+          err_backtrace.each { |i| i.force_encoding('UTF-8') }
         end
         err_backtrace.each { |location|
           if location.include?(test)

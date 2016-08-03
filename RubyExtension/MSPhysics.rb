@@ -30,13 +30,13 @@
 #   - AMS Library 3.3.0 or later.
 #
 # Version
-#   - MSPhysics 0.9.2
+#   - MSPhysics 0.9.3
 #   - NewtonDynamics 3.14
 #   - SDL 2.0.4
 #   - SDL_mixer 2.0.1
 #
 # Release Date
-#   July 28, 2016
+#   August 02, 2016
 #
 # Licence
 #   MIT © 2015-2016, Anton Synytsia
@@ -72,11 +72,11 @@ if load_me
   module MSPhysics
 
     NAME         = 'MSPhysics'.freeze
-    VERSION      = '0.9.2'.freeze
-    RELEASE_DATE = 'July 28, 2016'.freeze
+    VERSION      = '0.9.3'.freeze
+    RELEASE_DATE = 'August 02, 2016'.freeze
 
     # Create the extension.
-    @extension = SketchupExtension.new NAME, 'MSPhysics/main.rb'
+    @extension = SketchupExtension.new(NAME, 'MSPhysics/main.rb')
 
     desc = "A realtime physics simulation plugin similar to SketchyPhysics."
 
@@ -87,7 +87,7 @@ if load_me
     @extension.creator     = 'Anton Synytsia (anton.synytsia@gmail.com)'
 
     # Register and load the extension on start-up.
-    Sketchup.register_extension @extension, true
+    Sketchup.register_extension(@extension, true)
 
     class << self
 

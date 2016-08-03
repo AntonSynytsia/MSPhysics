@@ -61,7 +61,7 @@ resembled in the following way:
 
 ## Version
 
-* MSPhysics 0.9.2
+* MSPhysics 0.9.3
 * NewtonDynamics 3.14
 * SDL 2.0.4
 * SDL_Mixer 2.0.1
@@ -69,7 +69,7 @@ resembled in the following way:
 
 ## Release Date
 
-July 28, 2016
+August 02, 2016
 
 
 ## Licence

@@ -1,3 +1,9 @@
+## 0.9.3 - August 02, 2016
+- Fixed crash with loading large Replay data files. Thanks to Faust07 for
+  report.
+- Fixed loading error that occurs if account name contains Latin characters.
+  Thanks to Micceo for report.
+
 ## 0.9.2 - July 28, 2016
 - Fixed the bug in fullscreen checkbox option. Thanks to Faust07 for report.
 - Added statusbar notifications when Replay is being loaded/saved.

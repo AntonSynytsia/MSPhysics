@@ -6,7 +6,7 @@ unless defined?(MSPhysics)
 end
 
 dir = File.dirname(__FILE__)
-dir.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+dir.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
 ops = (RUBY_PLATFORM =~ /mswin|mingw/i) ? 'win' : 'osx'
 bit = (Sketchup.respond_to?('is_64bit?') && Sketchup.is_64bit?) ? '64' : '32'
 ver = RUBY_VERSION[0..2]
@@ -27,11 +27,15 @@ if RUBY_PLATFORM =~ /mswin|mingw/i
   # For particular reasons, it's a good practice to reset the variable, and this
   # is done way below, after initiating SDL libraries.
   env_paths_ary = ENV['PATH'].split(/\;/)
-  env_paths_ary << File.join(dir, ops+bit).gsub(/\//, "\\")
+  # It seems that ENV['PATH'] variable accepts paths encoded in Windows-1252
+  # format. The force_encoding('Windows-1252') doesn't work; though, unpacking
+  # from UTF-8 and repacking to ANSI does work. See this post for details:
+  # http://sketchucation.com/forums/viewtopic.php?f=323&t=56852&start=390#p601049
+  env_paths_ary << File.join(dir, ops+bit).gsub(/\//, "\\").unpack('U*').pack('C*')
   ENV['PATH'] = env_paths_ary.join(';')
 end
 lib_path = File.join(dir, ops+bit, ver, 'msp_lib' + ext)
-lib_path.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+lib_path.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
 lib_loaded = false
 lib_errors = []
 if File.exists?(lib_path)
@@ -46,7 +50,7 @@ else
 end
 unless lib_loaded
   lib_path_no_sdl = File.join(dir, ops+bit, ver, 'msp_lib_no_sdl' + ext)
-  lib_path_no_sdl.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+  lib_path_no_sdl.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
   if File.exists?(lib_path_no_sdl)
     begin
       require lib_path_no_sdl
@@ -59,6 +63,9 @@ unless lib_loaded
   end
 end
 unless lib_loaded
+  # Reset the ENV['PATH'] variable
+  ENV['PATH'] = orig_env_paths if RUBY_PLATFORM =~ /mswin|mingw/i
+  # Raise an exception
   msg = "An exception occurred while loading MSPhysics library. "
   msg << "The exception occurred due to one or more of the following reasons:\n"
   lib_errors.each { |e|
@@ -375,7 +382,7 @@ module MSPhysics
     # @return [Sketchup::Text, nil] A text object if successful.
     def add_watermark_text(x, y, text, name = 'watermark', component = 'version_text.skp')
       dir = File.dirname(__FILE__)
-      dir.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+      dir.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
       path = File.join(dir, "models/#{component}")
       return unless File.exists?(path)
       model = Sketchup.active_model
@@ -411,7 +418,7 @@ module MSPhysics
     # @return [Sketchup::Text, nil] A text object if successful.
     def add_watermark_text2(x, y, text, name = 'watermark', component = 'version_text.skp')
       dir = File.dirname(__FILE__)
-      dir.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+      dir.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
       path = File.join(dir, "models/#{component}")
       return unless File.exists?(path)
       model = Sketchup.active_model

@@ -1711,16 +1711,15 @@ module MSPhysics
           fshadow_data[pframe] = sdata unless sdata.empty?
         }
         # Create a Zlib writer instance
-        gz = Zlib::GzipWriter.open(mspr_fpath, Zlib::BEST_SPEED, Zlib::FILTERED)
-        #gz = File.open(mspr_fpath, 'w')
-        gz.write "{"
+        #gz = Zlib::GzipWriter.open(mspr_fpath, Zlib::BEST_SPEED, Zlib::FILTERED)
+        gz = File.open(mspr_fpath, 'w')
         # Save main info
-        gz.write ":start_frame=>#{@start_frame}," if @start_frame
-        gz.write ":end_frame=>#{@end_frame}," if @end_frame
+        gz.puts "{:start_frame=>#{@start_frame}}" if @start_frame
+        gz.puts "{:end_frame=>#{@end_frame}}" if @end_frame
         # Save groups
-        str = ":groups_data=>{"
         fgroups_data.each { |group, data|
           next if !(((group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentInstance)) && group.valid?) || (data[:definition] && data[:definition].valid?))
+          str = "{:groups_data=>{"
           str << "#{data[:id]}=>{"
           str << ":start_frame=>#{data[:start_frame]}," if data[:start_frame]
           str << ":end_frame=>#{data[:end_frame]}," if data[:end_frame]
@@ -1767,7 +1766,8 @@ module MSPhysics
             }
             str << "},"
           }
-          str << "},"
+          str << "}}}"
+          gz.puts str
           if (group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentInstance)) && group.valid?
             group.set_attribute(dict, 'ID', data[:id])
           else
@@ -1780,11 +1780,9 @@ module MSPhysics
             data[:definition].set_attribute(dict, 'IDs', ids)
           end
         }
-        str << "},"
-        gz.write(str)
         # Save materials
         saved_mats = {}
-        str = ":materials_data=>{"
+        str = "{:materials_data=>{"
         fmaterials_data.each { |material, data|
           if material.is_a?(Sketchup::Material) && material.valid?
             material.set_attribute(dict, 'ID', data[:id])
@@ -1816,11 +1814,11 @@ module MSPhysics
           }
           str << "},"
         }
-        str << "},"
-        gz.write(str)
+        str << "}}"
+        gz.puts str
         # Save layers
         saved_lays = {}
-        str = ":layers_data=>{"
+        str = "{:layers_data=>{"
         flayers_data.each { |layer, data|
           if layer.is_a?(Sketchup::Layer) && layer.valid?
             layer.set_attribute(dict, 'ID', data[:id])
@@ -1852,10 +1850,10 @@ module MSPhysics
           }
           str << "},"
         }
-        str << "},"
-        gz.write(str)
+        str << "}}"
+        gz.puts str
         # Save camera
-        str = ":camera_data=>{"
+        str = "{:camera_data=>{"
         str << ":start_frame=>#{fcamera_data[:start_frame]}," if fcamera_data[:start_frame]
         str << ":end_frame=>#{fcamera_data[:end_frame]}," if fcamera_data[:end_frame]
         fcamera_data.each { |pframe, fdata|
@@ -1881,10 +1879,10 @@ module MSPhysics
           }
           str << "},"
         }
-        str << "},"
-        gz.write(str)
+        str << "}}"
+        gz.puts str
         # Save render
-        str = ":render_data=>{"
+        str = "{:render_data=>{"
         str << ":start_frame=>#{frender_data[:start_frame]}," if frender_data[:start_frame]
         str << ":end_frame=>#{frender_data[:end_frame]}," if frender_data[:end_frame]
         frender_data.each { |pframe, fdata|
@@ -1912,10 +1910,10 @@ module MSPhysics
           }
           str << "},"
         }
-        str << "},"
-        gz.write(str)
+        str << "}}"
+        gz.puts str
         # Save shadow
-        str = ":shadow_data=>{"
+        str = "{:shadow_data=>{"
         str << ":start_frame=>#{fshadow_data[:start_frame]}," if fshadow_data[:start_frame]
         str << ":end_frame=>#{fshadow_data[:end_frame]}," if fshadow_data[:end_frame]
         fshadow_data.each { |pframe, fdata|
@@ -1946,7 +1944,7 @@ module MSPhysics
           str << "},"
         }
         str << "}}"
-        gz.write(str)
+        gz.puts str
         # Close the Zlib writer instance
         gz.close
         # Return success
@@ -1979,10 +1977,25 @@ module MSPhysics
         @render_data.clear
         @shadow_data.clear
         # Create a Zlib reader instance
-        gz = Zlib::GzipReader.open(mspr_fpath)
-        #gz = File.open(mspr_fpath, 'r')
+        #gz = Zlib::GzipReader.open(mspr_fpath)
+        #begin
+          #mspr_data = eval(gz.read)
+        #ensure
+          #gz.close
+        #end
+        mspr_data = {}
+        gz = File.open(mspr_fpath, 'r')
         begin
-          mspr_data = eval(gz.read)
+          gz.each_line { |line|
+            res = eval(line)
+            res.each { |k, v|
+              if mspr_data[k]
+                v.each { |sk, sv| mspr_data[k][sk] = sv }
+              else
+                mspr_data[k] = v
+              end
+            }
+          }
         ensure
           gz.close
         end
@@ -2356,7 +2369,7 @@ module MSPhysics
         script_file = UI.savepanel('Choose Export Directory and Name', nil, model_fname)
         return false unless script_file
         fpath = File.dirname(script_file)
-        fpath.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+        fpath.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
         fname = File.basename(script_file, '.skp')
         # Preset user data
         sframe = results[0].to_i
@@ -2448,7 +2461,7 @@ module MSPhysics
         script_file = UI.savepanel('Choose Export Directory and Name', nil, model_fname)
         return false unless script_file
         fpath = File.dirname(script_file)
-        fpath.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+        fpath.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
         fname = File.basename(script_file, '.skp')
         # Preset user data
         sframe = results[0].to_i
@@ -2584,7 +2597,7 @@ def self.export_msp_animation
   end
   script_file = UI.savepanel('Select Export Directory and Name', '', model_name)
   return false unless script_file
-  script_file.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+  script_file.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
   if script_file == script_file.split(/\./)[0..-2].join('.') # No file extension
     script_file << '.kst'
   end
@@ -2678,7 +2691,7 @@ def self.export_msp_animation
   if result == IDYES
     kt_path = SU2KT.get_kt_path
     return unless kt_path
-    kt_path.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+    kt_path.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
     if RUBY_PLATFORM =~ /mswin|mingw/i
       #batch_file_path = File.join(File.dirname(kt_path), 'start.bat')
       batch_file_path = File.join(File.dirname(script_file), "#{File.basename(script_file, '.kst')}_start_render.bat")
@@ -2740,7 +2753,7 @@ def self.export_msp_animation
 
   # Select export path and create export folder.
   model_filename = File.basename(model.path, ".*")
-  model_filename.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+  model_filename.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
   if model_filename.empty?
     queue_filename = 'Untitled.igq'
   else
@@ -2748,11 +2761,11 @@ def self.export_msp_animation
   end
   batch_file_path = UI.savepanel('Select Export Directory and Name', '', queue_filename)
   return false unless batch_file_path
-  batch_file_path.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+  batch_file_path.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
   export_dir = File.join(File.dirname(batch_file_path), File.basename(batch_file_path, ".*"))
   Dir.mkdir(export_dir) unless FileTest.exist?(export_dir)
   export_path = File.join(export_dir, File.basename(batch_file_path, ".*")) + '.igs'
-  export_path.force_encoding("UTF-8") if RUBY_VERSION !~ /1.8/
+  export_path.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
 
   ie = ::IndigoExporter.new(export_path)
   ie.settings.save_to_model()
@@ -3040,8 +3053,8 @@ end}
           err_message = e.message
           err_backtrace = e.backtrace
           if RUBY_VERSION !~ /1.8/
-            err_message.force_encoding("UTF-8")
-            err_backtrace.each { |i| i.force_encoding("UTF-8") }
+            err_message.force_encoding('UTF-8')
+            err_backtrace.each { |i| i.force_encoding('UTF-8') }
           end
           msg = "An error occurred while loading MSPhysics Replay data. You might be getting this error because the saved Replay data is irrelevant to the current MSPhysics version.\n#{e.class}:\n#{err_message}\nBacktrace:\n#{err_backtrace.join("\n")}\n"
           ::UI.messagebox(msg)
