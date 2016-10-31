@@ -94,7 +94,7 @@ Add an impulsive explosion.
     onTouch { |toucher, position, normal, force, speed|
       simulation.log_line("onTouch #{frame}")
     }
-    onTouching { |toucher, position, normal|
+    onTouching { |toucher|
       simulation.log_line("onTouching #{frame}")
     }
     onUntouch { |toucher|

@@ -111,23 +111,6 @@ module MSPhysics
         sim.world.solver_model = model if sim
       end
 
-      # Get simulation friction model.
-      # @return [Fixnum] 0 - exact coulomb, n - adaptive coulomb.
-      def friction_model
-        default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:friction_model]
-        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Friction Model', default)
-        return attr.zero? ? 0 : 1
-      end
-
-      # Set simulation friction model.
-      # @param [Fixnum] model 0 - exact coulomb, 1 - adaptive coulomb.
-      def friction_model=(model)
-        model = model.zero? ? 0 : 1
-        Sketchup.active_model.set_attribute('MSPhysics', 'Friction Model', model)
-        sim = MSPhysics::Simulation.instance
-        sim.world.friction_model = model if sim
-      end
-
       # Get simulation update timestep in seconds.
       # @return [Numeric] A value between 1/1200 and 1/30.
       def update_timestep
@@ -311,7 +294,6 @@ module MSPhysics
         self.hide_joint_layer_enabled = true if self.hide_joint_layer_enabled?
         self.undo_on_end_enabled = self.undo_on_end_enabled?
         self.solver_model = self.solver_model
-        self.friction_model = self.friction_model
         self.update_timestep = self.update_timestep
         self.gravity = self.gravity
         self.material_thickness = self.material_thickness

@@ -3,14 +3,9 @@
 - Add fracture/split interface.
 - Make Replay compatible with LightUp, Vray, and Thea Render.
 - Get material changes working with SkIndigo.
-- Fix the improver behavior with CurvySlider spinning out of control on the exact solver.
-- Fix the improver behavior with CurvySlider where connected bodies flip at particular points if rotation is disabled and alignment enabled.
-- Fix the improver behavior with Servo wobbling back and forth on the iterative solver with low number of passes.
-- Fix the improver behavior with BallAndSocket being unstable when limits are enabled.
-- Add our own convex decomposition algorithm.
-- Get keyboard, mouse, and MIDI working under Mac OS X. Also control toolbars based on the active model.
-- Add watermark text displaying MSPhysics version.
+- Fix the improper behavior with CurvySlider spinning out of control on the exact solver.
+- Fix the improper behavior with Servo wobbling back and forth on the iterative solver with low number of passes.
+- Fix the improper behavior with BallAndSocket being unstable when limits are enabled.
+- Add custom convex decomposition algorithm.
 - Split Simulation into Simulation and SimulationTool.
 - Add feature to scale the UI dialog.
-- Create a layout for the documentation.
-- Verify that touch events work properly.

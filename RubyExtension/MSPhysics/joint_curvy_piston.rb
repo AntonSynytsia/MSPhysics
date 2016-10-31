@@ -9,6 +9,7 @@ module MSPhysics
     DEFAULT_ALIGNMENT_POWER = 0.0
     DEFAULT_REDUCTION_RATIO = 0.1
     DEFAULT_CONTROLLER = nil
+    DEFAULT_CONTROLLER_MODE = 0
     DEFAULT_LOOP_ENABLED = false
     DEFAULT_ALIGNMENT_ENABLED = true
     DEFAULT_ROTATION_ENABLED = true
@@ -29,6 +30,7 @@ module MSPhysics
       MSPhysics::Newton::CurvyPiston.set_alignment_power(@address, DEFAULT_ALIGNMENT_POWER)
       MSPhysics::Newton::CurvyPiston.set_reduction_ratio(@address, DEFAULT_REDUCTION_RATIO)
       MSPhysics::Newton::CurvyPiston.set_controller(@address, DEFAULT_CONTROLLER)
+      MSPhysics::Newton::CurvyPiston.set_controller_mode(@address, DEFAULT_CONTROLLER_MODE)
       MSPhysics::Newton::CurvyPiston.enable_loop(@address, DEFAULT_LOOP_ENABLED)
       MSPhysics::Newton::CurvyPiston.enable_alignment(@address, DEFAULT_ALIGNMENT_ENABLED)
       MSPhysics::Newton::CurvyPiston.enable_rotation(@address, DEFAULT_ROTATION_ENABLED)
@@ -192,17 +194,41 @@ module MSPhysics
     end
 
     # Get curvy piston controller.
-    # @return [Numeric, nil] Desired position in meters or +nil+ if piston is
-    #   turned off.
+    # @return [Numeric, nil] Returns one of the following values:
+    #   * Desired position in meters if controller mode is 0.
+    #   * Magnitude and direction of linear rate if controller mode is 1.
+    #   * +nil+ if piston is turned off.
     def controller
       MSPhysics::Newton::CurvyPiston.get_controller(@address)
     end
 
     # Set curvy piston controller.
-    # @param [Numeric, nil] value Desired position in meters or +nil+ to turn
-    #   off the piston.
+    # @param [Numeric, nil] value Accepts one of the following values:
+    #   * Desired position in meters if controller mode is 0.
+    #   * Magnitude and direction of linear rate if controller mode is 1.
+    #   * +nil+ to turn off the piston.
     def controller=(value)
       MSPhysics::Newton::CurvyPiston.set_controller(@address, value)
+    end
+
+    # Get controller mode.
+    # @return [Fixnum] Returns one of the following values:
+    #   * 0 if curvy piston is controlled by position, a value that represents
+    #       distance on curve.
+    #   * 1 if curvy piston is controlled by speed, a value that represents the
+    #       magnitude of linear rate.
+    def controller_mode
+      MSPhysics::Newton::CurvyPiston.get_controller_mode(@address)
+    end
+
+    # Set controller mode.
+    # @param [Fixnum] mode Pass one of the following values:
+    #   * 0 if curvy piston is ought to be controlled by position, a value that
+    #       represents distance on curve.
+    #   * 1 if curvy piston is ought to be controlled by speed, a value that
+    #       represents the magnitude of linear rate.
+    def controller_mode=(mode)
+      MSPhysics::Newton::CurvyPiston.set_controller_mode(@address, mode)
     end
 
     # Determine whether curve looping is enabled.
@@ -263,6 +289,12 @@ module MSPhysics
     #   point and direction on curve or +nil+ if curve is empty.
     def info_by_pos(pos)
       MSPhysics::Newton::CurvyPiston.get_info_by_pos(@address, pos)
+    end
+
+    # Get normal matrices of the curve.
+    # @return [Array<Geom::Transformation>] An array of the normal matrices.
+    def normal_matrices
+      MSPhysics::Newton::CurvyPiston.get_normal_matrices(@address)
     end
 
   end # class CurvyPiston < Joint

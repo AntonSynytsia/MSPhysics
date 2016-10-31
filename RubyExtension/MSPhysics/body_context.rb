@@ -234,8 +234,6 @@ module MSPhysics
     # @yield This event is triggered every frame when the body is in an extended
     #   contact with another body.
     # @yieldparam [Body] toucher
-    # @yieldparam [Geom::Point3d] point
-    # @yieldparam [Geom::Vector3d] normal
     def onTouching(&block)
       set_event_proc(:onTouching, block)
     end
@@ -282,6 +280,7 @@ module MSPhysics
     # @yieldparam [String] key Virtual key name.
     # @yieldparam [Fixnum] val Virtual key constant value.
     # @yieldparam [String] char Actual key character.
+    # @note Windows only!
     def onKeyDown(&block)
       set_event_proc(:onKeyDown, block)
     end
@@ -291,14 +290,17 @@ module MSPhysics
     # @yieldparam [String] key Virtual key name.
     # @yieldparam [Fixnum] val Virtual key constant value.
     # @yieldparam [String] char Actual key character.
+    # @note Windows only!
     def onKeyUp(&block)
       set_event_proc(:onKeyUp, block)
     end
+
     # Assign a block of code to the onKeyExtended event.
     # @yield This event is called when the key is held down.
     # @yieldparam [String] key Virtual key name.
     # @yieldparam [Fixnum] val Virtual key constant value.
     # @yieldparam [String] char Actual key character.
+    # @note Windows only!
     def onKeyExtended(&block)
       set_event_proc(:onKeyExtended, block)
     end
@@ -315,6 +317,7 @@ module MSPhysics
     # @yield This event is called when the left mouse button is pressed.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @note Windows only!
     def onLButtonDown(&block)
       set_event_proc(:onLButtonDown, block)
     end
@@ -323,6 +326,7 @@ module MSPhysics
     # @yield This event is called when the left mouse button is released.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @note Windows only!
     def onLButtonUp(&block)
       set_event_proc(:onLButtonUp, block)
     end
@@ -331,6 +335,7 @@ module MSPhysics
     # @yield This event is called when the left mouse button is double clicked.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @note Windows only!
     def onLButtonDoubleClick(&block)
       set_event_proc(:onLButtonDoubleClick, block)
     end
@@ -339,6 +344,7 @@ module MSPhysics
     # @yield This event is called when the right mouse button is pressed.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @note Windows only!
     def onRButtonDown(&block)
       set_event_proc(:onRButtonDown, block)
     end
@@ -347,6 +353,7 @@ module MSPhysics
     # @yield This event is called when the right mouse button is released.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @note Windows only!
     def onRButtonUp(&block)
       set_event_proc(:onRButtonUp, block)
     end
@@ -355,6 +362,7 @@ module MSPhysics
     # @yield This event is called when the right mouse button is double clicked.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @note Windows only!
     def onRButtonDoubleClick(&block)
       set_event_proc(:onRButtonDoubleClick, block)
     end
@@ -363,6 +371,7 @@ module MSPhysics
     # @yield This event is called when the middle mouse button is pressed.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @note Windows only!
     def onMButtonDown(&block)
       set_event_proc(:onMButtonDown, block)
     end
@@ -371,6 +380,7 @@ module MSPhysics
     # @yield This event is called when the middle mouse button is released.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @note Windows only!
     def onMButtonUp(&block)
       set_event_proc(:onMButtonUp, block)
     end
@@ -379,6 +389,7 @@ module MSPhysics
     # @yield This event is called when the middle mouse button is double clicked.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @note Windows only!
     def onMButtonDoubleClick(&block)
       set_event_proc(:onMButtonDoubleClick, block)
     end
@@ -387,6 +398,7 @@ module MSPhysics
     # @yield This event is called when the X1 mouse button is pressed.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @note Windows only!
     def onXButton1Down(&block)
       set_event_proc(:onXButton1Down, block)
     end
@@ -395,6 +407,7 @@ module MSPhysics
     # @yield This event is called when the X1 mouse button is released.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @note Windows only!
     def onXButton1Up(&block)
       set_event_proc(:onXButton1Up, block)
     end
@@ -403,6 +416,7 @@ module MSPhysics
     # @yield This event is called when the X1 mouse button is double clicked.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @note Windows only!
     def onXButton1DoubleClick(&block)
       set_event_proc(:onXButton1DoubleClick, block)
     end
@@ -411,6 +425,7 @@ module MSPhysics
     # @yield This event is called when the X2 mouse button is pressed.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @note Windows only!
     def onXButton2Down(&block)
       set_event_proc(:onXButton2Down, block)
     end
@@ -419,6 +434,7 @@ module MSPhysics
     # @yield This event is called when the X2 mouse button is released.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @note Windows only!
     def onXButton2Up(&block)
       set_event_proc(:onXButton2Up, block)
     end
@@ -427,6 +443,7 @@ module MSPhysics
     # @yield This event is called when the X2 mouse button is double clicked.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @note Windows only!
     def onXButton2DoubleClick(&block)
       set_event_proc(:onXButton2DoubleClick, block)
     end
@@ -436,6 +453,7 @@ module MSPhysics
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
     # @yieldparam [Fixnum] dir Rotate direction: +-1+ - down, +1+ - up.
+    # @note Windows only!
     def onMouseWheelRotate(&block)
       set_event_proc(:onMouseWheelRotate, block)
     end
@@ -445,6 +463,7 @@ module MSPhysics
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
     # @yieldparam [Fixnum] dir Tilt direction: +-1+ - left, +1+ - right.
+    # @note Windows only!
     def onMouseWheelTilt(&block)
       set_event_proc(:onMouseWheelTilt, block)
     end

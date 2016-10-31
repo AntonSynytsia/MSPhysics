@@ -199,6 +199,116 @@ module MSPhysics
         data
       end
 
+      # Get all joints and their connected bodies.
+      # @return [Hash] <tt>{ jtra => [joint_group, joint_parent_body, joint_id, {connected_body => distance}] }</tt>
+      def map_joints_with_connected_bodies
+        fjdata = {}
+        sim_inst = MSPhysics::Simulation.instance
+        return fjdata if sim_inst.nil?
+        # Gather all bodies and their data.
+        fgdata = {} # { group => [body, center, connected_ids, connect_closest] }
+        jid_to_tras = {} # { id => [jtra] }
+        Sketchup.active_model.entities.each { |ent|
+          if ((ent.is_a?(Sketchup::Group) || ent.is_a?(Sketchup::ComponentInstance)) &&
+            ent.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' &&
+            !ent.get_attribute('MSPhysics Body', 'Ignore', false))
+            body = sim_inst.find_body_by_group(ent)
+            if body
+              bb = AMS::Group.get_bounding_box_from_faces(ent, true, ent.transformation) { |e|
+                e.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !e.get_attribute('MSPhysics Body', 'Ignore')
+              }
+              connected_ids = ent.get_attribute('MSPhysics Body', 'Connected Joints')
+              connected_ids = connected_ids.is_a?(Array) ? connected_ids.grep(Fixnum).uniq : []
+              connect_closest = ent.get_attribute('MSPhysics Body', 'Connect Closest Joints', MSPhysics::DEFAULT_BODY_SETTINGS[:connect_closest_joinst])
+              fgdata[ent] = [body, bb.center, connected_ids, connect_closest]
+            end
+          end
+        }
+        # Gather all joints and their data.
+        Sketchup.active_model.entities.each { |ent|
+          next if !ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)
+          if ent.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && fgdata.has_key?(ent)
+            ptra = ent.transformation
+            cents = ent.is_a?(Sketchup::ComponentInstance) ? ent.definition.entities : ent.entities
+            cents.each { |cent|
+              if ((cent.is_a?(Sketchup::Group) || cent.is_a?(Sketchup::ComponentInstance)) &&
+                cent.get_attribute('MSPhysics', 'Type', 'Body') == 'Joint')
+                id = cent.get_attribute('MSPhysics Joint', 'ID', nil)
+                if id.is_a?(Fixnum)
+                  jtra = ptra * AMS::Geometry.extract_matrix_scale(cent.transformation)
+                  fjdata[jtra] = [cent, fgdata[ent][0], id, {}]
+                  if jid_to_tras.has_key?(id)
+                    jid_to_tras[id] << jtra
+                  else
+                    jid_to_tras[id] = [jtra]
+                  end
+                end
+              end
+            }
+          elsif ent.get_attribute('MSPhysics', 'Type', 'Body') == 'Joint'
+            id = ent.get_attribute('MSPhysics Joint', 'ID', nil)
+            if id.is_a?(Fixnum)
+              jtra = AMS::Geometry.extract_matrix_scale(ent.transformation)
+              fjdata[jtra] = [ent, nil, id, {}]
+              if jid_to_tras.has_key?(id)
+                jid_to_tras[id] << jtra
+              else
+                jid_to_tras[id] = [jtra]
+              end
+            end
+          end
+        }
+        # Fill in joint data with connected bodies.
+        fgdata.each { |gent, ginfo|
+          ginfo[2].each { |id|
+            jtras = jid_to_tras[id]
+            next unless jtras
+            jtras.each { |jtra|
+              jdata = fjdata[jtra]
+              next if jdata[1] == ginfo[0] # Skip if joint parent body is the current group body.
+              dist = ginfo[1].distance(jtra.origin).to_f
+              if ginfo[3] # if connect closest
+                min = nil
+                jdata[3].each { |cbody, cdist|
+                  min = cdist if !min || cdist < min
+                }
+                if min.nil? || dist - min < 0.01
+                  jdata[3].clear
+                  jdata[3][ginfo[0]] = dist
+                end
+              else
+                jdata[3][ginfo[0]] = dist
+              end
+            }
+          }
+        }
+=begin
+        # Now filter closest joints.
+        fjdata.each { |jtra, jinfo|
+          jinfo[3].reject! { |body, dist| # Iterate through all connected bodies and their distances
+            bremove = false
+            if fgdata[body.group][3] # if connect closest enabled
+              fjdata.each { |sjtra, sjinfo| # Once again iterate through all joints
+                next if sjtra == jtra
+                if sjinfo[2] == jinfo[2]
+                  sjinfo[3].each { |sbody, sdist|
+                    if sdist - dist < -0.01
+                      bremove = true
+                      break
+                    end
+                  }
+                  break if bremove
+                end
+              }
+            end
+            bremove
+          }
+        }
+=end
+        # Return data
+        fjdata
+      end
+
       # Get all gears connected to a joint.
       # @param [Sketchup::Group, Sketchup::ComponentInstance] joint
       # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] jparent
@@ -641,10 +751,8 @@ module MSPhysics
     end
 
     def update_state
-      if RUBY_PLATFORM =~ /mswin|mingw/i
-        @control_down = AMS::Keyboard.control_down?
-        @shift_down = AMS::Keyboard.shift_down?
-      end
+      @control_down = AMS::Keyboard.control_down?
+      @shift_down = AMS::Keyboard.shift_down?
       if @control_down && @shift_down
         @cursor_id = MSPhysics::CURSORS[:select_plus_minus]
       elsif @control_down

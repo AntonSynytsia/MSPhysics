@@ -161,6 +161,19 @@ module MSPhysics
       MSPhysics::Newton::Joint.set_pin_matrix(@address, matrix)
     end
 
+    # Get joint pin transformation in global space.
+    # @param [Fixnum] mode
+    #  * Pass 0 to obtain aligned pin matrix in global space with respect to the
+    #    child body.
+    #  * Pass 1 to obtain aligned pin matrix in global space with respect to the
+    #    parent body.
+    #  * Pass 2 to obtain non-aligned pin matrix in global space with respect to
+    #    the parent body.
+    # @return [Geom::Transformation, nil]
+    def get_pin_matrix2(mode)
+      MSPhysics::Newton::Joint.get_pin_matrix2(@address, mode)
+    end
+
     # Determine whether parent body is collidable with its child body.
     # @return [Boolean]
     def bodies_collidable?

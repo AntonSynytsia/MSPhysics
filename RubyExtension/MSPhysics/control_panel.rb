@@ -33,7 +33,7 @@ module MSPhysics
               @init_called = true
               ds = eval(params)
               #@border_size = [iws.x - ds.x, iws.y - ds.y]
-              if RUBY_PLATFORM =~ /mswin|mingw/i && @handle
+              if AMS::IS_PLATFORM_WINDOWS && @handle
                 ws = AMS::Window.get_size(@handle)
                 cr = AMS::Window.get_client_rect(@handle)
                 cs = [cr[2] - cr[0], cr[3] - cr[1]]
@@ -56,10 +56,10 @@ module MSPhysics
           }
           @dialog.add_action_callback('mouse_leave') { |dlg, params|
             @mouse_over = false
-            AMS::Sketchup.activate if RUBY_PLATFORM =~ /mswin|mingw/i
+            AMS::Sketchup.activate if AMS::IS_PLATFORM_WINDOWS
           }
           @dialog.add_action_callback('update_note') { |dlg, params|
-            next if RUBY_PLATFORM !~ /mswin|mingw/i
+            next unless AMS::IS_PLATFORM_WINDOWS
             cmd = ""
             if AMS::Sketchup.is_main_window_active?
               cmd << "$('#note1').css('display', 'none');"
@@ -82,11 +82,11 @@ module MSPhysics
           url = File.join(dir, 'html/control_panel.html')
           @dialog.set_file(url)
           # Show dialog
-          RUBY_PLATFORM =~ /mswin|mingw/i ? @dialog.show : @dialog.show_modal
+          AMS::IS_PLATFORM_WINDOWS ? @dialog.show : @dialog.show_modal
           # Assign the on_close callback. Important: This must be called after
           # showing dialog in order to work on Mac OS X.
           @dialog.set_on_close {
-            if RUBY_PLATFORM =~ /mswin|mingw/i
+            if AMS::IS_PLATFORM_WINDOWS
               AMS::Sketchup.include_dialog(@handle)
               AMS::Sketchup.remove_observer(self)
             end
@@ -97,7 +97,7 @@ module MSPhysics
             @init_called = false
           }
           # Find dialog window handle
-          @handle = RUBY_PLATFORM =~ /mswin|mingw/i ? AMS::Sketchup.find_window_by_caption(@title) : nil
+          @handle = AMS::IS_PLATFORM_WINDOWS ? AMS::Sketchup.find_window_by_caption(@title) : nil
           if @handle
             # Add observer
             AMS::Sketchup.add_observer(self)
@@ -125,6 +125,14 @@ module MSPhysics
       # @return [Boolean]
       def visible?
         @dialog ? true : false
+      end
+
+      # Make the control panel active.
+      # @return [Boolean] success
+      def bring_to_front
+        return false unless @dialog
+        @dialog.bring_to_front
+        true
       end
 
       # Create a range slider.
@@ -231,7 +239,7 @@ module MSPhysics
         return false unless @dialog
         wsx = @border_size.x + @size.x
         wsy = @border_size.y + @size.y
-        if RUBY_PLATFORM =~ /mswin|mingw/i && @handle
+        if AMS::IS_PLATFORM_WINDOWS && @handle
           vr = AMS::Sketchup.get_viewport_rect
           x = vr[2] - wsx
           y = vr[3] - wsy

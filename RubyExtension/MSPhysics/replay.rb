@@ -1574,7 +1574,7 @@ module MSPhysics
       def save_data_to_file(wrap_in_op = true)
         op_started = false
         model = Sketchup.active_model
-        return false unless model.path
+        return false if model.path.empty?
         dict = 'MSPhysics Replay'
         # Parse path to the current model.
         model_path = model.path.gsub(/\\/, '/')
@@ -1958,7 +1958,7 @@ module MSPhysics
       # @return [Boolean] success
       def load_data_from_file
         model = Sketchup.active_model
-        return false unless model.path
+        return false if model.path.empty?
         dict = 'MSPhysics Replay'
         # Parse path to the current model.
         model_path = model.path.gsub(/\\/, '/')
@@ -2081,7 +2081,7 @@ module MSPhysics
       # @return [Boolean] success
       def clear_data_from_file
         model = Sketchup.active_model
-        return false unless model.path
+        return false if model.path.empty?
         dict = 'MSPhysics Replay'
         # Parse path to the current model.
         model_path = model.path.gsub(/\\/, '/')
@@ -2692,7 +2692,7 @@ def self.export_msp_animation
     kt_path = SU2KT.get_kt_path
     return unless kt_path
     kt_path.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
-    if RUBY_PLATFORM =~ /mswin|mingw/i
+    if AMS::IS_PLATFORM_WINDOWS
       #batch_file_path = File.join(File.dirname(kt_path), 'start.bat')
       batch_file_path = File.join(File.dirname(script_file), "#{File.basename(script_file, '.kst')}_start_render.bat")
       batch = File.new(batch_file_path, 'w')

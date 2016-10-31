@@ -19,16 +19,21 @@ module MSPhysics
         @@instance ? true : false
       end
 
-      # Start simulation.
+      # Start simulation. This option starts simulation with all groups
+      # considered part of simulation.
+      # @param [Boolean] from_selection
+      #   * Pass true to start simulation from selection. All hidden groups are
+      #     ignored and all non-selected groups act stationary.
+      #   * Pass false to start simulation will all bodies being considered.
       # @return [Boolean] success
-      def start
+      def start(from_selection = false)
         return false if @@instance
         MSPhysics::Replay.reset
-        Sketchup.active_model.select_tool(Simulation.new)
+        Sketchup.active_model.select_tool( Simulation.new(from_selection) )
         true
       end
 
-      # Reset simulation.
+      # End simulation.
       # @return [Boolean] success
       def reset
         return false unless @@instance
@@ -49,7 +54,10 @@ module MSPhysics
 
     end # class << self
 
-    def initialize
+    # @param [Boolean] from_selection Pass true to start simulation from selection.
+    def initialize(from_selection = false)
+      @started_from_selection = from_selection ? true : false
+      @selected_ents = []
       default = MSPhysics::DEFAULT_SIMULATION_SETTINGS
       @world = nil
       @update_rate = default[:update_rate]
@@ -162,6 +170,8 @@ module MSPhysics
       @joybutton_data = {}
       @joypad_data = 0
       @disable_timer = false
+      @simulation_started = false
+      @reset_positions_on_end = true
       @@instance = self
     end
 
@@ -184,6 +194,13 @@ module MSPhysics
     attr_reader :joystick_data, :joybutton_data, :joypad_data
 
     # @!group Simulation Control Functions
+
+    # Determine whether simulation started from selection.
+    # @return [Boolean] true if simulation started from selection; false if
+    #   simulation started with all groups being considered.
+    def started_from_selection?
+      @started_from_selection
+    end
 
     # Play simulation.
     # @return [Boolean] success
@@ -303,29 +320,31 @@ module MSPhysics
     # Set cursor position in view coordinates.
     # @param [Fixnum] x
     # @param [Fixnum] y
-    # @return [Boolean] success
     # @note Windows only!
-    def set_cursor_pos(x,y)
-      return false if RUBY_PLATFORM !~ /mswin|mingw/i
-      AMS::Cursor.set_pos(x.to_i, y.to_i, 2)
-      @cursor_pos = AMS::Cursor.get_pos(2)
-      true
+    def set_cursor_pos(x, y)
+      if AMS::IS_PLATFORM_WINDOWS
+        @cursor_pos.x = x
+        @cursor_pos.y = y
+        AMS::Cursor.set_pos(x, y, 2)
+      end
     end
 
     # Show/hide mouse cursor.
     # @param [Boolean] state
     # @note Windows only!
     def cursor_visible=(state)
-      return if RUBY_PLATFORM !~ /mswin|mingw/i
-      AMS::Cursor.show(state)
+      if AMS::IS_PLATFORM_WINDOWS
+        AMS::Cursor.show(state)
+      end
     end
 
     # Determine whether cursor is visible.
     # @return [Boolean]
     # @note Windows only!
     def cursor_visible?
-      return false if RUBY_PLATFORM !~ /mswin|mingw/i
-      AMS::Cursor.is_visible?
+      if AMS::IS_PLATFORM_WINDOWS
+        AMS::Cursor.is_visible?
+      end
     end
 
     # @!endgroup
@@ -345,7 +364,7 @@ module MSPhysics
     #   }
     # @note Windows only!
     def view_full_screen(state, include_floating_windows = true)
-      return false if RUBY_PLATFORM !~ /mswin|mingw/i
+      return false unless AMS::IS_PLATFORM_WINDOWS
       AMS::Sketchup.show_toolbar_container(5, !state, false)
       AMS::Sketchup.show_scenes_bar(!state, false)
       AMS::Sketchup.show_status_bar(!state, false)
@@ -846,7 +865,7 @@ module MSPhysics
         @dntext[:mat] = model.materials.add('MSPDisplayNote')
       end
       if @dntext[:ent].nil? || @dntext[:ent].deleted?
-        @dntext[:ent] = MSPhysics.add_watermark_text2(10, 10, '', 'DisplayNote')
+        @dntext[:ent] = MSPhysics.add_watermark_text2(10, 30, '', 'DisplayNote')
         @dntext[:ent].material = @dntext[:mat]
       end
       color = Sketchup::Color.new(color) unless color.is_a?(Sketchup::Color)
@@ -1002,11 +1021,12 @@ module MSPhysics
 
     # @!group Music, Sound, and MIDI Functions
 
-    # Play embedded sound by name. This can load WAVE, AIFF, RIFF, OGG, and VOC
-    # formats.
+    # Play embedded sound by name.
     # @note If this function succeeds, it returns a channel the sound was
     #   registered to play on. The returned channel can be adjusted to desired
     #   volume and panning.
+    # @note On Windows, this can load WAVE, AIFF, RIFF, OGG, and VOC formats.
+    #   Mac OS X is limited to WAVE sounds.
     # @example Play 3D effect when space is pressed.
     #   onKeyDown { |key, value, char|
     #     if key == 'space'
@@ -1045,11 +1065,12 @@ module MSPhysics
       MSPhysics::Sound.play(sound, channel, repeat)
     end
 
-    # Play sound from path. This can load WAVE, AIFF, RIFF, OGG, VOC, and FLAC
-    # formats.
+    # Play sound from path.
     # @note If this function succeeds, it returns a channel the sound was
     #   registered to play on. The returned channel can be adjusted to desired
     #   volume and panning.
+    # @note On Windows, this can load WAVE, AIFF, RIFF, OGG, VOC, and FLAC
+    #   formats. Mac OS X is limited to WAVE sounds.
     # @param [String] path Full path of the sound.
     # @param [Fixnum] channel The channel to play the sound at. Pass -1 to play
     #   sound at the available channel.
@@ -1167,9 +1188,7 @@ module MSPhysics
     # @return [Fixnum, nil] Midi note ID or nil if MIDI interface failed to play
     #   the note.
     # @see http://wiki.fourthwoods.com/midi_file_format#general_midi_instrument_patch_map General MIDI Instrument Patch Map
-    # @note Windows only!
     def play_midi_note(instrument, note = 63, channel = 0, volume = 127)
-      return false if RUBY_PLATFORM !~ /mswin|mingw/i
       AMS::MIDI.play_note(instrument, note, channel, volume);
     end
 
@@ -1177,9 +1196,7 @@ module MSPhysics
     # @param [Fixnum] id A MIDI note identifier returned by the
     #   {#play_midi_note} function. Pass -1 to stop all midi notes.
     # @return [Boolean] success
-    # @note Windows only!
     def stop_midi_note(id)
-      return false if RUBY_PLATFORM !~ /mswin|mingw/i
       if id == -1
         for i in 0..15
           AMS::MIDI.change_channel_controller(i, 0x7B, 0)
@@ -1239,9 +1256,7 @@ module MSPhysics
     # @param [Numeric] max_hearing_range MIDI note maximum hearing range in
     #   meters.
     # @return [Boolean] success
-    # @note Windows only!
     def position_midi_note(id, pos, max_hearing_range = 100)
-      return false if RUBY_PLATFORM !~ /mswin|mingw/i
       AMS::MIDI.set_note_position(id, pos, max_hearing_range)
     end
 
@@ -1495,18 +1510,32 @@ module MSPhysics
     # @!endgroup
     # @!group Advanced
 
-    # Determine whether the undo command is ought to be triggered when the
+    # Determine whether the undo command is ought to be triggered after the
     # simulation resets.
     # @return [Boolean]
     def undo_on_reset?
       @undo_on_reset
     end
 
-    # Enable/disable the undo commend that is ought to be triggered when the
+    # Enable/disable the undo commend that is ought to be triggered after the
     # simulation resets.
     # @param [Boolean] state
     def undo_on_reset=(state)
       @undo_on_reset = state ? true : false
+    end
+
+    # Determine whether the reseting of group/component transformations when
+    # simulation resets is enabled.
+    # @return [Boolean]
+    def reset_positions_on_end?
+      @reset_positions_on_end
+    end
+
+    # Enable/disable the reseting of group/component transformations when
+    # simulation resets.
+    # @param [Boolean] state
+    def reset_positions_on_end=(state)
+      @reset_positions_on_end = state ? true : false
     end
 
     # @!endgroup
@@ -1926,8 +1955,8 @@ module MSPhysics
           @camera[:follow] = nil
         else
           eye = ent.bounds.center + @camera[:offset]
-          tar = eye + cam.direction.to_a
-          cam.set(eye, tar, [0,0,1])
+          tar = eye + cam.direction
+          cam.set(eye, tar, Z_AXIS.parallel?(cam.direction) ? Y_AXIS : Z_AXIS)
         end
       end
       ent = @camera[:target]
@@ -1935,8 +1964,10 @@ module MSPhysics
         if ent.deleted?
           @camera[:target] = nil
         else
-         dir = cam.eye.vector_to(ent.bounds.center)
-         cam.set(cam.eye, dir, [0,0,1])
+          eye = cam.eye
+          dir = eye.vector_to(ent.bounds.center)
+          tar = eye + dir
+          cam.set(eye, tar, Z_AXIS.parallel?(dir) ? Y_AXIS : Z_AXIS)
         end
       end
       # Process dragged body
@@ -2095,7 +2126,7 @@ module MSPhysics
         view.draw_line(pt1, pt2)
         view.line_stipple = ''
         view.draw_points(pt1, @pick_and_drag[:point_size], @pick_and_drag[:point_style], @pick_and_drag[:point_color])
-        if RUBY_PLATFORM =~ /mswin|mingw/i && AMS::Keyboard.shift_down?
+        if AMS::Keyboard.shift_down?
           view.line_width = @pick_and_drag[:vline_width]
           view.line_stipple = @pick_and_drag[:vline_stipple]
           view.drawing_color = @pick_and_drag[:vline_color]
@@ -2414,9 +2445,11 @@ module MSPhysics
         joint.alignment_power = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Reduction Ratio', MSPhysics::CurvyPiston::DEFAULT_REDUCTION_RATIO)
         joint.reduction_ratio = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Controller Mode', MSPhysics::CurvyPiston::DEFAULT_CONTROLLER_MODE)
+        joint.controller_mode = attr.to_i
         controller = joint_ent.get_attribute(jdict, 'Controller')
         if controller.is_a?(String) && !controller.empty?
-          @controlled_joints[joint] = [controller, pos_ratio]
+          @controlled_joints[joint] = [controller, joint.controller_mode == 0 ? pos_ratio : 1]
         end
         MSPhysics::JointConnectionTool.get_points_on_curve(joint_ent, parent_body ? parent_body.group : nil).each { |point|
           joint.add_point(point)
@@ -2436,12 +2469,27 @@ module MSPhysics
       joint.bodies_collidable = attr
       attr = joint_ent.get_attribute(jdict, 'Breaking Force', MSPhysics::Joint::DEFAULT_BREAKING_FORCE)
       joint.breaking_force = attr.to_f
-
       joint.connect(child_body)
       joint
     end
 
     def init_joints
+      MSPhysics::JointConnectionTool.map_joints_with_connected_bodies.each { |jtra, jinfo|
+        jinfo[3].each { |cbody, dist|
+          begin
+            init_joint(jinfo[0], jinfo[1], cbody, jtra)
+          rescue Exception => e
+            err_message = e.message
+            err_backtrace = e.backtrace
+            if RUBY_VERSION !~ /1.8/
+              err_message.force_encoding('UTF-8')
+              err_backtrace.each { |i| i.force_encoding('UTF-8') }
+            end
+            puts "An exception occurred while creating a joint from #{jinfo[0]}!\n#{e.class}:\n#{err_message}\nTrace:\n#{err_backtrace.join("\n")}"
+          end
+        }
+      }
+=begin
       Sketchup.active_model.entities.each { |ent|
         next if !ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)
         type = ent.get_attribute('MSPhysics', 'Type', 'Body')
@@ -2487,6 +2535,7 @@ module MSPhysics
           }
         end
       }
+=end
 =begin
       Sketchup.active_model.entities.each { |ent|
         next if !ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)
@@ -2580,6 +2629,12 @@ module MSPhysics
       else
         model.start_operation('MSPhysics Simulation')
       end
+      # Record starting selection
+      model.selection.each { |e|
+        if (e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)) && e.parent == model
+          @selected_ents << e
+        end
+      }
       # Clear selection
       model.selection.clear
       # Update dialog state
@@ -2622,7 +2677,7 @@ module MSPhysics
       # Save layer visibility
       model.layers.each { |l| @layers[l] = l.visible? }
       # Activate observer
-      AMS::Sketchup.add_observer(self) if RUBY_PLATFORM =~ /mswin|mingw/i
+      AMS::Sketchup.add_observer(self) if AMS::IS_PLATFORM_WINDOWS
       # Configure Settings
       settings = MSPhysics::Settings
       @update_rate = settings.update_rate
@@ -2630,7 +2685,6 @@ module MSPhysics
       # Create world
       @world = MSPhysics::World.new(settings.world_scale)
       @world.solver_model = settings.solver_model
-      @world.friction_model = settings.friction_model
       @world.set_gravity(0, 0, settings.gravity)
       @world.material_thickness = settings.material_thickness
       #~ @world.max_threads_count = @world.max_threads_count # Threads are disabled, so changing thread count won't make a difference.
@@ -2651,7 +2705,16 @@ module MSPhysics
         if type == 'Body'
           next if entity.get_attribute('MSPhysics Body', 'Ignore')
           begin
-            body = add_group(entity)
+            if @started_from_selection
+              if entity.visible? && entity.layer.visible?
+                body = add_group(entity)
+                unless @selected_ents.include?(entity)
+                  body.static = true
+                end
+              end
+            else
+              add_group(entity)
+            end
           rescue MSPhysics::ScriptException => e
             abort(e)
             return
@@ -2666,7 +2729,6 @@ module MSPhysics
             #~ puts "Entity at index #{index} was not added to simulation:\n#{e.class}:\n#{err_message}\nTrace:\n#{err_backtrace.join("\n")}\n\n"
             puts "Entity at index #{index} was not added to simulation:\n#{e.class}:\n#{err_message}\n\n"
           end
-        elsif type == 'Joint'
         elsif type == 'Buoyancy Plane'
           dict = 'MSPhysics Buoyancy Plane'
           density = entity.get_attribute(dict, 'Density')
@@ -2687,6 +2749,10 @@ module MSPhysics
         end
         return unless @world
       }
+      # Transform all entities once to register into the undo operation.
+      @saved_transformations.each { |e, t|
+        e.transformation = t if e.valid?
+      }
       # Create Joints
       init_joints
       init_gears
@@ -2698,11 +2764,11 @@ module MSPhysics
         MSPhysics::SDL.init_sub_system(MSPhysics::SDL::INIT_JOYSTICK)
       end
       # Close SP MIDI device if open
-      if defined?(MIDIator::Interface.midiInterface)
+      if defined?(MIDIator::Interface.midiInterface) && MIDIator::Interface.midiInterface.respond_to?(:close)
         MIDIator::Interface.midiInterface.close
       end
       # Open MIDI device
-      AMS::MIDI.open_device() if RUBY_PLATFORM =~ /mswin|mingw/i
+      AMS::MIDI.open_device()
       # Initialize timers
       @time_info[:start] = Time.now
       @time_info[:last] = Time.now
@@ -2731,12 +2797,17 @@ module MSPhysics
       end
       # Call onStart event
       call_event(:onStart)
+      return unless Simulation.active?
       # Refresh view
       view.invalidate
       # Start the update timer
-      if Simulation.active? && !@disable_timer
+      if !@disable_timer
         @update_timer = ::UI.start_timer(0.005, true) { do_on_update }
       end
+      # Display control panel on OS X
+      MSPhysics::ControlPanel.visible = true unless AMS::IS_PLATFORM_WINDOWS
+      # Status indicator
+      @simulation_started = true
     end
 
     def deactivate(view)
@@ -2778,9 +2849,11 @@ module MSPhysics
       end
       @dntext.clear
       # Reset entity transformations
-      @saved_transformations.each { |e, t|
-        e.move!(t) if e.valid?
-      }
+      if @reset_positions_on_end
+        @saved_transformations.each { |e, t|
+          e.move!(t) if e.valid?
+        }
+      end
       @saved_transformations.clear
       # Show hidden entities
       @hidden_entities.each { |e|
@@ -2792,14 +2865,14 @@ module MSPhysics
       # Undo changed style made by the show collision function
       self.collision_wireframe_visible = false
       # Show cursor if hidden
-      AMS::Cursor.show(true) if RUBY_PLATFORM =~ /mswin|mingw/i
+      AMS::Cursor.show(true) if AMS::IS_PLATFORM_WINDOWS
       # Close control panel
       MSPhysics::ControlPanel.visible = false
       MSPhysics::ControlPanel.remove_sliders
       # Clear variables of the common context
       MSPhysics::CommonContext.clear_vars
       # Remove observer
-      AMS::Sketchup.remove_observer(self) if RUBY_PLATFORM =~ /mswin|mingw/i
+      AMS::Sketchup.remove_observer(self) if AMS::IS_PLATFORM_WINDOWS
       # Unset from fullscreen mode
       view_full_screen(false) if MSPhysics::Settings.full_screen_mode_enabled?
       # Purge unused
@@ -2837,8 +2910,12 @@ module MSPhysics
       # Reset layer visibility
       #~ @layers.each { |l, s| l.visible = s if l.valid? && l.visible? != s }
       @layers.clear
-      # Clear selection
+      # Restore original selection
       model.selection.clear
+      @selected_ents.each { |e|
+        model.selection.add(e) if e.valid?
+      }
+      @selected_ents.clear
       # Make sure the undo called next will not undo the prior operation.
       model.entities.add_cpoint(ORIGIN).erase!
       # Finish all operations
@@ -2857,7 +2934,7 @@ module MSPhysics
         MSPhysics::Music.destroy_all
       end
       # Close MIDI device
-      AMS::MIDI.close_device() if RUBY_PLATFORM =~ /mswin|mingw/i
+      AMS::MIDI.close_device()
       # Free some variables
       @controller_context = nil
       @emitters.clear
@@ -2873,6 +2950,7 @@ module MSPhysics
       @particle_def2d.clear
       @particle_def3d.clear
       @curves.clear
+      @simulation_started = false
       @@instance = nil
       # Show info
       if @error
@@ -2929,6 +3007,7 @@ module MSPhysics
       end
       update_status_text
       view.invalidate
+      MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
     end
 
     def suspend(view)
@@ -2937,6 +3016,7 @@ module MSPhysics
 
     def onMouseEnter(view)
       @mouse_over = true
+      MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
     end
 
     def onMouseLeave(view)
@@ -2973,7 +3053,7 @@ module MSPhysics
       end
       cam = view.camera
       line = [cam.eye, @ip1.position]
-      if RUBY_PLATFORM =~ /mswin|mingw/i && AMS::Keyboard.shift_down?
+      if AMS::Keyboard.shift_down?
         normal = view.camera.zaxis
         normal.z = 0
         normal.normalize!
@@ -3069,6 +3149,11 @@ module MSPhysics
       @original_cursor_id = @cursor_id
       self.cursor = MSPhysics::CURSORS[:grab]
       view.lock_inference
+      MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
+    end
+
+    def onLButtonDoubleClick(flags, x, y, view)
+      MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
     end
 
     def onLButtonUp(flags, x, y, view)
@@ -3086,6 +3171,33 @@ module MSPhysics
         abort(e)
       end if @clicked and @clicked.valid?
       @clicked = nil
+      MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
+    end
+
+
+    def onRButtonDown(flags, x, y, view)
+      MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
+    end
+
+    def onRButtonDoubleClick(flags, x, y, view)
+      MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
+    end
+
+    def onRButtonUp(flags, x, y, view)
+      MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
+    end
+
+
+    def onMButtonDown(flags, x, y, view)
+      MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
+    end
+
+    def onMButtonDoubleClick(flags, x, y, view)
+      MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
+    end
+
+    def onMButtonUp(flags, x, y, view)
+      MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
     end
 
     def getMenu(menu)
@@ -3178,13 +3290,13 @@ module MSPhysics
           end
         }
       end
-      wb = @world.aabb if @world != nil && @world.valid?
-      @bb.add(wb) if wb
+      #~ wb = @world.aabb if @world != nil && @world.valid?
+      #~ @bb.add(wb) if wb
       @bb
     end
 
     def draw(view)
-      return if @error
+      return if @error || !@simulation_started
       @bb.clear
       draw_contact_points(view)
       draw_contact_forces(view)

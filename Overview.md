@@ -61,8 +61,8 @@ In this tutorial we will create a sphere and control it with keyboard.
           MSPhysics::Simulation.instance.world.some_world_method
         }
 
-* See {MSPhysics::CommonContext} for various functions accessible in the body and
-  controller contexts.
+* See {MSPhysics::CommonContext} for various common functions accessible in the
+  body context and controller context.
   Access from the controller context: <tt>some_common_method</tt>.
   Access from the body context:
 
@@ -70,15 +70,16 @@ In this tutorial we will create a sphere and control it with keyboard.
           some_common_method
         }
 
-* See {MSPhysics::BodyContext} for various function of accessible from every body in
-  simulation. Access from the body context:
+* See {MSPhysics::BodyContext} for various events accessible in the body
+  context. The <tt>MSPhysics::BodyContext</tt> encapsulates
+  <tt>MSPhysics::Body</tt> instance. See {MSPhysics::Body} for various functions
+  accessible from every body in simulation. Note that in order to call a body
+  method, you must have a <tt>this</tt> key word in front, for example,
+  <tt>this.mass = 20</tt>.
+  Access from the body context:
 
-        onUpdate { # onUpdate is a body context method
-          this.some_body_method
-          # Or (putting this in front is not necessary)
-          some_context_method
-          # Or (Accessing methods from other bodies)
-          world.bodies[some_index].some_body_method
+        onUpdate { # An event belonging to MSPhysics::BodyContext
+          this.some_body_method # A method belonging to MSPhysics::Body
         }
 
 * See {MSPhysics::ControllerContext} for various functions accessible in the
@@ -90,8 +91,7 @@ In this tutorial we will create a sphere and control it with keyboard.
 As described above, use the following code snippets to get reference to the
 {MSPhysics::Simulation} instance:
 
-* <tt>this.simulation</tt> or <tt>simulation</tt> - accessible within
-  Body and Controller scopes only.
+* <tt>simulation</tt> - accessible within BodyContext and ControllerContext scopes only.
 * <tt>MSPhysics::Simulation.instance</tt> - accessible from all scopes.
 
 Displaying frame using <tt>log_line</tt> or <tt>display_note</tt> functions:
@@ -139,26 +139,26 @@ Use <tt>MSPhysics::Simulation.reset</tt> in any scope.
 
 ## Shapes
 * **Box** - A rectangular prism collision shape that has its width, height, and
-  depth determined by a bounding box of group.
-* **Sphere** - A spherical collision shape with a diameter determined by the
-  width, height, or depth of a bounding box of a group, depending on which side
-  is the longest.
+  depth determined by the bounding box of a group.
+* **Sphere** - A spherical collision shape with width, height, or depth
+  determined by the bounding box of a group.
 * **Cone** - A conical collision shape with diameter and height determined by a
   bounding box of a group.
 * **Cylinder** - A cylindrical collision shape with diameter and height
-  determined by a bounding box of a group.
+  determined by the bounding box of a group.
 * **Chamfer Cylinder** - A cylindrical collision shape with rounded corners.
-  Dimensions are determined by bounding box of a group.
+  Dimensions are determined by the bounding box of a group.
 * **Capsule** - A stretched/compressed spherical collision shape. Dimensions are
-  determined by a bounding box of a group.
+  determined by the bounding box of a group.
 * **Convex Hull** - A convex collision shape calculated from all the faces in a
   group/component.
 * **Compound** - A compound collision with all sub-geometry and sub-groups
   considered as separate convex hulls.
-* **Compound from CD** - A compound collision calculated from a convex
-  decomposition algorithm.
+* **Compound from CD** - A compound collision with convex hull calculated by a
+  convex decomposition algorithm.
 * **Static Mesh** - A static tree collision derived from all faces of a group.
-* **Null** - A dynamic collision shape with no collision.
+* **Null** - A dynamic collision shape with no collision. Useful for linker
+  bodies, such as the neck of a rag-doll.
 
 
 ## Shape Notes
@@ -236,13 +236,16 @@ adding to Body Script tab:
 
 
 ## Optimization & Performance
-* The slower the speed (smaller update timestep), the more realistic the
+* The slower the speed (smaller update timestep), the more accurate the
   simulation is.
 * Use exact solver model when precision is more important than speed.
 * Use iterative solver model when speed is more important than precision.
 * To improve performance in general, go to <i>Preferences -> OpenGL</i> and
   reduce <i>Anti-Aliasing</i> as poor performance could be caused by slow
   graphics processing.
+* Sometimes, performance lag could be caused by an anti-virus software,
+  particularly Windows Defender on Windows 10. Disabling it should yield better
+  performance.
 * Use iterative solver when simulating stacked geometry, like walls, as exact
   solver might result in lag.
 * Enable continuous collision check or reduce simulation speed to prevent

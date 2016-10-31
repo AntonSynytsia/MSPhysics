@@ -26,6 +26,7 @@ As well as to those who contributed in making the project a reality.
 ## Access
 
 * (Menu) Plugins → MSPhysics → [option]
+* (Context Menu) MSPhysics → [Option]
 * MSPhysics Toolbars
 
 
@@ -33,43 +34,59 @@ As well as to those who contributed in making the project a reality.
 
 * Microsoft Windows XP or later / Mac OS X 10.5+
 * SketchUp 6 or later. SU2016 64bit is recommended!
-* [AMS_Library 3.3.0+](http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835)
+* [AMS_Library 3.4.0+](http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835)
 
 
-## Manual Installation Instructions
-If installing manually, place <i>MSPhysics</i> folder and <i>MSPhysics.rb</i>
-into SketchUp's <b>Plugins</b> folder. Ensure to download and install
-AMS Library too!
+## Installation Instructions
 
-* For SU8 and prior the path to the plugins folder is:
-    - <b>C:/Program Files (x86)/Google/Google SketchUp X/Plugins/</b>
-* For SU2013 the path to the plugins folder is:
-    - <b>C:/Program Files (x86)/SketchUp/SketchUp 2013/Plugins/</b>
-* For SU2014 and later the path to the plugins folder is:
-    - <b>C:/Users/[User Name]/AppData/Roaming/SketchUp/SketchUp 20XY/SketchUp/Plugins</b>
-    - <b>%appdata%/SketchUp/SketchUp 20XY/Sketchup/Plugins/</b>
+1. Navigate to [MSPhysics Homepage](http://sketchucation.com/forums/viewtopic.php?f=323&t=56852).
+2. Download <i>ams_Lib_x.y.z.rbz</i> and <i>MSPhysics_x.y.z.rbz</i>.
+3. Open SketchUp.
+4. Select <i>(Menu) Window → Preferences</i>.
+5. Navigate to <i>Extensions</i> section within the <i>System Preferences</i> dialog.
+6. Click <i>Install Extension...</i> button, select <i>ams_Lib_x.y.z.rbz</i>, and click <i>Open</i>.
+7. Repeat the same step for <i>MSPhysics_x.y.z.rbz</i>
+8. Ensure that both <i>AMS Library</i> and <i>MSPhysics</i> extensions are checked.
 
-When extracted and moved into the Plugins folder, the content should be
-resembled in the following way:
 
-<i>../Plugins/</i>
-* <i>MSPhysics</i> folder
-* <i>MSPhysics.rb</i> file
-* <i>ams_Lib</i> folder
-* <i>ams_lib.rb</i> file
+## Uninstallation Instructions
+
+Follow these steps in case you intend to uninstall the plugin.
+
+1. Navigate to the desired Plugins folder:
+
+    * For Windows
+
+        - For SU8 and below the plugins folder is located in
+            - <tt>C:\Program Files (x86)\Google\Google SketchUp #\</tt>
+        - For SU2013 the plugins folder is located in
+            - <tt>C:\Program Files (x86)\SketchUp\SketchUp 2013\</tt>
+        - For SU2014 and later the plugins folder is located in
+            - <tt>C:\Users\[User Name]\AppData\Roaming\SketchUp\SketchUp 20##\SketchUp\</tt>
+            - %appdata%\SketchUp\SketchUp 20##\SketchUp\</tt>
+            - <tt>C:\ProgramData\SketchUp\SketchUp 20##\SketchUp\Plugins</tt>
+
+    * For Mac OS X
+
+        - For SU8 and below the plugins folder is located in
+            - <tt>[YOUR USER NAME]/Library/Application Support/Google SketchUp #/SketchUp/plugins</tt>
+        - For SU2013 and later the plugins folder is located in
+            - <tt>> Library > Application Support > SketchUp # > SketchUp > Plugins</tt>
+
+2. Select <i>ams_Lib</i> folder, <i>ams_Lib.rb</i> file, <i>MSPhysics</i> folder, and <i>MSPhysics.rb</i> file and delete them.
 
 
 ## Version
 
-* MSPhysics 0.9.3
+* MSPhysics 0.9.5
 * NewtonDynamics 3.14
-* SDL 2.0.4
+* SDL 2.0.5
 * SDL_Mixer 2.0.1
 
 
 ## Release Date
 
-August 02, 2016
+October 31, 2016
 
 
 ## Licence

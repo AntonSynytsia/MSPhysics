@@ -125,11 +125,6 @@
                     <option value="48">Iterative 48 Passes</option>
                     <option value="64">Iterative 64 Passes</option>
                   </select></td></tr>
-                  <tr><td colspan="2"><p class="heading">Friction Model</p></td></tr>
-                  <tr><td colspan="2"><select id="simulation-friction_model" data-placeholder="Friction Model" class="chosen-select-no-single drop-down" style="width: 229px;">
-                    <option value="0">Exact Coulomb</option>
-                    <option value="1">Adaptive Coulomb</option>
-                  </select></td></tr>
                   <tr><td colspan="2"><p class="heading">Properties</p></td></tr>
                   <tr title="The gravitational acceleration along Z-axis in meters per second squared (m/s²).">
                     <td><label class="spacing_tab" for="simulation-gravity">Gravity</label></td>
@@ -1222,7 +1217,14 @@
                   <td><label for="curvy_piston-enable_loop">Loop</label></td>
                   <td><input id="curvy_piston-enable_loop" type="checkbox"></input></td>
                 </tr>
-                <tr title="Control desired position in preset units. Pass nil to 'turn off' the piston.">
+                <tr>
+                  <td><label for="curvy_piston-controller_mode">Controller Mode</label></td>
+                  <td><select id="curvy_piston-controller_mode" data-placeholder="Controller Mode" class="chosen-select-no-single drop-down" style="width: 248px;">
+                    <option value="0">Control by Position</option>
+                    <option value="1">Control by Speed</option>
+                  </select></td>
+                </tr>
+                <tr title="Control desired position in preset units or magnitude and direction of the linear rate, depending on the controller mode. Pass nil to 'turn off' the piston.">
                   <td><label for="curvy_piston-controller">Controller</label></td>
                   <td><input id="curvy_piston-controller" class="custom-text controller-input" type="text"></input></td>
                 </tr>
@@ -1238,7 +1240,7 @@
                     <li class="description">The idea behind a curvy joint is that the connected body travels along the user-drawn curve.</li>
                     <li class="description">The curve can be modified by adding a connected set of edges/curves within the joint. The edge closest to the origin of the joint is considered as the starting edge.</li>
                     <li class="description">The curve joint works best when the angle between any two connected edges is less than 45 degrees.</li>
-                    <li class="description">The <em2>Controller</em2> argument assumes input as the desired linear position in preset units.</li>
+                    <li class="description">The <em2>Controller</em2> argument assumes input as the desired linear position in preset units or the magnitude and direction of linear rate, depending on the <em2>Controller Mode</em2>.</li>
                     <li class="description">The <em2>Controller</em2> argument also accepts <em1>nil</em1> as the parameter, which turns off the joint.</li>
                     <li class="description">The desired position is clamped between min and max limits if the limits are enabled.</li>
                     <li class="description">The <em2>Reduction Ratio</em2> may be used to decelerate linear rate when piston nears its desired position.</li>

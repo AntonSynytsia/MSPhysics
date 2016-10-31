@@ -219,5 +219,11 @@ module MSPhysics
       MSPhysics::Newton::CurvySlider.get_info_by_pos(@address, pos)
     end
 
+    # Get normal matrices of the curve.
+    # @return [Array<Geom::Transformation>] An array of the normal matrices.
+    def normal_matrices
+      MSPhysics::Newton::CurvySlider.get_normal_matrices(@address)
+    end
+
   end # class CurvySlider < Joint
 end # module MSPhysics

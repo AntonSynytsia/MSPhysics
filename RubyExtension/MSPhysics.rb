@@ -20,23 +20,23 @@
 #   contributed in making the project a reality.
 #
 # Access
-#   - (Menu) Plugins → MSPhysics → [Option]
+#   - (Menu) Extensions → MSPhysics → [Option]
 #   - (Context Menu) MSPhysics → [Option]
 #   - MSPhysics Toolbars
 #
 # Compatibility and Requirements
-#   - Microsoft Windows XP or later / Mac OS X 10.5+.
+#   - Microsoft Windows XP or later / Mac OS X 10.5+
 #   - SketchUp 6 or later. SU2016 64bit is recommended!
-#   - AMS Library 3.3.0 or later.
+#   - AMS Library 3.4.0+
 #
 # Version
-#   - MSPhysics 0.9.3
+#   - MSPhysics 0.9.5
 #   - NewtonDynamics 3.14
-#   - SDL 2.0.4
+#   - SDL 2.0.5
 #   - SDL_mixer 2.0.1
 #
 # Release Date
-#   August 02, 2016
+#   October 31, 2016
 #
 # Licence
 #   MIT © 2015-2016, Anton Synytsia
@@ -57,10 +57,10 @@ load_me = true
 if load_me
   begin
     require 'ams_Lib/main.rb'
-    raise 'Outdated library!' if AMS::Lib::VERSION.to_f < 3.3
+    raise 'Outdated library!' if AMS::Lib::VERSION.to_f < 3.4
   rescue StandardError, LoadError
     load_me = false
-    msg = "'MSPhysics' extension requires AMS Library version 3.3.0 or later. 'MSPhysics' extension will not work without the library installed. Would you like to visit the library's download page?"
+    msg = "MSPhysics extension requires AMS Library, version 3.4.0 or later. MSPhysics will not work without the library installed. Would you like to visit the library's download page?"
     if UI.messagebox(msg, MB_YESNO) == IDYES
       UI.openURL('http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835')
     end
@@ -72,8 +72,8 @@ if load_me
   module MSPhysics
 
     NAME         = 'MSPhysics'.freeze
-    VERSION      = '0.9.3'.freeze
-    RELEASE_DATE = 'August 02, 2016'.freeze
+    VERSION      = '0.9.5'.freeze
+    RELEASE_DATE = 'October 31, 2016'.freeze
 
     # Create the extension.
     @extension = SketchupExtension.new(NAME, 'MSPhysics/main.rb')

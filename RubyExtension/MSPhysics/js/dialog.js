@@ -296,22 +296,22 @@ $(document).ready( function() {
   // Initialize tabs
   $('.tabs .tab-links a').on('click', function(e) {
     var currentAttrValue = $(this).attr('href');
-    // Show/Hide Tabs
-    $('.tabs ' + currentAttrValue).fadeIn(400).siblings().hide();
     // Change/remove current tab to active
     $(this).parent('li').addClass('active').siblings().removeClass('active');
     var tab_id = currentAttrValue.charAt(currentAttrValue.length-1);
     if( tab_id != active_tab_id ) {
       active_tab_id = tab_id;
-      window.setTimeout(function() { callback('tab_changed', tab_id); }, 0);
+      window.setTimeout(function() {
+        if (tab_id != 3) update_editor_size();
+        callback('tab_changed', tab_id);
+      }, 0);
     }
-    window.setTimeout(function() { update_size() }, 0);
+    window.setTimeout(function() { update_size(); }, 0);
     e.preventDefault();
+    // Show/Hide Tabs
+    $('.tabs ' + currentAttrValue).fadeIn(400).siblings().hide();
   });
 
-  /*$('#tab1').on('mouseenter', function(e) {
-    callback('update_simulation_state');
-  });*/
   $( document ).on('mouseenter', function(e) {
     callback("mouse_enter");
   });

@@ -97,16 +97,25 @@ function remove_sliders() {
 $( document ).ready(function() {
   window.setTimeout(init, 10); // Timeout is needed because without it the event might not be triggered on Mac OS X.
   g_interval_timer = setInterval(function() { callback('update_note') }, 1000);
+
+  $( document ).mouseenter(function() {
+    callback('mouse_enter');
+  });
+
+  $( document ).mouseleave(function() {
+    callback('mouse_leave');
+  });
+
+  window.addEventListener('keydown', function (e) {
+    var tag = e.target.tagName.toLowerCase();
+    if (tag != 'input' && tag != 'textarea') {
+      e.preventDefault();
+      return false;
+    }
+  });
+
 });
 
 $( window ).unload(function() {
   uninit();
-});
-
-$( document ).mouseenter(function() {
-  callback('mouse_enter');
-});
-
-$( document ).mouseleave(function() {
-  callback('mouse_leave');
 });

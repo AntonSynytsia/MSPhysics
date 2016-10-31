@@ -198,28 +198,6 @@ module MSPhysics
       MSPhysics::Newton::World.set_solver_model(@address, model.to_i)
     end
 
-    # Get world friction model.
-    # * 0 - Exact coulomb. Exact friction model is used when precision in more
-    #   important than speed.
-    # * 1 - Adaptive coulomb. Adaptive friction model is used when speed is more
-    #   important than precision.
-    # Generally, adaptive coulomb is 10% faster than exact coulumb.
-    # @return [Fixnum]
-    def friction_model
-      MSPhysics::Newton::World.get_friction_model(@address)
-    end
-
-    # Set world friction model.
-    # * 0 - Exact coulomb. Exact friction model is used when precision in more
-    #   important than speed.
-    # * 1 - Adaptive coulomb. Adaptive friction model is used when speed is more
-    #   important than precision.
-    # Generally, adaptive coulomb is 10% faster than exact coulomb.
-    # @param [Fixnum] model
-    def friction_model=(model)
-      MSPhysics::Newton::World.set_friction_model(@address, model.to_i)
-    end
-
     # Get world material thickness in meters, an imaginary thickness between the
     # collision geometry of two colliding bodies.
     # @return [Numeric] A value between 0.0 and 1/32.0.

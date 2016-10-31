@@ -1,3 +1,25 @@
+## 0.9.5 - October 31, 2016
+- Made keyboard input and MIDI compatible with Mac OS X. On Mac OS X, the
+  control panel must be active to prevent the triggering of SketchUp commands.
+  This version requires updating AMS Library to versions 3.4.0 or later.
+- Fixed dialog issues with the updated jQuery.
+- Added a feature that displays MSPhysics version, whenever simulation starts.
+- Added another play command which starts simulation from selection. All hidden
+  groups/components are ignored, all non-selected groups/components act static,
+  and all selected groups/components are dynamic.
+- Added a stop command which ends simulation without resetting positions.
+- Added 'Control by Speed' mode to CurvyPiston joint.
+- Fixed improper behavior with curvy joints where connected bodies flip at
+  particular points if rotation is disabled and alignment enabled.
+- Fixed improper behavior with curvy joints where looping is disabled, yet the
+  curve is complete.
+- Updated toolbar icons.
+- Many minor fixes and upgrades.
+
+## 0.9.4 - October 08, 2016
+- Fixed friction bug. Thanks to Ulrich. W. (bambutec) for report.
+- Improved performance with closest joints when simulation starts.
+
 ## 0.9.3 - August 02, 2016
 - Fixed crash with loading large Replay data files. Thanks to Faust07 for
   report.

@@ -7,10 +7,10 @@ end
 
 dir = File.dirname(__FILE__)
 dir.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
-ops = (RUBY_PLATFORM =~ /mswin|mingw/i) ? 'win' : 'osx'
+ops = AMS::IS_PLATFORM_WINDOWS ? 'win' : 'osx'
 bit = (Sketchup.respond_to?('is_64bit?') && Sketchup.is_64bit?) ? '64' : '32'
 ver = RUBY_VERSION[0..2]
-ext = (RUBY_PLATFORM =~ /mswin|mingw/i) ? '.so' : '.bundle'
+ext = AMS::IS_PLATFORM_WINDOWS ? '.so' : '.bundle'
 
 # Load external libraries
 begin
@@ -21,7 +21,7 @@ end
 
 # Load MSPhysics Library
 orig_env_paths = ENV['PATH']
-if RUBY_PLATFORM =~ /mswin|mingw/i
+if AMS::IS_PLATFORM_WINDOWS
   # Append dlls path to the ENV['PATH'] variable so that msp_lib.so knows where
   # to find the required dlls. This is only necessary on the windows side.
   # For particular reasons, it's a good practice to reset the variable, and this
@@ -64,7 +64,7 @@ unless lib_loaded
 end
 unless lib_loaded
   # Reset the ENV['PATH'] variable
-  ENV['PATH'] = orig_env_paths if RUBY_PLATFORM =~ /mswin|mingw/i
+  ENV['PATH'] = orig_env_paths if AMS::IS_PLATFORM_WINDOWS
   # Raise an exception
   msg = "An exception occurred while loading MSPhysics library. "
   msg << "The exception occurred due to one or more of the following reasons:\n"
@@ -115,17 +115,14 @@ require File.join(dir, 'scene_data.rb')
 # @since 1.0.0
 module MSPhysics
 
-  TEMP_DIR = RUBY_PLATFORM =~ /mswin|mingw/i ? ENV["TEMP"].gsub(/\\/, '/') : ENV["TMPDIR"].gsub(/\\/, '/')
-
   DEFAULT_SIMULATION_SETTINGS = {
-    :solver_model           => 4,
-    :friction_model         => 0,
+    :solver_model           => 8,
     :update_rate            => 2,
     :update_timestep        => 1/60.0,
-    :gravity                => [0.0, 0.0, -9.8],
+    :gravity                => [0.0, 0.0, -5.0],
     :material_thickness     => 0.0001,
     :contact_merge_tolerance=> 0.001,
-    :world_scale            => 1
+    :world_scale            => 10
   }
 
   DEFAULT_BODY_SETTINGS = {
@@ -181,16 +178,18 @@ module MSPhysics
     :select_plus_minus      => 0,
     :hand                   => 0,
     :grab                   => 0,
+    :click                  => 0,
     :target                 => 0
   }
 
   CURSOR_ORIGINS = {
-    :select                 => [3,8],
-    :select_plus            => [3,8],
-    :select_minus           => [3,8],
-    :select_plus_minus      => [3,8],
-    :hand                   => [3,8],
-    :grab                   => [3,8],
+    :select                 => [2,5],
+    :select_plus            => [2,5],
+    :select_minus           => [2,5],
+    :select_plus_minus      => [2,5],
+    :hand                   => [2,2],
+    :grab                   => [2,2],
+    :click                  => [2,2],
     :target                 => [15,15]
   }
 
@@ -380,7 +379,7 @@ module MSPhysics
     # @param [String] name Watermark name.
     # @param [String] component Watermark component.
     # @return [Sketchup::Text, nil] A text object if successful.
-    def add_watermark_text(x, y, text, name = 'watermark', component = 'version_text.skp')
+    def add_watermark_text(x, y, text, name = 'Watermark', component = 'version_text.skp')
       dir = File.dirname(__FILE__)
       dir.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
       path = File.join(dir, "models/#{component}")
@@ -393,13 +392,13 @@ module MSPhysics
       ci = model.entities.add_instance(cd, Geom::Transformation.new(loc))
       tt = ci.explode[0]
       tt.text = text
-      tt.set_attribute('MSPhysics', 'name', name.to_s)
+      tt.set_attribute('MSPhysics', 'Name', name.to_s)
       mat = model.materials['MSPWatermarkText']
       unless mat
         mat = model.materials.add('MSPWatermarkText')
         mat.color = WATERMARK_COLOR
-        tt.material = mat
       end
+      tt.material = mat
       layer = model.layers['MSPWatermarkText']
       unless layer
         layer = model.layers.add('MSPWatermarkText')
@@ -416,7 +415,7 @@ module MSPhysics
     # @param [String] name Watermark name.
     # @param [String] component Watermark component.
     # @return [Sketchup::Text, nil] A text object if successful.
-    def add_watermark_text2(x, y, text, name = 'watermark', component = 'version_text.skp')
+    def add_watermark_text2(x, y, text, name = 'Watermark', component = 'version_text.skp')
       dir = File.dirname(__FILE__)
       dir.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
       path = File.join(dir, "models/#{component}")
@@ -429,7 +428,7 @@ module MSPhysics
       ci = model.entities.add_instance(cd, Geom::Transformation.new(loc))
       tt = ci.explode[0]
       tt.text = text
-      tt.set_attribute('MSPhysics', 'name', name.to_s)
+      tt.set_attribute('MSPhysics', 'Name', name.to_s)
       tt
     end
 
@@ -438,7 +437,7 @@ module MSPhysics
     # @return [Sketchup::Text, nil] A text object if the text exists.
     def find_watermark_text_by_name(name)
       Sketchup.active_model.entities.each { |e|
-        return e if e.is_a?(Sketchup::Text) && e.get_attribute('MSPhysics', 'name') == name.to_s
+        return e if e.is_a?(Sketchup::Text) && e.get_attribute('MSPhysics', 'Name') == name.to_s
       }
       nil
     end
@@ -448,9 +447,42 @@ module MSPhysics
     def all_watermark_texts
       texts = []
       Sketchup.active_model.entities.each { |e|
-        texts << e if e.is_a?(Sketchup::Text) && e.get_attribute('MSPhysics', 'name') != nil
+        texts << e if e.is_a?(Sketchup::Text) && e.get_attribute('MSPhysics', 'Name') != nil
       }
       texts
+    end
+
+    # Displays MSPhysics version text.
+    # @param [Boolean] wrap_op Whether to wrap in operation.
+    def verify_version(wrap_op = true)
+      model = Sketchup.active_model
+      mvers = model.get_attribute('MSPhysics', 'Version')
+      cvers = MSPhysics::VERSION
+      cver = cvers.gsub(/\./, '').to_i
+      if mvers.is_a?(String)
+        mver = mvers.gsub(/\./, '').to_i
+        if mver == cver
+          return
+        elsif mver > cver
+          ::UI.messagebox("This model was created with MSPhysics #{mvers}. Your version is #{cvers}. Using an outdated version may result in improper behaviour!")
+          return
+        end
+      end
+      te = nil
+      model.entities.each { |e|
+        if e.is_a?(Sketchup::Text) && e.get_attribute('MSPhysics', 'Name') == 'Version Text'
+          te = e
+          break
+        end
+      }
+      model.start_operation('Utilizing Version') if wrap_op
+      if te
+        te.text = "Requires MSPhysics #{cvers}+ !\n#{te.text}"
+      else
+        te = add_watermark_text(10, 10, "Requires MSPhysics #{cvers}+ !", 'Version Text')
+      end
+      model.set_attribute('MSPhysics', 'Version', cvers)
+      model.commit_operation if wrap_op
     end
 
     private
@@ -462,10 +494,24 @@ module MSPhysics
       entities.each { |e|
         next if !e.is_a?(Sketchup::Group) && !e.is_a?(Sketchup::ComponentInstance)
         if e.get_attribute('MSPhysics', 'Type', nil) == 'Joint'
-          tra = e.transformation
-          t = Geom::Transformation.new(tra.xaxis, tra.yaxis, tra.zaxis, tra.origin)
-          e.transformation = t * st
-          count += 1
+          jt = e.get_attribute('MSPhysics Joint', 'Type')
+          if jt == 'CurvySlider' || jt == 'CurvyPiston'
+            ents = e.is_a?(Sketchup::ComponentInstance) ? e.definition.entities : e.entities
+            ents.each { |se|
+              if se.is_a?(Sketchup::ComponentInstance) && se.definition.name =~ /curvy_slider|curvy_piston/
+                tra = se.transformation
+                t = Geom::Transformation.new(tra.xaxis, tra.yaxis, tra.zaxis, tra.origin)
+                se.transformation = t * st
+                count += 1
+                break
+              end
+            }
+          else
+            tra = e.transformation
+            t = Geom::Transformation.new(tra.xaxis, tra.yaxis, tra.zaxis, tra.origin)
+            e.transformation = t * st
+            count += 1
+          end
         else
           ents = e.is_a?(Sketchup::ComponentInstance) ? e.definition.entities : e.entities
           count += scale_joints(scale, ents)
@@ -482,7 +528,7 @@ unless file_loaded?(__FILE__)
   if MSPhysics.sdl_used?
     sdl = MSPhysics::SDL
     mix = MSPhysics::Mixer
-    sdl.init(sdl::INIT_AUDIO | sdl::INIT_JOYSTICK)
+    sdl.init(sdl::INIT_AUDIO | sdl::INIT_JOYSTICK | sdl::INIT_EVENTS)
     mix.init(mix::INIT_SUPPORTED)
     mix.open_audio(22050, mix::DEFAULT_FORMAT, 2, 1024)
     mix.allocate_channels(16)
@@ -495,7 +541,7 @@ unless file_loaded?(__FILE__)
     }
   end
   # Reset the ENV['PATH'] variable
-  ENV['PATH'] = orig_env_paths if RUBY_PLATFORM =~ /mswin|mingw/i
+  ENV['PATH'] = orig_env_paths if AMS::IS_PLATFORM_WINDOWS
   # Create cursors
   path = File.join(dir, 'images/cursors')
   MSPhysics::CURSORS.keys.each { |name|
@@ -513,7 +559,7 @@ unless file_loaded?(__FILE__)
   # Coefficients are defined from material to material contacts. Material to
   # another material coefficients are automatically calculated by averaging out
   # the coefficients of both.
-  # [ name, density (kg/m^3), static friction, kinetic friction, elasticity, softness ]
+  # [ name, density (kg/m^3), static friction, dynamic friction, elasticity, softness ]
   # Many coefficient values are estimated, averaged up, made up, and not accurate.
   mats = [
     ['Aluminium', 2700, 0.42, 0.34, 0.30, 0.01],
@@ -563,6 +609,7 @@ unless file_loaded?(__FILE__)
     MSPhysics::Dialog.visible = !MSPhysics::Dialog.visible?
   }
   cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
     MSPhysics::Dialog.visible? ? MF_CHECKED : MF_UNCHECKED
   }
   cmd.menu_text = cmd.tooltip = 'Toggle UI'
@@ -572,17 +619,27 @@ unless file_loaded?(__FILE__)
   sim_toolbar.add_item(cmd)
 
   cmd = UI::Command.new('Toggle Play') {
-    sim.active? ? sim.instance.toggle_play : sim.start
+    if  sim.active?
+      sim.instance.toggle_play
+    else
+      MSPhysics.verify_version
+      sim.start(false)
+    end
   }
   cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
     if sim.active?
-      sim.instance.playing? ? MF_CHECKED : MF_UNCHECKED
+      if sim.instance.started_from_selection?
+        MF_GRAYED
+      else
+        sim.instance.playing? ? MF_CHECKED : MF_UNCHECKED
+      end
     else
       MF_ENABLED
     end
   }
   cmd.menu_text = cmd.tooltip = 'Toggle Play'
-  cmd.status_bar_text = 'Play/Pause simulation.'
+  cmd.status_bar_text = 'Play/Pause simulation. This option starts simulation with all groups considered part of simulation.'
   cmd.small_icon = simg_path + 'toggle_play.png'
   cmd.large_icon = limg_path + 'toggle_play.png'
   sim_toolbar.add_item(cmd)
@@ -591,12 +648,55 @@ unless file_loaded?(__FILE__)
     sim.reset
   }
   cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
     sim.active? ? MF_ENABLED : MF_GRAYED
   }
   cmd.menu_text = cmd.tooltip = 'Reset'
-  cmd.status_bar_text = 'Reset simulation.'
+  cmd.status_bar_text = 'End simulation and reset positions.'
   cmd.small_icon = simg_path + 'reset.png'
   cmd.large_icon = limg_path + 'reset.png'
+  sim_toolbar.add_item(cmd)
+
+  sim_toolbar.add_separator
+
+  cmd = UI::Command.new('Toggle Play 2') {
+    if  sim.active?
+      sim.instance.toggle_play
+    else
+      MSPhysics.verify_version
+      sim.start(true)
+    end
+  }
+  cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
+    if sim.active?
+      if sim.instance.started_from_selection?
+        sim.instance.playing? ? MF_CHECKED : MF_UNCHECKED
+      else
+        MF_GRAYED
+      end
+    else
+      MF_ENABLED
+    end
+  }
+  cmd.menu_text = cmd.tooltip = 'Toggle Play 2'
+  cmd.status_bar_text = 'Play/Pause simulation. This option starts simulation from selected groups. All hidden groups are ignored and all non-selected groups act stationary.'
+  cmd.small_icon = simg_path + 'toggle_play2.png'
+  cmd.large_icon = limg_path + 'toggle_play2.png'
+  sim_toolbar.add_item(cmd)
+
+  cmd = UI::Command.new('Stop') {
+    sim.instance.reset_positions_on_end = false
+    sim.reset
+  }
+  cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
+    sim.active? ? MF_ENABLED : MF_GRAYED
+  }
+  cmd.menu_text = cmd.tooltip = 'Stop'
+  cmd.status_bar_text = 'End simulation without resetting positions.'
+  cmd.small_icon = simg_path + 'stop.png'
+  cmd.large_icon = limg_path + 'stop.png'
   sim_toolbar.add_item(cmd)
 
   sim_toolbar.show
@@ -612,6 +712,7 @@ unless file_loaded?(__FILE__)
   cmd.menu_text = cmd.tooltip = 'Joint Connection Tool'
   cmd.status_bar_text = 'Activate/Deactivate joint connection tool.'
   cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
     MSPhysics::JointConnectionTool.active? ? MF_CHECKED : MF_UNCHECKED
   }
   cmd.small_icon = simg_path + 'toggle_connect.png'
@@ -628,6 +729,9 @@ unless file_loaded?(__FILE__)
     scale = input[0].to_f
     count = MSPhysics.set_joint_scale(scale)
     UI.messagebox("Edited scale of #{count} MSPhysics joint(s).")
+  }
+  cmd.set_validation_proc {
+    Sketchup.active_model ? MF_ENABLED : MF_GRAYED
   }
   cmd.menu_text = cmd.tooltip = 'Edit Joints Scale'
   cmd.status_bar_text = 'Change scale of MSPhysics joints.'
@@ -649,6 +753,7 @@ unless file_loaded?(__FILE__)
       jt = MSPhysics::JointTool.new(name)
     }
     cmd.set_validation_proc {
+      next MF_GRAYED unless Sketchup.active_model
       jt != nil && jt.active? ? MF_CHECKED : MF_UNCHECKED
     }
     cmd.menu_text = cmd.tooltip = ename
@@ -668,6 +773,7 @@ unless file_loaded?(__FILE__)
     MSPhysics::Replay.record_enabled = !MSPhysics::Replay.record_enabled?
   }
   cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
     MSPhysics::Replay.record_enabled? ? MF_CHECKED : MF_UNCHECKED
   }
   cmd.menu_text = cmd.tooltip = 'Toggle Record'
@@ -682,6 +788,7 @@ unless file_loaded?(__FILE__)
     MSPhysics::Replay.camera_replay_enabled = state
   }
   cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
     MSPhysics::Replay.camera_record_enabled? ? MF_CHECKED : MF_UNCHECKED
   }
   cmd.menu_text = cmd.tooltip = 'Toggle Camera Replay'
@@ -705,6 +812,7 @@ unless file_loaded?(__FILE__)
     end
   }
   cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
     next MF_GRAYED unless MSPhysics::Replay.active_data_valid?
     if MSPhysics::Replay.active?
       MSPhysics::Replay.playing? && !MSPhysics::Replay.reversed? ? MF_CHECKED : MF_UNCHECKED
@@ -733,6 +841,7 @@ unless file_loaded?(__FILE__)
     end
   }
   cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
     next MF_GRAYED unless MSPhysics::Replay.active_data_valid?
     if MSPhysics::Replay.active?
       MSPhysics::Replay.playing? && MSPhysics::Replay.reversed? ? MF_CHECKED : MF_UNCHECKED
@@ -754,6 +863,7 @@ unless file_loaded?(__FILE__)
     end
   }
   cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
     next MF_GRAYED unless MSPhysics::Replay.active_data_valid?
     if MSPhysics::Replay.active?
       MSPhysics::Replay.paused? ? MF_CHECKED : MF_UNCHECKED
@@ -771,6 +881,7 @@ unless file_loaded?(__FILE__)
     MSPhysics::Replay.reset
   }
   cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
     MSPhysics::Replay.active? ? MF_ENABLED : MF_GRAYED
   }
   cmd.menu_text = cmd.tooltip = 'Reset'
@@ -783,6 +894,7 @@ unless file_loaded?(__FILE__)
     MSPhysics::Replay.stop
   }
   cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
     MSPhysics::Replay.active? ? MF_ENABLED : MF_GRAYED
   }
   cmd.menu_text = cmd.tooltip = 'Stop'
@@ -796,6 +908,7 @@ unless file_loaded?(__FILE__)
     MSPhysics::Replay.speed = v + (v < 10.0 ? (v < 2.0 ? (v < 0.1 ? 0.01 : 0.1) : 1.0) : 10.0)
   }
   inc_spd_cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
     inc_spd_cmd.status_bar_text = "Increase replay animation speed.    Speed: #{sprintf("%.2f", MSPhysics::Replay.speed)}"
     MF_ENABLED
   }
@@ -810,6 +923,7 @@ unless file_loaded?(__FILE__)
     MSPhysics::Replay.speed = v - (v > 10.0 ? 10.0 : (v > 2.0 ? 1.0 : (v > 0.1 ? 0.1 : 0.01)))
   }
   dec_spd_cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
     dec_spd_cmd.status_bar_text = "Decrease replay animation speed.    Speed: #{sprintf("%.2f", MSPhysics::Replay.speed)}"
     MF_ENABLED
   }
@@ -825,6 +939,7 @@ unless file_loaded?(__FILE__)
     MSPhysics::Replay.clear_data_from_file
   }
   cmd.set_validation_proc {
+    next MF_GRAYED unless Sketchup.active_model
     MSPhysics::Replay.active_data_valid? && !MSPhysics::Replay.active? ? MF_ENABLED : MF_GRAYED
   }
   cmd.menu_text = cmd.tooltip = 'Clear Data'
@@ -1050,8 +1165,8 @@ unless file_loaded?(__FILE__)
         Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
         #~ MSPhysics.delete_attribute(joints, 'MSPhysics Joint')
         joints.each { |joint|
-          joint.attribute_dictionary('MSPhysics Joint').keys.each { k|
-            joint.delete_attribute('MSPhysics Joint', k) if k != 'Type'
+          joint.attribute_dictionary('MSPhysics Joint').each_key { |k|
+            joint.delete_attribute('MSPhysics Joint', k) if k != 'Type' && k != 'ID'
           }
         }
         model.commit_operation
@@ -1119,6 +1234,7 @@ unless file_loaded?(__FILE__)
     MSPhysics::Replay.export_to_images
   }
   plugin_menu.set_validation_proc(item) {
+    next MF_GRAYED unless Sketchup.active_model
     MSPhysics::Replay.active_data_valid? ? MF_ENABLED : MF_GRAYED
   }
 
@@ -1126,6 +1242,7 @@ unless file_loaded?(__FILE__)
     MSPhysics::Replay.export_to_skp
   }
   plugin_menu.set_validation_proc(item) {
+    next MF_GRAYED unless Sketchup.active_model
     MSPhysics::Replay.active_data_valid? ? MF_ENABLED : MF_GRAYED
   }
 
@@ -1133,6 +1250,7 @@ unless file_loaded?(__FILE__)
     MSPhysics::Replay.export_to_kerkythea
   }
   plugin_menu.set_validation_proc(item) {
+    next MF_GRAYED unless Sketchup.active_model
     MSPhysics::Replay.active_data_valid? ? MF_ENABLED : MF_GRAYED
   }
 
@@ -1140,6 +1258,7 @@ unless file_loaded?(__FILE__)
     MSPhysics::Replay.export_to_skindigo
   }
   plugin_menu.set_validation_proc(item) {
+    next MF_GRAYED unless Sketchup.active_model
     MSPhysics::Replay.active_data_valid? ? MF_ENABLED : MF_GRAYED
   }
 
@@ -1173,10 +1292,13 @@ unless file_loaded?(__FILE__)
     MSPhysics::Replay.shadow_replay_enabled = input[9] == 'Yes'
     MSPhysics::Replay.save_replay_settings(true)
   }
+  plugin_menu.set_validation_proc(item) {
+    Sketchup.active_model ? MF_ENABLED : MF_GRAYED
+  }
 
   plugin_menu.add_separator
 
-  plugin_menu.add_item('Create Buoyancy Plane') {
+  item = plugin_menu.add_item('Create Buoyancy Plane') {
     default = MSPhysics::DEFAULT_BUOYANCY_PLANE_SETTINGS
     prompts = ['Density (kg/m³)', 'Viscosity (0.0 - 1.0)', 'Current X', 'Current Y', 'Current Z']
     defaults = [default[:density], default[:viscosity], default[:current_x], default[:current_y], default[:current_z]]
@@ -1209,10 +1331,13 @@ unless file_loaded?(__FILE__)
     group.set_attribute(dict, 'Current Z', current_z)
     model.commit_operation
   }
+  plugin_menu.set_validation_proc(item) {
+    Sketchup.active_model ? MF_ENABLED : MF_GRAYED
+  }
 
   plugin_menu.add_separator
 
-  plugin_menu.add_item('Select All Joints') {
+  item = plugin_menu.add_item('Select All Joints') {
     model = Sketchup.active_model
     model.selection.clear
     model.definitions.each { |d|
@@ -1221,7 +1346,12 @@ unless file_loaded?(__FILE__)
       }
     }
   }
-  plugin_menu.add_item('Delete All Attributes') {
+  plugin_menu.set_validation_proc(item) {
+    Sketchup.active_model ? MF_ENABLED : MF_GRAYED
+  }
+
+
+  item = plugin_menu.add_item('Delete All Attributes') {
     msg = "This option removes all MSPhysics assigned properties, scripts, and record of connected joints.\n"
     msg << "Do you want to proceed?"
     choice = UI.messagebox(msg, MB_YESNO)
@@ -1233,8 +1363,11 @@ unless file_loaded?(__FILE__)
       model.commit_operation
     end
   }
+  plugin_menu.set_validation_proc(item) {
+    Sketchup.active_model ? MF_ENABLED : MF_GRAYED
+  }
 
-  plugin_menu.add_item('Purge Unused') {
+  item = plugin_menu.add_item('Purge Unused') {
     model = Sketchup.active_model
     op = 'MSPhysics - Purge Unused'
     Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
@@ -1244,6 +1377,11 @@ unless file_loaded?(__FILE__)
     model.styles.purge_unused
     model.commit_operation
   }
+  plugin_menu.set_validation_proc(item) {
+    Sketchup.active_model ? MF_ENABLED : MF_GRAYED
+  }
+
+  plugin_menu.add_separator
 
   if Sketchup.version.to_i > 13
     item = plugin_menu.add_item('Use Original Icons') {

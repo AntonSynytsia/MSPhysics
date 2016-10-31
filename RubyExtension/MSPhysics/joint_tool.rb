@@ -49,6 +49,7 @@ module MSPhysics
       @shift_down_time = nil
       @layer_color = Sketchup::Color.new(44, 44, 164)
       @active = false
+      @cursor_id = MSPhysics::CURSORS[:click]
       Sketchup.active_model.select_tool(self)
     end
 
@@ -248,6 +249,10 @@ module MSPhysics
       bb.add(@ip2.position) if @ip2.valid?
       bb.add(@ip.position) if @ip.valid?
       bb
+    end
+
+    def onSetCursor
+      ::UI.set_cursor(@cursor_id)
     end
 
   end # class JointTool
