@@ -22,17 +22,21 @@ end
 # Load MSPhysics Library
 orig_env_paths = ENV['PATH']
 if AMS::IS_PLATFORM_WINDOWS
+  new_env_paths = String.new(ENV['PATH'])
   # Append dlls path to the ENV['PATH'] variable so that msp_lib.so knows where
   # to find the required dlls. This is only necessary on the windows side.
-  # For particular reasons, it's a good practice to reset the variable, and this
-  # is done way below, after initiating SDL libraries.
-  env_paths_ary = ENV['PATH'].split(/\;/)
   # It seems that ENV['PATH'] variable accepts paths encoded in Windows-1252
   # format. The force_encoding('Windows-1252') doesn't work; though, unpacking
-  # from UTF-8 and repacking to ANSI does work. See this post for details:
+  # from UTF-8 and repacking to ANSI prior to force-encoding does work. See this
+  # post for details:
   # http://sketchucation.com/forums/viewtopic.php?f=323&t=56852&start=390#p601049
-  env_paths_ary << File.join(dir, ops+bit).gsub(/\//, "\\").unpack('U*').pack('C*')
-  ENV['PATH'] = env_paths_ary.join(';')
+  dpath = File.join(dir, ops+bit).gsub(/\//, "\\") + ';'
+  dpath = dpath.unpack('U*').pack('C*')
+  dpath.force_encoding(new_env_paths.encoding) if RUBY_VERSION !~ /1.8/
+  new_env_paths << dpath
+  ENV['PATH'] = new_env_paths
+  # It's a good practice to reset the ENV['PATH'] variable, and this is done way
+  # below, after initiating SDL libraries.
 end
 lib_path = File.join(dir, ops+bit, ver, 'msp_lib' + ext)
 lib_path.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/

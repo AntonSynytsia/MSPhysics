@@ -1,3 +1,6 @@
+## 0.9.6 - November 4, 2016
+- Fixed encoding with non-ASCII user names.
+
 ## 0.9.5 - October 31, 2016
 - Made keyboard input and MIDI compatible with Mac OS X. On Mac OS X, the
   control panel must be active to prevent the triggering of SketchUp commands.

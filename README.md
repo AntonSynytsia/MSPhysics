@@ -54,9 +54,7 @@ As well as to those who contributed in making the project a reality.
 Follow these steps in case you intend to uninstall the plugin.
 
 1. Navigate to the desired Plugins folder:
-
     * For Windows
-
         - For SU8 and below the plugins folder is located in
             - <tt>C:\Program Files (x86)\Google\Google SketchUp #\</tt>
         - For SU2013 the plugins folder is located in
@@ -65,9 +63,7 @@ Follow these steps in case you intend to uninstall the plugin.
             - <tt>C:\Users\[User Name]\AppData\Roaming\SketchUp\SketchUp 20##\SketchUp\</tt>
             - %appdata%\SketchUp\SketchUp 20##\SketchUp\</tt>
             - <tt>C:\ProgramData\SketchUp\SketchUp 20##\SketchUp\Plugins</tt>
-
     * For Mac OS X
-
         - For SU8 and below the plugins folder is located in
             - <tt>[YOUR USER NAME]/Library/Application Support/Google SketchUp #/SketchUp/plugins</tt>
         - For SU2013 and later the plugins folder is located in
@@ -78,7 +74,7 @@ Follow these steps in case you intend to uninstall the plugin.
 
 ## Version
 
-* MSPhysics 0.9.5
+* MSPhysics 0.9.6
 * NewtonDynamics 3.14
 * SDL 2.0.5
 * SDL_Mixer 2.0.1
@@ -86,7 +82,7 @@ Follow these steps in case you intend to uninstall the plugin.
 
 ## Release Date
 
-October 31, 2016
+November 4, 2016
 
 
 ## Licence
