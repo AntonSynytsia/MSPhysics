@@ -1,3 +1,8 @@
+## 0.9.7 - November 10, 2016
+- Fixed the incompatibility with Windows XP.
+- Fixed encoding with non-ASCII user names.
+- Fixed loading errors.
+
 ## 0.9.6 - November 4, 2016
 - Fixed encoding with non-ASCII user names.
 

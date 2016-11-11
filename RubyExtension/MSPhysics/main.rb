@@ -20,23 +20,21 @@ rescue LoadError => e
 end
 
 # Load MSPhysics Library
-orig_env_paths = ENV['PATH']
+dll_load_report = ""
 if AMS::IS_PLATFORM_WINDOWS
-  new_env_paths = String.new(ENV['PATH'])
-  # Append dlls path to the ENV['PATH'] variable so that msp_lib.so knows where
-  # to find the required dlls. This is only necessary on the windows side.
-  # It seems that ENV['PATH'] variable accepts paths encoded in Windows-1252
-  # format. The force_encoding('Windows-1252') doesn't work; though, unpacking
-  # from UTF-8 and repacking to ANSI prior to force-encoding does work. See this
-  # post for details:
-  # http://sketchucation.com/forums/viewtopic.php?f=323&t=56852&start=390#p601049
-  dpath = File.join(dir, ops+bit).gsub(/\//, "\\") + ';'
-  dpath = dpath.unpack('U*').pack('C*')
-  dpath.force_encoding(new_env_paths.encoding) if RUBY_VERSION !~ /1.8/
-  new_env_paths << dpath
-  ENV['PATH'] = new_env_paths
-  # It's a good practice to reset the ENV['PATH'] variable, and this is done way
-  # below, after initiating SDL libraries.
+  dll_path = File.join(dir, ops+bit)
+  dll_path.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
+  %w(libFLAC-8 libmikmod-2 libmodplug-1 libogg libvorbis libvorbisfile-3 SDL2 SDL2_mixer smpeg2 newton).each { |dll_name|
+    full_dll_path = File.join(dll_path, dll_name + '.dll')
+    full_dll_path.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
+    if File.exists?(full_dll_path)
+      dll_load_report << "#{dll_name} : #{AMS::DLL.load_library(full_dll_path)}\n"
+    else
+      dll_load_report << "#{dll_name} : missing!\n"
+    end
+  }
+  dll_path = File.join(File.dirname(__FILE__), ops+bit)
+  #~ UI.messagebox(dll_load_report)
 end
 lib_path = File.join(dir, ops+bit, ver, 'msp_lib' + ext)
 lib_path.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
@@ -67,14 +65,13 @@ unless lib_loaded
   end
 end
 unless lib_loaded
-  # Reset the ENV['PATH'] variable
-  ENV['PATH'] = orig_env_paths if AMS::IS_PLATFORM_WINDOWS
   # Raise an exception
-  msg = "An exception occurred while loading MSPhysics library. "
+  msg = "An exception occurred while loading MSPhysics #{MSPhysics::VERSION}! "
   msg << "The exception occurred due to one or more of the following reasons:\n"
   lib_errors.each { |e|
     msg << "- #{e.class}: #{e.message}\n"
   }
+  msg << "DLL Load Report:\n#{dll_load_report}\n" if AMS::IS_PLATFORM_WINDOWS
   raise(Exception, msg, caller)
 end
 
@@ -544,8 +541,6 @@ unless file_loaded?(__FILE__)
       sdl.quit
     }
   end
-  # Reset the ENV['PATH'] variable
-  ENV['PATH'] = orig_env_paths if AMS::IS_PLATFORM_WINDOWS
   # Create cursors
   path = File.join(dir, 'images/cursors')
   MSPhysics::CURSORS.keys.each { |name|

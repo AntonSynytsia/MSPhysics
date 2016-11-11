@@ -74,7 +74,7 @@ Follow these steps in case you intend to uninstall the plugin.
 
 ## Version
 
-* MSPhysics 0.9.6
+* MSPhysics 0.9.7
 * NewtonDynamics 3.14
 * SDL 2.0.5
 * SDL_Mixer 2.0.1
@@ -82,7 +82,7 @@ Follow these steps in case you intend to uninstall the plugin.
 
 ## Release Date
 
-November 4, 2016
+November 10, 2016
 
 
 ## Licence

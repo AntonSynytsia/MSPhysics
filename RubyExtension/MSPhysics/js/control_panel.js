@@ -94,6 +94,14 @@ function remove_sliders() {
   $( '#table-crs' ).empty();
 }
 
+function process_keys(e) {
+  var tag = e.target.tagName.toLowerCase();
+  if (tag != 'input' && tag != 'textarea') {
+    e.preventDefault();
+    return false;
+  }
+}
+
 $( document ).ready(function() {
   window.setTimeout(init, 10); // Timeout is needed because without it the event might not be triggered on Mac OS X.
   g_interval_timer = setInterval(function() { callback('update_note') }, 1000);
@@ -106,13 +114,18 @@ $( document ).ready(function() {
     callback('mouse_leave');
   });
 
-  window.addEventListener('keydown', function (e) {
+  /*window.addEventListener('keydown', function (e) {
     var tag = e.target.tagName.toLowerCase();
     if (tag != 'input' && tag != 'textarea') {
       e.preventDefault();
       return false;
     }
-  });
+  });*/
+  if (window.addEventListener) {
+    window.addEventListener('keydown', process_keys);
+  } else if (window.attachEvent) {
+    window.attachEvent('oneydown', process_keys);
+  }
 
 });
 
