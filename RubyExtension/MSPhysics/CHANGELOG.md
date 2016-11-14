@@ -1,7 +1,14 @@
+## 0.9.8 - November 13, 2016
+- Fixed camera follow/track commands in scenes.
+- Fixed issue with the orbit tool not activating while simulation is running.
+  Thanks to cristyan, faust07, and PituPhysics for report.
+- Fixed loading errors on Mac OS X. Thanks to Oxer for report.
+- Added help-box to the UI dialog.
+
 ## 0.9.7 - November 10, 2016
 - Fixed the incompatibility with Windows XP.
 - Fixed encoding with non-ASCII user names.
-- Fixed loading errors.
+- Fixed loading errors on Windows.
 
 ## 0.9.6 - November 4, 2016
 - Fixed encoding with non-ASCII user names.

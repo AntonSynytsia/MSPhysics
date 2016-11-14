@@ -178,10 +178,13 @@ function update_input_events() {
   // Process checkbox and radio input triggers.
   $('input[type=checkbox], input[type=radio]').on('change', function() {
     if (this.id == 'editor-read_only') {
-      window.aceEditor.setReadOnly(this.checked)
+      window.aceEditor.setReadOnly(this.checked);
     }
     else if (this.id == 'editor-print_margin') {
-      window.aceEditor.setShowPrintMargin(this.checked)
+      window.aceEditor.setShowPrintMargin(this.checked);
+    }
+    else if (this.id == 'dialog-help_box') {
+      display_help_box(this.checked);
     }
     var data = '["'+this.id+'",'+this.checked+']';
     callback('check_input_changed', data);
@@ -191,6 +194,11 @@ function update_input_events() {
   $('button').on('click', function() {
     callback('button_clicked', this.id);
   });
+}
+
+function display_help_box(state) {
+  $('.help_box').css('display', state ? 'inline-block': 'none');
+  update_size2();
 }
 
 $(document).ready( function() {
@@ -310,6 +318,7 @@ $(document).ready( function() {
     e.preventDefault();
     // Show/Hide Tabs
     $('.tabs ' + currentAttrValue).fadeIn(400).siblings().hide();
+    $('.help_box').val("");
   });
 
   $( document ).on('mouseenter', function(e) {
@@ -356,4 +365,28 @@ $(document).ready( function() {
   });
 
   update_input_events();
+
+  $('label,input,button').mouseover(function() {
+    try {
+      var p1 = this.parentElement;
+      var p2 = p1 ? p1.parentElement : null;
+
+      if (this.title != "") {
+        $('.help_box').val(this.title);
+      }
+      else if (p1 && p1.title != "") {
+        $('.help_box').val(p1.title);
+      }
+      else if (p2 && p2.title != "") {
+        $('.help_box').val(p2.title);
+      }
+      else {
+        $('.help_box').val("");
+      }
+    } catch(err) {
+      //~ alert(err);
+      $('.help_box').val("");
+    }
+  });
+
 });

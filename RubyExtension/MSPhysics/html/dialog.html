@@ -142,11 +142,17 @@
                     <td><label class="spacing_tab" for="simulation-world_scale">World Scale</label></td>
                     <td><input id="simulation-world_scale" class="custom-text numeric-input" type="text"></input></td>
                   </tr>
+                  <tr><td colspan="2"><p class="heading">Dialog Settings</p></td></tr>
+                  <tr title="Display help-box.">
+                    <td><label class="spacing_tab" for="dialog-help_box">Help Box</label></td>
+                    <td><input id="dialog-help_box" type="checkbox"></input></td>
+                  </tr>
                 </table>
               </td>
             </tr>
           </table>
           <div class="credit">Powered by <a href="http://newtondynamics.com/forum/newton.php" target="_blank">Newton Dynamics</a> by Julio Jerez</div>
+          <textarea class="help_box" wrap="on" readonly="readonly"></textarea>
         </div>
         <div id="tab2" class="tab">
           <div id="tab2-none">
@@ -354,6 +360,7 @@
             <div class="vertical_spacing"></div>
             <p>Sub groups/components are limited to a few options.</p>
           </div>
+          <textarea class="help_box" wrap="on" readonly="readonly"></textarea>
         </div>
         <div id="tab3" class="tab">
           <div id="tab3-none">
@@ -366,7 +373,7 @@
                 <tr>
                   <td><label class="expander description"><em5>Options</em5></label></td>
                   <td colspan="4"><pre class="center"><a href="http://www.rubydoc.info/github/AntonSynytsia/MSPhysics/master/file/Overview.md" target="_blank">MSPhysics</a> | <a href="http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/index" target="_blank">AMS Library</a> | <a href="http://www.sketchup.com/intl/en/developer/" target="_blank">SketchUp API</a> | <a href="ruby_core" target="_blank">Ruby Core</a></pre></td>
-                  <td colspan="2"><pre><label class="description">Entity ID: </label><input id="body-entity_id" class="labeled-text" type="text" unselectable="on" onselectstart="return false;" onmousedown="return false;" readonly></input><label class="description">Index: </label><input id="body-entity_index" class="labeled-text" type="text" unselectable="on" onselectstart="return false;" onmousedown="return false;" readonly></input></pre></td>
+                  <td colspan="2"><pre><label class="description">Entity ID: </label><input id="body-entity_id" class="labeled-text" type="text" unselectable="on" onselectstart="return false;" onmousedown="return false;" readonly="readonly"></input><label class="description">Index: </label><input id="body-entity_index" class="labeled-text" type="text" unselectable="on" onselectstart="return false;" onmousedown="return false;" readonly="readonly"></input></pre></td>
                 </tr>
               </table>
               <div class="content spacing_tab">
@@ -1250,6 +1257,7 @@
               </div>
             </div>
           </div>
+          <textarea class="help_box" wrap="on" readonly="readonly"></textarea>
         </div>
 
         <div id="tab5" class="tab">
@@ -1304,6 +1312,7 @@
             </ul>
           </div>
           <div class="credit">Powered by <a href="https://www.libsdl.org/" target="_blank">SDL</a></div>
+          <textarea class="help_box" wrap="on" readonly="readonly"></textarea>
         </div>
 
     </div>

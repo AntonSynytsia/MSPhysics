@@ -8,6 +8,7 @@ module MSPhysics
     DEFAULT_WRAP = 'free'
     DEFAULT_PRINT_MARGIN = true
     DEFAULT_EDITOR_SIZE = [800,600]
+    DEFAULT_DIALOG_HELP_BOX = true
 
     @dialog = nil
     @handle = nil
@@ -33,6 +34,7 @@ module MSPhysics
     @geared_joints = {}
     @selection_observer = nil
     @border_size = [0,0]
+    @dialog_help_box = DEFAULT_DIALOG_HELP_BOX
 
     class << self
 
@@ -97,6 +99,8 @@ module MSPhysics
         cmd << "$('#simulation-material_thickness').val('#{ format_value(settings.material_thickness * 32.0, @precision) }');"
         cmd << "$('#simulation-update_rate').val('#{settings.update_rate}');"
         cmd << "$('#simulation-world_scale').val('#{ format_value(settings.world_scale, @precision) }');"
+        cmd << "$('#dialog-help_box').prop('checked', #{ @dialog_help_box });"
+        cmd << "display_help_box(#{@dialog_help_box});"
         execute_js(cmd)
       end
 
@@ -1042,6 +1046,10 @@ module MSPhysics
               elsif attr == 'read_only'
                 @editor_read_only = value
               end
+            when 'dialog'
+              if attr == 'help_box'
+                @dialog_help_box = value
+              end
             when 'joint', *MSPhysics::JOINT_NAMES
               if @selected_joint && @selected_joint.valid?
                 if dict == 'joint' && attr =~ /constraint_type/i
@@ -1523,11 +1531,11 @@ module MSPhysics
                 end
               end
             when 'editor'
-              if id == 'editor-theme'
+              if attr == 'theme'
                 @editor_theme = value.to_s
-              elsif id == 'editor-font'
+              elsif attr == 'font'
                 @editor_font = value.to_i
-              elsif id == 'editor-wrap'
+              elsif attr == 'wrap'
                 @editor_wrap = value.to_s
               end
             when 'joint', *MSPhysics::JOINT_NAMES
@@ -1779,6 +1787,7 @@ module MSPhysics
         rescue Exception => e
           @editor_size = DEFAULT_EDITOR_SIZE.dup
         end
+        @dialog_help_box = Sketchup.read_default('MSPhysics', 'Dialog Help Box', DEFAULT_DIALOG_HELP_BOX) ? true : false
       end
 
       # Save editor settings into registry.
@@ -1788,6 +1797,7 @@ module MSPhysics
         Sketchup.write_default('MSPhysics', 'Editor Wrap', @editor_wrap.to_s)
         Sketchup.write_default('MSPhysics', 'Editor Print Margin', @editor_print_margin)
         Sketchup.write_default('MSPhysics', 'Editor Size', @editor_size.inspect)
+        Sketchup.write_default('MSPhysics', 'Dialog Help Box', @dialog_help_box)
       end
 
       # @!visibility private

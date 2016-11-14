@@ -25,21 +25,21 @@
 #   - MSPhysics Toolbars
 #
 # Compatibility and Requirements
-#   - Microsoft Windows XP or later / Mac OS X 10.5+
+#   - Microsoft Windows XP or later / Mac OS X 10.6+
 #   - SketchUp 6 or later. SU2016 64bit is recommended!
 #   - AMS Library 3.4.0+
 #
 # Version
-#   - MSPhysics 0.9.7
+#   - MSPhysics 0.9.8
 #   - NewtonDynamics 3.14
 #   - SDL 2.0.5
 #   - SDL_mixer 2.0.1
 #
 # Release Date
-#   November 10, 2016
+#   November 13, 2016
 #
 # Licence
-#   MIT © 2015-2016, Anton Synytsia
+#   MIT © 2014-2016, Anton Synytsia
 #
 # Credits
 #   - Julio Jerez for the NewtonDynamics physics engine.
@@ -72,8 +72,8 @@ if load_me
   module MSPhysics
 
     NAME         = 'MSPhysics'.freeze
-    VERSION      = '0.9.7'.freeze
-    RELEASE_DATE = 'November 10, 2016'.freeze
+    VERSION      = '0.9.8'.freeze
+    RELEASE_DATE = 'November 13, 2016'.freeze
 
     # Create the extension.
     @extension = SketchupExtension.new(NAME, 'MSPhysics/main.rb')
@@ -83,7 +83,7 @@ if load_me
     # Attach some nice info.
     @extension.description = desc
     @extension.version     = VERSION
-    @extension.copyright   = 'Anton Synytsia © 2015-2016'
+    @extension.copyright   = 'Anton Synytsia © 2014-2016'
     @extension.creator     = 'Anton Synytsia (anton.synytsia@gmail.com)'
 
     # Register and load the extension on start-up.

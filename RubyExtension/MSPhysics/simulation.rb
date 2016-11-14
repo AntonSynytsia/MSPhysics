@@ -2780,7 +2780,8 @@ module MSPhysics
         desc = page.description.downcase
         sentences = desc.split(/\./)
         sentences.each { |sentence|
-          words = sentence.split(/\s/)
+          words = sentence.strip.split(/\s/)
+          words.reject! { |word| word.empty? }
           if words.size >= 3 && words[0] == 'camera'
             if words[1] == 'follow'
               ent = find_group_by_name(words[2])
@@ -3174,7 +3175,6 @@ module MSPhysics
       MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
     end
 
-
     def onRButtonDown(flags, x, y, view)
       MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
     end
@@ -3187,10 +3187,10 @@ module MSPhysics
       MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
     end
 
-
-    def onMButtonDown(flags, x, y, view)
-      MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
-    end
+    # Implementing this will disable the orbit tool, which is not what we want.
+    #~ def onMButtonDown(flags, x, y, view)
+      #~ MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS
+    #~ end
 
     def onMButtonDoubleClick(flags, x, y, view)
       MSPhysics::ControlPanel.bring_to_front unless AMS::IS_PLATFORM_WINDOWS

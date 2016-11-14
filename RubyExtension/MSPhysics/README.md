@@ -32,7 +32,7 @@ As well as to those who contributed in making the project a reality.
 
 ## Compatibility and Requirements
 
-* Microsoft Windows XP or later / Mac OS X 10.5+
+* Microsoft Windows XP or later / Mac OS X 10.6+
 * SketchUp 6 or later. SU2016 64bit is recommended!
 * [AMS_Library 3.4.0+](http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835)
 
@@ -74,7 +74,7 @@ Follow these steps in case you intend to uninstall the plugin.
 
 ## Version
 
-* MSPhysics 0.9.7
+* MSPhysics 0.9.8
 * NewtonDynamics 3.14
 * SDL 2.0.5
 * SDL_Mixer 2.0.1
@@ -82,12 +82,12 @@ Follow these steps in case you intend to uninstall the plugin.
 
 ## Release Date
 
-November 10, 2016
+November 13, 2016
 
 
 ## Licence
 
-[MIT](http://opensource.org/licenses/MIT) © 2015-2016, Anton Synytsia
+[MIT](http://opensource.org/licenses/MIT) © 2014-2016, Anton Synytsia
 
 
 ## Credits

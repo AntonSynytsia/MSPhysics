@@ -1410,7 +1410,7 @@ unless file_loaded?(__FILE__)
   plugin_menu.add_item('About') {
     msg = "MSPhysics #{MSPhysics::VERSION} -- #{MSPhysics::RELEASE_DATE}\n"
     msg << "Powered by the Newton Dynamics #{MSPhysics::Newton.get_version} physics SDK by Julio Jerez.\n"
-    msg << "Copyright MIT © 2015-2016, Anton Synytsia.\n\n"
+    msg << "Copyright MIT © 2014-2016, Anton Synytsia.\n\n"
     msg << "Credits to:\n"
     msg << "  - Chris Phillips for ideas from SketchyPhysics.\n"
     msg << "  - István Nagy (PituPhysics) and Faust07 for testing.\n"
