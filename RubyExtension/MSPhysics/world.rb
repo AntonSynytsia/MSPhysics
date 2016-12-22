@@ -93,11 +93,9 @@ module MSPhysics
     # Update world by a time step in seconds.
     # @note The smaller the time step the more accurate the simulation will be.
     # @param [Numeric] timestep This value is clamped between 1/30.0 and 1/1200.0.
-    # @param [Fixnum] update_rate Number of times to update the world, a fixed
-    #   value between 1 and 100.
-    # @return [Numeric] Update time step.
-    def update(timestep, update_rate = 1)
-      MSPhysics::Newton::World.update(@address, timestep, update_rate)
+    # @return [Numeric] The update time step.
+    def update(timestep)
+      MSPhysics::Newton::World.update(@address, timestep)
     end
 
     # Get all bodies in the world.
@@ -179,21 +177,14 @@ module MSPhysics
     end
 
     # Get world solver model.
-    # * 0 - Exact solver. Exact solver model is used when precision in more
-    #   important than speed.
-    # * n - Iterative solver. Iterative solver model is used when speed is
-    #   more important than precision.
-    # @return [Fixnum]
+    # @return [Fixnum] Number of passes or zero if using exact.
     def solver_model
       MSPhysics::Newton::World.get_solver_model(@address)
     end
 
     # Set world solver model.
-    # * 0 - Exact solver. Exact solver model is used when precision in more
-    #   important than speed.
-    # * n - Iterative solver. Iterative solver model is used when speed is
-    #   more important than precision.
-    # @param [Fixnum] model
+    # @param [Fixnum] model Number of passes. The higher the value, the more
+    #   accurate the simulation will be. Pass zero to use exact solver.
     def solver_model=(model)
       MSPhysics::Newton::World.set_solver_model(@address, model.to_i)
     end

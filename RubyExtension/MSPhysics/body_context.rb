@@ -16,6 +16,9 @@ module MSPhysics
         :onUpdate               => nil,
         :onPreUpdate            => nil,
         :onPostUpdate           => nil,
+        :onTick                 => nil,
+        :onPreFrame             => nil,
+        :onPostFrame            => nil,
         :onEnd                  => nil,
         :onDraw                 => nil,
         :onPlay                 => nil,
@@ -48,6 +51,14 @@ module MSPhysics
         :onMouseWheelRotate     => nil,
         :onMouseWheelTilt       => nil
       }
+    end
+
+    # @api private
+    # @param [String] script
+    # @param [String] script_name
+    # @param [Fixnum] line
+    def eval_script(script, script_name, line)
+      eval(script, binding, script_name, line)
     end
 
     # Get the associated body.
@@ -153,34 +164,62 @@ module MSPhysics
 
     # Assign a block of code to the onStart event.
     # @yield This event is triggered once when simulation starts, hence when the
-    #   frame is zero. No transformation updates are made at this point.
+    #   frame is zero. No world updates are made at this point.
     def onStart(&block)
       set_event_proc(:onStart, block)
     end
 
     # Assign a block of code to the onUpdate event.
-    # @yield This event is triggered every frame after the simulation starts,
-    #   hence when the frame is greater than zero. Specifically, it is called
-    #   after the world update.
+    # @yield This event is triggered every time the world is updated. For
+    #   instance, if the world update rate is three, this event will be
+    #   triggered three times per frame. For performance purposes, group
+    #   transformations are not updated at this point. Only the
+    #   transformations for the bodies referencing the groups are updated.
+    #   This event is suitable for applying forces and velocities.
     def onUpdate(&block)
       set_event_proc(:onUpdate, block)
     end
 
     # Assign a block of code to the onPreUpdate event.
-    # @yield This event is triggered every frame prior to the world update.
+    # @yield This event is triggered every time before the world is updated,
+    #   particularly before the #{onUpdate} event. Just like #{onUpdate}, this
+    #   event can be triggered multiple times per frame.
     def onPreUpdate(&block)
       set_event_proc(:onPreUpdate, block)
     end
 
     # Assign a block of code to the onUpdate event.
-    # @yield This event is triggered every frame after the {#onUpdate} event is
-    #   called.
+    # @yield This event is triggered every time after the world is updated,
+    #   particularly after the #{onUpdate} event. Just like #{onUpdate}, this
+    #   event can be triggered multiple times per frame.
     def onPostUpdate(&block)
       set_event_proc(:onPostUpdate, block)
     end
 
+    # Assign a block of code to the onTick event.
+    # @yield This event is triggered every time the frame is changed,
+    #   specifically after all the world updates of the frame take place and
+    #   after group transformations are updated.
+    def onTick(&block)
+      set_event_proc(:onTick, block)
+    end
+
+    # Assign a block of code to the onPreFrame event.
+    # @yield This event is triggered every time before the frame is changed,
+    #   particularly before the #{onTick} event.
+    def onPreFrame(&block)
+      set_event_proc(:onPreFrame, block)
+    end
+
+    # Assign a block of code to the onPostFrame event.
+    # @yield This event is triggered every time after the frame is changed,
+    #   particularly after the #{onTick} event.
+    def onPostFrame(&block)
+      set_event_proc(:onPostFrame, block)
+    end
+
     # Assign a block of code to the onEnd event.
-    # @yield This event is triggered once when simulation ends; right before the
+    # @yield This event is triggered when simulation ends, right before the
     #   bodies are moved back to their starting transformation.
     def onEnd(&block)
       set_event_proc(:onEnd, block)
@@ -255,7 +294,7 @@ module MSPhysics
 
     # Assign a block of code to the onClick event.
     # @yield This event is triggered when the body is clicked.
-    # @yieldparam [Geom::Point3d] pos Clicked position in global space.
+    # @yieldparam [Geom::Point3d] point Clicked position in global space.
     def onClick(&block)
       set_event_proc(:onClick, block)
     end
@@ -281,6 +320,7 @@ module MSPhysics
     # @yieldparam [Fixnum] val Virtual key constant value.
     # @yieldparam [String] char Actual key character.
     # @note Windows only!
+    # @see http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/file/Keyboard.md Virtual-Key Names
     def onKeyDown(&block)
       set_event_proc(:onKeyDown, block)
     end
@@ -291,6 +331,7 @@ module MSPhysics
     # @yieldparam [Fixnum] val Virtual key constant value.
     # @yieldparam [String] char Actual key character.
     # @note Windows only!
+    # @see http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/file/Keyboard.md Virtual-Key Names
     def onKeyUp(&block)
       set_event_proc(:onKeyUp, block)
     end
@@ -301,6 +342,7 @@ module MSPhysics
     # @yieldparam [Fixnum] val Virtual key constant value.
     # @yieldparam [String] char Actual key character.
     # @note Windows only!
+    # @see http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/file/Keyboard.md Virtual-Key Names
     def onKeyExtended(&block)
       set_event_proc(:onKeyExtended, block)
     end

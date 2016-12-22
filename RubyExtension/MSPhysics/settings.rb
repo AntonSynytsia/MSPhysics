@@ -95,15 +95,16 @@ module MSPhysics
       end
 
       # Get simulation solver model.
-      # @return [Fixnum] 0 - exact, n - iterative.
+      # @return [Fixnum] Number of passes.
       def solver_model
         default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:solver_model]
         attr = Sketchup.active_model.get_attribute('MSPhysics', 'Solver Model', default)
-        return attr.to_i.abs
+        val = attr.to_i.abs
+        return val
       end
 
       # Set simulation solver model.
-      # @param [Fixnum] model 0 - exact, n - iterative.
+      # @param [Fixnum] model Number of passes.
       def solver_model=(model)
         model = model.to_i.abs
         Sketchup.active_model.set_attribute('MSPhysics', 'Solver Model', model)
@@ -289,7 +290,7 @@ module MSPhysics
       def apply_settings
         return false unless MSPhysics::Simulation.active?
         self.continuous_collision_check_enabled = self.continuous_collision_check_enabled?
-        self.full_screen_mode_enabled = self.full_screen_mode_enabled?
+        self.full_screen_mode_enabled = true if self.full_screen_mode_enabled?
         self.game_mode_enabled = self.game_mode_enabled?
         self.hide_joint_layer_enabled = true if self.hide_joint_layer_enabled?
         self.undo_on_end_enabled = self.undo_on_end_enabled?

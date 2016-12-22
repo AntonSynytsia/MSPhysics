@@ -10,17 +10,31 @@
 ##Overview
 
 MSPhysics is a real-time physics simulation plugin for SketchUp, similar to
-SketchyPhysics. Unlike SketchyPhysics, MSPhsyics is a written completely from
-scratch, integrating the latest NewtonDynamics physics SDK. The differences
-between the two is that MSPhysics is a lot faster, has a far more advanced
-scripting API, and comes with a reliable Replay animation tool. Furthermore
-MSPhysics uses AMS Library, which on the Windows side, allows taking control
-over user input, such as mouse and keyboard, and switching SketchUp fullscreen.
-With such advantage, creating FPS type games in MSPhysics, without interference
-of various keyboard/mouse shortcuts, is now a possibility. At the moment, the
-project is under development, particularly within the Wiki branch. All in all
-huge credit goes to Julio Jerez for writing the NewtonDynamics physics engine.
-As well as to those who contributed in making the project a reality.
+SketchyPhysics. Unlike SketchyPhysics, MSPhsyics is written completely from
+scratch, integrating the latest NewtonDynamics physics SDK. The difference
+between the two is that MSPhysics is significantly faster, has a more advanced
+scripting API, and comes with a reliable Replay animation tool, which allows
+recording simulation and exporting to SkIndigo, KerkyThea, and a sequence of
+images.
+
+Another difference between MSPhysics and SketchyPhysics is having advantage over
+user input. In SketchyPhysics there was a struggle in creating keyboard and
+mouse controlled games. Whenever simulation would run, there had to be an active
+control panel window that would redirect user input, that is to prevent the
+interference of SketchUp's keyboard and mouse shortcuts. In MSPhysics, however,
+the control panel is not necessary. MSPhysics utilizes AMS Library, which on the
+windows side, allows taking control over user input and switching SketchUp
+fullscreen. Imagine playing FPS games in SketchUp, in fullscreen, without having
+various SketchUp commands taking control over simulation. All that is possible
+with MSPhysics.
+
+At the moment, the project is under development. Various optimizations,
+improvements, and bug fixes are made to enhance stability. Once MSPhysics gets
+to a stable level, that is version 1.0.0, the focus will shift toward making
+tutorials and enriching the Wiki branch.
+
+Huge credit goes to Julio Jerez for writing the NewtonDynamics physics engine.
+As well as, to those who contributed in making the project a reality.
 
 
 ## Access
@@ -74,7 +88,7 @@ Follow these steps in case you intend to uninstall the plugin.
 
 ## Version
 
-* MSPhysics 0.9.8
+* MSPhysics 0.9.9
 * NewtonDynamics 3.14
 * SDL 2.0.5
 * SDL_Mixer 2.0.1
@@ -82,7 +96,7 @@ Follow these steps in case you intend to uninstall the plugin.
 
 ## Release Date
 
-November 13, 2016
+December 22, 2016
 
 
 ## Licence
@@ -92,6 +106,10 @@ November 13, 2016
 
 ## Credits
 
-* **Julio Jerez** for the [NewtonDynamics](http://newtondynamics.com/forum/index.php) physics SDK.
+* **Julio Jerez** for the [NewtonDynamics](http://newtondynamics.com/forum/index.php) physics engine.
 * **Chris Phillips** for ideas from [SketchyPhysics](https://code.google.com/p/sketchyphysics/).
-* **István Nagy (PituPhysics)** and **Faust07** for testing.
+* **István Nagy (PituPhysics)**, **Faust07**, and many others for testing.
+
+## Author
+
+Anton Synytsia

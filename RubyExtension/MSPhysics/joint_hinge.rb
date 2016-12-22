@@ -6,10 +6,11 @@ module MSPhysics
     DEFAULT_MIN = -180.0.degrees
     DEFAULT_MAX = 180.0.degrees
     DEFAULT_LIMITS_ENABLED = false
-    DEFAULT_STRONG_MODE_ENABLED = true
     DEFAULT_FRICTION = 0.0
     DEFAULT_ACCEL = 40.0
     DEFAULT_DAMP = 10.0
+    DEFAULT_STRENGTH = 0.98
+    DEFAULT_HOOKES_ENABLED = false
     DEFAULT_ROTATE_BACK_ENABLED = false
     DEFAULT_START_ANGLE = 0.0.degrees
     DEFAULT_CONTROLLER = 1.0
@@ -27,10 +28,11 @@ module MSPhysics
       MSPhysics::Newton::Hinge.set_min(@address, DEFAULT_MIN)
       MSPhysics::Newton::Hinge.set_max(@address, DEFAULT_MAX)
       MSPhysics::Newton::Hinge.enable_limits(@address, DEFAULT_LIMITS_ENABLED)
-      MSPhysics::Newton::Hinge.enable_strong_mode(@address, DEFAULT_STRONG_MODE_ENABLED)
       MSPhysics::Newton::Hinge.set_friction(@address, DEFAULT_FRICTION)
       MSPhysics::Newton::Hinge.set_accel(@address, DEFAULT_ACCEL)
       MSPhysics::Newton::Hinge.set_damp(@address, DEFAULT_DAMP)
+      MSPhysics::Newton::Hinge.set_strength(@address, DEFAULT_STRENGTH)
+      MSPhysics::Newton::Hinge.set_mode(@address, DEFAULT_HOOKES_ENABLED ? 1 : 0)
       MSPhysics::Newton::Hinge.enable_rotate_back(@address, DEFAULT_ROTATE_BACK_ENABLED)
       MSPhysics::Newton::Hinge.set_start_angle(@address, DEFAULT_START_ANGLE)
       MSPhysics::Newton::Hinge.set_controller(@address, DEFAULT_CONTROLLER)
@@ -90,22 +92,8 @@ module MSPhysics
       MSPhysics::Newton::Hinge.enable_limits(@address, state)
     end
 
-    # Determine whether strong mode for angular spring is enabled.
-    # @note This feature has an effect only if "rotate-back" is enabled.
-    # @return [Boolean]
-    def strong_mode_enabled?
-      MSPhysics::Newton::Hinge.strong_mode_enabled?(@address)
-    end
-
-    # Enable/disable strong mode for angular spring.
-    # @note This feature has an effect only if "rotate-back" is enabled.
-    # @param [Boolean] state
-    def strong_mode_enabled=(state)
-      MSPhysics::Newton::Hinge.enable_strong_mode(@address, state)
-    end
-
     # Get rotational friction.
-    # @note This feature has an effect only if "rotate-back" is disabled.
+    # @note This option has an effect only if "rotate-back" is disabled.
     # @note The actual friction is <tt>friction * controller</tt>.
     # @return [Numeric] A value greater than or equal to zero.
     def friction
@@ -113,46 +101,81 @@ module MSPhysics
     end
 
     # Set rotational friction.
-    # @note This feature has an effect only if "rotate-back" is disabled.
+    # @note This option has an effect only if "rotate-back" is disabled.
     # @note The actual friction is <tt>friction * controller</tt>.
     # @param [Numeric] value A value greater than or equal to zero.
     def friction=(value)
       MSPhysics::Newton::Hinge.set_friction(@address, value)
     end
 
-    # Get rotational acceleration.
-    # @note Higher acceleration makes rotation faster.
-    # @note This feature has an effect only if "rotate back" is enabled.
-    # @return [Numeric] A value greater than or equal to zero.
+    # Get rotational spring oscillation acceleration.
+    # @note This option has an effect only if "rotate back" is enabled.
+    # @return [Numeric] A spring constant in kg/s² or spring accel in 1/s²,
+    #   depending on the mode; a value greater than or equal to zero.
     def accel
       MSPhysics::Newton::Hinge.get_accel(@address)
     end
 
-    # Set rotational acceleration.
-    # @note Higher acceleration makes rotation faster.
-    # @note This feature has an effect only if "rotate back" is enabled.
-    # @param [Numeric] value A value greater than or equal to zero.
+    # Set rotational spring oscillation acceleration.
+    # @note This option has an effect only if "rotate back" is enabled.
+    # @param [Numeric] value A spring constant in kg/s² or spring accel in 1/s²,
+    #   depending on the mode; a value greater than or equal to zero.
     def accel=(value)
       MSPhysics::Newton::Hinge.set_accel(@address, value)
     end
 
-    # Get rotational damper.
-    # @note Higher damper makes rotation stronger.
-    # @note This feature has an effect only if "rotate back" is enabled.
-    # @return [Numeric] A value greater than or equal to zero.
+    # Get rotational spring oscillation drag.
+    # @note This option has an effect only if "rotate back" is enabled.
+    # @return [Numeric] A spring drag coefficient in kg/s or spring damp in 1/s,
+    #   depending on the mode; a value greater than or equal to zero.
     def damp
       MSPhysics::Newton::Hinge.get_damp(@address)
     end
 
-    # Set rotational damper.
-    # @note Higher damper makes rotation stronger.
-    # @note This feature has an effect only if "rotate back" is enabled.
-    # @param [Numeric] value A value greater than or equal to zero.
+    # Set rotational spring oscillation drag.
+    # @note This option has an effect only if "rotate back" is enabled.
+    # @param [Numeric] value A spring drag coefficient in kg/s or spring damp
+    #    in 1/s, depending on the mode; a value greater than or equal to zero.
     def damp=(value)
       MSPhysics::Newton::Hinge.set_damp(@address, value)
     end
 
-    # Determine whether a feature to rotate back to a starting angle is enabled.
+    # Get rotational spring strength coefficient.
+    # @note This option has an effect only if "rotate back" is enabled and mode
+    #   is set to zero.
+    # @return [Numeric] A value between 0.0 and 1.0.
+    def strength
+      MSPhysics::Newton::Hinge.get_strength(@address)
+    end
+
+    # Set rotational spring strength coefficient.
+    # @note This option has an effect only if "rotate back" is enabled and mode
+    #   is set to zero.
+    # @param [Numeric] value A value between 0.0 and 1.0.
+    def strength=(value)
+      MSPhysics::Newton::Hinge.set_strength(@address, value)
+    end
+
+    # Get rotational spring mode.
+    # @note This option has an effect only if "rotate back" is enabled.
+    # @return [Fixnum]
+    #   * 0 - if using standard accel/damp/strength.
+    #   * 1 - if using Hooke's spring constant and spring damping coefficient.
+    def mode
+      MSPhysics::Newton::Hinge.get_mode(@address)
+    end
+
+    # Set rotational spring mode.
+    # @note This option has an effect only if "rotate back" is enabled.
+    # @param [Fixnum] value
+    #   * 0 - use standard accel/damp/strength.
+    #   * 1 - use Hooke's spring constant and spring damping coefficient.
+    def mode=(value)
+      MSPhysics::Newton::Hinge.set_mode(@address, value)
+    end
+
+    # Determine whether the option to rotate back to a starting angle is
+    # enabled.
     # @return [Boolean]
     def rotate_back_enabled?
       MSPhysics::Newton::Hinge.rotate_back_enabled?(@address)

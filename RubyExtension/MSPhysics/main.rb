@@ -1,23 +1,11 @@
 require 'MSPhysics.rb'
 
-unless defined?(MSPhysics)
-  msg = 'You cannot load MSPhysics extension until SketchUp meets all the plugin compatibility demands!'
-  raise(LoadError, msg, caller)
-end
-
 dir = File.dirname(__FILE__)
 dir.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
 ops = AMS::IS_PLATFORM_WINDOWS ? 'win' : 'osx'
 bit = (Sketchup.respond_to?('is_64bit?') && Sketchup.is_64bit?) ? '64' : '32'
 ver = RUBY_VERSION[0..2]
 ext = AMS::IS_PLATFORM_WINDOWS ? '.so' : '.bundle'
-
-# Load external libraries
-begin
-  require 'zlib'
-rescue LoadError => e
-  require File.join(dir, 'external', 'zlib')
-end
 
 # Load MSPhysics Library
 dll_load_report = ""
@@ -49,20 +37,6 @@ if File.exists?(lib_path)
   end
 else
   lib_errors << LoadError.new("MSPhysics library file, \"#{lib_path}\", is missing!")
-end
-unless lib_loaded
-  lib_path_no_sdl = File.join(dir, ops+bit, ver, 'msp_lib_no_sdl' + ext)
-  lib_path_no_sdl.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
-  if File.exists?(lib_path_no_sdl)
-    begin
-      require lib_path_no_sdl
-      lib_loaded = true
-    rescue Exception => e
-      lib_errors << e
-    end
-  else
-    lib_errors << LoadError.new("MSPhysics library file, \"#{lib_path_no_sdl}\", is missing!")
-  end
 end
 unless lib_loaded
   # Raise an exception
@@ -101,6 +75,7 @@ require File.join(dir, 'joint_up_vector.rb')
 require File.join(dir, 'joint_fixed.rb')
 require File.join(dir, 'joint_curvy_slider.rb')
 require File.join(dir, 'joint_curvy_piston.rb')
+require File.join(dir, 'joint_plane.rb')
 require File.join(dir, 'djoint_linear_gear.rb')
 require File.join(dir, 'djoint_angular_gear.rb')
 require File.join(dir, 'djoint_rack_and_pinion.rb')
@@ -117,13 +92,13 @@ require File.join(dir, 'scene_data.rb')
 module MSPhysics
 
   DEFAULT_SIMULATION_SETTINGS = {
-    :solver_model           => 8,
+    :solver_model           => 16,
     :update_rate            => 2,
     :update_timestep        => 1/60.0,
-    :gravity                => [0.0, 0.0, -5.0],
-    :material_thickness     => 0.0001,
+    :gravity                => Geom::Vector3d.new(0.0, 0.0, -9.801),
+    :material_thickness     => 0.001,
     :contact_merge_tolerance=> 0.001,
-    :world_scale            => 10
+    :world_scale            => 9
   }
 
   DEFAULT_BODY_SETTINGS = {
@@ -132,7 +107,7 @@ module MSPhysics
     :density                => 700,
     :mass                   => 1.0,
     :static_friction        => 0.90,
-    :dynamic_friction       => 0.50,
+    :kinetic_friction       => 0.50,
     :enable_friction        => true,
     :elasticity             => 0.40,
     :softness               => 0.10,
@@ -211,7 +186,8 @@ module MSPhysics
     10 => 'universal',
     11 => 'fixed',
     12 => 'curvy_slider',
-    13 => 'curvy_piston'
+    13 => 'curvy_piston',
+    14 => 'plane'
   }.freeze
 
   DOUBLE_JOINT_TYPES = {
@@ -455,6 +431,7 @@ module MSPhysics
 
     # Displays MSPhysics version text.
     # @param [Boolean] wrap_op Whether to wrap in operation.
+    # @return [Boolean] Whether the user chose to continue running.
     def verify_version(wrap_op = true)
       model = Sketchup.active_model
       mvers = model.get_attribute('MSPhysics', 'Version')
@@ -463,10 +440,9 @@ module MSPhysics
       if mvers.is_a?(String)
         mver = mvers.gsub(/\./, '').to_i
         if mver == cver
-          return
+          return true
         elsif mver > cver
-          ::UI.messagebox("This model was created with MSPhysics #{mvers}. Your version is #{cvers}. Using an outdated version may result in improper behaviour!")
-          return
+          return false if ::UI.messagebox("This model was created with MSPhysics #{mvers}. Your version is #{cvers}. Using an outdated version may result in improper behaviour! Would you like to continue?", MB_YESNO) == IDNO
         end
       end
       te = nil
@@ -478,12 +454,13 @@ module MSPhysics
       }
       model.start_operation('Utilizing Version') if wrap_op
       if te
-        te.text = "Requires MSPhysics #{cvers}+ !\n#{te.text}"
+        te.text = "Created with MSPhysics #{cvers}\n#{te.text}"
       else
-        te = add_watermark_text(10, 10, "Requires MSPhysics #{cvers}+ !", 'Version Text')
+        te = add_watermark_text(10, 10, "Created with MSPhysics #{cvers}", 'Version Text')
       end
       model.set_attribute('MSPhysics', 'Version', cvers)
       model.commit_operation if wrap_op
+      true
     end
 
     private
@@ -526,21 +503,19 @@ end # module MSPhysics
 
 unless file_loaded?(__FILE__)
   # Setup audio
-  if MSPhysics.sdl_used?
-    sdl = MSPhysics::SDL
-    mix = MSPhysics::Mixer
-    sdl.init(sdl::INIT_AUDIO | sdl::INIT_JOYSTICK | sdl::INIT_EVENTS)
-    mix.init(mix::INIT_SUPPORTED)
-    mix.open_audio(22050, mix::DEFAULT_FORMAT, 2, 1024)
-    mix.allocate_channels(16)
-    Kernel.at_exit {
-      MSPhysics::Music.destroy_all
-      MSPhysics::Sound.destroy_all
-      mix.close_audio
-      mix.quit
-      sdl.quit
-    }
-  end
+  sdl = MSPhysics::SDL
+  mix = MSPhysics::Mixer
+  sdl.init(sdl::INIT_AUDIO | sdl::INIT_JOYSTICK | sdl::INIT_EVENTS)
+  mix.init(mix::INIT_SUPPORTED)
+  mix.open_audio(22050, mix::DEFAULT_FORMAT, 2, 1024)
+  mix.allocate_channels(16)
+  Kernel.at_exit {
+    MSPhysics::Music.destroy_all
+    MSPhysics::Sound.destroy_all
+    mix.close_audio
+    mix.quit
+    sdl.quit
+  }
   # Create cursors
   path = File.join(dir, 'images/cursors')
   MSPhysics::CURSORS.keys.each { |name|
@@ -548,17 +523,14 @@ unless file_loaded?(__FILE__)
     MSPhysics::CURSORS[name] = UI.create_cursor(File.join(path, name.to_s + '.png'), pt[0], pt[1])
   }
   # Initialize stuff
-  #t = UI.start_timer(1, false) {
-    #UI.stop_timer(t)
-    MSPhysics::Dialog.init
-    MSPhysics::Replay.init
-  #}
+  MSPhysics::Dialog.init
+  MSPhysics::Replay.init
 
   # Create some contact materials
   # Coefficients are defined from material to material contacts. Material to
   # another material coefficients are automatically calculated by averaging out
   # the coefficients of both.
-  # [ name, density (kg/m^3), static friction, dynamic friction, elasticity, softness ]
+  # [ name, density (kg/m^3), static friction, kinetic friction, elasticity, softness ]
   # Many coefficient values are estimated, averaged up, made up, and not accurate.
   mats = [
     ['Aluminium', 2700, 0.42, 0.34, 0.30, 0.01],
@@ -621,8 +593,7 @@ unless file_loaded?(__FILE__)
     if  sim.active?
       sim.instance.toggle_play
     else
-      MSPhysics.verify_version
-      sim.start(false)
+      sim.start(false) if MSPhysics.verify_version
     end
   }
   cmd.set_validation_proc {
@@ -662,8 +633,7 @@ unless file_loaded?(__FILE__)
     if  sim.active?
       sim.instance.toggle_play
     else
-      MSPhysics.verify_version
-      sim.start(true)
+      sim.start(true) if MSPhysics.verify_version
     end
   }
   cmd.set_validation_proc {
@@ -1007,7 +977,7 @@ unless file_loaded?(__FILE__)
         item = mat_menu.add_item(default_mat) {
           op = 'MSPhysics Body - Change Material'
           Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
-          ['Material', 'Density', 'Static Friction', 'Dynamic Friction', 'Enable Friction', 'Elasticity', 'Softness'].each { |option|
+          ['Material', 'Density', 'Static Friction', 'Kinetic Friction', 'Enable Friction', 'Elasticity', 'Softness'].each { |option|
             MSPhysics.delete_attribute(bodies, 'MSPhysics Body', option)
           }
           model.commit_operation
@@ -1035,7 +1005,7 @@ unless file_loaded?(__FILE__)
             MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Material', material.name)
             MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Density', material.density)
             MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Static Friction', material.static_friction)
-            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Dynamic Friction', material.dynamic_friction)
+            MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Kinetic Friction', material.kinetic_friction)
             MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Enable Friction', true)
             MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Elasticity', material.elasticity)
             MSPhysics.set_attribute(bodies, 'MSPhysics Body', 'Softness', material.softness)
@@ -1136,19 +1106,6 @@ unless file_loaded?(__FILE__)
           model.commit_operation
         }
       end
-      joint_type_menu = joint_menu.add_submenu('Type')
-      %w(Standard Flexible Robust).each { |jname|
-        jtype = jname == 'Robust' ? 2 : (jname == 'Flexible' ? 1 : 0)
-        item = joint_type_menu.add_item(jname) {
-          op = 'MSPhysics Joint - Type'
-          Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
-          MSPhysics.set_attribute(joints, 'MSPhysics Joint', 'Constraint Type', jtype)
-          model.commit_operation
-        }
-        joint_type_menu.set_validation_proc(item) {
-          MSPhysics.get_attribute(joints, 'MSPhysics Joint', 'Constraint Type', MSPhysics::Joint::DEFAULT_CONSTRAINT_TYPE) == jtype ? MF_CHECKED : MF_UNCHECKED
-        }
-      }
       item = joint_menu.add_item('Connected Collide') {
         op = 'MSPhysics Joint - Make Same ID'
         Sketchup.version.to_i > 6 ? model.start_operation(op, true) : model.start_operation(op)
@@ -1156,8 +1113,8 @@ unless file_loaded?(__FILE__)
         MSPhysics.set_attribute(joints, 'MSPhysics Joint', 'Bodies Collidable', !state)
         model.commit_operation
       }
-      joint_type_menu.set_validation_proc(item) {
-        MSPhysics.get_attribute(joints, 'MSPhysics Joint', 'Bodies Collidable', MSPhysics::Joint::DEFAULT_CONSTRAINT_TYPE) ? MF_CHECKED : MF_UNCHECKED
+      joint_menu.set_validation_proc(item) {
+        MSPhysics.get_attribute(joints, 'MSPhysics Joint', 'Bodies Collidable', MSPhysics::Joint::DEFAULT_BODIES_COLLIDABLE) ? MF_CHECKED : MF_UNCHECKED
       }
       joint_menu.add_item('Reset Properties') {
         op = 'MSPhysics Joint - Reset Properties'
@@ -1409,11 +1366,11 @@ unless file_loaded?(__FILE__)
 
   plugin_menu.add_item('About') {
     msg = "MSPhysics #{MSPhysics::VERSION} -- #{MSPhysics::RELEASE_DATE}\n"
-    msg << "Powered by the Newton Dynamics #{MSPhysics::Newton.get_version} physics SDK by Julio Jerez.\n"
-    msg << "Copyright MIT © 2014-2016, Anton Synytsia.\n\n"
+    msg << "Powered by the Newton Dynamics #{MSPhysics::Newton.get_version} Physics SDK by Julio Jerez.\n"
+    msg << "Copyright MIT © 2014-2016, Anton Synytsia (anton.synytsia@gmail.com)\n\n"
     msg << "Credits to:\n"
-    msg << "  - Chris Phillips for ideas from SketchyPhysics.\n"
-    msg << "  - István Nagy (PituPhysics) and Faust07 for testing.\n"
+    msg << "  - Chris Phillips for some ideas from SketchyPhysics.\n"
+    msg << "  - István Nagy (PituPhysics), Faust07, and many others for testing.\n"
     UI.messagebox(msg)
   }
 

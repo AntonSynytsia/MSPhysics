@@ -8,7 +8,7 @@ module MSPhysics
     # @param [Numeric] density Material density in kilograms per cubic meter.
     # @param [Numeric] static_friction Static friction coefficient. This value
     #   is clamped between +0.01+ and +2.00+.
-    # @param [Numeric] dynamic_friction Dynamic friction coefficient. This value
+    # @param [Numeric] kinetic_friction Kinetic friction coefficient. This value
     #   is clamped between +0.01+ and +2.00+.
     # @param [Numeric] elasticity The coefficient of restitution. This is the
     #   rebound ratio. A basketball has a rebound ratio of 0.83. This means the
@@ -18,11 +18,11 @@ module MSPhysics
     #   yields adaptable collision. Increasing softness yields resistible
     #   collision. This value is clamped between +0.01+ and +1.00+. Typical
     #   value is 0.15.
-    def initialize(name, density, static_friction, dynamic_friction, elasticity, softness)
+    def initialize(name, density, static_friction, kinetic_friction, elasticity, softness)
       @name = name.to_s
       @density = AMS.clamp(density, 0.001, nil)
       @static_friction = AMS.clamp(static_friction, 0.01, 2.00)
-      @dynamic_friction = AMS.clamp(dynamic_friction, 0.01, 2.00)
+      @kinetic_friction = AMS.clamp(kinetic_friction, 0.01, 2.00)
       @elasticity = AMS.clamp(elasticity, 0.01, 2.00)
       @softness = AMS.clamp(softness, 0.01, 1.00)
     end
@@ -57,16 +57,16 @@ module MSPhysics
       @static_friction = AMS.clamp(coefficient, 0.01, 2.00)
     end
 
-    # Get material dynamic friction coefficient.
+    # Get material kinetic friction coefficient.
     # @return [Numeric] A value between 0.01 and 2.00.
-    def dynamic_friction
-      @dynamic_friction
+    def kinetic_friction
+      @kinetic_friction
     end
 
-    # Set material dynamic friction coefficient.
+    # Set material kinetic friction coefficient.
     # @param [Numeric] coefficient A value between 0.01 and 2.00.
-    def dynamic_friction=(coefficient)
-      @dynamic_friction = AMS.clamp(coefficient, 0.01, 2.00)
+    def kinetic_friction=(coefficient)
+      @kinetic_friction = AMS.clamp(coefficient, 0.01, 2.00)
     end
 
     # Get material coefficient of restitution - bounciness.
@@ -100,7 +100,7 @@ module MSPhysics
     def equals?(other_material)
       ( other_material.density == @density &&
         other_material.static_friction == @static_friction &&
-        other_material.dynamic_friction == @dynamic_friction &&
+        other_material.kinetic_friction == @kinetic_friction &&
         other_material.elasticity == @elasticity &&
         other_material.softness == @softness )
     end

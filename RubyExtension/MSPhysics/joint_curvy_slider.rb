@@ -102,49 +102,49 @@ module MSPhysics
       MSPhysics::Newton::CurvySlider.get_cur_acceleration(@address)
     end
 
-    # Get current point on curve.
+    # Get current point on the curve.
     # @return [Geom::Point3d, nil] A point in global space or +nil+ if curve is
     #   empty or joint is disconnected.
     def cur_point
       MSPhysics::Newton::CurvySlider.get_cur_point(@address)
     end
 
-    # Get current vector on curve.
-    # @return [Geom::Point3d, nil] A vector in global space or +nil+ if curve is
-    #   empty or joint is disconnected.
+    # Get current vector on the curve.
+    # @return [Geom::Vector3d, nil] A vector in global space or +nil+ if curve
+    #   is empty or joint is disconnected.
     def cur_vector
       MSPhysics::Newton::CurvySlider.get_cur_vector(@address)
     end
 
-    # Get current tangent vector on curve.
-    # @return [Geom::Point3d, nil] A vector in global space or +nil+ if curve is
-    #   empty or joint is disconnected.
-    def cur_tangent
-      MSPhysics::Newton::CurvySlider.get_cur_tangent(@address)
+    # Get current normal matrix on the curve.
+    # @return [Geom::Transformation, nil] A transformation in global space or
+    #   +nil+ if curve is empty or joint is disconnected.
+    def cur_normal_matrix
+      MSPhysics::Newton::CurvySlider.get_cur_normal_matrix(@address)
     end
 
-    # Get linear friction.
-    # @return [Numeric]
+    # Get movement friction.
+    # @return [Numeric] A value greater than or equal to zero.
     def linear_friction
       MSPhysics::Newton::CurvySlider.get_linear_friction(@address)
     end
 
-    # Set linear friction.
-    # @param [Numeric] friction A value greater than or equal to zero.
-    def linear_friction=(friction)
-      MSPhysics::Newton::CurvySlider.set_linear_friction(@address, friction)
+    # Set movement friction.
+    # @param [Numeric] value A value greater than or equal to zero.
+    def linear_friction=(value)
+      MSPhysics::Newton::CurvySlider.set_linear_friction(@address, value)
     end
 
-    # Get angular friction.
-    # @return [Numeric]
+    # Get rotational friction.
+    # @return [Numeric] A numeric value greater than or equal to zero.
     def angular_friction
       MSPhysics::Newton::CurvySlider.get_angular_friction(@address)
     end
 
-    # Set angular friction.
-    # @param [Numeric] friction A numeric value greater than or equal to zero.
-    def angular_friction=(friction)
-      MSPhysics::Newton::CurvySlider.set_angular_friction(@address, friction)
+    # Set rotational friction.
+    # @param [Numeric] value A numeric value greater than or equal to zero.
+    def angular_friction=(value)
+      MSPhysics::Newton::CurvySlider.set_angular_friction(@address, value)
     end
 
     # Get magnitude of the linear and angular friction.
@@ -186,7 +186,7 @@ module MSPhysics
 
     # Get alignment power.
     # @note Has an effect only if alignment is enabled.
-    # @return [Numeric]
+    # @return [Numeric] A value greater than or equal to zero.
     def alignment_power
       MSPhysics::Newton::CurvySlider.get_alignment_power(@address)
     end
@@ -199,27 +199,38 @@ module MSPhysics
       MSPhysics::Newton::CurvySlider.set_alignment_power(@address, value)
     end
 
-    # Determine whether the rotation along the point on curve is enabled.
+    # Determine whether the rotation along the current point on curve is
+    # enabled.
     # @return [Boolean]
     def rotation_enabled?
       MSPhysics::Newton::CurvySlider.rotation_enabled?(@address)
     end
 
-    # Enable/disable rotation along the point on curve.
+    # Enable/disable rotation along the current point on curve.
     # @param [Boolean] state
     def rotation_enabled=(state)
       MSPhysics::Newton::CurvySlider.enable_rotation(@address, state)
     end
 
-    # Get point and direction on curve by linear position on curve.
-    # @param [Numeric] pos Linear position on curve in meters.
-    # @return [Array<(Geom::Point3d, Geom::Vector3d)>, nil] A array containing
-    #   point and direction on curve or +nil+ if curve is empty.
-    def info_by_pos(pos)
-      MSPhysics::Newton::CurvySlider.get_info_by_pos(@address, pos)
+    # Get normal matrix corresponding to a particular distance on the curve.
+    # @param [Numeric] distance Linear position on curve in meters.
+    # @return [Geom::Transformation, nil] A transformation in global space or
+    #   +nil+ if curve is empty or joint is disconnected.
+    def normal_matrix_at_position(distance)
+      MSPhysics::Newton::CurvySlider.get_normal_martix_at_position(@address, distance)
     end
 
-    # Get normal matrices of the curve.
+    # Get normal matrix corresponding to a particular point on or beside the
+    # curve.
+    # @param [Geom::Point3d] point A point in global space.
+    # @return [Array<(Geom::Transformation, Numeric)>, nil] A transformation in
+    #   global space along with overpass value or +nil+ if curve is empty or
+    #   joint is disconnected.
+    def normal_matrix_at_point(point)
+      MSPhysics::Newton::CurvySlider.get_normal_martix_at_point(@address, point)
+    end
+
+    # Get all normal matrices of the curve.
     # @return [Array<Geom::Transformation>] An array of the normal matrices.
     def normal_matrices
       MSPhysics::Newton::CurvySlider.get_normal_matrices(@address)

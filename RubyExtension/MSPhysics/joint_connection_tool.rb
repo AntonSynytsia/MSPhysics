@@ -628,65 +628,93 @@ module MSPhysics
       # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] jparent
       # @return [Array<Geom::Point3d>] An array of points in global space.
       def get_points_on_curve(joint, jparent)
+        # Find the closest edge
         closest_dist = nil
-        start_vertex = nil
+        closest_edge = nil
         AMS::Group.get_entities(joint).each { |e|
           next unless e.is_a?(Sketchup::Edge)
           dist1 = e.start.position.distance(ORIGIN)
           dist2 = e.end.position.distance(ORIGIN)
-          if dist1 < dist2
-            vertex = e.start
-            dist = dist1
-          else
-            vertex = e.end
-            dist = dist2
-          end
+          dist = dist1 < dist2 ? dist1 : dist2
           if closest_dist.nil? || dist < closest_dist
             closest_dist = dist
-            start_vertex = vertex
+            closest_edge = e
             break if closest_dist < 1.0e-8
           end
         }
-        verts = []
-        if start_vertex
-          used_edges = []
-          verts << start_vertex
-          edge = start_vertex.edges[0]
-          verts << edge.other_vertex(start_vertex)
-          used_edges << edge
-          while true
-            edge = nil
-            lastv = verts.last
-            lastv.edges.each { |e|
-              unless used_edges.include?(e)
-                edge = e
-                break
-              end
-            }
-            break unless edge
-            verts << edge.other_vertex(lastv)
-            used_edges << edge
+        # Verify
+        return Array.new() unless closest_edge
+        # Preset data
+        edges = { closest_edge => 0 }
+        edges[closest_edge] = 0
+        vertices = {}
+        # Get all preceding edge vertices
+        edge = closest_edge
+        v = edge.start
+        vertices[0] = v
+        count = -1
+        while true
+          next_edge = v.edges[0]
+          if next_edge == edge
+            if v.edges[1]
+              next_edge = v.edges[1]
+            else
+              break
+            end
           end
+          break if edges.has_key?(next_edge)
+          v = next_edge.other_vertex(v)
+          vertices[count] = v
+          edges[next_edge] = count
+          edge = next_edge
+          count -= 1
         end
+        # Get all consequent edge vertices
+        edge = closest_edge
+        v = edge.end
+        vertices[1] = v
+        count = 2
+        while true
+          next_edge = v.edges[0]
+          if next_edge == edge
+            if v.edges[1]
+              next_edge = v.edges[1]
+            else
+              break
+            end
+          end
+          break if edges.has_key?(next_edge)
+          v = next_edge.other_vertex(v)
+          vertices[count] = v
+          edges[next_edge] = count
+          edge = next_edge
+          count += 1
+        end
+        # Return sorted vertices
         tra = joint.transformation
         if jparent
           tra = jparent.transformation * tra
         end
-        verts.map { |v| v.position.transform(tra) }
+        vertices.keys.sort.map { |i| vertices[i].position.transform(tra) }
       end
 
       # Get curve length of a CurvySlider or CurvyPiston joint.
       # @param [Sketchup::Group, Sketchup::ComponentInstance] joint
+      # @param [Boolean] loop
       # @return [Numeric] Length in inches.
-      def get_curve_length(joint, jparent)
+      def get_curve_length(joint, jparent, loop = false)
         length = 0.0
         last_pt = nil
-        get_points_on_curve(joint, jparent).each { |pt|
+        pts = get_points_on_curve(joint, jparent)
+        pts.each { |pt|
           if last_pt
             length += last_pt.distance(pt)
           end
           last_pt = pt
         }
+        if loop && last_pt
+          length += pts[0].distance(last_pt)
+        end
         length
       end
 
@@ -715,7 +743,7 @@ module MSPhysics
         :connected  => Sketchup::Color.new(0, 225, 0),
         :potential  => Sketchup::Color.new(200, 40, 250),
         :gears      => Sketchup::Color.new(250, 0, 0),
-        :curve      => Sketchup::Color.new(255, 255, 0)
+        :curve      => Sketchup::Color.new(237, 71, 232)
       }
       @line_width = {
         :picked     => 2,
@@ -723,7 +751,7 @@ module MSPhysics
         :connected  => 2,
         :potential  => 2,
         :gears      => 2,
-        :curve      => 2
+        :curve      => 3
       }
       @line_stipple = {
         :picked     => '',
@@ -734,7 +762,7 @@ module MSPhysics
         :curve      => ''
       }
       @pins = [0,1,1,3,3,2,2,0, 4,5,5,7,7,6,6,4, 0,4,1,5,2,6,3,7]
-      @scale = 1.02
+      @scale = 1.03
     end
 
     private

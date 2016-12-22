@@ -1,7 +1,9 @@
-var last_cursor = [1,0];
-var active_tab_id = 1;
-var size_updating = false;
-var editor_size_offset = 3;
+var g_last_cursor = [1,0];
+var g_active_tab_id = 1;
+var g_size_update_time = new Date();
+var g_editor_size_offset = 2;
+var g_script_saved = true;
+var g_normal_width = 460;
 
 String.prototype.contains = function(it) { return this.indexOf(it) != -1; };
 
@@ -10,7 +12,7 @@ function is_int(n) {
 }
 
 function type(obj) {
-  return Object.prototype.toString.call(obj).slice(8, -1);
+  return Object.prototype.toString().call(obj).slice(8, -1);
 }
 
 function callback(name, data) {
@@ -18,7 +20,8 @@ function callback(name, data) {
   window.location.href = 'skp:' + name + '@' + data;
 }
 
-$(document).on('click', 'a[href]', function() {
+$(document).on('click', 'a[href]', function(evt) {
+  evt.preventDefault();
   if (this.href.contains("http")) {
     callback('open_link', this.href);
     return false;
@@ -29,80 +32,67 @@ $(document).on('click', 'a[href]', function() {
 });
 
 function init() {
-  var w = $( window ).width();
-  var h = $( window ).height();
-  var data = '['+w+','+h+']';
+  var cw = $(window).width();
+  var ch = $(window).height();
+  var data = '['+cw+','+ch+']';
   callback('init', data);
 }
 
 function editor_set_script(code) {
   //window.aceEditor.focus();
-  $( '#temp_script_area' ).val(code);
+  $('#temp_script_area').val(code);
   window.aceEditor.getSession().getUndoManager().reset;
   window.aceEditor.getSession().setValue(code);
 }
 
 function editor_set_cursor(row, col) {
   window.aceEditor.gotoLine(row, col, true);
-  last_cursor = [row, col];
+  g_last_cursor = [row, col];
 }
 
 function editor_select_current_line() {
   window.aceEditor.selection.selectLineEnd();
 }
 
-function activate_tab(number) {
-  $('#tab'+number).fadeIn(400).siblings().hide();
-  $('a[href$="#tab'+number+'"]').parent('li').addClass('active').siblings().removeClass('active');
-  active_tab_id = number;
-  callback('tab_changed', number);
-}
-
-function update_size() {
-  size_updating = true;
-  //var id = '#tab' + active_tab_id;
-  var w = 462; // 11px * 48em
-  var h = $('#body').outerHeight(true);
-  var value = $(window).height() - h + $('#editor').innerHeight() + editor_size_offset;
-  if (value < 0) value = 0;
-  document.getElementById('editor').style.height = value + 'px';
-  var data = '['+w+','+h+']';
-  callback('size_changed', data);
-  // Repeat because it doesn't always work.
-  var h = $('#body').outerHeight(true);
-  var value = $(window).height() - h + $('#editor').innerHeight() + editor_size_offset;
-  if (value < 0) value = 0;
-  document.getElementById('editor').style.height = value + 'px';
-  window.aceEditor.resize();
-  var data = '['+w+','+h+']';
-  callback('size_changed', data);
-  size_updating = false;
-}
-
-function update_size2() {
-  size_updating = true;
-  //var id = '#tab' + active_tab_id;
-  var w = 462; // 11px * 48em
-  var h = $('#body').outerHeight(true);
-  var value = $(window).height() - h + $('#editor').innerHeight() + editor_size_offset;
-  if (value < 0) value = 0;
-  document.getElementById('editor').style.height = value + 'px';
-  var data = '['+w+','+h+']';
-  callback('size_changed', data);
-  size_updating = false;
+function update_editor_placement() {
+  if (g_active_tab_id == 3) {
+    var value = $(window).height() - $('#body').outerHeight(true) + $('#editor').innerHeight() + g_editor_size_offset;
+    if (value < 0) value = 0;
+    document.getElementById('editor').style.height = value + 'px';
+    window.aceEditor.resize();
+  }
 }
 
 function update_editor_size() {
-  var w = $( window ).width();
-  var h = $( window ).height();
-  var data = '['+w+','+h+']';
-  callback('editor_size_changed', data);
+  if (g_active_tab_id == 3) {
+    var cw = $(window).width();
+    var ch = $(window).height();
+    var data = '['+cw+','+ch+']';
+    callback('editor_size_changed', data);
+  }
+}
+
+function update_placement(tab_id, bresize) {
+  g_size_update_time = new Date();
+  bresize = bresize ? true : false;
+  if (tab_id != 0) {
+    $('#tab'+tab_id).fadeIn(150).siblings().hide();
+    $('a[href$="#tab'+tab_id+'"]').parent('li').addClass('active').siblings().removeClass('active');
+    g_active_tab_id = tab_id;
+  }
+  $('.help_box').val("");
+  var dw = g_normal_width;
+  var dh = $('#body').outerHeight(true);
+  var data = '['+g_active_tab_id+','+dw+','+dh+','+bresize+']';
+  callback('placement_changed', data);
+  update_editor_placement();
 }
 
 function assign_joint_click_event() {
   var last_selected_joint_label = 0;
   $('.joint-label').off();
-  $('.joint-label').on('click', function() {
+  $('.joint-label').on('click', function(evt) {
+    evt.preventDefault();
     if (last_selected_joint_label != 0) {
       last_selected_joint_label.removeClass('joint-label-selected');
       last_selected_joint_label.addClass('joint-label');
@@ -185,29 +175,45 @@ function update_input_events() {
     }
     else if (this.id == 'dialog-help_box') {
       display_help_box(this.checked);
+      update_placement(0, true);
     }
     var data = '["'+this.id+'",'+this.checked+']';
     callback('check_input_changed', data);
   });
 
   // Process button clicks
-  $('button').on('click', function() {
+  $('button').on('click', function(evt) {
     callback('button_clicked', this.id);
+    evt.preventDefault();
   });
 }
 
 function display_help_box(state) {
   $('.help_box').css('display', state ? 'inline-block': 'none');
-  update_size2();
+}
+
+function editor_changed() {
+  if (g_script_saved) return;
+  var code = window.aceEditor.getSession().getValue();
+  // Return if no changes made
+  if ($('#temp_script_area').val() == code) return;
+  $('#temp_script_area').val(code);
+  callback('editor_changed', '');
+  g_script_saved = true;
+}
+
+function set_viewport_scale(scale) {
+  var percent = Math.round(100.0 / parseFloat(scale));
+  $("style[id='vp_scale']").remove();
+  $("<style id=\"vp_scale\" type='text/css'>@-ms-viewport { width: "+percent+"%; }</style>").appendTo("head");
 }
 
 $(document).ready( function() {
-
   // Determine browser for compatibility
   var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
 
   // Initialize
-  window.setTimeout(init, 10); // Timeout is needed because without it the event might not be triggered on Mac OS X.
+  window.setTimeout(init, 0); // Timeout is needed because without it the event might not be triggered on Mac OS X.
 
   // Initialize Chosen
   var config = {
@@ -215,27 +221,29 @@ $(document).ready( function() {
     '.chosen-select-deselect'  : {allow_single_deselect:true},
     '.chosen-select-no-single' : {disable_search_threshold:6},
     '.chosen-select-no-results': {no_results_text:'Oops, nothing found!'},
-    '.chosen-select-width'     : {width:"95%"}
+    '.chosen-select-width'     : {width:"100%"}
   }
   for (var selector in config) {
-    $( selector ).chosen(config[selector]);
+    $(selector).chosen(config[selector]);
   }
 
   // Initialize expander
   $('.expander').simpleexpand({'hideMode' : 'slideToggle'});
 
-  $('.expander').click(function() {
+  $('.expander').on('click', function(evt) {
+    evt.preventDefault();
     for (i = 1; i < 8; i++) {
-      window.setTimeout(function() { update_size2() }, i * 25);
+      window.setTimeout(function() { update_placement(0, true); }, i * 25);
     }
   });
 
   // Initialize Ace
+  var dom = ace.require("ace/lib/dom");
+  ace.require("ace/ext/language_tools");
+  var StatusBar = ace.require('ace/ext/statusbar').StatusBar;
   var editor = ace.edit('editor');
   window.aceEditor = editor;
-  var script_saved = true;
   var container = document.getElementById('editor');
-  var StatusBar = ace.require('ace/ext/statusbar').StatusBar;
   var statusbar = new StatusBar(editor, document.getElementById('status-bar'));
   editor.session.setMode('ace/mode/ruby');
   editor.setTheme('ace/theme/tomorrow_night');
@@ -247,39 +255,44 @@ $(document).ready( function() {
   editor.renderer.setShowGutter(true);
   editor.renderer.setShowPrintMargin(true);
   editor.session.setUseSoftTabs(true);
-  editor.session.setTabSize(2);
+  editor.session.setTabSize(4);
   editor.session.setUseWrapMode(true);
   editor.setHighlightSelectedWord(true);
   editor.setBehavioursEnabled(true);
   editor.setFadeFoldWidgets(true);
-  editor.setOption('scrollPastEnd', true);
+  editor.setOptions({
+    scrollPastEnd: true,
+    enableBasicAutocompletion: true
+  });
   container.style.fontSize = '12px';
+  editor.renderer.setScrollMargin(10, 10);
   container.style.fontFamily = 'Courier New';
   editor.getSession().on('change', function(e) {
-    script_saved = false;
+    g_script_saved = false;
   });
 
   editor.commands.addCommand({
     name: "showKeyboardShortcuts",
     bindKey: {win: "Ctrl-Alt-h", mac: "Command-Alt-h"},
-    exec: function(editor) {
+    exec: function(ed) {
       ace.config.loadModule("ace/ext/keybinding_menu", function(module) {
-        module.init(editor);
-        editor.showKeyboardShortcuts()
-      })
+        module.init(ed);
+        ed.showKeyboardShortcuts();
+      });
     }
-  })
-  //editor.execCommand("showKeyboardShortcuts")
+  });
+  //editor.execCommand("showKeyboardShortcuts");
 
-  function editor_changed() {
-    if (script_saved) return;
-    var code = editor.getSession().getValue();
-    // Return if no changes made
-    if ($( '#temp_script_area' ).val() == code) return;
-    $( '#temp_script_area' ).val(code);
-    callback('editor_changed', '');
-    script_saved = true;
-  }
+  editor.commands.addCommand({
+    name: "Toggle Fullscreen",
+    bindKey: "F11",
+    exec: function(ed) {
+      var fs = dom.toggleCssClass(document.body, "fullscreen");
+      dom.setCssClass(ed.container, "fullscreen", fs);
+      ed.setAutoScrollEditorIntoView(!fs);
+      update_editor_placement();
+    }
+  });
 
   // Save editor script on the following events.
   $('#editor').focusout(function() {
@@ -289,9 +302,9 @@ $(document).ready( function() {
   $('#editor').mouseout(function() {
     var pos = editor.selection.getSelectionAnchor();
     //var pos = editor.getSelection().getCursor();
-    if (pos && (pos.row+1 != last_cursor[0] || pos.column != last_cursor[1])) {
-      last_cursor = [pos.row+1, pos.column];
-      callback('cursor_changed', '['+last_cursor+']');
+    if (pos && (pos.row+1 != g_last_cursor[0] || pos.column != g_last_cursor[1])) {
+      g_last_cursor = [pos.row+1, pos.column];
+      callback('cursor_changed', '['+g_last_cursor[0]+','+g_last_cursor[1]+']');
     }
     editor_changed();
   });
@@ -302,41 +315,31 @@ $(document).ready( function() {
   });*/
 
   // Initialize tabs
-  $('.tabs .tab-links a').on('click', function(e) {
+  $('.tabs .tab-links a').on('click', function(evt) {
+    evt.preventDefault();
     var currentAttrValue = $(this).attr('href');
     // Change/remove current tab to active
     $(this).parent('li').addClass('active').siblings().removeClass('active');
     var tab_id = currentAttrValue.charAt(currentAttrValue.length-1);
-    if( tab_id != active_tab_id ) {
-      active_tab_id = tab_id;
-      window.setTimeout(function() {
-        if (tab_id != 3) update_editor_size();
-        callback('tab_changed', tab_id);
-      }, 0);
-    }
-    window.setTimeout(function() { update_size(); }, 0);
-    e.preventDefault();
-    // Show/Hide Tabs
-    $('.tabs ' + currentAttrValue).fadeIn(400).siblings().hide();
-    $('.help_box').val("");
+    update_placement(tab_id, true);
   });
 
-  $( document ).on('mouseenter', function(e) {
+  $(document).on('mouseenter', function() {
     callback("mouse_enter");
   });
 
   // Resize editor
-  $( window ).resize( function() {
-    if (active_tab_id == 3 && size_updating == false) {
-      value = $(window).height() - $('#body').outerHeight(true) + $('#editor').innerHeight() + editor_size_offset;
-      if (value < 0) value = 0;
-      container.style.height = value + 'px';
-      editor.resize();
+  $(window).resize( function(evt) {
+    evt.preventDefault();
+    var current_time = new Date();
+    if (g_active_tab_id == 3 && current_time - g_size_update_time > 300) {
+      update_editor_placement();
       update_editor_size();
     }
   });
 
   $('.drop-down').on('change', function(evt, params) {
+    evt.preventDefault();
     if (this.id == 'editor-theme') {
       editor.setTheme('ace/theme/' + params.selected);
     }
@@ -355,6 +358,11 @@ $(document).ready( function() {
         $('#body-density_control').css('display', 'table-row');
         $('#body-mass_control').css('display', 'none');
       }
+    }
+    else if (this.id == 'dialog-scale') {
+      set_viewport_scale(params.selected);
+      window.setTimeout( function() { update_placement(1, true); }, 50);
+      window.setTimeout( function() { update_placement(1, true); }, 150);
     }
     var data = '["'+this.id+'","'+params.selected+'"]';
     callback('select_input_changed', data);
@@ -384,7 +392,6 @@ $(document).ready( function() {
         $('.help_box').val("");
       }
     } catch(err) {
-      //~ alert(err);
       $('.help_box').val("");
     }
   });

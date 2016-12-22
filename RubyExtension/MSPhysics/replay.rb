@@ -909,615 +909,6 @@ module MSPhysics
         end
       end
 
-      # Save active data into model.
-      # @param [Boolean] wrap_in_op Whether to wrap in operation.
-      # @return [Boolean] success
-      def save_data_to_model(wrap_in_op = true)
-        op_started = false
-        return false unless active_data_valid?
-        model = Sketchup.active_model
-        dict = 'MSPhysics Replay'
-        # Notify
-        Sketchup.status_text = "Saving Replay data to model. This might take a while..."
-        # Start operation
-        if wrap_in_op
-          if Sketchup.version.to_i > 6
-            model.start_operation('Saving MSPhysics Replay', true)
-          else
-            model.start_operation('Saving MSPhysics Replay')
-          end
-          op_started = true
-        end
-        # Create temporary variables to store unique information.
-        fgroups_data = {}
-        fmaterials_data = {}
-        flayers_data = {}
-        fcamera_data = {}
-        frender_data = {}
-        fshadow_data = {}
-        # Filter groups data
-        @groups_data.each { |group, data|
-          gdata = {}
-          gdata[:id] = data[:id]
-          gdata[:definition] = data[:definition] if data[:definition]
-          gdata[:start_frame] = data[:start_frame] if data[:start_frame]
-          gdata[:end_frame] = data[:end_frame] if data[:end_frame]
-          last = {}
-          data.each { |pframe, fdata|
-            next unless pframe.is_a?(Fixnum)
-            sdata = {}
-            fdata.each { |k, v|
-              if v.is_a?(Sketchup::Material) || v.is_a?(Sketchup::Layer)
-                v2 = v.__id__
-              elsif v.is_a?(Geom::Transformation)
-                v2 = v.to_a
-              else
-               v2 = v
-              end
-              next if last.has_key?(k) && last[k] == v2
-              sdata[k] = v
-              last[k] = v2
-            }
-            gdata[pframe] = sdata unless sdata.empty?
-          }
-          fgroups_data[group] = gdata
-        }
-        # Filter materials data
-        @materials_data.each { |material, data|
-          gdata = {}
-          gdata[:id] = data[:id]
-          gdata[:start_frame] = data[:start_frame] if data[:start_frame]
-          gdata[:end_frame] = data[:end_frame] if data[:end_frame]
-          last = {}
-          data.each { |pframe, fdata|
-            next unless pframe.is_a?(Fixnum)
-            sdata = {}
-            fdata.each { |k, v|
-              v2 = v.is_a?(Sketchup::Color) ? v.to_a : v
-              next if last.has_key?(k) && last[k] == v2
-              sdata[k] = v
-              last[k] = v2
-            }
-            gdata[pframe] = sdata unless sdata.empty?
-          }
-          fmaterials_data[material] = gdata
-        }
-        # Filter layers data
-        @layers_data.each { |layer, data|
-          gdata = {}
-          gdata[:id] = data[:id]
-          gdata[:start_frame] = data[:start_frame] if data[:start_frame]
-          gdata[:end_frame] = data[:end_frame] if data[:end_frame]
-          last = {}
-          data.each { |pframe, fdata|
-            next unless pframe.is_a?(Fixnum)
-            sdata = {}
-            fdata.each { |k, v|
-              v2 = v.is_a?(Sketchup::Color) ? v.to_a : v
-              next if last.has_key?(k) && last[k] == v2
-              sdata[k] = v
-              last[k] = v2
-            }
-            gdata[pframe] = sdata unless sdata.empty?
-          }
-          flayers_data[layer] = gdata
-        }
-        # Filter camera data
-        fcamera_data[:start_frame] = @camera_data[:start_frame] if @camera_data[:start_frame]
-        fcamera_data[:end_frame] = @camera_data[:end_frame] if @camera_data[:end_frame]
-        last = {}
-        @camera_data.each { |pframe, fdata|
-          next unless pframe.is_a?(Fixnum)
-          sdata = {}
-          fdata.each { |k, v|
-            next if last.has_key?(k) && last[k] == v
-            sdata[k] = v
-            last[k] = v
-          }
-          fcamera_data[pframe] = sdata unless sdata.empty?
-        }
-        # Filter render data
-        frender_data[:start_frame] = @render_data[:start_frame] if @render_data[:start_frame]
-        frender_data[:end_frame] = @render_data[:end_frame] if @render_data[:end_frame]
-        last = {}
-        @render_data.each { |pframe, fdata|
-          next unless pframe.is_a?(Fixnum)
-          sdata = {}
-          fdata.each { |k, v|
-            v2 = v.is_a?(Sketchup::Color) ? v.to_a : v
-            next if last.has_key?(k) && last[k] == v2
-            sdata[k] = v
-            last[k] = v2
-          }
-          frender_data[pframe] = sdata unless sdata.empty?
-        }
-        # Filter shadow data
-        fshadow_data[:start_frame] = @shadow_data[:start_frame] if @shadow_data[:start_frame]
-        fshadow_data[:end_frame] = @shadow_data[:end_frame] if @shadow_data[:end_frame]
-        last = {}
-        @shadow_data.each { |pframe, fdata|
-          next unless pframe.is_a?(Fixnum)
-          sdata = {}
-          fdata.each { |k, v|
-            v2 = v.is_a?(Sketchup::Color) ? v.to_a : v
-            next if last.has_key?(k) && last[k] == v2
-            sdata[k] = v
-            last[k] = v2
-          }
-          fshadow_data[pframe] = sdata unless sdata.empty?
-        }
-        # Save main info
-        model.set_attribute(dict, 'Start Frame', @start_frame)
-        model.set_attribute(dict, 'End Frame', @end_frame)
-        # Save groups
-        gz = Zlib::Deflate.new(Zlib::DEFAULT_COMPRESSION, Zlib::MAX_WBITS, Zlib::MAX_MEM_LEVEL, Zlib::FILTERED)
-        gz << "{"
-        fgroups_data.each { |group, data|
-          next if !(((group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentInstance)) && group.valid?) || (data[:definition] && data[:definition].valid?))
-          gz << "#{data[:id]}=>{"
-          gz << ":start_frame=>#{data[:start_frame]}," if data[:start_frame]
-          gz << ":end_frame=>#{data[:end_frame]}," if data[:end_frame]
-          data.each { |pframe, fdata|
-            next unless pframe.is_a?(Fixnum)
-            gz << "#{pframe}=>{"
-            fdata.each { |k, v|
-              res = nil
-              if v.is_a?(Length)
-                res = v.to_f.to_s
-              elsif v.is_a?(Numeric)
-                res = v.to_s
-              elsif v.is_a?(Sketchup::Layer)
-                if flayers_data[v]
-                  res = flayers_data[v][:id].to_s
-                elsif v.valid?
-                  res = v.entityID.to_s
-                else
-                  next
-                end
-              elsif v.is_a?(Sketchup::Material)
-                if fmaterials_data[v]
-                  res = fmaterials_data[v][:id].to_s
-                elsif v.valid?
-                  res = v.entityID.to_s
-                else
-                  next
-                end
-              elsif v.is_a?(Sketchup::Color)
-                res = "Sketchup::Color.new(#{v.red},#{v.green},#{v.blue},#{v.alpha})"
-              elsif v.is_a?(Geom::Transformation)
-                res = "Geom::Transformation.new(#{v.to_a.inspect})"
-              elsif v.is_a?(Geom::Point3d)
-                res = "Geom::Point3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
-              elsif v.is_a?(Geom::Vector3d)
-                res = "Geom::Vector3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
-              else
-                res = v.inspect
-              end
-              #res.gsub!(/\s/, '')
-              res.gsub!('Infinity', '1.0/0.0')
-              res.gsub!('NaN', '0.0/0.0')
-              gz << "#{k.inspect}=>#{res},"
-            }
-            gz << "},"
-          }
-          gz << "},"
-          if (group.is_a?(Sketchup::Group) || group.is_a?(Sketchup::ComponentInstance)) && group.valid?
-            group.set_attribute(dict, 'ID', data[:id])
-          else
-            ids = data[:definition].get_attribute(dict, 'IDs')
-            if ids.is_a?(Array)
-              ids << data[:id]
-            else
-              ids = [data[:id]]
-            end
-            data[:definition].set_attribute(dict, 'IDs', ids)
-          end
-        }
-        gz << "}"
-        res = gz.flush(Zlib::FINISH)
-        chop_count = 0
-        while(res.size % 4 != 0)
-          res << "\0"
-          chop_count += 1
-        end
-        model.set_attribute(dict, 'Groups Data', res.unpack('l*'))
-        model.set_attribute(dict, 'Groups Data Chop Count', chop_count)
-        gz.close
-        # Save materials
-        saved_mats = {}
-        gz = Zlib::Deflate.new(Zlib::DEFAULT_COMPRESSION, Zlib::MAX_WBITS, Zlib::MAX_MEM_LEVEL, Zlib::FILTERED)
-        gz << "{"
-        fmaterials_data.each { |material, data|
-          if material.is_a?(Sketchup::Material) && material.valid?
-            material.set_attribute(dict, 'ID', data[:id])
-            saved_mats[material] = true
-          end
-          gz << "#{data[:id]}=>{"
-          gz << ":start_frame=>#{data[:start_frame]}," if data[:start_frame]
-          gz << ":end_frame=>#{data[:end_frame]}," if data[:end_frame]
-          data.each { |pframe, fdata|
-            next unless pframe.is_a?(Fixnum)
-            gz << "#{pframe}=>{"
-            fdata.each { |k, v|
-              res = nil
-              if v.is_a?(Length)
-                res = v.to_f.to_s
-              elsif v.is_a?(Numeric)
-                res = v.to_s
-              elsif v.is_a?(Sketchup::Color)
-                res = "Sketchup::Color.new(#{v.red},#{v.green},#{v.blue},#{v.alpha})"
-              else
-                res = v.inspect
-              end
-              #res.gsub!(/\s/, '')
-              res.gsub!('Infinity', '1.0/0.0')
-              res.gsub!('NaN', '0.0/0.0')
-              gz << "#{k.inspect}=>#{res},"
-            }
-            gz << "},"
-          }
-          gz << "},"
-        }
-        gz << "}"
-        res = gz.flush(Zlib::FINISH)
-        chop_count = 0
-        while(res.size % 4 != 0)
-          res << "\0"
-          chop_count += 1
-        end
-        model.set_attribute(dict, 'Materials Data', res.unpack('l*'))
-        model.set_attribute(dict, 'Materials Data Chop Count', chop_count)
-        gz.close
-        # Save layers
-        saved_lays = {}
-        gz = Zlib::Deflate.new(Zlib::DEFAULT_COMPRESSION, Zlib::MAX_WBITS, Zlib::MAX_MEM_LEVEL, Zlib::FILTERED)
-        gz << "{"
-        flayers_data.each { |layer, data|
-          if layer.is_a?(Sketchup::Layer) && layer.valid?
-            layer.set_attribute(dict, 'ID', data[:id])
-            saved_lays[layer] = true
-          end
-          gz << "#{data[:id]}=>{"
-          gz << ":start_frame=>#{data[:start_frame]}," if data[:start_frame]
-          gz << ":end_frame=>#{data[:end_frame]}," if data[:end_frame]
-          data.each { |pframe, fdata|
-            next unless pframe.is_a?(Fixnum)
-            gz << "#{pframe}=>{"
-            fdata.each { |k, v|
-              res = nil
-              if v.is_a?(Length)
-                res = v.to_f.to_s
-              elsif v.is_a?(Numeric)
-                res = v.to_s
-              elsif v.is_a?(Sketchup::Color)
-                res = "Sketchup::Color.new(#{v.red},#{v.green},#{v.blue},#{v.alpha})"
-              else
-                res = v.inspect
-              end
-              #res.gsub!(/\s/, '')
-              res.gsub!('Infinity', '1.0/0.0')
-              res.gsub!('NaN', '0.0/0.0')
-              gz << "#{k.inspect}=>#{res},"
-            }
-            gz << "},"
-          }
-          gz << "},"
-        }
-        gz << "}"
-        res = gz.flush(Zlib::FINISH)
-        chop_count = 0
-        while(res.size % 4 != 0)
-          res << "\0"
-          chop_count += 1
-        end
-        model.set_attribute(dict, 'Layers Data', res.unpack('l*'))
-        model.set_attribute(dict, 'Layers Data Chop Count', chop_count)
-        gz.close
-        # Save camera
-        gz = Zlib::Deflate.new(Zlib::DEFAULT_COMPRESSION, Zlib::MAX_WBITS, Zlib::MAX_MEM_LEVEL, Zlib::FILTERED)
-        gz << "{"
-        gz << ":start_frame=>#{fcamera_data[:start_frame]}," if fcamera_data[:start_frame]
-        gz << ":end_frame=>#{fcamera_data[:end_frame]}," if fcamera_data[:end_frame]
-        fcamera_data.each { |pframe, fdata|
-          next unless pframe.is_a?(Fixnum)
-          gz << "#{pframe}=>{"
-          fdata.each { |k, v|
-            res = nil
-            if v.is_a?(Length)
-              res = v.to_f.to_s
-            elsif v.is_a?(Numeric)
-              res = v.to_s
-            elsif v.is_a?(Geom::Point3d)
-              res = "Geom::Point3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
-            elsif v.is_a?(Geom::Vector3d)
-              res = "Geom::Vector3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
-            else
-              res = v.inspect
-            end
-            #res.gsub!(/\s/, '')
-            res.gsub!('Infinity', '1.0/0.0')
-            res.gsub!('NaN', '0.0/0.0')
-            gz << "#{k.inspect}=>#{res},"
-          }
-          gz << "},"
-        }
-        gz << "}"
-        res = gz.flush(Zlib::FINISH)
-        chop_count = 0
-        while(res.size % 4 != 0)
-          res << "\0"
-          chop_count += 1
-        end
-        model.set_attribute(dict, 'Camera Data', res.unpack('l*'))
-        model.set_attribute(dict, 'Camera Data Chop Count', chop_count)
-        gz.close
-        # Save render
-        gz = Zlib::Deflate.new(Zlib::DEFAULT_COMPRESSION, Zlib::MAX_WBITS, Zlib::MAX_MEM_LEVEL, Zlib::FILTERED)
-        gz << "{"
-        gz << ":start_frame=>#{frender_data[:start_frame]}," if frender_data[:start_frame]
-        gz << ":end_frame=>#{frender_data[:end_frame]}," if frender_data[:end_frame]
-        frender_data.each { |pframe, fdata|
-          next unless pframe.is_a?(Fixnum)
-          gz << "#{pframe}=>{"
-          fdata.each { |k, v|
-            res = nil
-            if v.is_a?(Length)
-              res = v.to_f.to_s
-            elsif v.is_a?(Numeric)
-              res = v.to_s
-            elsif v.is_a?(Sketchup::Color)
-              res = "Sketchup::Color.new(#{v.red},#{v.green},#{v.blue},#{v.alpha})"
-            elsif v.is_a?(Geom::Point3d)
-              res = "Geom::Point3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
-            elsif v.is_a?(Geom::Vector3d)
-              res = "Geom::Vector3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
-            else
-              res = v.inspect
-            end
-            #res.gsub!(/\s/, '')
-            res.gsub!('Infinity', '1.0/0.0')
-            res.gsub!('NaN', '0.0/0.0')
-            gz << "#{k.inspect}=>#{res},"
-          }
-          gz << "},"
-        }
-        gz << "}"
-        res = gz.flush(Zlib::FINISH)
-        chop_count = 0
-        while(res.size % 4 != 0)
-          res << "\0"
-          chop_count += 1
-        end
-        model.set_attribute(dict, 'Render Data', res.unpack('l*'))
-        model.set_attribute(dict, 'Render Data Chop Count', chop_count)
-        gz.close
-        # Save shadow
-        gz = Zlib::Deflate.new(Zlib::DEFAULT_COMPRESSION, Zlib::MAX_WBITS, Zlib::MAX_MEM_LEVEL, Zlib::FILTERED)
-        gz << "{"
-        gz << ":start_frame=>#{fshadow_data[:start_frame]}," if fshadow_data[:start_frame]
-        gz << ":end_frame=>#{fshadow_data[:end_frame]}," if fshadow_data[:end_frame]
-        fshadow_data.each { |pframe, fdata|
-          next unless pframe.is_a?(Fixnum)
-          gz << "#{pframe}=>{"
-          fdata.each { |k, v|
-            res = nil
-            if v.is_a?(Length)
-              res = v.to_f.to_s
-            elsif v.is_a?(Numeric)
-              res = v.to_s
-            elsif v.is_a?(Time)
-              next
-            elsif v.is_a?(Sketchup::Color)
-              res = "Sketchup::Color.new(#{v.red},#{v.green},#{v.blue},#{v.alpha})"
-            elsif v.is_a?(Geom::Point3d)
-              res = "Geom::Point3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
-            elsif v.is_a?(Geom::Vector3d)
-              res = "Geom::Vector3d.new(#{v.x.to_f},#{v.y.to_f},#{v.z.to_f})"
-            else
-              res = v.inspect
-            end
-            #res.gsub!(/\s/, '')
-            res.gsub!('Infinity', '1.0/0.0')
-            res.gsub!('NaN', '0.0/0.0')
-            gz << "#{k.inspect}=>#{res},"
-          }
-          gz << "},"
-        }
-        gz << "}"
-        res = gz.flush(Zlib::FINISH)
-        chop_count = 0
-        while(res.size % 4 != 0)
-          res << "\0"
-          chop_count += 1
-        end
-        model.set_attribute(dict, 'Shadow Data', res.unpack('l*'))
-        model.set_attribute(dict, 'Shadow Data Chop Count', chop_count)
-        gz.close
-        # Return success
-        return true
-      ensure
-        # End operation
-        model.commit_operation if op_started
-      end
-
-      # Load saved data from model.
-      # @return [Boolean] success
-      def load_data_from_model
-        model = Sketchup.active_model
-        dict = 'MSPhysics Replay'
-        # Notify
-        Sketchup.status_text = "Loading Replay data from model. This might take a while..."
-        # Clear active data
-        @groups_data.clear
-        @materials_data.clear
-        @layers_data.clear
-        @camera_data.clear
-        @render_data.clear
-        @shadow_data.clear
-        # Load general info
-        sframe = model.get_attribute(dict, 'Start Frame')
-        eframe = model.get_attribute(dict, 'End Frame')
-        @start_frame = sframe.is_a?(Fixnum) ? sframe : nil
-        @end_frame = eframe.is_a?(Fixnum) ? eframe : nil
-        # Load IDs
-        id_to_grp = {}
-        id_to_def = {}
-        id_to_mat = {}
-        id_to_lay = {}
-        model.entities.each { |e|
-          if e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)
-            id = e.get_attribute(dict, 'ID')
-            id_to_grp[id] = e if id.is_a?(Fixnum)
-          end
-        }
-        model.definitions.each { |d|
-          ids = d.get_attribute(dict, 'IDs')
-          if ids.is_a?(Array)
-            ids.each { |id|
-              id_to_def[id] = d if id.is_a?(Fixnum)
-            }
-          end
-        }
-        model.materials.each { |mat|
-          id = mat.get_attribute(dict, 'ID')
-          id_to_mat[id] = mat if id.is_a?(Fixnum)
-        }
-        model.layers.each { |lay|
-          id = lay.get_attribute(dict, 'ID')
-          id_to_lay[id] = lay if id.is_a?(Fixnum)
-        }
-        # Load groups
-        data = model.get_attribute(dict, 'Groups Data')
-        if data.is_a?(Array)
-          chop_count = AMS.clamp(model.get_attribute(dict, 'Groups Data Chop Count', 0).to_i, 0, 3)
-          res = data.pack('l*')
-          chop_count.times { res.chop! }
-          data = eval(Zlib::Inflate.inflate(res))
-          data.each { |id, gdata|
-            g = id_to_grp[id]
-            d = id_to_def[id]
-            gdata[:id] = id
-            gdata[:definition] = d if d
-            gdata.each { |pframe, fdata|
-              next unless pframe.is_a?(Fixnum)
-              if fdata[:layer].is_a?(Fixnum)
-                lay = id_to_lay[fdata[:layer]]
-                if lay
-                  fdata[:layer] = lay
-                else
-                  fdata.delete(:layer)
-                end
-              end
-              if fdata[:material].is_a?(Fixnum)
-                mat = id_to_mat[fdata[:material]]
-                fdata[:material] = mat if mat
-              end
-            }
-            @groups_data[g ? g : id] = gdata
-          }
-        end
-        # Load materials
-        data = model.get_attribute(dict, 'Materials Data')
-        if data.is_a?(Array)
-          chop_count = AMS.clamp(model.get_attribute(dict, 'Materials Data Chop Count', 0).to_i, 0, 3)
-          res = data.pack('l*')
-          chop_count.times { res.chop! }
-          data = eval(Zlib::Inflate.inflate(res))
-          data.each { |id, gdata|
-            g = id_to_mat[id]
-            gdata[:id] = id
-            @materials_data[g ? g : id] = gdata
-          }
-        end
-        # Load layers
-        data = model.get_attribute(dict, 'Layers Data')
-        if data.is_a?(Array)
-          chop_count = AMS.clamp(model.get_attribute(dict, 'Layers Data Chop Count', 0).to_i, 0, 3)
-          res = data.pack('l*')
-          chop_count.times { res.chop! }
-          data = eval(Zlib::Inflate.inflate(res))
-          data.each { |id, gdata|
-            g = id_to_lay[id]
-            gdata[:id] = id
-            @layers_data[g ? g : id] = gdata
-          }
-        end
-        # Load camera
-        data = model.get_attribute(dict, 'Camera Data')
-        if data.is_a?(Array)
-          chop_count = AMS.clamp(model.get_attribute(dict, 'Camera Data Chop Count', 0).to_i, 0, 3)
-          res = data.pack('l*')
-          chop_count.times { res.chop! }
-          @camera_data = eval(Zlib::Inflate.inflate(res))
-        end
-        # Load render
-        data = model.get_attribute(dict, 'Render Data')
-        if data.is_a?(Array)
-          chop_count = AMS.clamp(model.get_attribute(dict, 'Render Data Chop Count', 0).to_i, 0, 3)
-          res = data.pack('l*')
-          chop_count.times { res.chop! }
-          @render_data = eval(Zlib::Inflate.inflate(res))
-        end
-        # Load shadow
-        data = model.get_attribute(dict, 'Shadow Data')
-        if data.is_a?(Array)
-          chop_count = AMS.clamp(model.get_attribute(dict, 'Shadow Data Chop Count', 0).to_i, 0, 3)
-          res = data.pack('l*')
-          chop_count.times { res.chop! }
-          @shadow_data = eval(Zlib::Inflate.inflate(res))
-        end
-        # Flatten all data
-        flatten_active_data
-        # Return success
-        true
-      end
-
-      # Delete saved data from model.
-      # @param [Boolean] wrap_in_op Whether to wrap in operation.
-      def clear_data_from_model(wrap_in_op = true)
-        model = Sketchup.active_model
-        # Start operation
-        if wrap_in_op
-          if Sketchup.version.to_i > 6
-            model.start_operation('Clearing MSPhysics Replay', true)
-          else
-            model.start_operation('Clearing MSPhysics Replay')
-          end
-        end
-        dict = model.attribute_dictionaries['MSPhysics Replay']
-        if dict
-          dict.delete_key('Groups Data')
-          dict.delete_key('Materials Data')
-          dict.delete_key('Layers Data')
-          dict.delete_key('Camera Data')
-          dict.delete_key('Render Data')
-          dict.delete_key('Shadow Data')
-          dict.delete_key('Start Frame')
-          dict.delete_key('End Frame')
-          dict.delete_key('Groups Data Chop Count')
-          dict.delete_key('Materials Data Chop Count')
-          dict.delete_key('Layers Data Chop Count')
-          dict.delete_key('Camera Data Chop Count')
-          dict.delete_key('Render Data Chop Count')
-          dict.delete_key('Shadow Data Chop Count')
-        end
-        model.definitions.each { |d|
-          d.attribute_dictionaries.delete('MSPhysics Replay') if d.attribute_dictionaries
-          d.instances.each { |i|
-            i.attribute_dictionaries.delete('MSPhysics Replay') if i.attribute_dictionaries
-          }
-        }
-        model.materials.each { |m|
-          m.attribute_dictionaries.delete('MSPhysics Replay') if m.attribute_dictionaries
-        }
-        model.layers.each { |l|
-          l.attribute_dictionaries.delete('MSPhysics Replay') if l.attribute_dictionaries
-        }
-        # End operation
-        model.commit_operation if wrap_in_op
-      end
-
-
       # Smoothen the camera transitioning.
       # @param [Fixnum] interval
       # @return [Boolean] success
@@ -1710,9 +1101,12 @@ module MSPhysics
           }
           fshadow_data[pframe] = sdata unless sdata.empty?
         }
-        # Create a Zlib writer instance
-        #gz = Zlib::GzipWriter.open(mspr_fpath, Zlib::BEST_SPEED, Zlib::FILTERED)
+        # Save unique ID to model.
+        unique_id = 100000 + rand(100000)
+        model.set_attribute(dict, 'ID', unique_id)
+        # Create a file
         gz = File.open(mspr_fpath, 'w')
+        gz.puts "{:id=>#{unique_id}}"
         # Save main info
         gz.puts "{:start_frame=>#{@start_frame}}" if @start_frame
         gz.puts "{:end_frame=>#{@end_frame}}" if @end_frame
@@ -1945,7 +1339,7 @@ module MSPhysics
         }
         str << "}}"
         gz.puts str
-        # Close the Zlib writer instance
+        # Close the file
         gz.close
         # Return success
         return true
@@ -1976,13 +1370,7 @@ module MSPhysics
         @camera_data.clear
         @render_data.clear
         @shadow_data.clear
-        # Create a Zlib reader instance
-        #gz = Zlib::GzipReader.open(mspr_fpath)
-        #begin
-          #mspr_data = eval(gz.read)
-        #ensure
-          #gz.close
-        #end
+        # Read from file
         mspr_data = {}
         gz = File.open(mspr_fpath, 'r')
         begin
@@ -1998,6 +1386,10 @@ module MSPhysics
           }
         ensure
           gz.close
+        end
+        # Verify ID
+        if mspr_data[:id] != model.get_attribute(dict, 'ID')
+          return false
         end
         # Load general info
         @start_frame = mspr_data[:start_frame].is_a?(Fixnum) ? mspr_data[:start_frame] : nil
@@ -2074,6 +1466,51 @@ module MSPhysics
         flatten_active_data
         # Return success
         true
+      end
+
+      # Delete saved data from model.
+      # @param [Boolean] wrap_in_op Whether to wrap in operation.
+      def clear_data_from_model(wrap_in_op = true)
+        model = Sketchup.active_model
+        # Start operation
+        if wrap_in_op
+          if Sketchup.version.to_i > 6
+            model.start_operation('Clearing MSPhysics Replay', true)
+          else
+            model.start_operation('Clearing MSPhysics Replay')
+          end
+        end
+        dict = model.attribute_dictionaries['MSPhysics Replay']
+        if dict
+          dict.delete_key('Groups Data')
+          dict.delete_key('Materials Data')
+          dict.delete_key('Layers Data')
+          dict.delete_key('Camera Data')
+          dict.delete_key('Render Data')
+          dict.delete_key('Shadow Data')
+          dict.delete_key('Start Frame')
+          dict.delete_key('End Frame')
+          dict.delete_key('Groups Data Chop Count')
+          dict.delete_key('Materials Data Chop Count')
+          dict.delete_key('Layers Data Chop Count')
+          dict.delete_key('Camera Data Chop Count')
+          dict.delete_key('Render Data Chop Count')
+          dict.delete_key('Shadow Data Chop Count')
+        end
+        model.definitions.each { |d|
+          d.attribute_dictionaries.delete('MSPhysics Replay') if d.attribute_dictionaries
+          d.instances.each { |i|
+            i.attribute_dictionaries.delete('MSPhysics Replay') if i.attribute_dictionaries
+          }
+        }
+        model.materials.each { |m|
+          m.attribute_dictionaries.delete('MSPhysics Replay') if m.attribute_dictionaries
+        }
+        model.layers.each { |l|
+          l.attribute_dictionaries.delete('MSPhysics Replay') if l.attribute_dictionaries
+        }
+        # End operation
+        model.commit_operation if wrap_in_op
       end
 
       # Clear saved data from file.
@@ -3147,14 +2584,19 @@ end}
       end
 
       def getExtents
-        bb = Sketchup.active_model.bounds
+        bb = Geom::BoundingBox.new
         if Sketchup.version.to_i > 6
           Sketchup.active_model.entities.each { |e|
             next if e.is_a?(Sketchup::Text)
-            bb.add(e.bounds) if e.visible?
+            if e.visible? && e.layer.visible?
+              c = e.bounds.center
+              next if c.x.is_a?(Bignum) || c.y.is_a?(Bignum) || c.z.is_a?(Bignum)
+              next if c.x.abs > 1.0e10 || c.y.abs > 1.0e10 || c.z.abs > 1.0e10
+              bb.add(e.bounds)
+            end
           }
         end
-        bb
+        bb.empty? ? Sketchup.active_model.bounds : bb
       end
 
       def nextFrame(view)

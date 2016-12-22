@@ -5,7 +5,7 @@ module MSPhysics
 
     DEFAULT_ACCEL = 40.0
     DEFAULT_DAMP = 10.0
-    DEFAULT_DAMPER_ENABLED = false
+    DEFAULT_STRENGTH = 0.98
     DEFAULT_PIN_DIR = Z_AXIS
 
     # Create an UpVector joint.
@@ -20,7 +20,7 @@ module MSPhysics
       MSPhysics::Newton::UpVector.create(@address)
       MSPhysics::Newton::UpVector.set_accel(@address, DEFAULT_ACCEL)
       MSPhysics::Newton::UpVector.set_damp(@address, DEFAULT_DAMP)
-      MSPhysics::Newton::UpVector.enable_damper(@address, DEFAULT_DAMPER_ENABLED)
+      MSPhysics::Newton::UpVector.set_strength(@address, DEFAULT_STRENGTH)
       MSPhysics::Newton::UpVector.set_pin_dir(@address, DEFAULT_PIN_DIR)
     end
 
@@ -52,16 +52,16 @@ module MSPhysics
       MSPhysics::Newton::UpVector.set_damp(@address, value)
     end
 
-    # Determine whether rotation stiff & damp parameters are enabled.
-    # @return [Boolean]
-    def damper_enabled?
-      MSPhysics::Newton::UpVector.damper_enabled?(@address)
+    # Get strength of the acceleration and damper.
+    # @return [Numeric] A value between 0.0 and 1.0.
+    def strength
+      MSPhysics::Newton::UpVector.get_strength(@address)
     end
 
-    # Enable/disable rotation stiff & damp parameters.
-    # @param [Boolean] state
-    def damper_enabled=(state)
-      MSPhysics::Newton::UpVector.enable_damper(@address, state)
+    # Set strength of the acceleration and damper.
+    # @param [Numeric] value A value between 0.0 and 1.0.
+    def strength=(value)
+      MSPhysics::Newton::UpVector.set_strength(@address, value)
     end
 
     # Get desired pin direction with respect to joint orientation.

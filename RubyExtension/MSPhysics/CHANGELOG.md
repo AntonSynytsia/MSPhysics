@@ -1,3 +1,32 @@
+## 0.9.9 - December 22, 2016
+- Reworked all joints. This includes bug fixes to the limits of the
+  BallAndSocket and Universal joints, improved behaviour of the CurvySlider and
+  CurvyPiston joints, removal of robust and flexible constraints, and various
+  improvements to the behaviours of all other joints.
+- Added a Plane joint.
+- Added a feature to control Spring and Hinge joint oscillation with parameters
+  basing on Hooke's law.
+- Reworked the UI dialog. This addresses various syntax errors within the layout
+  code, the undesired behavior of the fullscreen command, the bug with
+  simulation tab not showing preset settings, the bug with editor not preserving
+  size, and the issue with the dialog not considering DPI scale factor in
+  SU2017.
+- Added a feature to adjust the scale of the MSPhysics UI. This feature only
+  works on Windows.
+- Added a feature to switch Ace Editor fullscreen (use F11).
+- Fixed the issue where newly defined script functions were only accessible to
+  the body instance defining them rather than to all the body instances.
+- Added onTick, onPreFrame, and onPostFrame events. Also changed the nature of
+  onUpdate, onPreUpdate, and onPostUpdate events. See scripting documentation
+  for details. This includes the removal of some Body functions that aren't
+  necessary anymore.
+- Fixed the issue with the saved replay animation not loading properly if the
+  model wasn't previously saved.
+- Removed support for running without SDL, as adding it in the first place has
+  been unnecessary.
+- Improved the behaviour of pick and drag tool.
+- Improved buoyancy.
+
 ## 0.9.8 - November 13, 2016
 - Fixed camera follow/track commands in scenes.
 - Fixed issue with the orbit tool not activating while simulation is running.
@@ -36,15 +65,15 @@
 - Improved performance with closest joints when simulation starts.
 
 ## 0.9.3 - August 02, 2016
-- Fixed crash with loading large Replay data files. Thanks to Faust07 for
+- Fixed crash with loading large replay data files. Thanks to faust07 for
   report.
 - Fixed loading error that occurs if account name contains Latin characters.
   Thanks to Micceo for report.
 
 ## 0.9.2 - July 28, 2016
-- Fixed the bug in fullscreen checkbox option. Thanks to Faust07 for report.
-- Added statusbar notifications when Replay is being loaded/saved.
-- For size, performance, and stability purposes Replay information is now saved
+- Fixed the bug in fullscreen checkbox option. Thanks to faust07 for report.
+- Added statusbar notifications when replay is being loaded/saved.
+- For size, performance, and stability purposes replay information is now saved
   into a separate file, named <b>[model_name].mspreplay</b>.
 
 ## 0.9.1 - July 26, 2016
@@ -100,7 +129,7 @@
 
 ## 0.7.3 - May 25, 2016
 - Implemented latest Newton version which fixes static mesh collision bug.
-- Fixed bug in replay after stopping animation. Thanks to Faust07 for report.
+- Fixed bug in replay after stopping animation. Thanks to faust07 for report.
 - Added a feature to save replay into model.
 - Added joystick support.
 

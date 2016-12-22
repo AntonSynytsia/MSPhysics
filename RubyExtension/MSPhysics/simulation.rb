@@ -67,11 +67,7 @@ module MSPhysics
       @fps = 0
       @time_info = { :start => 0, :end => 0, :last => 0, :sim => 0, :total => 0 }
       @fps_info = { :update_rate => 10, :last => 0, :change => 0 }
-      @selected_page = nil
-      @camera = { :original => nil, :follow => nil, :target => nil, :offset => nil }
-      @rendering_options = {}
-      @shadow_info = {}
-      @layers = {}
+      @camera = { :original => {}, :follow => nil, :target => nil, :offset => nil }
       @cursor_id = MSPhysics::CURSORS[:hand]
       @original_cursor_id = @cursor_id
       @cursor_pos = [0,0]
@@ -87,7 +83,7 @@ module MSPhysics
       @update_timer = nil
       @ip1 = Sketchup::InputPoint.new
       @ip = Sketchup::InputPoint.new
-      @picked = []
+      @picked = {}
       @clicked = nil
       @error = nil
       @saved_transformations = {}
@@ -140,14 +136,16 @@ module MSPhysics
         :zaxis          => Sketchup::Color.new(0, 0, 255)
       }
       @pick_and_drag = {
-        :line_width     => 2,
+        :line_width     => 1,
         :line_stipple   => '_',
-        :line_color     => Sketchup::Color.new(60, 60, 60),
+        :line_color     => Sketchup::Color.new(250, 10, 10),
+        :point_width    => 2,
         :point_size     => 10,
         :point_style    => 4,
         :point_color    => Sketchup::Color.new(4, 4, 4),
-        :vline_width    => 2,
-        :vline_stipple  => '',
+        :vline_width    => 1,
+        :vline_stipple1 => '',
+        :vline_stipple2 => '-',
         :vline_color    => Sketchup::Color.new(0, 40, 255)
       }
       @controller_context = MSPhysics::ControllerContext.new
@@ -172,6 +170,7 @@ module MSPhysics
       @disable_timer = false
       @simulation_started = false
       @reset_positions_on_end = true
+      @joint_layer_orig_visible = true
       @@instance = self
     end
 
@@ -461,7 +460,6 @@ module MSPhysics
     def continuous_collision_check_enabled=(state)
       @ccm = state ? true : false
       world_address = @world.address
-      ovs = MSPhysics::Newton.is_object_validation_enabled?
       MSPhysics::Newton.enable_object_validation(false)
       if @ccm
         body_address = MSPhysics::Newton::World.get_first_body(world_address)
@@ -479,7 +477,7 @@ module MSPhysics
         }
         @cc_bodies.clear
       end
-      MSPhysics::Newton.enable_object_validation(ovs)
+      MSPhysics::Newton.enable_object_validation(true)
     end
 
     # Determine whether the continuous collision check, for all bodies, is
@@ -501,7 +499,6 @@ module MSPhysics
         @hidden_entities.clear
       else
         world_address = @world.address
-        ovs = MSPhysics::Newton.is_object_validation_enabled?
         MSPhysics::Newton.enable_object_validation(false)
         body_address = MSPhysics::Newton::World.get_first_body(world_address)
         while body_address
@@ -512,7 +509,7 @@ module MSPhysics
           end
           body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
         end
-        MSPhysics::Newton.enable_object_validation(ovs)
+        MSPhysics::Newton.enable_object_validation(true)
       end
       @show_bodies
     end
@@ -647,7 +644,7 @@ module MSPhysics
         body.density = group.get_attribute(bdict, 'Density', default[:density])
       end
       body.static_friction = group.get_attribute(bdict, 'Static Friction', default[:static_friction])
-      body.dynamic_friction = group.get_attribute(bdict, 'Dynamic Friction', default[:dynamic_friction])
+      body.kinetic_friction = group.get_attribute(bdict, 'Kinetic Friction', default[:kinetic_friction])
       body.elasticity = group.get_attribute(bdict, 'Elasticity', default[:elasticity])
       body.softness = group.get_attribute(bdict, 'Softness', default[:softness])
       body.friction_enabled = group.get_attribute(bdict, 'Enable Friction', default[:enable_friction])
@@ -666,8 +663,7 @@ module MSPhysics
       if group.get_attribute(bdict, 'Enable Script', default[:enable_script])
         script = group.get_attribute('MSPhysics Script', 'Value')
         begin
-          #Kernel.eval(script, body.context.get_binding, MSPhysics::SCRIPT_NAME, 1)
-          body.context.instance_eval(script, MSPhysics::SCRIPT_NAME, 1)
+          body.context.eval_script(script, MSPhysics::SCRIPT_NAME, 1)
         rescue Exception => e
           ref = nil
           test = MSPhysics::SCRIPT_NAME + ':'
@@ -1044,7 +1040,6 @@ module MSPhysics
     #   mixer failed to play sound.
     # @raise [TypeError] if sound is invalid.
     def play_sound(name, channel = -1, repeat = 0)
-      return unless MSPhysics.sdl_used?
       sound = MSPhysics::Sound.get_by_name(name)
       unless sound
         type = Sketchup.active_model.get_attribute('MSPhysics Sound Types', name, nil)
@@ -1080,7 +1075,6 @@ module MSPhysics
     #   mixer failed to play sound.
     # @raise [TypeError] if sound is invalid.
     def play_sound2(path, channel = -1, repeat = 0)
-      return unless MSPhysics.sdl_used?
       sound = MSPhysics::Sound.create_from_dir(path)
       MSPhysics::Sound.play(sound, channel, repeat)
     end
@@ -1090,7 +1084,6 @@ module MSPhysics
     #   {#play_sound2} functions. Pass -1 to stop all sounds.
     # @return [Boolean] success
     def stop_sound(channel)
-      return false unless MSPhysics.sdl_used?
       MSPhysics::Sound.stop(channel)
       true
     end
@@ -1106,7 +1099,6 @@ module MSPhysics
     #   in meters.
     # @return [Boolean] success
     def position_sound(channel, pos, max_hearing_range = 100)
-      return false unless MSPhysics.sdl_used?
       MSPhysics::Sound.set_position_3d(channel, pos, max_hearing_range)
     end
 
@@ -1122,7 +1114,6 @@ module MSPhysics
     # @return [Boolean] success
     # @raise [TypeError] if music is invalid.
     def play_music(name, repeat = 0)
-      return false unless MSPhysics.sdl_used?
       music = MSPhysics::Music.get_by_name(name)
       unless music
         type = Sketchup.active_model.get_attribute('MSPhysics Sound Types', name, nil)
@@ -1151,7 +1142,6 @@ module MSPhysics
     # @return [Boolean] success
     # @raise [TypeError] if music is invalid.
     def play_music2(path, repeat = 0)
-      return false if MSPhysics.sdl_used?
       music = MSPhysics::Music.create_from_dir(path)
       MSPhysics::Music.play(music, repeat)
     end
@@ -1159,7 +1149,6 @@ module MSPhysics
     # Stop the currently playing music.
     # @return [Boolean] success
     def stop_music
-      return false unless MSPhysics.sdl_used?
       MSPhysics::Music.stop
       true
     end
@@ -1702,7 +1691,6 @@ module MSPhysics
       end
       model = Sketchup.active_model
       view = model.active_view
-      cam = view.camera
       # Wait a few frames just to update icons in case of huge performance.
       if @update_wait < 5
         @update_wait += 1
@@ -1714,10 +1702,8 @@ module MSPhysics
           @pause_updated = true
           @time_info[:sim] += Time.now - @time_info[:last]
           @fps_info[:change] += Time.now - @fps_info[:last]
-          if MSPhysics.sdl_used?
-            MSPhysics::Music.pause
-            MSPhysics::Sound.pause(-1)
-          end
+          MSPhysics::Music.pause
+          MSPhysics::Sound.pause(-1)
         end
         #view.show_frame
         return
@@ -1726,61 +1712,26 @@ module MSPhysics
         @time_info[:last] = Time.now
         @fps_info[:last] = Time.now
         @pause_updated = false
-        if MSPhysics.sdl_used?
-          MSPhysics::Music.resume
-          MSPhysics::Sound.resume(-1)
-        end
+        MSPhysics::Music.resume
+        MSPhysics::Sound.resume(-1)
       end
       # Clear drawing queues
+      @bb.clear
       @draw_queue.clear
       @points_queue.clear
       # Update joy data
-      update_joy_data if MSPhysics.sdl_used?
+      update_joy_data
       # Increment frame
       @frame += 1
-      # Call onPreUpdate event
-      call_event(:onPreUpdate)
+      # Call onPreFrame event
+      call_event(:onPreFrame)
       return unless Simulation.active?
-      # Process thrusters
-      @thrusters.reject! { |body, data|
-        next true unless body.valid?
-        value = nil
-        begin
-          #value = Kernel.eval(data[:controller], @controller.get_binding, CONTROLLER_NAME, 0)
-          value = @controller_context.instance_eval(data[:controller], CONTROLLER_NAME, 0)
-        rescue Exception => e
-          err_message = e.message
-          err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
-          puts "An exception occurred while evaluating thruster controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{err_message}"
-        end
-        return unless Simulation.active?
-        next true unless body.valid?
-        begin
-          if value.is_a?(Numeric)
-            value = Geom::Vector3d.new(0, 0, value)
-          elsif value.is_a?(Array) && value.size == 3 && value.x.is_a?(Numeric) && value.y.is_a?(Numeric) && value.z.is_a?(Numeric)
-            value = Geom::Vector3d.new(value)
-          else
-            next
-          end
-          if value.length != 0
-            value = AMS.scale_vector(value, 1.0/@update_timestep)
-            body.add_force2( data[:lock_axis] ? value.transform(body.normal_matrix) : value )
-          end
-        rescue Exception => e
-          err_message = e.message
-          err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
-          puts "An exception occurred while assigning thruster controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{err_message}"
-        end
-        false
-      }
       # Process emitters
       @emitters.reject! { |body, data|
         next true unless body.valid?
         value = nil
         begin
-          #value = Kernel.eval(data[:controller], @controller.get_binding, CONTROLLER_NAME, 0)
-          value = @controller_context.instance_eval(data[:controller], CONTROLLER_NAME, 0)
+          value = @controller_context.eval_script(data[:controller], CONTROLLER_NAME, 0)
         rescue Exception => e
           err_message = e.message
           err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
@@ -1791,15 +1742,16 @@ module MSPhysics
         begin
           if value.is_a?(Numeric)
             value = Geom::Vector3d.new(0, 0, value)
-          elsif value.is_a?(Array) && value.size == 3 && value.x.is_a?(Numeric) && value.y.is_a?(Numeric) && value.z.is_a?(Numeric)
+          elsif value.is_a?(Array) && value.x.is_a?(Numeric) && value.y.is_a?(Numeric) && value.z.is_a?(Numeric)
             value = Geom::Vector3d.new(value)
-          else
-            next
+          elsif !value.is_a?(Geom::Vector3d)
+            next false
           end
           if value.length != 0
             value = AMS.scale_vector(value, 1.0/@update_timestep)
+            value.transform!(body.normal_matrix) if data[:lock_axis]
             if @frame % data[:rate] == 0
-              self.emit_body(body, data[:lock_axis] ? value.transform(body.normal_matrix) : value, data[:lifetime])
+              self.emit_body(body, value, data[:lifetime])
             end
           end
         rescue Exception => e
@@ -1809,67 +1761,195 @@ module MSPhysics
         end
         false
       }
-      # Disable object validation while processing data to improve performance.
+      # Update world update_rate times
       world_address = @world.address
-      ovs = MSPhysics::Newton.is_object_validation_enabled?
-      MSPhysics::Newton.enable_object_validation(false)
-      # Process buoyancy planes
-      @buoyancy_planes.reject! { |entity, data|
-        next true unless entity.valid?
-        tra = entity.transformation
-        body_address = MSPhysics::Newton::World.get_first_body(world_address)
-        while body_address
-          unless MSPhysics::Newton::Body.is_static?(body_address)
-            MSPhysics::Newton::Body.apply_buoyancy(body_address, tra.origin, tra.zaxis, data[:current].transform(tra), data[:density], data[:viscosity], data[:viscosity])
-          end
-          body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
-        end
-        false
-      }
-      # Update controlled joints
-      @controlled_joints.reject! { |joint, data|
-        next true if !joint.valid?
-        if data.is_a?(Array)
-          controller = data[0]
-          ratio = data[1]
-        else
-          controller = data
-          ratio = 1
-        end
-        value = nil
-        begin
-          value = @controller_context.instance_eval(controller, CONTROLLER_NAME, 0)
-        rescue Exception => e
-          err_message = e.message
-          err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
-          puts "An exception occurred while evaluating joint controller!\nController:\n#{controller}\n#{e.class}:\n#{err_message}"
-        end
+      @update_rate.times {
+        # Call onPreUpdate event
+        call_event(:onPreUpdate)
         return unless Simulation.active?
-        next true if !joint.valid?
-        begin
-          if joint.is_a?(Servo) || joint.is_a?(Piston) || joint.is_a?(CurvyPiston)
-            if value.is_a?(Numeric)
-              joint.controller = value * ratio
-            elsif value.nil?
-              joint.controller = nil
-            end
-          elsif joint.is_a?(UpVector)
-            if (value.is_a?(Array) || value.is_a?(Geom::Vector3d)) && value.x.is_a?(Numeric) && value.y.is_a?(Numeric) && value.z.is_a?(Numeric)
-              joint.set_pin_dir(value)
-            end
-          elsif value.is_a?(Numeric)
-            joint.controller = value * ratio
+        # Process thrusters
+        @thrusters.reject! { |body, data|
+          next true unless body.valid?
+          value = nil
+          begin
+            value = @controller_context.eval_script(data[:controller], CONTROLLER_NAME, 0)
+          rescue Exception => e
+            err_message = e.message
+            err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
+            puts "An exception occurred while evaluating thruster controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{err_message}"
           end
-        rescue Exception => e
-          err_message = e.message
-          err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
-          puts "An exception occurred while assigning joint controller!\nController:\n#{controller}\n#{e.class}:\n#{err_message}"
+          return unless Simulation.active?
+          next true unless body.valid?
+          begin
+            if value.is_a?(Numeric)
+              value = Geom::Vector3d.new(0, 0, value)
+            elsif value.is_a?(Array) && value.x.is_a?(Numeric) && value.y.is_a?(Numeric) && value.z.is_a?(Numeric)
+              value = Geom::Vector3d.new(value)
+            elsif !value.is_a?(Geom::Vector3d)
+              next false
+            end
+            if data[:lock_axis]
+              body.add_force(value.transform(body.normal_matrix))
+            else
+              body.add_force(value)
+            end
+          rescue Exception => e
+            err_message = e.message
+            err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
+            puts "An exception occurred while assigning thruster controller!\nController:\n#{data[:controller]}\n#{e.class}:\n#{err_message}"
+          end
+          false
+        }
+        # Process buoyancy planes
+        MSPhysics::Newton.enable_object_validation(false)
+        @buoyancy_planes.reject! { |entity, data|
+          next true unless entity.valid?
+          tra = entity.transformation
+          body_address = MSPhysics::Newton::World.get_first_body(world_address)
+          while body_address
+            unless MSPhysics::Newton::Body.is_static?(body_address)
+              MSPhysics::Newton::Body.apply_buoyancy(body_address, tra.origin, tra.zaxis, data[:current].transform(tra), data[:density], data[:viscosity], data[:viscosity], @update_timestep)
+            end
+            body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
+          end
+          false
+        }
+        MSPhysics::Newton.enable_object_validation(true)
+        # Update controlled joints
+        @controlled_joints.reject! { |joint, data|
+          next true if !joint.valid?
+          if data.is_a?(Array)
+            controller = data[0]
+            ratio = data[1]
+          else
+            controller = data
+            ratio = 1
+          end
+          value = nil
+          begin
+            value = @controller_context.eval_script(controller, CONTROLLER_NAME, 0)
+          rescue Exception => e
+            err_message = e.message
+            err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
+            puts "An exception occurred while evaluating joint controller!\nController:\n#{controller}\n#{e.class}:\n#{err_message}"
+          end
+          return unless Simulation.active?
+          next true if !joint.valid?
+          begin
+            if joint.is_a?(Servo) || joint.is_a?(Piston) || joint.is_a?(CurvyPiston)
+              if value.is_a?(Numeric)
+                joint.controller = value * ratio
+              elsif value.nil?
+                joint.controller = nil
+              end
+            elsif joint.is_a?(UpVector)
+              if (value.is_a?(Array) || value.is_a?(Geom::Vector3d)) && value.x.is_a?(Numeric) && value.y.is_a?(Numeric) && value.z.is_a?(Numeric)
+                joint.set_pin_dir(value)
+              end
+            elsif value.is_a?(Numeric)
+              joint.controller = value * ratio
+            end
+          rescue Exception => e
+            err_message = e.message
+            err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
+            puts "An exception occurred while assigning joint controller!\nController:\n#{controller}\n#{e.class}:\n#{err_message}"
+          end
+          false
+        }
+        # Process dragged body
+        unless @picked.empty?
+          if @picked[:body].valid?
+            pick_pt = @picked[:loc_pick_pt].transform(@picked[:body].get_matrix)
+            ray = view.pickray(@cursor_pos.x, @cursor_pos.y)
+            view_normal = view.camera.zaxis
+            normal = nil
+            if AMS::Keyboard.shift_down?
+              if view_normal.dot(Z_AXIS).abs < 0.999995
+                normal = view_normal
+                normal.z = 0
+                normal.normalize!
+              end
+              if !@picked[:shift_down]
+                @picked[:plane_origin] = Geom::Point3d.new(@picked[:dest_pt])
+                @picked[:shift_down] = true
+              end
+            else
+              if pick_pt.z > ray[0].z
+                normal = Z_AXIS
+              else
+                normal = Z_AXIS.reverse
+              end
+              if @picked[:shift_down]
+                @picked[:plane_origin] = Geom::Point3d.new(@picked[:dest_pt])
+                @picked[:shift_down] = false
+              end
+            end
+            if normal && ray[1].dot(normal) > 0.02
+              plane = [@picked[:plane_origin], normal]
+              @picked[:dest_pt] = Geom.intersect_line_plane(ray, plane)
+            end
+            MSPhysics::Newton::Body.apply_pick_and_drag(@picked[:body].address, pick_pt, @picked[:dest_pt], 150.0, 10.0)
+          else
+            @picked.clear
+            self.cursor = @original_cursor_id
+          end
         end
-        false
+        # Update newton world
+        @world.update(@update_timestep)
+        # Call onUpdate event
+        call_event(:onUpdate)
+        return unless Simulation.active?
+        # Call onTouch event
+        count = MSPhysics::Newton::World.get_touch_data_count(world_address)
+        for i in 0...count
+          data = MSPhysics::Newton::World.get_touch_data_at(world_address, i)
+          body1 = MSPhysics::Newton::Body.get_user_data(data[0])
+          body2 = MSPhysics::Newton::Body.get_user_data(data[1])
+          if body1.is_a?(MSPhysics::Body) && body2.is_a?(MSPhysics::Body)
+            begin
+              body1.context.call_event(:onTouch, body2, data[2], data[3], data[4], data[5])
+            rescue Exception => e
+              abort(e)
+            end
+            return unless Simulation.active?
+          end
+        end
+        # Call onTouching event
+        count = MSPhysics::Newton::World.get_touching_data_count(world_address)
+        for i in 0...count
+          data = MSPhysics::Newton::World.get_touching_data_at(world_address, i)
+          body1 = MSPhysics::Newton::Body.get_user_data(data[0])
+          body2 = MSPhysics::Newton::Body.get_user_data(data[1])
+          if body1.is_a?(MSPhysics::Body) && body2.is_a?(MSPhysics::Body)
+            begin
+              body1.context.call_event(:onTouching, body2)
+            rescue Exception => e
+              abort(e)
+            end
+            return unless Simulation.active?
+          end
+        end
+        # Call onUntouch event
+        count = MSPhysics::Newton::World.get_untouch_data_count(world_address)
+        for i in 0...count
+          data = MSPhysics::Newton::World.get_untouch_data_at(world_address, i)
+          body1 = MSPhysics::Newton::Body.get_user_data(data[0])
+          body2 = MSPhysics::Newton::Body.get_user_data(data[1])
+          if body1.is_a?(MSPhysics::Body) && body2.is_a?(MSPhysics::Body)
+            begin
+              body1.context.call_event(:onUntouch, body2)
+            rescue Exception => e
+              abort(e)
+            end
+            return unless Simulation.active?
+          end
+        end
+        # Call onPostUpdate event
+        call_event(:onPostUpdate)
+        return unless Simulation.active?
       }
-      # Update transformations of all transformed entities.
-      # Update newton world
-      @world.update(@update_timestep, @update_rate)
+      # Update group transformations
+      MSPhysics::Newton.enable_object_validation(false)
       body_address = MSPhysics::Newton::World.get_first_body(world_address)
       while body_address
         if MSPhysics::Newton::Body.matrix_changed?(body_address)
@@ -1880,65 +1960,17 @@ module MSPhysics
         end
         body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
       end
-      # Re-enable object validation.
-      MSPhysics::Newton.enable_object_validation(ovs)
-      # Call onTouch event
-      count = MSPhysics::Newton::World.get_touch_data_count(world_address)
-      for i in 0...count
-        data = MSPhysics::Newton::World.get_touch_data_at(world_address, i)
-        body1 = MSPhysics::Newton::Body.get_user_data(data[0])
-        body2 = MSPhysics::Newton::Body.get_user_data(data[1])
-        if body1.is_a?(MSPhysics::Body) && body2.is_a?(MSPhysics::Body)
-          begin
-            body1.context.call_event(:onTouch, body2, data[2], data[3], data[4], data[5])
-          rescue Exception => e
-            abort(e)
-          end
-          return unless Simulation.active?
-        end
-      end
-      # Call onTouching event
-      count = MSPhysics::Newton::World.get_touching_data_count(world_address)
-      for i in 0...count
-        data = MSPhysics::Newton::World.get_touching_data_at(world_address, i)
-        body1 = MSPhysics::Newton::Body.get_user_data(data[0])
-        body2 = MSPhysics::Newton::Body.get_user_data(data[1])
-        if body1.is_a?(MSPhysics::Body) && body2.is_a?(MSPhysics::Body)
-          begin
-            body1.context.call_event(:onTouching, body2)
-          rescue Exception => e
-            abort(e)
-          end
-          return unless Simulation.active?
-        end
-      end
-      # Call onUntouch event
-      count = MSPhysics::Newton::World.get_untouch_data_count(world_address)
-      for i in 0...count
-        data = MSPhysics::Newton::World.get_untouch_data_at(world_address, i)
-        body1 = MSPhysics::Newton::Body.get_user_data(data[0])
-        body2 = MSPhysics::Newton::Body.get_user_data(data[1])
-        if body1.is_a?(MSPhysics::Body) && body2.is_a?(MSPhysics::Body)
-          begin
-            body1.context.call_event(:onUntouch, body2)
-          rescue Exception => e
-            abort(e)
-          end
-          return unless Simulation.active?
-        end
-      end
+      MSPhysics::Newton.enable_object_validation(true)
       # Update particles
       update_particles
-      # Call onUpdate event
-      call_event(:onUpdate)
+      # Call onTick event
+      call_event(:onTick)
       return unless Simulation.active?
-      # Call onPostUpdate event
-      call_event(:onPostUpdate)
+      # Call onPostFrame event
+      call_event(:onPostFrame)
       return unless Simulation.active?
       # Process 3D sounds.
-      if MSPhysics.sdl_used?
-        MSPhysics::Sound.update_effects
-      end
+      MSPhysics::Sound.update_effects
       # Process emitted bodies.
       @emitted_bodies.reject! { |body, life_end|
         next false if life_end == 0 || @frame < life_end
@@ -1949,37 +1981,23 @@ module MSPhysics
         true
       }
       # Update camera
-      ent = @camera[:follow]
-      if ent
-        if ent.deleted?
+      if @camera[:follow]
+        if @camera[:follow].deleted?
           @camera[:follow] = nil
         else
-          eye = ent.bounds.center + @camera[:offset]
-          tar = eye + cam.direction
-          cam.set(eye, tar, Z_AXIS.parallel?(cam.direction) ? Y_AXIS : Z_AXIS)
+          eye = @camera[:follow].bounds.center + @camera[:offset]
+          tar = eye + view.camera.direction
+          view.camera.set(eye, tar, Z_AXIS.parallel?(view.camera.direction) ? Y_AXIS : Z_AXIS)
         end
       end
-      ent = @camera[:target]
-      if ent
-        if ent.deleted?
+      if @camera[:target]
+        if @camera[:target].deleted?
           @camera[:target] = nil
         else
-          eye = cam.eye
-          dir = eye.vector_to(ent.bounds.center)
+          eye = view.camera.eye
+          dir = eye.vector_to(@camera[:target].bounds.center)
           tar = eye + dir
-          cam.set(eye, tar, Z_AXIS.parallel?(dir) ? Y_AXIS : Z_AXIS)
-        end
-      end
-      # Process dragged body
-      unless @picked.empty?
-        if @picked[0].valid?
-          pick_pt = @picked[1].transform(@picked[0].get_matrix)
-          dest_pt = @picked[2]
-          MSPhysics::Newton::Body.apply_pick_and_drag(@picked[0].address, pick_pt, dest_pt, 120.0 / @update_rate, 20.0 / @update_rate)
-          #Newton::Body.apply_pick_and_drag2(@picked[0].address, pick_pt, dest_pt, 0.3, 0.95, @update_timestep)
-        else
-          @picked.clear
-          self.cursor = @original_cursor_id
+          view.camera.set(eye, tar, Z_AXIS.parallel?(dir) ? Y_AXIS : Z_AXIS)
         end
       end
       # Update FPS
@@ -2014,7 +2032,6 @@ module MSPhysics
     def draw_contact_points(view)
       return unless @contact_points[:show]
       world_address = @world.address
-      ovs = MSPhysics::Newton.is_object_validation_enabled?
       MSPhysics::Newton.enable_object_validation(false)
       body_address = MSPhysics::Newton::World.get_first_body(world_address)
       while body_address
@@ -2024,7 +2041,7 @@ module MSPhysics
         end
         body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
       end
-      MSPhysics::Newton.enable_object_validation(ovs)
+      MSPhysics::Newton.enable_object_validation(true)
     end
 
     def draw_contact_forces(view)
@@ -2033,7 +2050,6 @@ module MSPhysics
       view.line_width = @contact_forces[:line_width]
       view.line_stipple = @contact_forces[:line_stipple]
       world_address = @world.address
-      ovs = MSPhysics::Newton.is_object_validation_enabled?
       MSPhysics::Newton.enable_object_validation(false)
       body_address = MSPhysics::Newton::World.get_first_body(world_address)
       while body_address
@@ -2052,7 +2068,7 @@ module MSPhysics
         end
         body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
       end
-      MSPhysics::Newton.enable_object_validation(ovs)
+      MSPhysics::Newton.enable_object_validation(true)
     end
 
     def draw_collision_wireframe(view)
@@ -2065,7 +2081,6 @@ module MSPhysics
       view.line_width = @axes[:line_width]
       view.line_stipple = @axes[:line_stipple]
       world_address = @world.address
-      ovs = MSPhysics::Newton.is_object_validation_enabled?
       MSPhysics::Newton.enable_object_validation(false)
       body_address = MSPhysics::Newton::World.get_first_body(world_address)
       while body_address
@@ -2092,7 +2107,7 @@ module MSPhysics
         # Get next body
         body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
       end
-      MSPhysics::Newton.enable_object_validation(ovs)
+      MSPhysics::Newton.enable_object_validation(true)
     end
 
     def draw_aabb(view)
@@ -2101,7 +2116,6 @@ module MSPhysics
       view.line_width = @aabb[:line_width]
       view.line_stipple = @aabb[:line_stipple]
       world_address = @world.address
-      ovs = MSPhysics::Newton.is_object_validation_enabled?
       MSPhysics::Newton.enable_object_validation(false)
       body_address = MSPhysics::Newton::World.get_first_body(world_address)
       while body_address
@@ -2111,24 +2125,25 @@ module MSPhysics
         view.draw(GL_LINES, [min, [min.x, min.y, max.z], [min.x, max.y, min.z], [min.x, max.y, max.z], [max.x, max.y, min.z], max, [max.x, min.y, min.z], [max.x, min.y, max.z]])
         body_address = MSPhysics::Newton::World.get_next_body(world_address, body_address)
       end
-      MSPhysics::Newton.enable_object_validation(ovs)
+      MSPhysics::Newton.enable_object_validation(true)
     end
 
     def draw_pick_and_drag(view)
       return if @picked.empty?
-      if @picked[0].valid?
-        pt1 = @picked[1].transform(@picked[0].get_matrix)
-        pt2 = @picked[2]
+      if @picked[:body].valid?
+        pt1 = @picked[:loc_pick_pt].transform(@picked[:body].get_matrix)
+        pt2 = @picked[:dest_pt]
         @bb.add(pt2)
         view.line_width = @pick_and_drag[:line_width]
         view.line_stipple = @pick_and_drag[:line_stipple]
         view.drawing_color = @pick_and_drag[:line_color]
         view.draw_line(pt1, pt2)
+        view.line_width = @pick_and_drag[:point_width]
         view.line_stipple = ''
         view.draw_points(pt1, @pick_and_drag[:point_size], @pick_and_drag[:point_style], @pick_and_drag[:point_color])
         if AMS::Keyboard.shift_down?
           view.line_width = @pick_and_drag[:vline_width]
-          view.line_stipple = @pick_and_drag[:vline_stipple]
+          view.line_stipple = pt2.z > 0 ? @pick_and_drag[:vline_stipple1] : @pick_and_drag[:vline_stipple2]
           view.drawing_color = @pick_and_drag[:vline_color]
           view.draw(GL_LINES, [pt2.x, pt2.y, 0], pt2)
         end
@@ -2150,7 +2165,7 @@ module MSPhysics
           view.draw2d(type, points)
         end
       }
-      @points_queue.each{ |points, size, style, color, width, stipple|
+      @points_queue.each { |points, size, style, color, width, stipple|
         @bb.add(points)
         view.line_width = width
         view.line_stipple = stipple
@@ -2246,10 +2261,12 @@ module MSPhysics
         joint.accel = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Damp', MSPhysics::Hinge::DEFAULT_DAMP)
         joint.damp = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Strength', MSPhysics::Hinge::DEFAULT_STRENGTH)
+        joint.strength = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Enable Hookes', MSPhysics::Hinge::DEFAULT_HOOKES_ENABLED)
+        joint.mode = attr ? 1 : 0
         attr = joint_ent.get_attribute(jdict, 'Enable Rotate Back', MSPhysics::Hinge::DEFAULT_ROTATE_BACK_ENABLED)
         joint.rotate_back_enabled = attr
-        attr = joint_ent.get_attribute(jdict, 'Enable Strong Mode', MSPhysics::Hinge::DEFAULT_STRONG_MODE_ENABLED)
-        joint.strong_mode_enabled = attr
         attr = joint_ent.get_attribute(jdict, 'Start Angle', MSPhysics::Hinge::DEFAULT_START_ANGLE * iang_ratio)
         joint.start_angle = attr.to_f * ang_ratio
         controller = joint_ent.get_attribute(jdict, 'Controller')
@@ -2328,10 +2345,12 @@ module MSPhysics
         joint.accel = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Damp', MSPhysics::Spring::DEFAULT_DAMP)
         joint.damp = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Strength', MSPhysics::Spring::DEFAULT_STRENGTH)
+        joint.strength = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Enable Hookes', MSPhysics::Spring::DEFAULT_HOOKES_ENABLED)
+        joint.mode = attr ? 1 : 0
         attr = joint_ent.get_attribute(jdict, 'Enable Limits', MSPhysics::Spring::DEFAULT_LIMITS_ENABLED)
         joint.limits_enabled = attr
-        attr = joint_ent.get_attribute(jdict, 'Enable Strong Mode', MSPhysics::Spring::DEFAULT_STRONG_MODE_ENABLED)
-        joint.strong_mode_enabled = attr
         attr = joint_ent.get_attribute(jdict, 'Start Position', MSPhysics::Spring::DEFAULT_START_POSITION * ipos_ratio)
         joint.start_position = attr.to_f * pos_ratio
         controller = joint_ent.get_attribute(jdict, 'Controller')
@@ -2344,8 +2363,8 @@ module MSPhysics
         joint.accel = attr.to_f
         attr = joint_ent.get_attribute(jdict, 'Damp', MSPhysics::UpVector::DEFAULT_DAMP)
         joint.damp = attr.to_f
-        attr = joint_ent.get_attribute(jdict, 'Enable Damper', MSPhysics::UpVector::DEFAULT_DAMPER_ENABLED)
-        joint.damper_enabled = attr
+        attr = joint_ent.get_attribute(jdict, 'Strength', MSPhysics::UpVector::DEFAULT_STRENGTH)
+        joint.strength = attr.to_f
         controller = joint_ent.get_attribute(jdict, 'Controller')
         if controller.is_a?(String) && !controller.empty?
           @controlled_joints[joint] = controller
@@ -2454,12 +2473,17 @@ module MSPhysics
         MSPhysics::JointConnectionTool.get_points_on_curve(joint_ent, parent_body ? parent_body.group : nil).each { |point|
           joint.add_point(point)
         }
+      when 'Plane'
+        joint = MSPhysics::Plane.new(@world, parent_body, pin_matrix, joint_ent)
+        attr = joint_ent.get_attribute(jdict, 'Linear Friction', MSPhysics::Plane::DEFAULT_LINEAR_FRICTION)
+        joint.linear_friction = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Angular Friction', MSPhysics::Plane::DEFAULT_ANGULAR_FRICTION)
+        joint.angular_friction = attr.to_f
+        attr = joint_ent.get_attribute(jdict, 'Enable Rotation', MSPhysics::Plane::DEFAULT_ROTATION_ENABLED)
+        joint.rotation_enabled = attr
       else
         return
       end
-
-      attr = joint_ent.get_attribute(jdict, 'Constraint Type', MSPhysics::Joint::DEFAULT_CONSTRAINT_TYPE).to_i
-      joint.constraint_type = attr
       attr = joint_ent.name.to_s
       attr = joint_ent.get_attribute(jdict, 'ID').to_s if attr.empty?
       joint.name = attr
@@ -2642,40 +2666,22 @@ module MSPhysics
       # Stop any running animation
       view.animation = nil
       # Stop any playing sounds and music
-      if MSPhysics.sdl_used?
-        MSPhysics::Sound.destroy_all
-        MSPhysics::Music.destroy_all
-      end
-      # Save selected page
-      @selected_page = model.pages.selected_page
+      MSPhysics::Sound.destroy_all
+      MSPhysics::Music.destroy_all
       # Save camera orientation
-      @camera[:original] = [
-        camera.eye,
-        camera.target,
-        camera.up,
-        camera.perspective?,
-        camera.aspect_ratio,
-        camera.description,
-      ]
-      # To avoid a warning temporarily enable the perspective mode.
-      t = camera.perspective?
-      camera.perspective = true
-      @camera[:original].concat [
-        camera.focal_length,
-        camera.fov,
-        camera.image_width
-      ]
-      # To avoid a warning temporarily enable the parallel projection mode.
-      camera.perspective = false
-      # Set and save original perspective
-      @camera[:original] << camera.height
-      camera.perspective = t
-      # Save rendering options
-      model.rendering_options.each { |k, v| @rendering_options[k] = v }
-      # Save shadow info
-      model.shadow_info.each { |k, v| @shadow_info[k] = v }
-      # Save layer visibility
-      model.layers.each { |l| @layers[l] = l.visible? }
+      opts = @camera[:original]
+      opts[:eye] = camera.eye
+      opts[:target] = camera.target
+      opts[:up] = camera.up
+      opts[:aspect_ratio] = camera.aspect_ratio
+      opts[:perspective] = camera.perspective?
+      if opts[:perspective]
+        opts[:focal_length] = camera.focal_length
+        opts[:fov] = camera.fov
+        opts[:image_width] = camera.image_width
+      else
+        opts[:height] = camera.height
+      end
       # Activate observer
       AMS::Sketchup.add_observer(self) if AMS::IS_PLATFORM_WINDOWS
       # Configure Settings
@@ -2757,12 +2763,12 @@ module MSPhysics
       init_joints
       init_gears
       # Apply settings
+      jlayer = model.layers['MSPhysics Joints']
+      @joint_layer_orig_visible = (jlayer && jlayer.visible?) ? true : false
       MSPhysics::Settings.apply_settings
       # Reinitialize joystick
-      if MSPhysics.sdl_used?
-        MSPhysics::SDL.quit_sub_system(MSPhysics::SDL::INIT_JOYSTICK)
-        MSPhysics::SDL.init_sub_system(MSPhysics::SDL::INIT_JOYSTICK)
-      end
+      MSPhysics::SDL.quit_sub_system(MSPhysics::SDL::INIT_JOYSTICK)
+      MSPhysics::SDL.init_sub_system(MSPhysics::SDL::INIT_JOYSTICK)
       # Close SP MIDI device if open
       if defined?(MIDIator::Interface.midiInterface) && MIDIator::Interface.midiInterface.respond_to?(:close)
         MIDIator::Interface.midiInterface.close
@@ -2876,41 +2882,25 @@ module MSPhysics
       AMS::Sketchup.remove_observer(self) if AMS::IS_PLATFORM_WINDOWS
       # Unset from fullscreen mode
       view_full_screen(false) if MSPhysics::Settings.full_screen_mode_enabled?
-      # Purge unused
-      model.definitions.purge_unused
-      #~ model.materials.purge_unused
-      # Reset selected page
-      if @selected_page && @selected_page.valid?
-        tt = @selected_page.transition_time
-        @selected_page.transition_time = 0
-        model.pages.selected_page = @selected_page
-        @selected_page.transition_time = tt
-        @selected_page = nil
+      # Recover joint layer
+      if @joint_layer_orig_visible
+        jlayer = model.layers['MSPhysics Joints']
+        jlayer.visible = true if jlayer && !jlayer.visible?
       end
-      # Set camera to original placement
+      # Purge unused definitions
+      model.definitions.purge_unused
+      # Reset camera orientation
       opts = @camera[:original]
-      camera.set(opts[0], opts[1], opts[2])
-      camera.aspect_ratio = opts[4]
-      camera.description = opts[5]
-      # Enable the perspective mode to avoid a warning
-      camera.perspective = true
-      camera.focal_length = opts[6]
-      camera.fov = opts[7]
-      camera.image_width = opts[8]
-      # Enable the parallel projection mode to avoid a warning
-      camera.perspective = false
-      camera.height = opts[9]
-      # Set original perspective
-      camera.perspective = opts[3]
-      # Reset rendering options
-      #~ @rendering_options.each { |k, v| model.rendering_options[k] = v }
-      @rendering_options.clear
-      # Reset shadow info
-      #~ @shadow_info.each { |k, v| model.shadow_info[k] = v }
-      @shadow_info.clear
-      # Reset layer visibility
-      #~ @layers.each { |l, s| l.visible = s if l.valid? && l.visible? != s }
-      @layers.clear
+      camera.set(opts[:eye], opts[:target], opts[:up])
+      #camera.aspect_ratio = opts[:aspect_ratio]
+      camera.perspective = opts[:perspective]
+      if opts[:perspective]
+        camera.focal_length = opts[:focal_length]
+        camera.fov = opts[:fov]
+        camera.image_width = opts[:image_width]
+      else
+        camera.height = opts[:height]
+      end
       # Restore original selection
       model.selection.clear
       @selected_ents.each { |e|
@@ -2927,13 +2917,11 @@ module MSPhysics
       view.invalidate
       # Destroy all particles
       MSPhysics::C::Particle.destroy_all
-      if MSPhysics.sdl_used?
-        # Close joystick
-        MSPhysics::Joystick.close_all_joysticks
-        # Stop any playing sounds and music
-        MSPhysics::Sound.destroy_all
-        MSPhysics::Music.destroy_all
-      end
+      # Close joystick
+      MSPhysics::Joystick.close_all_joysticks
+      # Stop any playing sounds and music
+      MSPhysics::Sound.destroy_all
+      MSPhysics::Music.destroy_all
       # Close MIDI device
       AMS::MIDI.close_device()
       # Free some variables
@@ -2977,8 +2965,10 @@ module MSPhysics
         printf("  average FPS     : %d\n", average_fps)
         printf("  simulation time : %.2f seconds\n", @time_info[:sim])
         printf("  total time      : %.2f seconds\n\n", @time_info[:total])
+        MSPhysics::Dialog.update_state
       else
-        puts "MSPhysics Simulation was stopped before it even started."
+        puts "MSPhysics Simulation was aborted before it even started."
+        MSPhysics::Dialog.update_state
       end
       # Save replay animation data
       if MSPhysics::Replay.recorded_data_valid? && ::UI.messagebox("Would you like to save recorded simulation for the replay?", MB_YESNO) == IDYES
@@ -3025,51 +3015,10 @@ module MSPhysics
     end
 
     def onMouseMove(flags, x, y, view)
-      @cursor_pos = [x,y]
+      @cursor_pos.x = x
+      @cursor_pos.y = y
       call_event(:onMouseMove, x, y) unless @paused
       return unless Simulation.active?
-      return if @picked.empty?
-      if @mode == 1
-        @picked.clear
-        self.cursor = @original_cursor_id
-        return
-      end
-      @ip.pick(view, x, y)
-      return if @ip == @ip1
-      @ip1.copy! @ip
-      # view.tooltip = @ip1.tooltip
-      if @picked[0].valid?
-        begin
-          @picked[0].context.call_event(:onDrag) if @picked[4] != @frame
-        rescue Exception => e
-          abort(e)
-          return
-        end
-        return unless Simulation.active?
-        @picked[4] = @frame
-      else
-        @picked.clear
-        self.cursor = @original_cursor_id
-        return
-      end
-      cam = view.camera
-      line = [cam.eye, @ip1.position]
-      if AMS::Keyboard.shift_down?
-        normal = view.camera.zaxis
-        normal.z = 0
-        normal.normalize!
-      else
-        normal = Z_AXIS
-      end
-      plane = [@picked[2], normal]
-      vector = cam.eye.vector_to(@ip1.position)
-      theta = vector.angle_between(normal).radians
-      if (90 - theta).abs > 1
-        pt = Geom.intersect_line_plane(line, plane)
-        v = cam.eye.vector_to(pt)
-        @picked[2] = pt if cam.zaxis.angle_between(v).radians < 90
-      end
-      #~ @picked[2] = @ip1.position
     end
 
     def onLButtonDown(flags, x, y, view)
@@ -3083,12 +3032,12 @@ module MSPhysics
         sel.clear
         return
       end
-      pos = @ip1.position
+      pick_pt = @ip1.position
       # Use ray test as it determines positions more accurate than input point.
       ray = view.pickray(x,y)
       res = view.model.raytest(ray)
       if res
-        pos = res[0]
+        pick_pt = res[0]
         ent = res[1][0]
       else
         ph = view.pick_helper
@@ -3101,40 +3050,10 @@ module MSPhysics
       end
       body = find_body_by_group(ent)
       return unless body
-=begin
-      # Correct input point position if is not located on the picked entity.
-      # 1. Transform input point position relative to the deepest element
-      # coordinate system.
-      path = ph.path_at(0)[0..-2]
-      path.each { |e|
-        pos.transform!(e.transformation.inverse)
-      }
-      deepest = ph.leaf_at(0)
-      # 2. Verify that input point is located on the picked entity. If point
-      # is not on the entity, then use deepest element position as the new
-      # reference to the point.
-      case deepest
-      when Sketchup::ConstructionPoint
-        pos = deepest.position
-      when Sketchup::Edge
-        unless AMS::Geometry.is_point_on_edge?(pos, deepest)
-          pos = AMS::Geometry.calc_edge_centre(deepest)
-        end
-      when Sketchup::Face
-        unless AMS::Geometry.is_point_on_face?(pos, deepest)
-          pos = AMS::Geometry.calc_face_centre(deepest)
-        end
-      end
-      # 3. Transform input point back into global coordinate system for
-      # implementation.
-      path.reverse.each { |e|
-        pos.transform!(e.transformation)
-      }
-=end
       # Call the onClick event.
       begin
         @clicked = body
-        @clicked.context.call_event(:onClick, pos.clone)
+        @clicked.context.call_event(:onClick, Geom::Point3d.new(pick_pt))
       rescue Exception => e
         abort(e)
         return
@@ -3142,10 +3061,15 @@ module MSPhysics
       return unless Simulation.active?
       # Pick body if the body is not static.
       return if body.static? || @mode == 1
-      pick_pt = pos.transform(body.get_matrix.inverse)
-      cc = body.continuous_collision_check_enabled?
+      loc_pick_pt = pick_pt.transform(body.get_matrix.inverse)
       body.continuous_collision_check_enabled = true
-      @picked = [body, pick_pt, pos, cc, nil, sel.include?(ent)]
+      @picked[:body] = body
+      @picked[:loc_pick_pt] = loc_pick_pt
+      @picked[:dest_pt] = pick_pt
+      @picked[:plane_origin] = Geom::Point3d.new(pick_pt)
+      @picked[:shift_down] = false
+      @picked[:ccc] = body.continuous_collision_check_enabled?
+      @picked[:orig_selected] = sel.include?(ent)
       sel.add(ent)
       @original_cursor_id = @cursor_id
       self.cursor = MSPhysics::CURSORS[:grab]
@@ -3159,9 +3083,9 @@ module MSPhysics
 
     def onLButtonUp(flags, x, y, view)
       unless @picked.empty?
-        if @picked[0].valid?
-          @picked[0].continuous_collision_check_enabled = @picked[3]
-          view.model.selection.remove(@picked[0].group) unless @picked[5]
+        if @picked[:body].valid?
+          @picked[:body].continuous_collision_check_enabled = @picked[:ccc]
+          view.model.selection.remove(@picked[:body].group) unless @picked[:orig_selected]
         end
         @picked.clear
         self.cursor = @original_cursor_id
@@ -3284,20 +3208,19 @@ module MSPhysics
       if Sketchup.version.to_i > 6
         Sketchup.active_model.entities.each { |e|
           next if e.is_a?(Sketchup::Text)
-          if e.visible?
+          if e.visible? && e.layer.visible?
             c = e.bounds.center
-            @bb.add(e.bounds) if !c.x.is_a?(Bignum) && !c.y.is_a?(Bignum) && !c.z.is_a?(Bignum)
+            next if c.x.is_a?(Bignum) || c.y.is_a?(Bignum) || c.z.is_a?(Bignum)
+            next if c.x.abs > 1.0e10 || c.y.abs > 1.0e10 || c.z.abs > 1.0e10
+            @bb.add(e.bounds)
           end
         }
       end
-      #~ wb = @world.aabb if @world != nil && @world.valid?
-      #~ @bb.add(wb) if wb
-      @bb
+      @bb.empty? ? Sketchup.active_model.bounds : @bb
     end
 
     def draw(view)
       return if @error || !@simulation_started
-      @bb.clear
       draw_contact_points(view)
       draw_contact_forces(view)
       draw_collision_wireframe(view)

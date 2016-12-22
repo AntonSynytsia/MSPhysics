@@ -237,8 +237,9 @@ module MSPhysics
 
       def update_placement
         return false unless @dialog
-        wsx = @border_size.x + @size.x
-        wsy = @border_size.y + @size.y
+        ui_scale = Sketchup.version.to_i > 16 ? UI.scale_factor : 1.0
+        wsx = @border_size.x + @size.x * ui_scale
+        wsy = @border_size.y + @size.y * ui_scale
         if AMS::IS_PLATFORM_WINDOWS && @handle
           vr = AMS::Sketchup.get_viewport_rect
           x = vr[2] - wsx

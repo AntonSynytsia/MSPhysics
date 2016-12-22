@@ -7,8 +7,9 @@ module MSPhysics
     DEFAULT_MAX = 10.0
     DEFAULT_ACCEL = 40.0
     DEFAULT_DAMP = 10.0
+    DEFAULT_STRENGTH = 0.98
+    DEFAULT_HOOKES_ENABLED = false
     DEFAULT_LIMITS_ENABLED = false
-    DEFAULT_STRONG_MODE_ENABLED = true
     DEFAULT_START_POSITION = 0.0
     DEFAULT_CONTROLLER = 1.0
 
@@ -26,8 +27,9 @@ module MSPhysics
       MSPhysics::Newton::Spring.set_max(@address, DEFAULT_MAX)
       MSPhysics::Newton::Spring.set_accel(@address, DEFAULT_ACCEL)
       MSPhysics::Newton::Spring.set_damp(@address, DEFAULT_DAMP)
+      MSPhysics::Newton::Spring.set_strength(@address, DEFAULT_STRENGTH)
+      MSPhysics::Newton::Spring.set_mode(@address, DEFAULT_HOOKES_ENABLED ? 1 : 0)
       MSPhysics::Newton::Spring.enable_limits(@address, DEFAULT_LIMITS_ENABLED)
-      MSPhysics::Newton::Spring.enable_strong_mode(@address, DEFAULT_STRONG_MODE_ENABLED)
       MSPhysics::Newton::Spring.set_start_position(@address, DEFAULT_START_POSITION)
       MSPhysics::Newton::Spring.set_controller(@address, DEFAULT_CONTROLLER)
     end
@@ -67,44 +69,62 @@ module MSPhysics
       MSPhysics::Newton::Spring.enable_limits(@address, state)
     end
 
-    # Determine whether strong stiff and damp mode is enabled.
-    # @return [Boolean]
-    def strong_mode_enabled?
-      MSPhysics::Newton::Spring.strong_mode_enabled?(@address)
-    end
-
-    # Enable/disable strong stiff and damp mode.
-    # @param [Boolean] state
-    def strong_mode_enabled=(state)
-      MSPhysics::Newton::Spring.enable_strong_mode(@address, state)
-    end
-
-    # Get movement acceleration.
-    # @note Higher acceleration makes movement faster.
-    # @return [Numeric]
+    # Get spring oscillation acceleration.
+    # @return [Numeric] A spring constant in kg/s² or spring accel in 1/s²,
+    #   depending on the mode; a value greater than or equal to zero.
     def accel
       MSPhysics::Newton::Spring.get_accel(@address)
     end
 
-    # Set movement acceleration.
-    # @note Higher acceleration makes movement faster.
-    # @param [Numeric] value A value greater than or equal to zero.
+    # Set spring oscillation acceleration.
+    # @param [Numeric] value A spring constant in kg/s² or spring accel in 1/s²,
+    #   depending on the mode; a value greater than or equal to zero.
     def accel=(value)
       MSPhysics::Newton::Spring.set_accel(@address, value)
     end
 
-    # Get movement damper.
-    # @note Higher damper makes movement stronger.
-    # @return [Numeric]
+    # Get spring oscillation drag.
+    # @return [Numeric] A spring drag coefficient in kg/s or spring damp in 1/s,
+    #   depending on the mode; a value greater than or equal to zero.
     def damp
       MSPhysics::Newton::Spring.get_damp(@address)
     end
 
-    # Set movement damper.
-    # @note Higher damper makes movement stronger.
-    # @param [Numeric] value A value greater than or equal to zero.
+    # Set spring oscillation drag.
+    # @param [Numeric] value A spring drag coefficient in kg/s or spring damp
+    #    in 1/s, depending on the mode; a value greater than or equal to zero.
     def damp=(value)
       MSPhysics::Newton::Spring.set_damp(@address, value)
+    end
+
+    # Get spring strength coefficient.
+    # @note This option has an effect only if mode is set to zero.
+    # @return [Numeric] A value between 0.0 and 1.0.
+    def strength
+      MSPhysics::Newton::Spring.get_strength(@address)
+    end
+
+    # Set spring strength coefficient.
+    # @note This option has an effect only if mode is set to zero.
+    # @param [Numeric] value A value between 0.0 and 1.0.
+    def strength=(value)
+      MSPhysics::Newton::Spring.set_strength(@address, value)
+    end
+
+    # Get spring mode.
+    # @return [Fixnum]
+    #   * 0 - if using standard accel/damp/strength.
+    #   * 1 - if using Hooke's spring constant and spring damping coefficient.
+    def mode
+      MSPhysics::Newton::Spring.get_mode(@address)
+    end
+
+    # Set spring mode.
+    # @param [Fixnum] value
+    #   * 0 - use standard accel/damp/strength.
+    #   * 1 - use Hooke's spring constant and spring damping coefficient.
+    def mode=(value)
+      MSPhysics::Newton::Spring.set_mode(@address, value)
     end
 
     # Get current position in meters with respect to the starting position.

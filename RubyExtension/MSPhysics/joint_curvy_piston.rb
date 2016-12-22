@@ -4,7 +4,7 @@ module MSPhysics
   class CurvyPiston < Joint
 
     DEFAULT_ANGULAR_FRICTION = 0.0
-    DEFAULT_RATE = 40.0
+    DEFAULT_RATE = 4.0
     DEFAULT_POWER = 0.0
     DEFAULT_ALIGNMENT_POWER = 0.0
     DEFAULT_REDUCTION_RATIO = 0.1
@@ -108,37 +108,37 @@ module MSPhysics
       MSPhysics::Newton::CurvyPiston.get_cur_acceleration(@address)
     end
 
-    # Get current point on curve.
+    # Get current point on the curve.
     # @return [Geom::Point3d, nil] A point in global space or +nil+ if curve is
     #   empty or joint is disconnected.
     def cur_point
       MSPhysics::Newton::CurvyPiston.get_cur_point(@address)
     end
 
-    # Get current vector on curve.
-    # @return [Geom::Point3d, nil] A vector in global space or +nil+ if curve is
-    #   empty or joint is disconnected.
+    # Get current vector on the curve.
+    # @return [Geom::Vector3d, nil] A vector in global space or +nil+ if curve
+    #   is empty or joint is disconnected.
     def cur_vector
       MSPhysics::Newton::CurvyPiston.get_cur_vector(@address)
     end
 
-    # Get current tangent vector on curve.
-    # @return [Geom::Point3d, nil] A vector in global space or +nil+ if curve is
-    #   empty or joint is disconnected.
-    def cur_tangent
-      MSPhysics::Newton::CurvyPiston.get_cur_tangent(@address)
+    # Get current normal matrix on the curve.
+    # @return [Geom::Transformation, nil] A transformation in global space or
+    #   +nil+ if curve is empty or joint is disconnected.
+    def cur_normal_matrix
+      MSPhysics::Newton::CurvyPiston.get_cur_normal_matrix(@address)
     end
 
-    # Get angular friction.
-    # @return [Numeric]
+    # Get rotational friction.
+    # @return [Numeric] A numeric value greater than or equal to zero.
     def angular_friction
       MSPhysics::Newton::CurvyPiston.get_angular_friction(@address)
     end
 
-    # Set angular friction.
-    # @param [Numeric] friction A numeric value greater than or equal to zero.
-    def angular_friction=(friction)
-      MSPhysics::Newton::CurvyPiston.set_angular_friction(@address, friction)
+    # Set rotational friction.
+    # @param [Numeric] value A numeric value greater than or equal to zero.
+    def angular_friction=(value)
+      MSPhysics::Newton::CurvyPiston.set_angular_friction(@address, value)
     end
 
     # Get maximum linear rate in meters per second.
@@ -258,7 +258,7 @@ module MSPhysics
 
     # Get alignment power.
     # @note Has an effect only if alignment is enabled.
-    # @return [Numeric]
+    # @return [Numeric] A value greater than or equal to zero.
     def alignment_power
       MSPhysics::Newton::CurvyPiston.get_alignment_power(@address)
     end
@@ -271,27 +271,38 @@ module MSPhysics
       MSPhysics::Newton::CurvyPiston.set_alignment_power(@address, value)
     end
 
-    # Determine whether the rotation along the point on curve is enabled.
+    # Determine whether the rotation along the current point on curve is
+    # enabled.
     # @return [Boolean]
     def rotation_enabled?
       MSPhysics::Newton::CurvyPiston.rotation_enabled?(@address)
     end
 
-    # Enable/disable rotation along the point on curve.
+    # Enable/disable rotation along the current point on curve.
     # @param [Boolean] state
     def rotation_enabled=(state)
       MSPhysics::Newton::CurvyPiston.enable_rotation(@address, state)
     end
 
-    # Get point and direction on curve by linear position on curve.
-    # @param [Numeric] pos Linear position on curve in meters.
-    # @return [Array<(Geom::Point3d, Geom::Vector3d)>, nil] A array containing
-    #   point and direction on curve or +nil+ if curve is empty.
-    def info_by_pos(pos)
-      MSPhysics::Newton::CurvyPiston.get_info_by_pos(@address, pos)
+    # Get normal matrix corresponding to a particular distance on the curve.
+    # @param [Numeric] distance Linear position on curve in meters.
+    # @return [Geom::Transformation, nil] A transformation in global space or
+    #   +nil+ if curve is empty or joint is disconnected.
+    def normal_matrix_at_position(distance)
+      MSPhysics::Newton::CurvyPiston.get_normal_martix_at_position(@address, distance)
     end
 
-    # Get normal matrices of the curve.
+    # Get normal matrix corresponding to a particular point on or beside the
+    # curve.
+    # @param [Geom::Point3d] point A point in global space.
+    # @return [Array<(Geom::Transformation, Numeric)>, nil] A transformation in
+    #   global space along with overpass value or +nil+ if curve is empty or
+    #   joint is disconnected.
+    def normal_matrix_at_point(point)
+      MSPhysics::Newton::CurvyPiston.get_normal_martix_at_point(@address, point)
+    end
+
+    # Get all normal matrices of the curve.
     # @return [Array<Geom::Transformation>] An array of the normal matrices.
     def normal_matrices
       MSPhysics::Newton::CurvyPiston.get_normal_matrices(@address)

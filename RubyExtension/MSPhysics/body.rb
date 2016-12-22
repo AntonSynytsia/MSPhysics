@@ -659,16 +659,16 @@ module MSPhysics
       MSPhysics::Newton::Body.set_static_friction(@address, coefficient)
     end
 
-    # Get dynamic friction coefficient of the body.
+    # Get kinetic friction coefficient of the body.
     # @return [Numeric] A value between 0.01 and 2.00.
-    def dynamic_friction
-      MSPhysics::Newton::Body.get_dynamic_friction(@address)
+    def kinetic_friction
+      MSPhysics::Newton::Body.get_kinetic_friction(@address)
     end
 
-    # Set dynamic friction coefficient of the body.
+    # Set kinetic friction coefficient of the body.
     # @param [Numeric] coefficient A value between 0.01 and 2.00.
-    def dynamic_friction=(coefficient)
-      MSPhysics::Newton::Body.set_dynamic_friction(@address, coefficient)
+    def kinetic_friction=(coefficient)
+      MSPhysics::Newton::Body.set_kinetic_friction(@address, coefficient)
     end
 
     # Get friction state of the body.
@@ -814,22 +814,8 @@ module MSPhysics
       MSPhysics::Newton::Body.get_force(@address)
     end
 
-    # Get the net force, in Newtons, applied on the body on the last world
-    # update.
-    # @return [Geom::Vector3d] The magnitude of force is retrieved in newtons
-    #   (kg*m/s/s).
-    def get_force_acc
-      MSPhysics::Newton::Body.get_force_acc(@address)
-    end
-
     # Apply force on the body in Newtons (kg * m/s/s).
-    # @note The {#add_force} applies force on an object for one world update.
-    #   For example, if the world update rate is 3, i.e if world updates 3 times
-    #   per frame, the force accumulated by the {#add_force} function will be
-    #   applied on the first update but not on the consequent two updates. Use
-    #   the {#add_force2} function to apply force throughout the whole world
-    #   update rate.
-    # @note Unlike the {#set_force}, this function doesn't overwrites original
+    # @note Unlike the {#set_force}, this function doesn't overwrite original
     #   force, but rather adds force to the force accumulator.
     # @overload add_force(force)
     #   @param [Geom::Vector3d, Array<Numeric>] force
@@ -838,7 +824,6 @@ module MSPhysics
     #   @param [Numeric] fy
     #   @param [Numeric] fz
     # @return [Boolean] success
-    # @see #add_force2
     def add_force(*args)
       if args.size == 3
         data = [args[0], args[1], args[2]]
@@ -850,41 +835,7 @@ module MSPhysics
       MSPhysics::Newton::Body.add_force(@address, data)
     end
 
-    # Apply force on the body in Newtons (kg * m/s/s).
-    # @note The {#add_force} applies force on an object for one world update.
-    #   For example, if the world update rate is 3, i.e if world updates 3 times
-    #   per frame, the force accumulated by the {#add_force} function will be
-    #   applied on the first update but not on the consequent two updates. Use
-    #   the {#add_force2} function to apply force throughout the whole world
-    #   update rate.
-    # @note Unlike the {#set_force}, this function doesn't overwrites original
-    #   force, but rather adds force to the force accumulator.
-    # @overload add_force2(force)
-    #   @param [Geom::Vector3d, Array<Numeric>] force
-    # @overload add_force2(fx, fy, fz)
-    #   @param [Numeric] fx
-    #   @param [Numeric] fy
-    #   @param [Numeric] fz
-    # @return [Boolean] success
-    # @see #add_force
-    def add_force2(*args)
-      if args.size == 3
-        data = [args[0], args[1], args[2]]
-      elsif args.size == 1
-        data = args[0]
-      else
-        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
-      end
-      MSPhysics::Newton::Body.add_force2(@address, data)
-    end
-
     # Apply force on the body in Newton (kg * m/s/s).
-    # @note The {#set_force} applies force on an object for one world update.
-    #   For example, if the world update rate is 3, i.e if world updates 3 times
-    #   per frame, the force accumulated by the {#set_force} function will be
-    #   applied on the first update but not on the consequent two updates. Use
-    #   the {#set_force2} function to apply force throughout the whole world
-    #   update rate.
     # @note Unlike the {#add_force}, this function overwrites original force,
     #   thus discarding the previously applied force.
     # @overload set_force(force)
@@ -894,7 +845,6 @@ module MSPhysics
     #   @param [Numeric] fy
     #   @param [Numeric] fz
     # @return [Boolean] success
-    # @see #set_force2
     def set_force(*args)
       if args.size == 3
         data = [args[0], args[1], args[2]]
@@ -906,34 +856,6 @@ module MSPhysics
       MSPhysics::Newton::Body.set_force(@address, data)
     end
 
-    # Apply force on the body in Newton (kg * m/s/s).
-    # @note The {#set_force} applies force on an object for one world update.
-    #   For example, if the world update rate is 3, i.e if world updates 3 times
-    #   per frame, the force accumulated by the {#set_force} function will be
-    #   applied on the first update but not on the consequent two updates. Use
-    #   the {#set_force2} function to apply force throughout the whole world
-    #   update rate.
-    # @note Unlike the {#add_force}, this function overwrites original force,
-    #   thus discarding the previously applied force.
-    # @overload set_force2(force)
-    #   @param [Geom::Vector3d, Array<Numeric>] force
-    # @overload set_force2(fx, fy, fz)
-    #   @param [Numeric] fx
-    #   @param [Numeric] fy
-    #   @param [Numeric] fz
-    # @return [Boolean] success
-    # @see #set_force
-    def set_force2(*args)
-      if args.size == 3
-        data = [args[0], args[1], args[2]]
-      elsif args.size == 1
-        data = args[0]
-      else
-        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
-      end
-      MSPhysics::Newton::Body.set_force2(@address, data)
-    end
-
     # Get the net torque, in Newton-meters, applied on the body after the last
     # world update.
     # @return [Geom::Vector3d]
@@ -941,21 +863,8 @@ module MSPhysics
       MSPhysics::Newton::Body.get_torque(@address)
     end
 
-    # Get the net torque, in Newton-meters, applied on the body on the last
-    # world update.
-    # @return [Geom::Vector3d]
-    def get_torque_acc
-      MSPhysics::Newton::Body.get_torque_acc(@address)
-    end
-
     # Apply torque on the body in Newton-meters (kg * m/s/s * m).
-    # @note The {#add_torque} applies torque on an object for one world update.
-    #   For example, if the world update rate is 3, i.e if world updates 3 times
-    #   per frame, the torque accumulated by the {#add_torque} function will be
-    #   applied on the first update but not on the consequent two updates. Use
-    #   the {#add_torque2} function to apply torque throughout the whole world
-    #   update rate.
-    # @note Unlike the {#set_torque}, this function doesn't overwrites original
+    # @note Unlike the {#set_torque}, this function doesn't overwrite original
     #   torque, but rather adds torque to the torque accumulator.
     # @overload add_torque(torque)
     #   @param [Geom::Vector3d, Array<Numeric>] torque
@@ -964,7 +873,6 @@ module MSPhysics
     #   @param [Numeric] ty
     #   @param [Numeric] tz
     # @return [Boolean] success
-    # @see #add_torque2
     def add_torque(*args)
       if args.size == 3
         data = [args[0], args[1], args[2]]
@@ -977,40 +885,6 @@ module MSPhysics
     end
 
     # Apply torque on the body in Newton-meters (kg * m/s/s * m).
-    # @note The {#add_torque} applies torque on an object for one world update.
-    #   For example, if the world update rate is 3, i.e if world updates 3 times
-    #   per frame, the torque accumulated by the {#add_torque} function will be
-    #   applied on the first update but not on the consequent two updates. Use
-    #   the {#add_torque2} function to apply torque throughout the whole world
-    #   update rate.
-    # @note Unlike the {#set_torque}, this function doesn't overwrites original
-    #   torque, but rather adds torque to the torque accumulator.
-    # @overload add_torque2(torque)
-    #   @param [Geom::Vector3d, Array<Numeric>] torque
-    # @overload add_torque2(tx, ty, tz)
-    #   @param [Numeric] tx
-    #   @param [Numeric] ty
-    #   @param [Numeric] tz
-    # @return [Boolean] success
-    # @see #add_torque
-    def add_torque2(*args)
-      if args.size == 3
-        data = [args[0], args[1], args[2]]
-      elsif args.size == 1
-        data = args[0]
-      else
-        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
-      end
-      MSPhysics::Newton::Body.add_torque2(@address, data)
-    end
-
-    # Apply torque on the body in Newton-meters (kg * m/s/s * m).
-    # @note The {#set_torque} applies torque on an object for one world update.
-    #   For example, if the world update rate is 3, i.e if world updates 3 times
-    #   per frame, the torque accumulated by the {#set_torque} function will be
-    #   applied on the first update but not on the consequent two updates. Use
-    #   the {#set_torque2} function to apply torque throughout the whole world
-    #   update rate.
     # @note Unlike the {#add_torque}, this function overwrites original torque,
     #   thus discarding the previously applied torque.
     # @overload set_torque(torque)
@@ -1020,7 +894,6 @@ module MSPhysics
     #   @param [Numeric] ty
     #   @param [Numeric] tz
     # @return [Boolean] success
-    # @see #set_torque2
     def set_torque(*args)
       if args.size == 3
         data = [args[0], args[1], args[2]]
@@ -1030,34 +903,6 @@ module MSPhysics
         raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
       end
       MSPhysics::Newton::Body.set_torque(@address, data)
-    end
-
-    # Apply torque on the body in Newton-meters (kg * m/s/s * m).
-    # @note The {#set_torque} applies torque on an object for one world update.
-    #   For example, if the world update rate is 3, i.e if world updates 3 times
-    #   per frame, the torque accumulated by the {#set_torque} function will be
-    #   applied on the first update but not on the consequent two updates. Use
-    #   the {#set_torque2} function to apply torque throughout the whole world
-    #   update rate.
-    # @note Unlike the {#add_torque}, this function overwrites original torque,
-    #   thus discarding the previously applied torque.
-    # @overload set_torque2(torque)
-    #   @param [Geom::Vector3d, Array<Numeric>] torque
-    # @overload set_torque2(tx, ty, tz)
-    #   @param [Numeric] tx
-    #   @param [Numeric] ty
-    #   @param [Numeric] tz
-    # @return [Boolean] success
-    # @see #set_torque
-    def set_torque2(*args)
-      if args.size == 3
-        data = [args[0], args[1], args[2]]
-      elsif args.size == 1
-        data = args[0]
-      else
-        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
-      end
-      MSPhysics::Newton::Body.set_torque2(@address, data)
     end
 
     # @!endgroup
@@ -1135,7 +980,7 @@ module MSPhysics
       MSPhysics::Newton::Body.get_collision_faces3(@address)
     end
 
-    # Apply pick and drag on the body.
+    # Apply pick and drag to the body.
     # @param [Geom::Point3d, Array<Numeric>] pick_pt Pick point, usually on the
     #   surface of the body, in global space.
     # @param [Geom::Point3d, Array<Numeric>] dest_pt Destination point in global
@@ -1147,10 +992,10 @@ module MSPhysics
       MSPhysics::Newton::Body.apply_pick_and_drag(@address, pick_pt, dest_pt, stiffness, damp)
     end
 
-    # Apply buoyancy on the body.
+    # Apply buoyancy to the body.
     # @param [Geom::Point3d, Array<Numeric>] plane_origin Plane origin.
     # @param [Geom::Vector3d, Array<Numeric>] plane_normal Plane normal.
-    # @param [Geom::Vector3d, Array<Numeric>] current Plane acceleration in
+    # @param [Geom::Vector3d, Array<Numeric>] current Velocity of the fluid
     #   global space.
     # @param [Numeric] density Fluid density in kilograms per cubic meter
     #   (kg/m^3).
@@ -1158,18 +1003,38 @@ module MSPhysics
     #   between 0.0 and 1.0.
     # @param [Numeric] angular_viscosity Angular viscosity, a value
     #   between 0.0 and 1.0.
+    # @param [Numeric] timestep
     # @return [Boolean] success
-    def apply_buoyancy(plane_origin, plane_normal = Z_AXIS, current = [0,0,0], density = 997.04, linear_viscosity = 0.01, angular_viscosity = 0.01)
-      MSPhysics::Newton::Body.apply_buoyancy(@address, plane_origin, plane_normal, density, linear_viscosity, angular_viscosity)
+    # @example
+    #   onUpdate {
+    #     plane_origin = Geom::Point3d.new(0,0,100)
+    #     plane_normal = Z_AXIS
+    #     current = Geom::Vector3d.new(5,0,0) # 5 m/s along the x-axis
+    #     density = 997.04 # density of water
+    #     linear_viscosity = 0.01
+    #     angular_viscosity = 0.01
+    #     timestep = simulation.update_timestep
+    #     this.apply_buoyancy(plane_origin, plane_normal, current, density, linear_viscosity, angular_viscosity, timestep)
+    #   }
+    def apply_buoyancy(plane_origin, plane_normal, current, density, linear_viscosity, angular_viscosity, timestep)
+      MSPhysics::Newton::Body.apply_buoyancy(@address, plane_origin, plane_normal, current, density, linear_viscosity, angular_viscosity, timestep)
     end
 
-    # Apply fluid resistance on a body. The resistance force and torque is based
-    # upon the body's velocity, omega, and orientation of its collision faces.
-    # @param [Numeric] density Fluid density in kg/m^3.
-    # @return [Array<(Geom::Vector3d, Geom::Vector3d)>, nil] The net force and
-    #   torque applied on the body or nil if body is static or not dynamic.
-    def apply_fluid_resistance(density = 1.225)
-      MSPhysics::Newton::Body.apply_fluid_resistance(@address, density)
+    # Apply fluid resistance to the body. The resistance force and torque is
+    # based upon the body's linear and angular velocity, orientation of its
+    # collision faces, and the drag coefficient.
+    # @note WIP
+    # @param [Numeric] drag Drag coefficient.
+    # @param [Geom::Vector3d] wind Velocity of the wind in meters per second.
+    # @return [Boolean] success
+    # @example
+    #   onUpdate {
+    #     drag = 0.25 # drag coefficient of air
+    #     wind = Geom::Vector3d.new(5,0,0) # 5 m/s along the x-axis
+    #     this.apply_aerodynamics(drag, wind)
+    #   }
+    def apply_aerodynamics(drag, wind)
+      MSPhysics::Newton::Body.apply_aerodynamics(@address, drag, wind)
     end
 
     # Create a copy of the body.
@@ -1282,11 +1147,12 @@ module MSPhysics
     # Make the body's Z-axis to look in a particular direction.
     # @param [Geom::Vector3d, nil] pin_dir Direction in global space. Pass nil
     #   to disable the look at constraint.
-    # @param [Numeric] accel Rotational acceleration.
-    # @param [Numeric] damp Rotational damper.
+    # @param [Numeric] accel Rotational oscillation stiffness.
+    # @param [Numeric] damp Rotational oscillation damping coefficient.
+    # @param [Numeric] strength Rotational oscillation strength.
     # @return [void]
     # @example
-    #   onUpdate {
+    #   onTick {
     #     if (key(' ') == 1)
     #       dir = this.group.transformation.origin.vector_to(ORIGIN)
     #       this.look_at(dir, 1500, 200)
@@ -1294,7 +1160,7 @@ module MSPhysics
     #       this.look_at(nil)
     #     end
     #   }
-    def look_at(pin_dir, accel = 1500, damp = 200)
+    def look_at(pin_dir, accel = 1500, damp = 200, strength = 0.98)
       if pin_dir.nil?
         if @look_at_joint && @look_at_joint.valid?
           @look_at_joint.destroy
@@ -1310,7 +1176,7 @@ module MSPhysics
       @look_at_joint.set_pin_dir(pin_dir.transform(@look_at_joint.get_pin_matrix.inverse))
       @look_at_joint.accel = accel
       @look_at_joint.damp = damp
-      @look_at_joint.damper_enabled = true
+      @look_at_joint.strength = strength
     end
 
   end # class Body

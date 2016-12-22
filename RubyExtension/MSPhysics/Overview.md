@@ -32,7 +32,7 @@ In this tutorial we will create a sphere and control it with keyboard.
           # lefty() returns a value ranging from -1.0 to 1.0, depending on the state
           # of W and S keys or the vertical position of the left joystick.
           v = lefty()
-          this.add_force2(h * mag, v * mag, 0) # Apply force on this body.
+          this.add_force(h * mag, v * mag, 0) # Apply force on this body.
         }
 
 4. Start simulation and control the sphere with W,S,A,D keys or left joystick.
@@ -154,7 +154,7 @@ Use <tt>MSPhysics::Simulation.reset</tt> in any scope.
   group/component.
 * **Compound** - A compound collision with all sub-geometry and sub-groups
   considered as separate convex hulls.
-* **Compound from CD** - A compound collision with convex hull calculated by a
+* **Compound from CD** - A compound collision with convex hulls calculated by a
   convex decomposition algorithm.
 * **Static Mesh** - A static tree collision derived from all faces of a group.
 * **Null** - A dynamic collision shape with no collision. Useful for linker
@@ -281,7 +281,7 @@ and controller context. See {MSPhysics::CommonContext} for various functions and
 their examples about joystick. Here is a simple example which outputs the state
 of the left joystick onto screen:
 
-    onUpdate {
+    onTick {
       x = joystick(:leftx)
       y = joystick(:lefty)
       txt = "xaxis #{x}\nyaxis #{y}"

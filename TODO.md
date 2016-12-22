@@ -1,11 +1,11 @@
 - Implement cloth and soft bodies interface.
 - Implement user mesh collision interface.
-- Add fracture/split interface.
+- Implement vehicle interface.
+- Implement fracture/split interface.
 - Make Replay compatible with LightUp, Vray, and Thea Render.
 - Get material changes working with SkIndigo.
-- Fix the improper behavior with CurvySlider spinning out of control on the exact solver.
-- Fix the improper behavior with Servo wobbling back and forth on the iterative solver with low number of passes.
-- Fix the improper behavior with BallAndSocket being unstable when limits are enabled.
-- Add custom convex decomposition algorithm.
-- Split Simulation into Simulation and SimulationTool.
-- Add feature to scale the UI dialog.
+- Improve the performance of export to KerkyThea and SkIndigo options.
+- Add aerodynamics.
+- Make the UI and Control Panel to base of HtmlDialog class in SU2017.
+- Fix the improper behavior of geared joints with parent bodies.
+- Add keyboard events on the Mac OS X side.

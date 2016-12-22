@@ -518,7 +518,7 @@ module MSPhysics
           }
           triplets[i].reverse! if flipped
         end
-        MSPhysics::Newton::Collision.create_compound_from_cd(world.address, triplets, 0.01, 0.2, 512, 1024, 0)
+        MSPhysics::Newton::Collision.create_compound_from_cd(world.address, triplets, 0.01, 0.02, 256, 500, 0.001, 0)
       end
 
     end # class << self

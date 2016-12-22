@@ -4,7 +4,6 @@ module MSPhysics
   # @since 1.0.0
   class Joint
 
-    DEFAULT_CONSTRAINT_TYPE = 0 # Standard - 0; Flexible - 1; Robust - 2.
     DEFAULT_STIFFNESS = 1.00
     DEFAULT_BODIES_COLLIDABLE = false
     DEFAULT_BREAKING_FORCE = 0.0
@@ -45,7 +44,6 @@ module MSPhysics
       parent_address = parent ? parent.address : nil
       @address = MSPhysics::Newton::Joint.create(world.address, parent_address, pin_tra, group_inst)
       MSPhysics::Newton::Joint.set_user_data(@address, self)
-      MSPhysics::Newton::Joint.set_constraint_type(@address, DEFAULT_CONSTRAINT_TYPE)
       MSPhysics::Newton::Joint.set_stiffness(@address, DEFAULT_STIFFNESS)
       MSPhysics::Newton::Joint.set_bodies_collidable(@address, DEFAULT_BODIES_COLLIDABLE)
       MSPhysics::Newton::Joint.set_breaking_force(@address, DEFAULT_BREAKING_FORCE)
@@ -114,24 +112,6 @@ module MSPhysics
     # @see MSPhysics::JOINT_TYPES
     def type
       MSPhysics::Newton::Joint.get_type(@address)
-    end
-
-    # Get constraint type.
-    # @return [Fixnum] A fixed value between 0 and 2.
-    #   0. Standard: somewhat stiff and somewhat stable.
-    #   1. Flexible: soft and stable.
-    #   2. Robust: stiff and may be unstable.
-    def constraint_type
-      MSPhysics::Newton::Joint.get_constraint_type(@address)
-    end
-
-    # Set constraint type.
-    # @param [Fixnum] ctype A fixed value between 0 and 2.
-    #   0. Standard: somewhat stiff and somewhat stable.
-    #   1. Flexible: soft and stable.
-    #   2. Robust: stiff and may be unstable.
-    def constraint_type=(ctype)
-      MSPhysics::Newton::Joint.set_constraint_type(@address, ctype)
     end
 
     # Get joint parent body.

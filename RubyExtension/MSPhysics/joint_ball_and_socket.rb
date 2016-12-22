@@ -102,6 +102,18 @@ module MSPhysics
       MSPhysics::Newton::BallAndSocket.get_cur_twist_angle(@address)
     end
 
+    # Get current twist omega in radians per second.
+    # @return [Numeric]
+    def cur_twist_omega
+      MSPhysics::Newton::BallAndSocket.get_cur_twist_omega(@address)
+    end
+
+    # Get current twist acceleration in radians per second per second.
+    # @return [Numeric]
+    def cur_twist_acceleration
+      MSPhysics::Newton::BallAndSocket.get_cur_twist_acceleration(@address)
+    end
+
     # Get angular friction.
     # @note The actual friction is <tt>friction * controller</tt>.
     # @return [Numeric] A value greater than or equal to zero.
