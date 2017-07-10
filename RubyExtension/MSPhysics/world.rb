@@ -1,7 +1,7 @@
 module MSPhysics
 
   # @since 1.0.0
-  class World
+  class World < Entity
     class << self
 
       # Verify that world is valid.
@@ -54,7 +54,7 @@ module MSPhysics
     end
 
     # Destroy the world.
-    # @return [void]
+    # @return [nil]
     def destroy
       MSPhysics::Newton::World.destroy(@address)
     end
@@ -114,12 +114,12 @@ module MSPhysics
       MSPhysics::Newton::World.get_joints(@address) { |ptr, data| data.is_a?(MSPhysics::Joint) ? data : nil }
     end
 
-    # Get all double joints in the world.
-    # @note Double joints that do not have a {DoubleJoint} instance are not
-    #   included in the array.
-    # @return [Array<DoubleJoint>]
-    def double_joints
-      MSPhysics::Newton::World.get_double_joints(@address) { |ptr, data| data.is_a?(MSPhysics::DoubleJoint) ? data : nil }
+    # Get all gears in the world.
+    # @note Gears that do not have a {Gear} instance are not included in the
+    #   array.
+    # @return [Array<Gear>]
+    def gears
+      MSPhysics::Newton::World.get_gears(@address) { |ptr, data| data.is_a?(MSPhysics::Gear) ? data : nil }
     end
 
     # Get all bodies in a particular bounds.
@@ -164,27 +164,26 @@ module MSPhysics
     #   @param [Numeric] ax Acceleration along X-axis in m/s/s.
     #   @param [Numeric] ay Acceleration along Y-axis in m/s/s.
     #   @param [Numeric] az Acceleration along Z-axis in m/s/s.
-    # @return [Geom::Vector3d] The newly assigned gravity.
+    # @return [nil]
     def set_gravity(*args)
       if args.size == 3
         data = [args[0], args[1], args[2]]
       elsif args.size == 1
         data = args[0]
       else
-        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments, but got #{args.size}.", caller)
+        raise(ArgumentError, "Wrong number of arguments! Expected 1 or 3 arguments but got #{args.size}.", caller)
       end
       MSPhysics::Newton::World.set_gravity(@address, data)
     end
 
     # Get world solver model.
-    # @return [Fixnum] Number of passes or zero if using exact.
+    # @return [Fixnum] Number of passes, a value between 1 and 256.
     def solver_model
       MSPhysics::Newton::World.get_solver_model(@address)
     end
 
     # Set world solver model.
-    # @param [Fixnum] model Number of passes. The higher the value, the more
-    #   accurate the simulation will be. Pass zero to use exact solver.
+    # @param [Fixnum] model Number of passes, a value between 1 and 256.
     def solver_model=(model)
       MSPhysics::Newton::World.set_solver_model(@address, model.to_i)
     end

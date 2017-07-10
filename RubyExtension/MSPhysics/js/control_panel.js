@@ -7,9 +7,9 @@ function callback(v_name, v_data) {
 }
 
 function init() {
-  var w = $( window ).width();
-  var h = $( window ).height();
-  var data = '['+w+','+h+']';
+  var cw = $(window).width();
+  var ch = $(window).height();
+  var data = '['+cw+','+ch+']';
   callback('init', data);
 }
 
@@ -22,9 +22,9 @@ function uninit() {
 }
 
 function update_size() {
-  var w = $( 'body' ).width();
-  var h = $( 'body' ).height();
-  var data = '['+w+','+h+']';
+  var cw = $('#main-wrap').outerWidth(true);
+  var ch = $('#main-wrap').outerHeight(true);
+  var data = '['+cw+','+ch+']';
   callback('size_changed', data);
 }
 
@@ -100,6 +100,18 @@ function process_keys(e) {
     e.preventDefault();
     return false;
   }
+}
+
+function compute_text_size(v_text, v_font, v_size, v_bold, v_italic) {
+  $("#test_note-text").css({
+    "font-family": v_font.toString(),
+    "font-size": v_size.toString() + "px",
+    "font-weight": (v_bold ? "bold" : "normal"),
+    "font-style": (v_italic ? "italic" : "normal")
+  });
+  $("#test_note-text").text(v_text);
+  var data = "[" + Math.round($("#test_note-text").width() * 1.5) + ", " + Math.round($("#test_note-text").height() * 1.3) + "]";
+  callback('test_result', data);
 }
 
 $( document ).ready(function() {

@@ -1,7 +1,7 @@
 module MSPhysics
 
   # @since 1.0.0
-  class Material
+  class Material < Entity
 
     # @param [String] name Material name. Passing the name of an existing
     #   material will simply overwrite it.

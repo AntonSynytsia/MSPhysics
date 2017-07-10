@@ -1,7 +1,7 @@
 module MSPhysics
 
   # @since 1.0.0
-  class Hit
+  class Hit < Entity
 
     # @param [Body] body
     # @param [Geom::Point3d, Array<Numeric>] point

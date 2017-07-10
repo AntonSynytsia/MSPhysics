@@ -3,14 +3,22 @@ module MSPhysics
   # @since 1.0.0
   module ControlPanel
 
+    TITLE = 'MSPhysics Control Panel'
+    FADE_DURATION = 2.0
+    FADE_DELAY = 2.0
+    MIN_OPACITY = 10
+    MAX_OPACITY = 250
+
     @dialog = nil
     @handle = nil
-    @title = 'MSPhysics Control Panel'
     @size = [0,0]
     @border_size = [0,0]
     @sliders = {}
     @mouse_over = false
     @init_called = false
+    @fade_time = nil
+    @fade_wait_time = nil
+    @test_result = nil
 
     class << self
 
@@ -22,11 +30,12 @@ module MSPhysics
 
       # Open/close MSPhysics control panel.
       # @param [Boolean] state
-      def visible=(state)
-        return false if (state ? true : false) == self.visible?
+      # @return [Boolean] success
+      def open(state)
+        return false if (state ? true : false) == self.open?
         if state
           iws = [300, 300]
-          @dialog = ::UI::WebDialog.new(@title, false, @title, iws.x, iws.y, 800, 600, false)
+          @dialog = ::UI::WebDialog.new(TITLE, false, TITLE, iws.x, iws.y, 800, 600, false)
           # Callbacks
           @dialog.add_action_callback('init') { |dlg, params|
             unless @init_called
@@ -45,7 +54,7 @@ module MSPhysics
             @sliders.each { |name, data|
               generate_slider_html(name, false)
             }
-            dlg.execute_script("update_size();")
+            execute_js("update_size();")
           }
           @dialog.add_action_callback('size_changed') { |dlg, params|
             @size = eval(params)
@@ -53,9 +62,15 @@ module MSPhysics
           }
           @dialog.add_action_callback('mouse_enter') { |dlg, params|
             @mouse_over = true
+            @fade_time = 0.0 unless @fade_time
+            @fade_wait_time = nil
           }
           @dialog.add_action_callback('mouse_leave') { |dlg, params|
             @mouse_over = false
+            unless @fade_time
+              @fade_time = FADE_DURATION
+              @fade_wait_time = 0.0
+            end
             AMS::Sketchup.activate if AMS::IS_PLATFORM_WINDOWS
           }
           @dialog.add_action_callback('update_note') { |dlg, params|
@@ -74,11 +89,14 @@ module MSPhysics
               cmd << "$('#note3').css('display', 'none');"
               cmd << "$('#note1').fadeIn(750);"
             end
-            dlg.execute_script(cmd)
+            execute_js(cmd)
+          }
+          @dialog.add_action_callback('test_result') { |dlg, params|
+            @test_result = eval(params)
           }
           # Set content
           dir = File.dirname(__FILE__)
-          dir.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
+          dir.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18
           url = File.join(dir, 'html/control_panel.html')
           @dialog.set_file(url)
           # Show dialog
@@ -90,14 +108,14 @@ module MSPhysics
               AMS::Sketchup.include_dialog(@handle)
               AMS::Sketchup.remove_observer(self)
             end
-            @dialog.execute_script('uninit();')
+            execute_js('uninit();')
             @dialog = nil
             @handle = nil
             @mouse_over = false
             @init_called = false
           }
           # Find dialog window handle
-          @handle = AMS::IS_PLATFORM_WINDOWS ? AMS::Sketchup.find_window_by_caption(@title) : nil
+          @handle = AMS::IS_PLATFORM_WINDOWS ? AMS::Sketchup.find_window_by_caption(TITLE) : nil
           if @handle
             # Add observer
             AMS::Sketchup.add_observer(self)
@@ -111,9 +129,11 @@ module MSPhysics
             AMS::Window.set_long(@handle, -16, style)
             AMS::Window.lock_update(nil)
             AMS::Window.set_pos(@handle, 0, 0, 0, 0, 0, 0x0267)
-            AMS::Window.set_layered_attributes(@handle, 0, 200, 2)
+            AMS::Window.set_layered_attributes(@handle, 0, MAX_OPACITY, 2)
             AMS::Sketchup.ignore_dialog(@handle)
             AMS::Sketchup.activate
+            @fade_time = FADE_DURATION
+            @fade_wait_time = 0.0
           end
         else
           @dialog.close
@@ -121,10 +141,33 @@ module MSPhysics
         true
       end
 
-      # Determine whether control panel is visible.
+      # Determine whether control panel is open.
+      # @return [Boolean]
+      def open?
+        @dialog ? true : false
+      end
+
+      # Show/hide the control panel window.
+      # @note Windows only!
+      # @return [Boolean] success
+      def show(state)
+        return false unless @dialog
+        if AMS::IS_PLATFORM_WINDOWS && @handle
+          AMS::Window.show(@handle, state ? 8 : 0)
+        else
+          false
+        end
+      end
+
+      # Determine whether the control panel window is visible.
       # @return [Boolean]
       def visible?
-        @dialog ? true : false
+        return false unless @dialog
+        if AMS::IS_PLATFORM_WINDOWS && @handle
+          AMS::Window.is_visible?(@handle)
+        else
+          true
+        end
       end
 
       # Make the control panel active.
@@ -133,6 +176,15 @@ module MSPhysics
         return false unless @dialog
         @dialog.bring_to_front
         true
+      end
+
+      # Execute JavaScript in the control panel.
+      # @param [String] code
+      # @return [nil]
+      def execute_js(code)
+        return unless @dialog
+        @dialog.execute_script("try { #{code} } catch(err) { alert(err); }")
+        #@dialog.execute_script(code)
       end
 
       # Create a range slider.
@@ -170,7 +222,7 @@ module MSPhysics
       def remove_sliders
         size = @sliders.size
         @sliders.clear
-        @dialog.execute_script("remove_sliders(); update_size();") if @dialog
+        execute_js("remove_sliders(); update_size();")
         size
       end
 
@@ -205,10 +257,39 @@ module MSPhysics
         return false unless data
         return false if @dialog.get_element_value("lcrs-" + cname).empty?
         cmd = "sliders[\"#{cname}\"].setValue(#{value.to_f}); update_slider(\"#{cname}\");"
-        @dialog.execute_script(cmd)
+        execute_js(cmd)
         true
       end
 
+      # Get the number of sliders in the control panel.
+      # @return [Fixnum]
+      def sliders_count
+        @sliders.size
+      end
+
+      # Compute size of a text in pixels.
+      # @note The control panel must be open for the values to be generated properly.
+      # @param [String] text
+      # @param [Hash] opts
+      # @option opts [String] :font ("Ariel") Text font.
+      # @option opts [Fixnum] :size (11) Font size in pixels.
+      # @option opts [Boolean] :bold (false) Whether to have the text bold.
+      # @option opts [Boolean] :italic (false) Whether to have the text
+      #   italicized.
+      # @return [Array, nil] An array of two values if successful
+      def compute_text_size(text, opts = {})
+        return unless @dialog
+        text = text.to_s
+        font = opts.has_key?(:font) ? opts[:font].to_s : "Ariel"
+        size = opts.has_key?(:size) ? opts[:size].to_i : 11
+        bold = opts.has_key?(:bold) ? (opts[:bold] ? true : false) : false
+        italic = opts.has_key?(:italic) ? (opts[:italic] ? true : false) : false
+        cmd = "compute_text_size(#{text.inspect}, #{font.inspect}, #{size}, #{bold}, #{italic})"
+        execute_js(cmd)
+        temp = @test_result
+        @test_result = nil
+        return temp
+      end
 
       # @!visibility private
 
@@ -221,7 +302,7 @@ module MSPhysics
         return false unless @dialog.get_element_value("lcrs-" + cname).empty?
         cmd = "add_slider(\"#{cname}\", #{data[:default_value]}, #{data[:min]}, #{data[:max]}, #{data[:step]});"
         cmd << "update_size();" if update_size
-        @dialog.execute_script(cmd)
+        execute_js(cmd)
         true
       end
 
@@ -231,13 +312,13 @@ module MSPhysics
         return false if @dialog.get_element_value("lcrs-" + cname).empty?
         cmd = "remove_slider(\"#{cname}\");"
         cmd << "update_size();" if update_size
-        @dialog.execute_script(cmd)
+        execute_js(cmd)
         true
       end
 
       def update_placement
         return false unless @dialog
-        ui_scale = Sketchup.version.to_i > 16 ? UI.scale_factor : 1.0
+        ui_scale = Sketchup.version.to_i > 16 ? ::UI.scale_factor : 1.0
         wsx = @border_size.x + @size.x * ui_scale
         wsy = @border_size.y + @size.y * ui_scale
         if AMS::IS_PLATFORM_WINDOWS && @handle
@@ -251,11 +332,41 @@ module MSPhysics
         true
       end
 
+      def udpdate_opacity
+        return if @dialog.nil? || @fade_time.nil? || !AMS::IS_PLATFORM_WINDOWS || @handle.nil?
+        if @fade_wait_time
+          @fade_wait_time += MSPhysics::VIEW_UPDATE_TIMESTEP
+          return if @fade_wait_time < FADE_DELAY
+          @fade_wait_time = nil
+        end
+        if @mouse_over
+          @fade_time += MSPhysics::VIEW_UPDATE_TIMESTEP
+        else
+          @fade_time -= MSPhysics::VIEW_UPDATE_TIMESTEP
+        end
+        if @fade_time <= 0.0
+          alpha = 0.0
+          @fade_time = nil
+        elsif @fade_time >= FADE_DURATION
+          alpha = 1.0
+          @fade_time = nil
+        else
+          alpha = @fade_time / FADE_DURATION
+        end
+        #alpha = 0.5 * Math.sin(Math::PI * (alpha - 0.5)) + 0.5
+        opacity = (MIN_OPACITY + (MAX_OPACITY - MIN_OPACITY) * alpha).round
+        AMS::Window.set_layered_attributes(@handle, 0, opacity, 2)
+      end
+
       def swo_on_size_move(x,y, w,h)
         update_placement
       end
 
       def swo_on_viewport_size(w, h)
+        update_placement
+      end
+
+      def swo_on_exit_size_move(x, y, w, h)
         update_placement
       end
 

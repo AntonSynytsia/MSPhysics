@@ -1,3 +1,67 @@
+## 1.0.0 - July 9, 2017
+- Fixed the bug with negative magnet forces. Thanks to Ali Karakus for the
+  report.
+- Made the magnet force to dissipate quadratically over the magnet range, rather
+  than linearly, as previously was. Now the following equation is used for
+  computing the actual force: <tt>f * (d - r)^2 / r^2</tt>; where f is the
+  maximum magnet force (in Newtons), d is the distance between magnet and the
+  magnetic body (in meters), and r is the maximum magnet range (in meters).
+- Added an option to control magnets with a slightly different equation:
+  <tt>actual_force = magnet_strength / distance^2</tt>.
+- Fixed the onTouching continuous response bug. Thanks to Wim van den Dungen for
+  the report.
+- Fixed the issue with MSPhysics UI text input values not saving on Mac OS X.
+  Thanks to TheSniper for the report.
+- Added an option to control Piston by speed.
+- Added 'rotation along Z-axis' option to Spring joint.
+- Fixed joystick input and added <tt>leftz</tt>/<tt>rightz</tt> commands. Thanks
+  to SynSuka3D for the report and request.
+- Made joystick input be read based on the type of connected joystick, which
+  again fixes the improper input mapping. Thanks to Istvan Nagy for the report.
+- Added better oscillator functions.
+- Fixed the gravity bug in type 1 particle effects.
+- Made type 2 and 3 particles be exportable with replay.
+- Windows only: Added an option to abort the exporting of replay animation.
+- Simulation stop command no longer erases copied/emitted bodies and particles.
+- Added <tt>MSPhysics::Body.#inertia</tt> for acquiring the rotational
+  equivalent of mass.
+- Fixed the improper behavior of static bodies. Thanks to Istvan Nagy for the
+  report.
+- Fixed the improper behaviour of touch events with non-collidable bodies.
+- Added an option to create kinematic bodies. See script overview on using them.
+- Added additional context menu options for controlling body selectable options,
+  such as magnet mode.
+- Added <tt>toggle_key(vk)</tt> command for getting the toggled state of a
+  virtual key.
+- Added <tt>key_slider(...)</tt> command.
+- Added <tt>accumulator(rate, delay)</tt>, <tt>repeater(rate, hold, delay)</tt>,
+  and <tt>singular_repeater(rate, delay, id)</tt> commands.
+- Upgraded to the latest version of NewtonDynamics. Note that models made with
+  previous MSPhysics versions may need to be updated for compatibility with the
+  new version.
+- Fixed a crash that could occur when generating convex/compound collisions from
+  tiny meshes.
+- Fixed the bug with assigning huge values for mass and other body properties.
+  Thanks to SynSuka3D for the report.
+- Fixed an unhandled exception of touch events and emitters, which caused jerky
+  movements when exporting to replay. Thanks to Faust07 for reporting the issue.
+- All functions involving rates and lifetimes now assume time in seconds. This,
+  too, applies to emitters and particles, ensuring that simulation results
+  remain persistent whenever changing update timestep and rate.
+- Added an option to control the up direction of specific shapes.
+- Removed 'Compound from CD' shape due to its instability.
+- Improved simulation scene transitioning.
+- Added a feature to animate scenes.
+- Added a feature to do keyboard pan/orbit.
+- Added an option to ignore hidden instances.
+- Added recoil and delay options to the emitter.
+- Improved functionality of many joints.
+- Improved joint connection tool.
+- Removed 'Connect Closest Joints' option and made copyable joints a default
+  feature.
+- Reverted to running simulation via the animation API, rather than timer, for
+  the proper rendering of shader and shadows.
+
 ## 0.9.9 - December 22, 2016
 - Reworked all joints. This includes bug fixes to the limits of the
   BallAndSocket and Universal joints, improved behaviour of the CurvySlider and

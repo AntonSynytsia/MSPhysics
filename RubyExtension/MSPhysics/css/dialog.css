@@ -7,19 +7,17 @@
 }
 
 html {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  font-size: 11px;
-  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
-  overflow: hidden;
   width: 100%;
   height: 100%;
-  min-width: 40em;
 }
 
 body {
-  padding: 5px;
+  overflow: hidden; /* May change this to auto if the content is clipped */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  width: 100%;
+  height: 100%;
   background: rgb(99,134,204);
   background: -moz-linear-gradient(top,  rgba(99,134,204,1) 0%, rgba(183,210,229,1) 100%);
   background: -webkit-linear-gradient(top,  rgba(99,134,204,1) 0%,rgba(183,210,229,1) 100%);
@@ -34,16 +32,10 @@ body {
   -ms-high-contrast-adjust: none;
 }
 
-input, label {
-  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
-  outline: none;
-  position: relative;
-  display: inline;
-  vertical-align: middle !important;
-  margin: 0 auto;
-  cursor: pointer;
-  padding: 0;
-  font-size: 100% !important;
+#main-wrap {
+  margin: 0;
+  padding: 5px;
+  border: 0;
 }
 
 input[type=checkbox], input[type=radio] {
@@ -53,7 +45,7 @@ input[type=checkbox], input[type=radio] {
   margin: 3.5px 0 !important;
 }
 
-input[type=checkbox] {
+/*input[type=checkbox] {
   box-shadow: 1px 1px 1px rgba(80, 80, 80, 0.2);
   -webkit-box-shadow: 1px 1px 1px rgba(80, 80, 80, 0.2);
   -moz-box-shadow: 1px 1px 1px rgba(80, 80, 80, 0.2);
@@ -63,28 +55,11 @@ input[type=checkbox]:focus {
   box-shadow: 0 0 8px rgba(0, 80, 255, 0.35);
   -webkit-box-shadow: 0 0 8px rgba(0, 80, 255, 0.35);
   -moz-box-shadow: 0 0 8px rgba(0, 80, 255, 0.35);
-}
+}*/
 
-fieldset {
-  position: relative;
-  text-indent: 0 !important;
-  text-align: left;
-  margin: 0 !important;
-  margin-bottom: 0.5em !important;
-  padding: 0 1em 1em;
-  border-color: rgba(0, 0, 0, 0.2);
-  border-image: none;
-  border-radius: 5px !important;
-  border-style: solid;
-  border-width: 1px;
-}
-
-fieldset legend {
-  display: inline;
-  padding: 0;
-  margin: 0.25em 0;
-  font-weight: bold;
-  white-space: normal;
+.chosen-container {
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  font-size: 11px;
 }
 
 .left {
@@ -103,20 +78,17 @@ fieldset legend {
   text-align: center;
 }
 
-.center2 {
-  margin: 0 auto;
-}
-
 .button {
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  font-size: 11px;
   outline: none;
-  padding: 0.5em 1.0em;
+  padding: 0.4em 0.8em;
   text-align: center;
   text-decoration: none;
   display: inline-block;
-  font-size: 11px;
-  transition: all 0.25s ease-in-out;
-  -webkit-transition: all 0.25s ease-in-out;
-  -moz-transition: all 0.25s ease-in-out;
+  transition: all 0.15s ease-in-out;
+  -webkit-transition: all 0.15s ease-in-out;
+  -moz-transition: all 0.15s ease-in-out;
   cursor: pointer;
   background: rgba(78, 191, 75, 1.0);
   color: #FDFDFD;
@@ -136,21 +108,18 @@ fieldset legend {
 
 .button:active {
   outline: none;
-  background: rgba(85, 196, 82, 1.0);
+  background: rgba(55, 219, 50, 1.0);
   color: #FFF;
   border: 1px solid rgba(85, 196, 82, 0.4);
 }
 
-table {
-  table-layout: fixed;
-}
-
 .custom-text {
-  background-color: #FEFEFE;
-  color: #0A0A0A;
-  font-size: 11px !important;
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  background-color: #FFF;
+  color: #222;
   cursor: auto;
-  padding: 0.25em 0em;
+  padding: 0.25em 0;
+  margin: 0;
   text-indent: 0.5em;
   outline: none;
   transition: all 0.25s ease-in-out;
@@ -159,7 +128,7 @@ table {
   border-radius: 3px;
   -webkit-border-radius: 3px;
   -moz-border-radius: 3px;
-  vertical-align: top;
+  vertical-align: middle;
   border: 1px solid rgba(80, 80, 80, 0.30) !important;
   box-shadow: 1px 1px 4px rgba(80, 80, 80, 0.15);
   -webkit-box-shadow: 1px 1px 4px rgba(80, 80, 80, 0.15);
@@ -175,35 +144,46 @@ table {
 
 .text-input {
   width: 100%;
-  font-size: 10px !important;
+  font-size: 10px;
 }
 
 .fixnum-input {
   width: 100%;
-  font-size: 10px !important;
+  font-size: 10px;
 }
 
 .numeric-input {
   width: 100%;
-  font-size: 10px !important;
+  font-size: 10px;
 }
 
 .controller-input {
   width: 100%;
-  font-size: 11px !important;
+  font-size: 11px;
 }
 
 .command-input {
   background-color: #2E2E2E;
   color: #CFCFCF;
   width: 100%;
-  font-size: 11px !important;
+  font-size: 11px;
+}
+
+.slider-input {
+  width: 100%;
+  font-size: 10px;
+}
+
+.slider-input::selection {
+  color: #0f0f0f;
+  background: #fff2a8;
 }
 
 .labeled-text {
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  font-size: 11px;
   border: none;
   background: none;
-  font-size: 11px !important;
   color: #FA8000;
   cursor: auto;
   outline: none;
@@ -217,24 +197,21 @@ table {
   -ms-high-contrast-adjust: none;
 }
 
-.main-wrap {
-  /* overflow to handle inner floating block */
-  overflow: hidden;
-}
-
 .credit {
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  font-size: 10px;
   clear: both;
   text-align: right;
   padding-right: 1em;
   position: relative;
   color: gray;
-  font-size: 9px !important;
 }
 
 .link {
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
   color: #0B1AE6;
   font-weight: normal;
-  font-size: 10px !important;
+  font-size: 10px;
   text-decoration: none;
 }
 
@@ -243,9 +220,12 @@ table {
 }
 
 #status-bar {
+  font-family: "Courier New";
+  font-size: 11px;
+  font-weight: normal;
   position: relative;
-  color: gray;
-  padding: 0.5em 1em 0em 1em;
+  color: #6A6A6A;
+  padding: 0.5em 1em 0 1em;
 }
 
 .ace_status-indicator {
@@ -290,106 +270,98 @@ table {
 }
 
 .sound-list {
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  font-size: 11px;
   background-color: #2E2E2E;
   color: #CFCFCF;
   border-radius: 3px;
   border: none;
   margin: auto 0 0.1em 0;
-  padding: 0.25em;
+  padding: 5px;
   width: 100%;
 }
 
 .description {
-  font-size: 11px !important;
-  color: #2F2F2F;
-  font-weight: normal;
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  font-size: 11px;
+  color: #222;
+  cursor: pointer;
+}
+
+.reference {
+  font-family: "Courier New";
+  font-size: 11px;
+  color: #222;
+  cursor: pointer;
 }
 
 .style1 {
-  color: #000DFF;
   font-weight: normal;
+  color: #000DFF;
 }
 
 .style2 {
-  color: #00CF00;
   font-weight: normal;
+  color: #00CF00;
 }
 
 .style3 {
-  color: #F02B2B;
   font-weight: normal;
+  color: #F02B2B;
 }
 
 .style4 {
-  color: #2F2F2F;
   font-weight: normal;
+  color: #2F2F2F;
 }
 
 .style5 {
-  color: #606060;
   font-weight: bold;
+  color: #606060;
 }
 
 .style6 {
-  color: #FFB01F;
   font-weight: normal;
+  color: #FFB01F;
 }
 
 .style7 {
-  color: #3823C2;
   font-weight: bold;
+  color: #3823C2;
 }
 
 .style8 {
-  color: #FF0000;
   font-weight: normal;
-}
-
-.description tt {
-  color: #170E80;
+  color: #FF0000;
 }
 
 .title {
-  color: #7F7F7F;
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  font-size: 16px;
   font-weight: normal;
-  font-size: 16px !important;
+  color: #7F7F7F;
+  cursor: pointer;
 }
 
 .heading {
-  color: #0AAA0A;
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  font-size: 11px;
   font-weight: bold;
-}
-
-table.opts_table {
-  border: none;
-  padding: 0em 0em 0.5em 0em;
-}
-
-table.opts_table tr td {
-  border: none;
-  vertical-align: middle;
-}
-
-table.opts_table tr {
-  padding: 0em;
-  margin: 0em;
-}
-
-table.opts_table td {
-  padding: 0em 0.1em;
+  color: #0AAA0A;
 }
 
 table.struct_table {
-  width: 100%;
+  table-layout: fixed;
   border: none;
-  padding: 0em;
-  margin: 0em;
+  padding: 0;
+  margin: 0;
+  width: 100%;
 }
 
 table.struct_table tr td {
   border: none;
-  padding: 0em;
-  margin: 0em;
+  padding: 0;
+  margin: 0;
   vertical-align: top;
 }
 
@@ -397,17 +369,36 @@ table.struct_table input[type=checkbox] {
   float: right;
 }
 
+table.opts_table {
+  table-layout: fixed;
+  border: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+table.opts_table tr td {
+  border: none;
+  padding: 0;
+  margin: 0;
+  vertical-align: middle;
+}
+
+table.opts_table input[type=checkbox] {
+  float: right;
+}
+
 .spacing_tab {
-  padding-left: 1em;
+  padding-left: 0.75em;
 }
 
 label.joint-label {
+  font-family: "Courier New";
+  font-size: 11px;
+  font-weight: normal;
   padding: 0.15em;
   color: #0036C9;
   background-color: none;
-  font-size: 11px !important;
-  font-family: "Courier New";
-  font-weight: normal;
   transition: all 0.1s ease-in-out;
   -webkit-transition: all 0.1s ease-in-out;
   -moz-transition: all 0.1s ease-in-out;
@@ -419,26 +410,26 @@ label.joint-label:hover {
 }
 
 label.joint-label-selected {
+  font-family: "Courier New";
+  font-size: 11px;
+  font-weight: normal;
   padding: 0.15em;
   color: #0036C9;
   background-color: rgba(255, 255, 120, 1.0);
-  font-size: 11px !important;
-  font-family: "Courier New";
-  font-weight: normal;
   transition: all 0.1s ease-in-out;
   -webkit-transition: all 0.1s ease-in-out;
   -moz-transition: all 0.1s ease-in-out;
 }
 
 .help_box {
+  font-family: "Calibri";
+  font-size: 13px;
+  font-weight: normal;
   resize: none;
   outline: none;
   width: 100%;
   height: 80px;
   overflow: auto;
-  font-family: "Calibri";
-  font-weight: normal;
-  font-size: 13px !important;
   background: #F8F8F8;
   color: #0A0A0A;
   padding: 5px;

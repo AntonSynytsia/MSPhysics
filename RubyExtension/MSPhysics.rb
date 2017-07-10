@@ -1,53 +1,31 @@
 require 'sketchup.rb'
 require 'extensions.rb'
 
-tload_me = true
+# @since 1.0.0
+module MSPhysics
 
-# Load and verify AMS Library
-begin
-  require 'ams_Lib/main'
-  if AMS::Lib::VERSION.to_f < 3.4
-    tload_me = false
-  end
-rescue LoadError
-  tload_me = false
-end
-unless tload_me
-  msg = "The AMS Window Settings extension requires AMS Library 3.4.0 or later! This extension will not load with the library not installed or outdated. Would you like to navigate to the library's download page?"
-  tload_me = false
-  if UI.messagebox(msg, MB_YESNO) == IDYES
-    UI.openURL('http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835')
-  end
-end
+  NAME         = 'MSPhysics'.freeze
+  VERSION      = '1.0.0'.freeze
+  RELEASE_DATE = 'July 9, 2017'.freeze
 
-# Load the extension
-if tload_me
-  # @since 1.0.0
-  module MSPhysics
+  # Create the extension.
+  @extension = ::SketchupExtension.new(NAME, 'MSPhysics/main_entry')
 
-    NAME         = 'MSPhysics'.freeze
-    VERSION      = '0.9.9'.freeze
-    RELEASE_DATE = 'December 22, 2016'.freeze
+  # Attach some nice info.
+  @extension.description = "A realtime physics simulation tool, similar to SketchyPhysics."
+  @extension.version     = VERSION
+  @extension.copyright   = 'MIT © 2014-2017, Anton Synytsia'
+  @extension.creator     = 'Anton Synytsia (anton.synytsia@gmail.com)'
 
-    # Create the extension.
-    @extension = SketchupExtension.new(NAME, 'MSPhysics/main')
+  # Register and load the extension on start-up.
+  ::Sketchup.register_extension(@extension, true)
 
-    # Attach some nice info.
-    @extension.description = "A realtime physics simulation tool."
-    @extension.version     = VERSION
-    @extension.copyright   = 'Anton Synytsia © 2014-2016'
-    @extension.creator     = 'Anton Synytsia (anton.synytsia@gmail.com)'
+  class << self
 
-    # Register and load the extension on start-up.
-    Sketchup.register_extension(@extension, true)
+    # @!attribute [r] extension
+    # Get MSPhysics extension.
+    # @return [SketchupExtension]
+    attr_reader :extension
 
-    class << self
-
-      # @!attribute [r] extension
-      # Get MSPhysics extension.
-      # @return [SketchupExtension]
-      attr_reader :extension
-
-    end # class << self
-  end # module MSPhysics
-end # if tload_me
+  end # class << self
+end # module MSPhysics

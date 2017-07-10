@@ -16,7 +16,7 @@ module MSPhysics
     # @param [MSPhysics::Body, nil] parent
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation
     #   in global space. Matrix origin is interpreted as the pin position.
-    #   Matrix z-axis is interpreted as the pin direction.
+    #   Matrix Z-axis is interpreted as the pin direction.
     # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group
     def initialize(world, parent, pin_tra, group = nil)
       super(world, parent, pin_tra, group)
@@ -36,16 +36,16 @@ module MSPhysics
       MSPhysics::Newton::Servo.get_cur_angle(@address)
     end
 
-    # Get current omega in radians per second.
+    # Get current angular velocity in radians per second.
     # @return [Numeric]
     def cur_omega
       MSPhysics::Newton::Servo.get_cur_omega(@address)
     end
 
-    # Get current acceleration in radians per second per second.
+    # Get current angular acceleration in radians per second per second.
     # @return [Numeric]
-    def cur_acceleration
-      MSPhysics::Newton::Servo.get_cur_acceleration(@address)
+    def cur_alpha
+      MSPhysics::Newton::Servo.get_cur_alpha(@address)
     end
 
     # Get minimum angle in radians.

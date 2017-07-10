@@ -25,20 +25,16 @@ module MSPhysics
 
     end # class << self
 
-    # @param [Symbol, String] joint_type See {MSPhysics::JOINT_TYPES} for valid
-    #  joint types.
-    def initialize(joint_type)
-      @joint_type = joint_type.to_s
+    # @param [Fixnum] joint_id See {MSPhysics::JOINT_ID_TO_NAME} for valid joint IDs.
+    def initialize(joint_id)
+      @joint_id = joint_id.to_i
+      joint_fname = MSPhysics::JOINT_ID_TO_FILE_NAME[@joint_id]
+      raise(TypeError, "Given joint ID is invalid!", caller) unless joint_fname
       dir = File.dirname(__FILE__)
-      dir.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
+      dir.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18
       @path = File.join(dir, 'models')
-      @full_path = File.join(@path, @joint_type + '.skp')
-      raise(TypeError, 'Given joint type is invalid!', caller) unless File.exists?(@full_path)
-      words = @joint_type.split(/\_/)
-      for i in 0...words.size
-        words[i].capitalize!
-      end
-      @joint_name = words.join()
+      @full_path = File.join(@path, joint_fname + '.skp')
+      raise(TypeError, "File to the given joint ID doesn't exist!", caller) unless File.exists?(@full_path)
       @ip1 = Sketchup::InputPoint.new
       @ip2 = Sketchup::InputPoint.new
       @ip = Sketchup::InputPoint.new
@@ -92,7 +88,8 @@ module MSPhysics
     def create_geometry(pt1, pt2, view)
       model = Sketchup.active_model
       ents = model.active_entities
-      model.start_operation('Create Joint')
+	  op = 'MSPhysics - Create Joint'
+	  Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
       begin
         if ents.parent.is_a?(Sketchup::ComponentDefinition)
           type = ents.parent.instances.first.get_attribute('MSPhysics', 'Type', nil)
@@ -106,7 +103,7 @@ module MSPhysics
           layer = model.layers.add('MSPhysics Joints')
           layer.color = @layer_color if Sketchup.version.to_i > 13
         end
-        if @joint_type == 'curvy_slider' || @joint_type == 'curvy_piston'
+        if @joint_id == 12 || @joint_id == 13
           curve_path = File.join(@path, 'curve.skp')
           curve_cd = model.definitions.load(curve_path)
           inst = ents.add_group
@@ -122,9 +119,9 @@ module MSPhysics
         assign_attributes(inst)
         model.selection.clear
         model.selection.add(inst)
-      rescue Exception => e
+      rescue Exception => err
         model.abort_operation
-        ::UI.messagebox(e)
+        ::UI.messagebox(err)
         return
       end
       model.commit_operation
@@ -132,7 +129,7 @@ module MSPhysics
 
     def assign_attributes(ent)
       ent.set_attribute('MSPhysics', 'Type', 'Joint')
-      ent.set_attribute('MSPhysics Joint', 'Type', @joint_name.to_s)
+      ent.set_attribute('MSPhysics Joint', 'Type', MSPhysics::JOINT_ID_TO_NAME[@joint_id])
       ent.set_attribute('MSPhysics Joint', 'ID', JointTool.generate_uniq_id)
     end
 
@@ -224,7 +221,7 @@ module MSPhysics
       return unless @ip2.valid?
       begin
         value = text.to_l
-      rescue Exception => e
+      rescue Exception => err
         ::UI.beep
         puts "Cannot convert '#{text}' to length."
         value = nil

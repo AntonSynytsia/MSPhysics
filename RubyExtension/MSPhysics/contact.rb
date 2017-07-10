@@ -2,7 +2,7 @@ module MSPhysics
 
   # The Contact class represents an individual collision contact.
   # @since 1.0.0
-  class Contact
+  class Contact < Entity
 
     # @param [Body] toucher
     # @param [Geom::Point3d, Array<Numeric>] point Contact point.

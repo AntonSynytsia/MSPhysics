@@ -51,6 +51,7 @@ module MSPhysics
         :onMouseWheelRotate     => nil,
         :onMouseWheelTilt       => nil
       }
+      super()
     end
 
     # @api private
@@ -137,12 +138,12 @@ module MSPhysics
       return false unless evt
       begin
         evt.call(*args)
-      rescue Exception => e
+      rescue Exception => err
         ref = nil
         test = MSPhysics::SCRIPT_NAME + ':'
-        err_message = e.message
-        err_backtrace = e.backtrace
-        if RUBY_VERSION !~ /1.8/
+        err_message = err.message
+        err_backtrace = err.backtrace
+        unless AMS::IS_RUBY_VERSION_18
           err_message.force_encoding('UTF-8')
           err_backtrace.each { |i| i.force_encoding('UTF-8') }
         end
@@ -154,7 +155,7 @@ module MSPhysics
         }
         ref = err_message if !ref && err_message.include?(test)
         line = ref ? ref.split(test, 2)[1].split(/\:/, 2)[0].to_i : nil
-        msg = "#{e.class.to_s[0] =~ /a|e|i|o|u/i ? 'An' : 'A'} #{e.class} has occurred while calling body #{event} event#{line ? ', line ' + line.to_s : nil}:\n#{err_message}"
+        msg = "#{err.class.to_s[0] =~ /a|e|i|o|u/i ? 'An' : 'A'} #{err.class} has occurred while calling body #{event} event#{line ? ', line ' + line.to_s : nil}:\n#{err_message}"
         raise MSPhysics::ScriptException.new(msg, err_backtrace, @__body.group, line)
       end
       true
@@ -351,6 +352,7 @@ module MSPhysics
     # @yield This event is called when the mouse is moved.
     # @yieldparam [Fixnum] x
     # @yieldparam [Fixnum] y
+    # @yieldparam [Sketchup::View] view
     def onMouseMove(&block)
       set_event_proc(:onMouseMove, block)
     end

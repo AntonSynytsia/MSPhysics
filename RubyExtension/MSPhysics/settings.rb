@@ -10,12 +10,163 @@ module MSPhysics
     @debug_contact_forces = false
     @debug_bodies = true
 
+    @settings = {}
+
     class << self
+
+      # @!visibility private
+      def init
+        Sketchup.add_observer(MSPhysics::Settings::AppObserver.new)
+        MSPhysics::Settings.load_options
+      end
+
+      # Save settings to registry
+      def save_options
+        Sketchup.write_default('MSPhysics', 'Settings', @settings.inspect.inspect[1..-2])
+      end
+
+      # Load settings from registry
+      def load_options
+        v = Sketchup.read_default('MSPhysics', 'Settings', '{}')
+        begin
+          res = eval(v)
+          @settings.merge!(res) if res.is_a?(Hash)
+        rescue Exception => e
+          # Do nothing; use default options.
+        end
+      end
+
+      # Get the state of keyboard navigation.
+      # @return [Fixnum] State:
+      #   * 0 - off/stop
+      #   * 1 - normal
+      #   * 2 - upright
+      def key_nav_state
+        default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:key_nav_state]
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Keyboard Nav State', default)
+        return AMS.clamp(attr.to_i, 0, 2)
+      end
+
+      # Set the state of keyboard navigation.
+      # @param [Fixnum] state State:
+      #   * 0 - off/stop
+      #   * 1 - normal
+      #   * 2 - upright
+      def key_nav_state=(state)
+        state = AMS.clamp(state.to_i, 0, 2)
+        Sketchup.active_model.set_attribute('MSPhysics', 'Keyboard Nav State', state)
+      end
+
+      # Get the maximum velocity of keyboard camera navigation in m/s.
+      # @return [Numeric]
+      def key_nav_velocity
+        if @settings.has_key?(:key_nav_velocity)
+          @settings[:key_nav_velocity]
+        else
+          MSPhysics::DEFAULT_SIMULATION_SETTINGS[:key_nav_velocity]
+        end
+      end
+
+      # Set the maximum velocity of keyboard camera navigation in m/s.
+      # @param [Numeric] value
+      def key_nav_velocity=(value)
+        @settings[:key_nav_velocity] = AMS.clamp(value.to_f, 0.01, nil)
+      end
+
+      # Get the maximum omega of keyboard camera navigation in rad/s.
+      # @return [Numeric]
+      def key_nav_omega
+        if @settings.has_key?(:key_nav_omega)
+          @settings[:key_nav_omega]
+        else
+          MSPhysics::DEFAULT_SIMULATION_SETTINGS[:key_nav_omega]
+        end
+      end
+
+      # Set the maximum omega of keyboard camera navigation in rad/s.
+      # @param [Numeric] value
+      def key_nav_omega=(value)
+        @settings[:key_nav_omega] = AMS.clamp(value.to_f, 0.01, nil)
+      end
+
+      # Get the time to accelerate, in seconds, from zero to the desired
+      # velocity or omega.
+      # @return [Numeric]
+      def key_nav_atime
+        if @settings.has_key?(:key_nav_atime)
+          @settings[:key_nav_atime]
+        else
+          MSPhysics::DEFAULT_SIMULATION_SETTINGS[:key_nav_atime]
+        end
+      end
+
+      # Set the time to accelerate, in seconds, from zero to the desired
+      # velocity or omega.
+      # @param [Numeric] value
+      def key_nav_atime=(value)
+        @settings[:key_nav_atime] = AMS.clamp(value.to_f, 0.0, nil)
+      end
+
+      # Get the state of scenes animation.
+      # @return [Fixnum] State:
+      #   * 0 - off/stop
+      #   * 1 - one way
+      #   * 2 - repeat forth and back
+      #   * 3 - loop around
+      def animate_scenes_state
+        default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:animate_scenes_state]
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Animate Scenes State', default)
+        return AMS.clamp(attr.to_i, 0, 3)
+      end
+
+      # Set the state of scenes animation.
+      # @param [Fixnum] state State:
+      #   * 0 - off/stop
+      #   * 1 - one way
+      #   * 2 - repeat forth and back
+      #   * 3 - loop around
+      def animate_scenes_state=(state)
+        state = AMS.clamp(state.to_i, 0, 3)
+        Sketchup.active_model.set_attribute('MSPhysics', 'Animate Scenes State', state)
+        sim = MSPhysics::Simulation.instance
+        sim.animate_scenes(state) if sim
+      end
+
+      # Get the time to wait before starting to animate scenes.
+      # @return [Numeric] Time in seconds.
+      def animate_scenes_delay
+        default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:animate_scenes_delay]
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Animate Scenes Delay', default)
+        return AMS.clamp(attr.to_f, 0, nil)
+      end
+
+      # Set the time to wait before starting to animate scenes.
+      # @param [Numeric] value Time in seconds.
+      def animate_scenes_delay=(value)
+        value = AMS.clamp(value.to_f, 0, nil)
+        Sketchup.active_model.set_attribute('MSPhysics', 'Animate Scenes Delay', value)
+      end
+
+      # Determine whether the animation of scenes is reversed.
+      # @return [Boolean]
+      def animate_scenes_reversed?
+        default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:animate_scenes_reversed]
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Animate Scenes Reversed', default)
+        return attr ? true : false
+      end
+
+      # Reverse/normalize the animation of scenes.
+      # @param [Boolean] state
+      def animate_scenes_reversed=(state)
+        state = state ? true : false
+        Sketchup.active_model.set_attribute('MSPhysics', 'Animate Scenes Reversed', state)
+      end
 
       # Determine whether continuous collision check is enabled.
       # @return [Boolean]
       def continuous_collision_check_enabled?
-        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Continuous Collision Mode', false)
+        default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:continuous_collision_check]
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Continuous Collision Mode', default)
         return attr ? true : false
       end
 
@@ -31,7 +182,8 @@ module MSPhysics
       # Determine whether fullscreen mode is enabled.
       # @return [Boolean]
       def full_screen_mode_enabled?
-        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Fullscreen Mode', false)
+        default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:full_screen_mode]
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Fullscreen Mode', default)
         return attr ? true : false
       end
 
@@ -44,10 +196,41 @@ module MSPhysics
         sim.view_full_screen(state) if sim
       end
 
+      # Determine whether hidden instances are ignored.
+      # @return [Boolean]
+      def ignore_hidden_instances?
+        default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:ignore_hidden_instances]
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Ignore Hidden Instances', default)
+        return attr ? true : false
+      end
+
+      # Enable/disable fancy operation.
+      # @param [Boolean] state
+      def ignore_hidden_instances=(state)
+        state = state ? true : false
+        Sketchup.active_model.set_attribute('MSPhysics', 'Ignore Hidden Instances', state)
+      end
+
+      # Determine whether the navigation of camera with keyboard is enabled.
+      # @return [Boolean]
+      def keyboard_navigation_enabled?
+        default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:keyboard_navigation]
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Keyboard Navigation', default)
+        return attr ? true : false
+      end
+
+      # Enable/disable the navigation of camera with keyboard.
+      # @param [Boolean] state
+      def keyboard_navigation_enabled=(state)
+        state = state ? true : false
+        Sketchup.active_model.set_attribute('MSPhysics', 'Keyboard Navigation', state)
+      end
+
       # Determine whether game mode is enabled.
       # @return [Boolean]
       def game_mode_enabled?
-        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Game Mode', false)
+        default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:game_mode]
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Game Mode', default)
         return attr ? true : false
       end
 
@@ -57,13 +240,14 @@ module MSPhysics
         state = state ? true : false
         Sketchup.active_model.set_attribute('MSPhysics', 'Game Mode', state)
         sim = MSPhysics::Simulation.instance
-        sim.mode = state ? 1 : 0 if sim
+        sim.mode = (state ? 1 : 0) if sim
       end
 
       # Determine whether the hide-joint-layer option is enabled.
       # @return [Boolean]
       def hide_joint_layer_enabled?
-        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Hide Joint Layer', false)
+        default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:hide_joint_layer]
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Hide Joint Layer', default)
         return attr ? true : false
       end
 
@@ -81,7 +265,8 @@ module MSPhysics
       # Determine whether the undo-on-end option is enabled.
       # @return [Boolean]
       def undo_on_end_enabled?
-        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Undo on End', false)
+        default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:undo_on_end]
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Undo on End', default)
         return attr ? true : false
       end
 
@@ -95,21 +280,40 @@ module MSPhysics
       end
 
       # Get simulation solver model.
-      # @return [Fixnum] Number of passes.
+      # @return [Fixnum] Number of passes, a value between 1 and 256.
       def solver_model
         default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:solver_model]
         attr = Sketchup.active_model.get_attribute('MSPhysics', 'Solver Model', default)
-        val = attr.to_i.abs
-        return val
+        return AMS.clamp(attr.to_i, 1, 256)
       end
 
       # Set simulation solver model.
-      # @param [Fixnum] model Number of passes.
+      # @param [Fixnum] model Number of passes, a value between 1 and 256.
       def solver_model=(model)
-        model = model.to_i.abs
+        model = AMS.clamp(model.to_i, 1, 256)
         Sketchup.active_model.set_attribute('MSPhysics', 'Solver Model', model)
         sim = MSPhysics::Simulation.instance
         sim.world.solver_model = model if sim
+      end
+
+      # Get joint solver model.
+      # @return [Fixnum] 0 - Accurate; 1 - Don't Use; 2 - Fast.
+      def joint_algorithm
+        default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:joint_algorithm]
+        attr = Sketchup.active_model.get_attribute('MSPhysics', 'Joint Algorithm', default)
+        return AMS.clamp(attr.to_i, 0, 2)
+      end
+
+      # Set joint solver model.
+      # @note Changing this property won't have an effect until simulation is
+      #   restarted.
+      # @param [Fixnum] model Joint solver model:
+      #   * 0 - Accurate: Slow but robust
+      #   * 1 - Don't Use
+      #   * 2 - Fast: Fast but flexible
+      def joint_algorithm=(model)
+        model = AMS.clamp(model.to_i, 0, 2)
+        Sketchup.active_model.set_attribute('MSPhysics', 'Joint Algorithm', model)
       end
 
       # Get simulation update timestep in seconds.
@@ -148,16 +352,16 @@ module MSPhysics
         sim.update_rate = rate if sim
       end
 
-      # Get simulation gravitational acceleration along z-axis, in meters per
+      # Get simulation gravitational acceleration along Z-axis, in meters per
       # second per second (m/s/s).
       # @return [Numeric]
       def gravity
-        default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:gravity].z
+        default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:gravity]
         attr = Sketchup.active_model.get_attribute('MSPhysics', 'Gravity', default)
         return attr.to_f
       end
 
-      # Set simulation gravitational acceleration along z-axis, in meters per
+      # Set simulation gravitational acceleration along Z-axis, in meters per
       # second per second (m/s/s).
       # @param [Numeric] acceleration
       def gravity=(acceleration)
@@ -193,7 +397,8 @@ module MSPhysics
       end
 
       # Set world scale.
-      # @note This has an effect only when simulation is restarted.
+      # @note Changing this property won't have an effect until simulation is
+      #   restarted.
       # @param [Numeric] scale A value between 0.1 and 100.
       def world_scale=(scale)
         scale = AMS.clamp(scale.to_f, 0.1, 100.0)
@@ -285,29 +490,16 @@ module MSPhysics
         @debug_bodies
       end
 
-      # Apply all settings to the active simulation.
-      # @return [Boolean] success
-      def apply_settings
-        return false unless MSPhysics::Simulation.active?
-        self.continuous_collision_check_enabled = self.continuous_collision_check_enabled?
-        self.full_screen_mode_enabled = true if self.full_screen_mode_enabled?
-        self.game_mode_enabled = self.game_mode_enabled?
-        self.hide_joint_layer_enabled = true if self.hide_joint_layer_enabled?
-        self.undo_on_end_enabled = self.undo_on_end_enabled?
-        self.solver_model = self.solver_model
-        self.update_timestep = self.update_timestep
-        self.gravity = self.gravity
-        self.material_thickness = self.material_thickness
-        self.world_scale = self.world_scale
-        self.update_rate = self.update_rate
-        self.collision_wireframe_visible = self.collision_wireframe_visible?
-        self.axes_visible = self.axes_visible?
-        self.contact_points_visible = self.contact_points_visible?
-        self.contact_forces_visible = self.contact_forces_visible?
-        self.bodies_visible = self.bodies_visible?
-        true
+    end # class << self
+
+    # @!visibility private
+    class AppObserver < ::Sketchup::AppObserver
+
+      def onQuit
+        MSPhysics::Settings.save_options
       end
 
-    end # class << self
+    end # class AppObserver
+
   end # module Settings
 end # module MSPhysics

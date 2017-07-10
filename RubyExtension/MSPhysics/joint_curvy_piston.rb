@@ -19,7 +19,7 @@ module MSPhysics
     # @param [MSPhysics::Body, nil] parent
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation
     #   in global space. Matrix origin is interpreted as the pin position.
-    #   Matrix z-axis is interpreted as the pin direction.
+    #   Matrix Z-axis is interpreted as the pin direction.
     # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group
     def initialize(world, parent, pin_tra, group = nil)
       super(world, parent, pin_tra, group)
@@ -195,8 +195,8 @@ module MSPhysics
 
     # Get curvy piston controller.
     # @return [Numeric, nil] Returns one of the following values:
-    #   * Desired position in meters if controller mode is 0.
-    #   * Magnitude and direction of linear rate if controller mode is 1.
+    #   * Desired position in meters if the controller mode is 0.
+    #   * Magnitude and direction of the linear rate if controller mode is 1.
     #   * +nil+ if piston is turned off.
     def controller
       MSPhysics::Newton::CurvyPiston.get_controller(@address)
@@ -204,8 +204,8 @@ module MSPhysics
 
     # Set curvy piston controller.
     # @param [Numeric, nil] value Accepts one of the following values:
-    #   * Desired position in meters if controller mode is 0.
-    #   * Magnitude and direction of linear rate if controller mode is 1.
+    #   * Desired position in meters if the controller mode is 0.
+    #   * Magnitude and direction of the linear rate if controller mode is 1.
     #   * +nil+ to turn off the piston.
     def controller=(value)
       MSPhysics::Newton::CurvyPiston.set_controller(@address, value)
@@ -213,20 +213,18 @@ module MSPhysics
 
     # Get controller mode.
     # @return [Fixnum] Returns one of the following values:
-    #   * 0 if curvy piston is controlled by position, a value that represents
-    #       distance on curve.
-    #   * 1 if curvy piston is controlled by speed, a value that represents the
-    #       magnitude of linear rate.
+    #   * 0 to control curvy piston by position.
+    #   * 1 to control curvy piston by speed - strict.
+    #   * 2 to control curvy piston by speed - adaptive.
     def controller_mode
       MSPhysics::Newton::CurvyPiston.get_controller_mode(@address)
     end
 
     # Set controller mode.
     # @param [Fixnum] mode Pass one of the following values:
-    #   * 0 if curvy piston is ought to be controlled by position, a value that
-    #       represents distance on curve.
-    #   * 1 if curvy piston is ought to be controlled by speed, a value that
-    #       represents the magnitude of linear rate.
+    #   * 0 to control curvy piston by position.
+    #   * 1 to control curvy piston by speed - strict.
+    #   * 2 to control curvy piston by speed - adaptive.
     def controller_mode=(mode)
       MSPhysics::Newton::CurvyPiston.set_controller_mode(@address, mode)
     end

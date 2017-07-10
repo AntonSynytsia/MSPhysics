@@ -12,7 +12,7 @@ module MSPhysics
     # @param [MSPhysics::Body, nil] parent
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation
     #   in global space. Matrix origin is interpreted as the pin position.
-    #   Matrix z-axis is interpreted as the pin direction.
+    #   Matrix Z-axis is interpreted as the pin direction.
     # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group
     def initialize(world, parent, pin_tra, group = nil)
       super(world, parent, pin_tra, group)
@@ -47,14 +47,14 @@ module MSPhysics
     end
 
     # Determine whether the rotation along the connected body's center of mass
-    # and the plane's z-axis is enabled.
+    # and the plane's Z-axis is enabled.
     # @return [Boolean]
     def rotation_enabled?
       MSPhysics::Newton::Plane.rotation_enabled?(@address)
     end
 
     # Enable/disable the rotation along the connected body's center of mass and
-    # the plane's z-axis.
+    # the plane's Z-axis.
     # @param [Boolean] state
     def rotation_enabled=(state)
       MSPhysics::Newton::Plane.enable_rotation(@address, state)

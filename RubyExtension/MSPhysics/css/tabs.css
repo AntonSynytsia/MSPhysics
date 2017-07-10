@@ -28,8 +28,8 @@
   padding: 0.5em 1.0em;
   border: 1px solid #4D4D4D;
   border-radius: 5px 5px 0px 0px;
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
   font-size: 12px;
-  font-weight: normal;
   transition: all 0.25s ease-in-out;
   -webkit-transition: all 0.25s ease-in-out;
   -moz-transition: all 0.25s ease-in-out;

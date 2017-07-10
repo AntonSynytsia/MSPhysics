@@ -10,10 +10,12 @@ module MSPhysics
     DEFAULT_EDITOR_SIZE = [800,600]
     DEFAULT_DIALOG_HELP_BOX = true
     DEFAULT_DIALOG_SCALE = 1.0
+    USE_HTML_DIALOG = false #~ Sketchup.version.to_i > 16 ? true : false
+    PRECISION = 3
+    TITLE = 'MSPhysics UI'
 
     @dialog = nil
     @handle = nil
-    @title = 'MSPhysics UI'
     @editor_size = DEFAULT_EDITOR_SIZE.dup
     @init_called = false
     @selected_body = nil
@@ -22,7 +24,6 @@ module MSPhysics
     @last_active_body_tab = 2
     @material = nil
     @activated_value = nil
-    @precision = 2
     @selected_sound = nil
     @default_sound_path = nil
     @editor_theme = DEFAULT_EDITOR_THEME
@@ -40,10 +41,11 @@ module MSPhysics
 
     class << self
 
+      # Execute JavaScript in the UI dialog.
       # @param [String] code
-      # @return [Boolean] success
+      # @return [nil]
       def execute_js(code)
-        return false unless @dialog
+        return unless @dialog
         @dialog.execute_script("try { #{code} } catch(err) { alert(err); }")
         #@dialog.execute_script(code)
       end
@@ -52,7 +54,7 @@ module MSPhysics
       # Update state of all UI.
       # @return [void]
       def update_state
-        return unless self.visible?
+        return unless self.open?
         # Simulation dialog
         update_simulation_state
         # Joint dialog
@@ -84,32 +86,51 @@ module MSPhysics
       # Update UI simulation tab.
       # @return [void]
       def update_simulation_state
-        return unless self.visible?
-        settings = MSPhysics::Settings
+        return unless self.open?
         cmd = ''
-        cmd << "$('#simulation-solver_model').val('#{settings.solver_model}');"
+        cmd << "$('#simulation-animate_scenes_state').val('#{MSPhysics::Settings.animate_scenes_state}');"
+        cmd << "$('#simulation-animate_scenes_state').trigger('chosen:updated');"
+        cmd << "$('#simulation-animate_scenes_reversed').prop('checked', #{MSPhysics::Settings.animate_scenes_reversed?});"
+        cmd << "$('#simulation-animate_scenes_delay').val('#{ format_value(MSPhysics::Settings.animate_scenes_delay, PRECISION) }');"
+        cmd << "$('#simulation-key_nav_state').val('#{MSPhysics::Settings.key_nav_state}');"
+        cmd << "$('#simulation-key_nav_state').trigger('chosen:updated');"
+        cmd << "$('#simulation-solver_model').val('#{MSPhysics::Settings.solver_model}');"
         cmd << "$('#simulation-solver_model').trigger('chosen:updated');"
-        cmd << "$('#simulation-update_timestep').val('#{(1.0/settings.update_timestep).round}');"
+        cmd << "$('#simulation-joint_algorithm').val('#{MSPhysics::Settings.joint_algorithm}');"
+        cmd << "$('#simulation-joint_algorithm').trigger('chosen:updated');"
+        cmd << "$('#simulation-update_timestep').val('#{(1.0 / MSPhysics::Settings.update_timestep).round}');"
         cmd << "$('#simulation-update_timestep').trigger('chosen:updated');"
-        cmd << "$('#simulation-continuous_collision').prop('checked', #{settings.continuous_collision_check_enabled?});"
-        cmd << "$('#simulation-full_screen_mode').prop('checked', #{settings.full_screen_mode_enabled?});"
-        cmd << "$('#simulation-game_mode').prop('checked', #{settings.game_mode_enabled?});"
-        cmd << "$('#simulation-hide_joint_layer').prop('checked', #{settings.hide_joint_layer_enabled?});"
-        cmd << "$('#simulation-undo_on_end').prop('checked', #{settings.undo_on_end_enabled?});"
-        cmd << "$('#simulation-collision_wireframe').prop('checked', #{settings.collision_wireframe_visible?});"
-        cmd << "$('#simulation-axes').prop('checked', #{settings.axes_visible?});"
-        cmd << "$('#simulation-aabb').prop('checked', #{settings.aabb_visible?});"
-        cmd << "$('#simulation-contact_points').prop('checked', #{settings.contact_points_visible?});"
-        cmd << "$('#simulation-contact_forces').prop('checked', #{settings.contact_forces_visible?});"
-        cmd << "$('#simulation-bodies').prop('checked', #{settings.bodies_visible?});"
-        cmd << "$('#simulation-gravity').val('#{ format_value(settings.gravity, @precision) }');"
-        cmd << "$('#simulation-material_thickness').val('#{ format_value(settings.material_thickness * 32.0, @precision) }');"
-        cmd << "$('#simulation-update_rate').val('#{settings.update_rate}');"
-        cmd << "$('#simulation-world_scale').val('#{ format_value(settings.world_scale, @precision) }');"
+        cmd << "$('#simulation-continuous_collision').prop('checked', #{MSPhysics::Settings.continuous_collision_check_enabled?});"
+        cmd << "$('#simulation-full_screen_mode').prop('checked', #{MSPhysics::Settings.full_screen_mode_enabled?});"
+        cmd << "$('#simulation-game_mode').prop('checked', #{MSPhysics::Settings.game_mode_enabled?});"
+        cmd << "$('#simulation-hide_joint_layer').prop('checked', #{MSPhysics::Settings.hide_joint_layer_enabled?});"
+        cmd << "$('#simulation-undo_on_end').prop('checked', #{MSPhysics::Settings.undo_on_end_enabled?});"
+        cmd << "$('#simulation-ignore_hidden_instances').prop('checked', #{MSPhysics::Settings.ignore_hidden_instances?});"
+        cmd << "$('#simulation-collision_wireframe').prop('checked', #{MSPhysics::Settings.collision_wireframe_visible?});"
+        cmd << "$('#simulation-axes').prop('checked', #{MSPhysics::Settings.axes_visible?});"
+        cmd << "$('#simulation-aabb').prop('checked', #{MSPhysics::Settings.aabb_visible?});"
+        cmd << "$('#simulation-contact_points').prop('checked', #{MSPhysics::Settings.contact_points_visible?});"
+        cmd << "$('#simulation-contact_forces').prop('checked', #{MSPhysics::Settings.contact_forces_visible?});"
+        cmd << "$('#simulation-bodies').prop('checked', #{MSPhysics::Settings.bodies_visible?});"
+        cmd << "$('#simulation-gravity').val('#{ format_value(MSPhysics::Settings.gravity, PRECISION) }');"
+        cmd << "$('#simulation-material_thickness').val('#{ format_value(MSPhysics::Settings.material_thickness * 32.0, PRECISION) }');"
+        cmd << "$('#simulation-update_rate').val('#{MSPhysics::Settings.update_rate}');"
+        cmd << "$('#simulation-world_scale').val('#{ format_value(MSPhysics::Settings.world_scale, PRECISION) }');"
         cmd << "$('#dialog-help_box').prop('checked', #{ @dialog_help_box });"
         cmd << "display_help_box(#{@dialog_help_box});"
         cmd << "$('#dialog-scale').val('#{@dialog_scale}');"
         cmd << "$('#dialog-scale').trigger('chosen:updated');"
+        execute_js(cmd)
+        update_simulation_sliders
+      end
+
+      # @return [void]
+      def update_simulation_sliders
+        return unless self.open?
+        cmd = ''
+        cmd << "if (g_kns_velocity != null) { g_kns_velocity.setValue(#{MSPhysics::Settings.key_nav_velocity}); };"
+        cmd << "if (g_kns_omega != null) { g_kns_omega.setValue(#{MSPhysics::Settings.key_nav_omega}); };"
+        cmd << "if (g_kns_atime != null) { g_kns_atime.setValue(#{MSPhysics::Settings.key_nav_atime}); };"
         execute_js(cmd)
       end
 
@@ -117,7 +138,7 @@ module MSPhysics
       # Update UI properties tab.
       # @return [void]
       def update_body_state
-        return unless self.visible?
+        return unless self.open?
         model = Sketchup.active_model
         bodies = []
         model.selection.each { |ent|
@@ -148,7 +169,7 @@ module MSPhysics
             cursor = nil
             begin
               cursor = eval(@selected_body.get_attribute('MSPhysics Script', 'Cursor', '[1,0]'))
-            rescue Exception => e
+            rescue Exception => err
               cursor = [1,0]
             end
             cmd << "editor_set_cursor(#{cursor.x}, #{cursor.y});"
@@ -175,10 +196,27 @@ module MSPhysics
               script = '0.0' if script.nil?
               cmd << "$('#body-#{ property }').val(#{script.inspect});"
             }
+            # Display type
+            type = @selected_body.get_attribute('MSPhysics Body', 'Type', default[:type]).to_i
+            cmd << "$('#body-type').val('#{type}');"
+            cmd << "$('#body-type').trigger('chosen:updated');"
             # Display shape
-            shape = @selected_body.get_attribute('MSPhysics Body', 'Shape', default[:shape]).to_s
-            cmd << "$('#body-shape').val('#{shape}');"
+            shape_id = @selected_body.get_attribute('MSPhysics Body', 'Shape', default[:shape_id])
+            if shape_id.is_a?(String)
+              MSPhysics::SHAPES.each { |k, v|
+                if shape_id == v
+                  shape_id = k
+                  break
+                end
+              }
+              shape_id = default[:shape_id] if shape_id.is_a?(String)
+            end
+            cmd << "$('#body-shape').val('#{shape_id}');"
             cmd << "$('#body-shape').trigger('chosen:updated');"
+            # Display shape up direction
+            shape_dir = @selected_body.get_attribute('MSPhysics Body', 'Shape Dir', default[:shape_dir]).to_i
+            cmd << "$('#body-shape_dir').val('#{shape_dir}');"
+            cmd << "$('#body-shape_dir').trigger('chosen:updated');"
             # Display material
             cmd << "$('#body-material').empty();"
             cmd << "$('#body-material').append('<option value=\"#{default[:material_name]}\">#{default[:material_name]}</option>');"
@@ -191,7 +229,7 @@ module MSPhysics
             cmd << "$('#body-material').val('#{material}');"
             cmd << "$('#body-material').trigger('chosen:updated');"
             # Display state and other check-box properties
-            ['Ignore', 'Collidable', 'Static', 'Frozen', 'Auto Sleep', 'Enable Friction', 'Magnetic', 'Enable Script', 'Continuous Collision', 'Enable Gravity', 'Thruster Lock Axis', 'Emitter Lock Axis', 'Enable Thruster', 'Enable Emitter', 'Connect Closest Joints'].each { |option|
+            MSPhysics::BODY_STATES.each { |option|
               property = option.downcase.gsub(/\s/, '_')
               default_state = default[property.to_sym]
               state = @selected_body.get_attribute('MSPhysics Body', option, default_state) ? true : false
@@ -200,7 +238,7 @@ module MSPhysics
             # Display name
             cmd << "$('#body-name').val(#{@selected_body.name.inspect});"
             # Display numeric properties
-            ['Density', 'Mass', 'Static Friction', 'Kinetic Friction', 'Elasticity', 'Softness', 'Magnet Force', 'Magnet Range', 'Linear Damping', 'Angular Damping'].each { |option|
+            ['Density', 'Mass', 'Static Friction', 'Kinetic Friction', 'Elasticity', 'Softness', 'Magnet Force', 'Magnet Range', 'Magnet Strength', 'Linear Damping', 'Angular Damping', 'Emitter Rate', 'Emitter Delay', 'Emitter Lifetime'].each { |option|
               property = option.downcase.gsub(/\s/, '_')
               attr = @selected_body.get_attribute('MSPhysics Body', option)
               if attr.is_a?(String)
@@ -208,40 +246,42 @@ module MSPhysics
               elsif !attr.is_a?(Numeric)
                 attr = default[property.to_sym]
               end
-              cmd << "$('#body-#{ property }').val('#{ format_value(attr, @precision) }');"
+              cmd << "$('#body-#{ property }').val('#{ format_value(attr, PRECISION) }');"
             }
-            # Display fixnum properties
-            ['Emitter Rate', 'Emitter Lifetime'].each { |option|
-              property = option.downcase.gsub(/\s/, '_')
-              attr = @selected_body.get_attribute('MSPhysics Body', option)
-              if attr.is_a?(String)
-                attr = attr.to_f
-              elsif !attr.is_a?(Numeric)
-                attr = default[property.to_sym]
-              end
-              cmd << "$('#body-#{ property }').val('#{ attr.round }');"
-            }
-            # Display weight control
-            weight_control = @selected_body.get_attribute('MSPhysics Body', 'Weight Control', 'Density').to_s
-            cmd << "$('#body-weight_control').val('#{weight_control}');"
-            cmd << "$('#body-weight_control').trigger('chosen:updated');"
-            if weight_control == 'Mass'
-              cmd << "$('#body-density_control').css('display', 'none');"
-              cmd << "$('#body-mass_control').css('display', 'table-row');"
+            # Display mass control
+            mass_control = @selected_body.get_attribute('MSPhysics Body', 'Mass Control', default[:mass_control]).to_i
+            cmd << "$('#body-mass_control').val('#{mass_control}');"
+            cmd << "$('#body-mass_control').trigger('chosen:updated');"
+            if mass_control == 2
+              cmd << "$('#body-control_by_density').css('display', 'none');"
+              cmd << "$('#body-control_by_mass').css('display', 'table-row');"
             else
-              cmd << "$('#body-density_control').css('display', 'table-row');"
-              cmd << "$('#body-mass_control').css('display', 'none');"
+              cmd << "$('#body-control_by_density').css('display', 'table-row');"
+              cmd << "$('#body-control_by_mass').css('display', 'none');"
+            end
+            # Display magnet mode
+            magnet_mode = @selected_body.get_attribute('MSPhysics Body', 'Magnet Mode', default[:magnet_mode]).to_i
+            cmd << "$('#body-magnet_mode').val('#{magnet_mode}');"
+            cmd << "$('#body-magnet_mode').trigger('chosen:updated');"
+            if magnet_mode == 2
+              cmd << "$('#body-magnet_mode1a').css('display', 'none');"
+              cmd << "$('#body-magnet_mode1b').css('display', 'none');"
+              cmd << "$('#body-magnet_mode2').css('display', 'table-row');"
+            else
+              cmd << "$('#body-magnet_mode1a').css('display', 'table-row');"
+              cmd << "$('#body-magnet_mode1b').css('display', 'table-row');"
+              cmd << "$('#body-magnet_mode2').css('display', 'none');"
             end
             # Display internal joints
             identical_joints = {}
             AMS::Group.get_entities(@selected_body).each { |e|
               if (e.is_a?(Sketchup::ComponentInstance) || e.is_a?(Sketchup::Group)) && e.get_attribute('MSPhysics', 'Type', 'Body') == 'Joint'
-                type = e.get_attribute('MSPhysics Joint', 'Type')
-                id = e.get_attribute('MSPhysics Joint', 'ID')
-                name = e.name.to_s
-                name = id.to_s if name.empty?
-                fname = type + '-' + name
-                fid = type + '-' + id.to_s
+                jtype = e.get_attribute('MSPhysics Joint', 'Type')
+                jid = e.get_attribute('MSPhysics Joint', 'ID')
+                jname = e.name.to_s
+                jname = jid.to_s if jname.empty?
+                fname = jtype + '-' + jname
+                fid = jtype + '-' + jid.to_s
                 if @body_internal_joints[fid]
                   if identical_joints[fid]
                     identical_joints[fid] += 1
@@ -277,14 +317,13 @@ module MSPhysics
             end
             identical_joints.clear
             # Display connected joints
-            connected_joints = MSPhysics::JointConnectionTool.get_connected_joints(@selected_body, false)[0]
-            connected_joints.each { |joint, jparent, jtra|
-              type = joint.get_attribute('MSPhysics Joint', 'Type')
-              id = joint.get_attribute('MSPhysics Joint', 'ID')
-              name = joint.name.to_s
-              name = id.to_s if name.empty?
-              fname = type + '-' + name
-              fid = type + '-' + id.to_s
+            MSPhysics::JointConnectionTool.get_connected_joints(@selected_body).each { |joint, jtra, jparent|
+              jtype = joint.get_attribute('MSPhysics Joint', 'Type')
+              jid = joint.get_attribute('MSPhysics Joint', 'ID')
+              jname = joint.name.to_s
+              jname = jid.to_s if jname.empty?
+              fname = jtype + '-' + jname
+              fid = jtype + '-' + jid.to_s
               if @body_connected_joints[fid]
                 if identical_joints[fid]
                   identical_joints[fid] += 1
@@ -347,7 +386,7 @@ module MSPhysics
       # Update UI joint tab.
       # @return [void]
       def update_joint_state
-        return unless self.visible?
+        return unless self.open?
         model = Sketchup.active_model
         joints = []
         model.selection.each { |ent|
@@ -373,7 +412,7 @@ module MSPhysics
         cmd << "$('#tab4-plane').css('display', 'none');"
 
         @geared_joints.clear
-        MSPhysics::JOINT_NAMES.each { |jname|
+        MSPhysics::JOINT_FILE_NAMES.each { |jname|
           cmd << "$('##{jname}-geared_joints_field').empty();"
           cmd << "$('##{jname}-geared_joints_field').css('display', 'none');"
         }
@@ -382,27 +421,12 @@ module MSPhysics
           @selected_joint = joints[0]
           jdict = 'MSPhysics Joint'
           attr = @selected_joint.get_attribute(jdict, 'Angle Units', MSPhysics::DEFAULT_ANGLE_UNITS)
-          ang_ratio = attr == 'deg' ? 1.degrees : 1
+          ang_ratio = MSPhysics::ANGLE_CONVERSION[attr]
+          ang_ratio = 1.0 unless ang_ratio
           iang_ratio = 1.0 / ang_ratio
           attr = @selected_joint.get_attribute(jdict, 'Position Units', MSPhysics::DEFAULT_POSITION_UNITS)
-          pos_ratio = case attr
-            when 'mm'
-              0.001
-            when 'cm'
-              0.01
-            when 'dm'
-              0.1
-            when 'm'
-              1.0
-            when 'in'
-              0.0254
-            when 'ft'
-              0.3048
-            when 'yd'
-              0.9144
-            else
-              1.0
-          end
+          pos_ratio = MSPhysics::POSITION_CONVERSION[attr]
+          pos_ratio = 1.0 unless pos_ratio
           ipos_ratio = 1.0 / pos_ratio
 
           cmd << "$('#tab4-none').css('display', 'none');"
@@ -416,11 +440,11 @@ module MSPhysics
           end
           cmd << "$('#joint-name').val(#{attr.inspect});"
           attr = @selected_joint.get_attribute(jdict, 'Stiffness', MSPhysics::Joint::DEFAULT_STIFFNESS)
-          cmd << "$('#joint-stiffness').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), @precision) }');"
+          cmd << "$('#joint-stiffness').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), PRECISION) }');"
           attr = @selected_joint.get_attribute(jdict, 'Bodies Collidable', MSPhysics::Joint::DEFAULT_BODIES_COLLIDABLE)
           cmd << "$('#joint-bodies_collidable').prop('checked', #{attr ? true : false});"
           attr = @selected_joint.get_attribute(jdict, 'Breaking Force', MSPhysics::Joint::DEFAULT_BREAKING_FORCE)
-          cmd << "$('#joint-breaking_force').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+          cmd << "$('#joint-breaking_force').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
 
           joint_type = @selected_joint.get_attribute(jdict, 'Type')
           joint_type2 = nil
@@ -438,34 +462,56 @@ module MSPhysics
             cmd << "$('#hinge-angle_units').val('#{attr}');"
             cmd << "$('#hinge-angle_units').trigger('chosen:updated');"
             attr = @selected_joint.get_attribute(jdict, 'Min', fix_numeric_value(MSPhysics::Hinge::DEFAULT_MIN * iang_ratio))
-            cmd << "$('#hinge-min').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#hinge-min').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Max', fix_numeric_value(MSPhysics::Hinge::DEFAULT_MAX * iang_ratio))
-            cmd << "$('#hinge-max').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#hinge-max').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Enable Limits', MSPhysics::Hinge::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#hinge-enable_limits').prop('checked', #{attr ? true : false});"
+            attr = @selected_joint.get_attribute(jdict, 'Mode', MSPhysics::Hinge::DEFAULT_MODE).to_i
+            cmd << "$('#hinge-mode').val('#{attr}');"
+            cmd << "$('#hinge-mode').trigger('chosen:updated');"
+            if attr == 2
+              cmd << "$('.hinge-mode_s0').css('display', 'none');"
+              cmd << "$('.hinge-mode_s1').css('display', 'none');"
+              cmd << "$('.hinge-mode_s2').css('display', 'table-row');"
+              cmd << "$('.hinge-mode_s12').css('display', 'table-row');"
+              cmd << "$('#hinge-start_angle').css('display', 'table-row');"
+            elsif attr == 1
+              cmd << "$('.hinge-mode_s0').css('display', 'none');"
+              cmd << "$('.hinge-mode_s1').css('display', 'table-row');"
+              cmd << "$('.hinge-mode_s2').css('display', 'none');"
+              cmd << "$('.hinge-mode_s12').css('display', 'table-row');"
+              cmd << "$('#hinge-start_angle').css('display', 'table-row');"
+            else
+              cmd << "$('.hinge-mode_s0').css('display', 'table-row');"
+              cmd << "$('.hinge-mode_s1').css('display', 'none');"
+              cmd << "$('.hinge-mode_s2').css('display', 'none');"
+              cmd << "$('.hinge-mode_s12').css('display', 'none');"
+              cmd << "$('#hinge-start_angle').css('display', 'none');"
+            end
             attr = @selected_joint.get_attribute(jdict, 'Friction', fix_numeric_value(MSPhysics::Hinge::DEFAULT_FRICTION))
-            cmd << "$('#hinge-friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#hinge-friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Accel', fix_numeric_value(MSPhysics::Hinge::DEFAULT_ACCEL))
-            cmd << "$('#hinge-accel').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#hinge-accel').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Damp', fix_numeric_value(MSPhysics::Hinge::DEFAULT_DAMP))
-            cmd << "$('#hinge-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#hinge-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Strength', fix_numeric_value(MSPhysics::Hinge::DEFAULT_STRENGTH))
-            cmd << "$('#hinge-strength').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), @precision) }');"
-            attr = @selected_joint.get_attribute(jdict, 'Enable Hookes', MSPhysics::Hinge::DEFAULT_HOOKES_ENABLED)
-            cmd << "$('#hinge-enable_hookes').prop('checked', #{attr ? true : false});"
-            attr = @selected_joint.get_attribute(jdict, 'Enable Rotate Back', MSPhysics::Hinge::DEFAULT_ROTATE_BACK_ENABLED)
-            cmd << "$('#hinge-enable_rotate_back').prop('checked', #{attr ? true : false});"
+            cmd << "$('#hinge-strength').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), PRECISION) }');"
+            attr = @selected_joint.get_attribute(jdict, 'Spring Constant', fix_numeric_value(MSPhysics::Hinge::DEFAULT_SPRING_CONSTANT))
+            cmd << "$('#hinge-spring_constant').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
+            attr = @selected_joint.get_attribute(jdict, 'Spring Drag', fix_numeric_value(MSPhysics::Hinge::DEFAULT_SPRING_DRAG))
+            cmd << "$('#hinge-spring_drag').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Start Angle', fix_numeric_value(MSPhysics::Hinge::DEFAULT_START_ANGLE * iang_ratio))
-            cmd << "$('#hinge-start_angle').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#hinge-start_angle').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::Hinge::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#hinge-controller').val(#{attr.inspect});"
           when 'Motor'
             joint_type2 = 'motor'
             cmd << "$('#tab4-motor').css('display', 'block');"
             attr = @selected_joint.get_attribute(jdict, 'Accel', fix_numeric_value(MSPhysics::Motor::DEFAULT_ACCEL))
-            cmd << "$('#motor-accel').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#motor-accel').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Damp', fix_numeric_value(MSPhysics::Motor::DEFAULT_DAMP))
-            cmd << "$('#motor-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#motor-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Enable Free Rotate', MSPhysics::Motor::DEFAULT_FREE_ROTATE_ENABLED)
             cmd << "$('#motor-enable_free_rotate').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::Motor::DEFAULT_CONTROLLER.to_s)
@@ -477,17 +523,17 @@ module MSPhysics
             cmd << "$('#servo-angle_units').val('#{attr}');"
             cmd << "$('#servo-angle_units').trigger('chosen:updated');"
             attr = @selected_joint.get_attribute(jdict, 'Min', fix_numeric_value(MSPhysics::Servo::DEFAULT_MIN * iang_ratio))
-            cmd << "$('#servo-min').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#servo-min').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Max', fix_numeric_value(MSPhysics::Servo::DEFAULT_MAX * iang_ratio))
-            cmd << "$('#servo-max').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#servo-max').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Enable Limits', MSPhysics::Servo::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#servo-enable_limits').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute(jdict, 'Rate', fix_numeric_value(MSPhysics::Servo::DEFAULT_RATE * iang_ratio))
-            cmd << "$('#servo-rate').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#servo-rate').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Power', fix_numeric_value(MSPhysics::Servo::DEFAULT_POWER))
-            cmd << "$('#servo-power').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#servo-power').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Reduction Ratio', fix_numeric_value(MSPhysics::Servo::DEFAULT_REDUCTION_RATIO))
-            cmd << "$('#servo-reduction_ratio').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), @precision) }');"
+            cmd << "$('#servo-reduction_ratio').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::Servo::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#servo-controller').val(#{attr.inspect});"
           when 'Slider'
@@ -497,13 +543,13 @@ module MSPhysics
             cmd << "$('#slider-position_units').val('#{attr}');"
             cmd << "$('#slider-position_units').trigger('chosen:updated');"
             attr = @selected_joint.get_attribute(jdict, 'Min', fix_numeric_value(MSPhysics::Slider::DEFAULT_MIN * ipos_ratio))
-            cmd << "$('#slider-min').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#slider-min').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Max', fix_numeric_value(MSPhysics::Slider::DEFAULT_MAX * ipos_ratio))
-            cmd << "$('#slider-max').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#slider-max').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Enable Limits', MSPhysics::Slider::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#slider-enable_limits').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute(jdict, 'Friction', fix_numeric_value(MSPhysics::Slider::DEFAULT_FRICTION))
-            cmd << "$('#slider-friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#slider-friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::Slider::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#slider-controller').val(#{attr.inspect});"
           when 'Piston'
@@ -513,19 +559,22 @@ module MSPhysics
             cmd << "$('#piston-position_units').val('#{attr}');"
             cmd << "$('#piston-position_units').trigger('chosen:updated');"
             attr = @selected_joint.get_attribute(jdict, 'Min', fix_numeric_value(MSPhysics::Piston::DEFAULT_MIN * ipos_ratio))
-            cmd << "$('#piston-min').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#piston-min').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Max', fix_numeric_value(MSPhysics::Piston::DEFAULT_MAX * ipos_ratio))
-            cmd << "$('#piston-max').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#piston-max').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Enable Limits', MSPhysics::Piston::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#piston-enable_limits').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute(jdict, 'Rate', fix_numeric_value(MSPhysics::Piston::DEFAULT_RATE * ipos_ratio))
-            cmd << "$('#piston-rate').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#piston-rate').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Power', fix_numeric_value(MSPhysics::Piston::DEFAULT_POWER))
-            cmd << "$('#piston-power').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#piston-power').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Reduction Ratio', fix_numeric_value(MSPhysics::Piston::DEFAULT_REDUCTION_RATIO))
-            cmd << "$('#piston-reduction_ratio').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), @precision) }');"
+            cmd << "$('#piston-reduction_ratio').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::Piston::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#piston-controller').val(#{attr.inspect});"
+            attr = @selected_joint.get_attribute(jdict, 'Controller Mode', MSPhysics::Piston::DEFAULT_CONTROLLER_MODE)
+            cmd << "$('#piston-controller_mode').val('#{AMS.clamp(attr.to_i, 0, 2)}');"
+            cmd << "$('#piston-controller_mode').trigger('chosen:updated');"
           when 'Spring'
             joint_type2 = 'spring'
             cmd << "$('#tab4-spring').css('display', 'block');"
@@ -533,32 +582,46 @@ module MSPhysics
             cmd << "$('#spring-position_units').val('#{attr}');"
             cmd << "$('#spring-position_units').trigger('chosen:updated');"
             attr = @selected_joint.get_attribute(jdict, 'Min', fix_numeric_value(MSPhysics::Spring::DEFAULT_MIN * ipos_ratio))
-            cmd << "$('#spring-min').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#spring-min').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Max', fix_numeric_value(MSPhysics::Spring::DEFAULT_MAX * ipos_ratio))
-            cmd << "$('#spring-max').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#spring-max').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Enable Limits', MSPhysics::Spring::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#spring-enable_limits').prop('checked', #{attr ? true : false});"
+            attr = @selected_joint.get_attribute(jdict, 'Enable Rotation', MSPhysics::Spring::DEFAULT_ROTATION_ENABLED)
+            cmd << "$('#spring-enable_rotation').prop('checked', #{attr ? true : false});"
+            attr = @selected_joint.get_attribute(jdict, 'Mode', MSPhysics::Spring::DEFAULT_MODE).to_i
+            cmd << "$('#spring-mode').val('#{attr}');"
+            cmd << "$('#spring-mode').trigger('chosen:updated');"
+            if attr == 1
+              cmd << "$('.spring-mode_s0').css('display', 'none');"
+              cmd << "$('.spring-mode_s1').css('display', 'table-row');"
+            else
+              cmd << "$('.spring-mode_s0').css('display', 'table-row');"
+              cmd << "$('.spring-mode_s1').css('display', 'none');"
+            end
             attr = @selected_joint.get_attribute(jdict, 'Accel', fix_numeric_value(MSPhysics::Spring::DEFAULT_ACCEL))
-            cmd << "$('#spring-accel').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#spring-accel').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Damp', fix_numeric_value(MSPhysics::Spring::DEFAULT_DAMP))
-            cmd << "$('#spring-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#spring-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Strength', fix_numeric_value(MSPhysics::Spring::DEFAULT_STRENGTH))
-            cmd << "$('#spring-strength').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), @precision) }');"
-            attr = @selected_joint.get_attribute(jdict, 'Enable Hookes', MSPhysics::Spring::DEFAULT_HOOKES_ENABLED)
-            cmd << "$('#spring-enable_hookes').prop('checked', #{attr ? true : false});"
+            cmd << "$('#spring-strength').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), PRECISION) }');"
+            attr = @selected_joint.get_attribute(jdict, 'Spring Constant', fix_numeric_value(MSPhysics::Spring::DEFAULT_SPRING_CONSTANT))
+            cmd << "$('#spring-spring_constant').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
+            attr = @selected_joint.get_attribute(jdict, 'Spring Drag', fix_numeric_value(MSPhysics::Spring::DEFAULT_SPRING_DRAG))
+            cmd << "$('#spring-spring_drag').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Start Position', fix_numeric_value(MSPhysics::Spring::DEFAULT_START_POSITION * ipos_ratio))
-            cmd << "$('#spring-start_position').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#spring-start_position').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::Spring::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#spring-controller').val(#{attr.inspect});"
           when 'UpVector'
             joint_type2 = 'up_vector'
             cmd << "$('#tab4-up_vector').css('display', 'block');"
             attr = @selected_joint.get_attribute(jdict, 'Accel', fix_numeric_value(MSPhysics::UpVector::DEFAULT_ACCEL))
-            cmd << "$('#up_vector-accel').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#up_vector-accel').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Damp', fix_numeric_value(MSPhysics::UpVector::DEFAULT_DAMP))
-            cmd << "$('#up_vector-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#up_vector-damp').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Strength', MSPhysics::UpVector::DEFAULT_STRENGTH)
-            cmd << "$('#up_vector-strength').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), @precision) }');"
+            cmd << "$('#up_vector-strength').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::UpVector::DEFAULT_PIN_DIR.to_a.to_s)
             cmd << "$('#up_vector-controller').val(#{attr.inspect});"
           when 'Corkscrew'
@@ -568,24 +631,24 @@ module MSPhysics
             cmd << "$('#corkscrew-position_units').val('#{attr}');"
             cmd << "$('#corkscrew-position_units').trigger('chosen:updated');"
             attr = @selected_joint.get_attribute(jdict, 'Min Position', fix_numeric_value(MSPhysics::Corkscrew::DEFAULT_MIN_POSITION * ipos_ratio))
-            cmd << "$('#corkscrew-min_position').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#corkscrew-min_position').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Max Position', fix_numeric_value(MSPhysics::Corkscrew::DEFAULT_MAX_POSITION * ipos_ratio))
-            cmd << "$('#corkscrew-max_position').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#corkscrew-max_position').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Enable Linear Limits', MSPhysics::Corkscrew::DEFAULT_LINEAR_LIMITS_ENABLED)
             cmd << "$('#corkscrew-enable_linear_limits').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute(jdict, 'Linear Friction', fix_numeric_value(MSPhysics::Corkscrew::DEFAULT_LINEAR_FRICTION))
-            cmd << "$('#corkscrew-linear_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#corkscrew-linear_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Angle Units', MSPhysics::DEFAULT_ANGLE_UNITS).to_s
             cmd << "$('#corkscrew-angle_units').val('#{attr}');"
             cmd << "$('#corkscrew-angle_units').trigger('chosen:updated');"
             attr = @selected_joint.get_attribute(jdict, 'Min Angle', fix_numeric_value(MSPhysics::Corkscrew::DEFAULT_MIN_ANGLE * iang_ratio))
-            cmd << "$('#corkscrew-min_angle').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#corkscrew-min_angle').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Max Angle', fix_numeric_value(MSPhysics::Corkscrew::DEFAULT_MAX_ANGLE * iang_ratio))
-            cmd << "$('#corkscrew-max_angle').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#corkscrew-max_angle').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Enable Angular Limits', MSPhysics::Corkscrew::DEFAULT_ANGULAR_LIMITS_ENABLED)
             cmd << "$('#corkscrew-enable_angular_limits').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute(jdict, 'Angular Friction', fix_numeric_value(MSPhysics::Corkscrew::DEFAULT_ANGULAR_FRICTION))
-            cmd << "$('#corkscrew-angular_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#corkscrew-angular_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
           when 'BallAndSocket'
             joint_type2 = 'ball_and_socket'
             cmd << "$('#tab4-ball_and_socket').css('display', 'block');"
@@ -593,17 +656,17 @@ module MSPhysics
             cmd << "$('#ball_and_socket-angle_units').val('#{attr}');"
             cmd << "$('#ball_and_socket-angle_units').trigger('chosen:updated');"
             attr = @selected_joint.get_attribute(jdict, 'Max Cone Angle', fix_numeric_value(MSPhysics::BallAndSocket::DEFAULT_MAX_CONE_ANGLE * iang_ratio))
-            cmd << "$('#ball_and_socket-max_cone_angle').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#ball_and_socket-max_cone_angle').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Enable Cone Limits', MSPhysics::BallAndSocket::DEFAULT_CONE_LIMITS_ENABLED)
             cmd << "$('#ball_and_socket-enable_cone_limits').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute(jdict, 'Min Twist Angle', fix_numeric_value(MSPhysics::BallAndSocket::DEFAULT_MIN_TWIST_ANGLE * iang_ratio))
-            cmd << "$('#ball_and_socket-min_twist_angle').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#ball_and_socket-min_twist_angle').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Max Twist Angle', fix_numeric_value(MSPhysics::BallAndSocket::DEFAULT_MAX_TWIST_ANGLE * iang_ratio))
-            cmd << "$('#ball_and_socket-max_twist_angle').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#ball_and_socket-max_twist_angle').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Enable Twist Limits', MSPhysics::BallAndSocket::DEFAULT_TWIST_LIMITS_ENABLED)
             cmd << "$('#ball_and_socket-enable_twist_limits').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute(jdict, 'Friction', fix_numeric_value(MSPhysics::BallAndSocket::DEFAULT_FRICTION))
-            cmd << "$('#ball_and_socket-friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#ball_and_socket-friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::BallAndSocket::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#ball_and_socket-controller').val(#{attr.inspect});"
           when 'Universal'
@@ -613,19 +676,19 @@ module MSPhysics
             cmd << "$('#universal-angle_units').val('#{attr}');"
             cmd << "$('#universal-angle_units').trigger('chosen:updated');"
             attr = @selected_joint.get_attribute(jdict, 'Min1', fix_numeric_value(MSPhysics::Universal::DEFAULT_MIN * iang_ratio))
-            cmd << "$('#universal-min1').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#universal-min1').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Max1', fix_numeric_value(MSPhysics::Universal::DEFAULT_MAX * iang_ratio))
-            cmd << "$('#universal-max1').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#universal-max1').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Enable Limits1', MSPhysics::Universal::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#universal-enable_limits1').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute(jdict, 'Min2', fix_numeric_value(MSPhysics::Universal::DEFAULT_MIN * iang_ratio))
-            cmd << "$('#universal-min2').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#universal-min2').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Max2', fix_numeric_value(MSPhysics::Universal::DEFAULT_MAX * iang_ratio))
-            cmd << "$('#universal-max2').val('#{ format_value(attr.to_f, @precision) }');"
+            cmd << "$('#universal-max2').val('#{ format_value(attr.to_f, PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Enable Limits2', MSPhysics::Universal::DEFAULT_LIMITS_ENABLED)
             cmd << "$('#universal-enable_limits2').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute(jdict, 'Friction', fix_numeric_value(MSPhysics::Universal::DEFAULT_FRICTION))
-            cmd << "$('#universal-friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#universal-friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::Universal::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#universal-controller').val(#{attr.inspect});"
           when 'CurvySlider'
@@ -638,11 +701,11 @@ module MSPhysics
             attr = @selected_joint.get_attribute(jdict, 'Enable Loop', MSPhysics::CurvySlider::DEFAULT_LOOP_ENABLED)
             cmd << "$('#curvy_slider-enable_loop').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute(jdict, 'Linear Friction', fix_numeric_value(MSPhysics::CurvySlider::DEFAULT_LINEAR_FRICTION))
-            cmd << "$('#curvy_slider-linear_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#curvy_slider-linear_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Angular Friction', fix_numeric_value(MSPhysics::CurvySlider::DEFAULT_ANGULAR_FRICTION))
-            cmd << "$('#curvy_slider-angular_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#curvy_slider-angular_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Alignment Power', fix_numeric_value(MSPhysics::CurvySlider::DEFAULT_ALIGNMENT_POWER))
-            cmd << "$('#curvy_slider-alignment_power').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#curvy_slider-alignment_power').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::CurvySlider::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#curvy_slider-controller').val(#{attr.inspect});"
           when 'CurvyPiston'
@@ -658,32 +721,32 @@ module MSPhysics
             attr = @selected_joint.get_attribute(jdict, 'Enable Loop', MSPhysics::CurvyPiston::DEFAULT_LOOP_ENABLED)
             cmd << "$('#curvy_piston-enable_loop').prop('checked', #{attr ? true : false});"
             attr = @selected_joint.get_attribute(jdict, 'Angular Friction', fix_numeric_value(MSPhysics::CurvyPiston::DEFAULT_ANGULAR_FRICTION))
-            cmd << "$('#curvy_piston-angular_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#curvy_piston-angular_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Rate', fix_numeric_value(MSPhysics::CurvyPiston::DEFAULT_RATE * ipos_ratio))
-            cmd << "$('#curvy_piston-rate').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#curvy_piston-rate').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Power', fix_numeric_value(MSPhysics::CurvyPiston::DEFAULT_POWER))
-            cmd << "$('#curvy_piston-power').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#curvy_piston-power').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Alignment Power', fix_numeric_value(MSPhysics::CurvyPiston::DEFAULT_ALIGNMENT_POWER))
-            cmd << "$('#curvy_piston-alignment_power').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#curvy_piston-alignment_power').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Reduction Ratio', fix_numeric_value(MSPhysics::CurvyPiston::DEFAULT_REDUCTION_RATIO))
-            cmd << "$('#curvy_piston-reduction_ratio').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), @precision) }');"
+            cmd << "$('#curvy_piston-reduction_ratio').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, 1.0), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Controller', MSPhysics::CurvyPiston::DEFAULT_CONTROLLER.to_s)
             cmd << "$('#curvy_piston-controller').val(#{attr.inspect});"
-            attr = @selected_joint.get_attribute(jdict, 'Controller Mode', MSPhysics::CurvyPiston::DEFAULT_CONTROLLER_MODE).to_i
-            cmd << "$('#curvy_piston-controller_mode').val('#{attr == 1 ? 1 : 0}');"
+            attr = @selected_joint.get_attribute(jdict, 'Controller Mode', MSPhysics::CurvyPiston::DEFAULT_CONTROLLER_MODE)
+            cmd << "$('#curvy_piston-controller_mode').val('#{AMS.clamp(attr.to_i, 0, 2)}');"
             cmd << "$('#curvy_piston-controller_mode').trigger('chosen:updated');"
           when 'Plane'
             joint_type2 = 'plane'
             cmd << "$('#tab4-plane').css('display', 'block');"
             attr = @selected_joint.get_attribute(jdict, 'Linear Friction', fix_numeric_value(MSPhysics::Plane::DEFAULT_LINEAR_FRICTION))
-            cmd << "$('#plane-linear_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#plane-linear_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Angular Friction', fix_numeric_value(MSPhysics::Plane::DEFAULT_ANGULAR_FRICTION))
-            cmd << "$('#plane-angular_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), @precision) }');"
+            cmd << "$('#plane-angular_friction').val('#{ format_value(AMS.clamp(attr.to_f, 0.0, nil), PRECISION) }');"
             attr = @selected_joint.get_attribute(jdict, 'Enable Rotation', MSPhysics::Plane::DEFAULT_ROTATION_ENABLED)
             cmd << "$('#plane-enable_rotation').prop('checked', #{attr ? true : false});"
           end
           # Display geared joints
-          if joint_type2
+          if joint_type2 && false
             identical_joints = {}
             geared_data = {}
             if Sketchup.version.to_i > 6
@@ -692,10 +755,10 @@ module MSPhysics
               sjparent = model.active_entities.is_a?(Sketchup::Model) ? nil : model.active_entities.parent.instances.first
             end
             MSPhysics::JointConnectionTool.get_geared_joints(@selected_joint, sjparent, true, false).each { |joint, jparent, jtra, gear_id, gear_type, gear_ratio|
-              type = joint.get_attribute('MSPhysics Joint', 'Type')
-              name = joint.name.to_s
-              name = gear_id.to_s if name.empty?
-              fname = type + '-' + name
+              jtype = joint.get_attribute('MSPhysics Joint', 'Type')
+              jname = joint.name.to_s
+              jname = gear_id.to_s if jname.empty?
+              fname = jtype + '-' + jname
               fid = gear_type.to_s + '-' + gear_id.to_s
               geared_data[gear_type] = {} unless geared_data[gear_type]
               if @geared_joints[fid]
@@ -735,7 +798,7 @@ module MSPhysics
                   cmd << "<td colspan=\\\"1\\\"><label>Ratio</label></td>"
                   cmd << "<td colspan=\\\"4\\\"><input class=\\\"custom-text numeric-input\\\" id=\\\"gear-#{fid}\\\"></input></td>"
                   cmd << "</tr>"
-                  cmd2 << "$('#gear-#{fid}').val('#{ format_value(gear_ratio.nil? ? 1.0 : gear_ratio, @precision) }');"
+                  cmd2 << "$('#gear-#{fid}').val('#{ format_value(gear_ratio.nil? ? 1.0 : gear_ratio, PRECISION) }');"
                 }
                 cmd << "</table>"
                 cmd << "</div>"
@@ -758,7 +821,7 @@ module MSPhysics
       # Update UI sound tab.
       # @return [void]
       def update_sound_state
-        return unless self.visible?
+        return unless self.open?
         model = Sketchup.active_model
         cmd = ""
         cmd << "$('#sound-list').empty();"
@@ -796,27 +859,12 @@ module MSPhysics
       def get_joint_default_value(joint, attr_name)
         jdict = 'MSPhysics Joint'
         attr = joint.get_attribute(jdict, 'Angle Units', MSPhysics::DEFAULT_ANGLE_UNITS)
-        ang_ratio = attr == 'deg' ? 1.degrees : 1
+        ang_ratio = MSPhysics::ANGLE_CONVERSION[attr]
+        ang_ratio = 1.0 unless ang_ratio
         iang_ratio = 1.0 / ang_ratio
         attr = joint.get_attribute(jdict, 'Position Units', MSPhysics::DEFAULT_POSITION_UNITS)
-        pos_ratio = case attr
-          when 'mm'
-            0.001
-          when 'cm'
-            0.01
-          when 'dm'
-            0.1
-          when 'm'
-            1.0
-          when 'in'
-            0.0254
-          when 'ft'
-            0.3048
-          when 'yd'
-            0.9144
-        else
-          1.0
-        end
+        pos_ratio = MSPhysics::POSITION_CONVERSION[attr]
+        pos_ratio = 1.0 unless pos_ratio
         ipos_ratio = 1.0 / pos_ratio
         joint_type = joint.get_attribute(jdict, 'Type')
         res = case joint_type
@@ -825,12 +873,13 @@ module MSPhysics
               when 'Min'; MSPhysics::Hinge::DEFAULT_MIN * iang_ratio
               when 'Max'; MSPhysics::Hinge::DEFAULT_MAX * iang_ratio
               when 'Enable Limits'; MSPhysics::Hinge::DEFAULT_LIMITS_ENABLED
+              when 'Mode'; MSPhysics::Hinge::DEFAULT_MODE
               when 'Friction'; MSPhysics::Hinge::DEFAULT_FRICTION
               when 'Accel'; MSPhysics::Hinge::DEFAULT_ACCEL
               when 'Damp'; MSPhysics::Hinge::DEFAULT_DAMP
               when 'Strength'; MSPhysics::Hinge::DEFAULT_STRENGTH
-              when 'Enable Hookes'; MSPhysics::Hinge::DEFAULT_HOOKES_ENABLED
-              when 'Enable Rotate Back'; MSPhysics::Hinge::DEFAULT_ROTATE_BACK_ENABLED
+              when 'Spring Constant'; MSPhysics::Hinge::DEFAULT_SPRING_CONSTANT
+              when 'Spring Drag'; MSPhysics::Hinge::DEFAULT_SPRING_DRAG
               when 'Start Angle'; MSPhysics::Hinge::DEFAULT_START_ANGLE * iang_ratio
               when 'Controller'; MSPhysics::Hinge::DEFAULT_CONTROLLER
             end
@@ -868,16 +917,20 @@ module MSPhysics
               when 'Power'; MSPhysics::Piston::DEFAULT_POWER
               when 'Reduction Ratio'; MSPhysics::Piston::DEFAULT_REDUCTION_RATIO
               when 'Controller'; MSPhysics::Piston::DEFAULT_CONTROLLER
+              when 'Controller Mode'; MSPhysics::Piston::DEFAULT_CONTROLLER_MODE
             end
           when 'Spring'
             case attr_name
               when 'Min'; MSPhysics::Spring::DEFAULT_MIN * ipos_ratio
               when 'Max'; MSPhysics::Spring::DEFAULT_MAX * ipos_ratio
               when 'Enable Limits'; MSPhysics::Spring::DEFAULT_LIMITS_ENABLED
+              when 'Enable Rotation'; MSPhysics::Spring::DEFAULT_ROTATION_ENABLED
+              when 'Mode'; MSPhysics::Spring::DEFAULT_MODE
               when 'Accel'; MSPhysics::Spring::DEFAULT_ACCEL
               when 'Damp'; MSPhysics::Spring::DEFAULT_DAMP
               when 'Strength'; MSPhysics::Spring::DEFAULT_STRENGTH
-              when 'Enable Hookes'; MSPhysics::Spring::DEFAULT_HOOKES_ENABLED
+              when 'Spring Constant'; MSPhysics::Spring::DEFAULT_SPRING_CONSTANT
+              when 'Spring Drag'; MSPhysics::Spring::DEFAULT_SPRING_DRAG
               when 'Start Position'; MSPhysics::Spring::DEFAULT_START_POSITION * ipos_ratio
               when 'Controller'; MSPhysics::Spring::DEFAULT_CONTROLLER
             end
@@ -976,29 +1029,46 @@ module MSPhysics
       # @param [Numeric] value
       # @return [String]
       def fix_numeric_value(value)
-        if RUBY_VERSION =~ /1.8/
+        if AMS::IS_RUBY_VERSION_18
           sprintf("%.8f", value.to_f).to_f
         else
           value.round(8)
         end
       end
 
-      # Open/Close MSPhysics UI.
+      # Open/close MSPhysics UI.
       # @param [Boolean] state
-      def visible=(state)
-        return false if (state ? true : false) == self.visible?
+      # @return [Boolean] success
+      def open(state)
+        return false if (state ? true : false) == self.open?
         if state
           dbs = MSPhysics::DEFAULT_BODY_SETTINGS
           @material = MSPhysics::Material.new('Temp', dbs[:density], dbs[:static_friction], dbs[:kinetic_friction], dbs[:elasticity], dbs[:softness])
           iws = [520, 520]
-          @dialog = ::UI::WebDialog.new(@title, false, @title, iws.x, iws.y, 800, 600, true)
+          if USE_HTML_DIALOG
+            @dialog = UI::HtmlDialog.new({
+              :dialog_title => TITLE,
+              :preferences_key => TITLE,
+              :scrollable => false,
+              :resizable => true,
+              :width => iws.x,
+              :height => iws.y,
+              :left => 800,
+              :top => 600,
+              :min_width => 50,
+              :min_height => 50,
+              :max_width => -1,
+              :max_height => -1,
+              :style => UI::HtmlDialog::STYLE_DIALOG
+            })
+          else
+            @dialog = ::UI::WebDialog.new(TITLE, false, TITLE, iws.x, iws.y, 800, 600, true)
+          end
           # Callbacks
-          @dialog.add_action_callback('init') { |dlg, params|
+          @dialog.add_action_callback('init') { |acs, params|
             unless @init_called
               @init_called = true
               ds = eval(params)
-              #@border_size.x = iws.x - ds.x
-              #@border_size.y = iws.y - ds.y
               if AMS::IS_PLATFORM_WINDOWS && @handle
                 ws = AMS::Window.get_size(@handle)
                 cr = AMS::Window.get_client_rect(@handle)
@@ -1011,27 +1081,39 @@ module MSPhysics
               end
               Sketchup.active_model.selection.add_observer(@selection_observer)
             end
-            execute_js("set_viewport_scale(#{@dialog_scale});")
+            execute_js("set_viewport_scale(#{@dialog_scale}); g_use_webdialog = #{!USE_HTML_DIALOG};")
             update_state
           }
-          @dialog.add_action_callback('editor_changed') { |dlg, params|
+          @dialog.add_action_callback('editor_changed') { |acs, params|
             if @selected_body && @selected_body.valid?
-              code = dlg.get_element_value('temp_script_area')
+              code = USE_HTML_DIALOG ? params : @dialog.get_element_value('temp_script_area')
               @selected_body.set_attribute('MSPhysics Script', 'Value', code)
             end
           }
-          @dialog.add_action_callback('cursor_changed') { |dlg, params|
+          @dialog.add_action_callback('cursor_changed') { |acs, params|
             if @selected_body && @selected_body.valid?
               @selected_body.set_attribute('MSPhysics Script', 'Cursor', params)
             end
           }
-          @dialog.add_action_callback('open_link') { |dlg, params|
-            ::UI.openURL(params)
+          @dialog.add_action_callback('open_link') { |acs, params|
+            dir = File.dirname(__FILE__)
+            if params == 'http://mspdoc/index'
+              fpath = File.join(dir, 'doc/index.html')
+              fpath = "http://www.rubydoc.info/github/AntonSynytsia/MSPhysics/master/index" unless File.exist?(fpath)
+            elsif params == 'http://amsdoc/index'
+              fpath = File.join(dir, '../ams_Lib/doc/index.html')
+              fpath = "http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/index" unless File.exist?(fpath)
+            elsif params == 'http://rubydoc/index'
+              fpath = "http://ruby-doc.org/core-#{RUBY_VERSION}/"
+            elsif params == 'http://mspdoc/controller'
+              fpath = File.join(dir, 'doc/file.ControllersOverview.html')
+              fpath = "http://www.rubydoc.info/github/AntonSynytsia/MSPhysics/master/file/ControllersOverview.md" unless File.exist?(fpath)
+            else
+              fpath = params
+            end
+            ::UI.openURL(fpath)
           }
-          @dialog.add_action_callback('open_ruby_core') { |dlg, params|
-            ::UI.openURL("http://ruby-doc.org/core-#{RUBY_VERSION}/")
-          }
-          @dialog.add_action_callback('check_input_changed') { |dlg, params|
+          @dialog.add_action_callback('check_input_changed') { |acs, params|
             settings = MSPhysics::Settings
             id, value = data = eval(params)
             dict, attr = id.split(/\-/, 2)
@@ -1044,6 +1126,8 @@ module MSPhysics
             when 'simulation'
               settings = MSPhysics::Settings
               case attr
+              when 'animate_scenes_reversed'
+                settings.animate_scenes_reversed = value
               when 'continuous_collision'
                 settings.continuous_collision_check_enabled = value
               when 'full_screen_mode'
@@ -1054,6 +1138,8 @@ module MSPhysics
                 settings.hide_joint_layer_enabled = value
               when 'undo_on_end'
                 settings.undo_on_end_enabled = value
+              when 'ignore_hidden_instances'
+                settings.ignore_hidden_instances = value
               when 'collision_wireframe'
                 settings.collision_wireframe_visible = value
               when 'axes'
@@ -1081,7 +1167,7 @@ module MSPhysics
               if attr == 'help_box'
                 @dialog_help_box = value
               end
-            when 'joint', *MSPhysics::JOINT_NAMES
+            when 'joint', *MSPhysics::JOINT_FILE_NAMES
               if @selected_joint && @selected_joint.valid?
                 if dict == 'fixed' && attr =~ /adjust_to/i
                   mode = attr.split(/\-/, 2)[1]
@@ -1093,19 +1179,19 @@ module MSPhysics
               end
             end
           }
-          @dialog.add_action_callback('button_clicked') { |dlg, params|
+          @dialog.add_action_callback('button_clicked') { |acs, params|
             case params
             when 'sound-add'
               path = ::UI.openpanel('Add Sound File', @default_sound_path)
               if path
-                path.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
+                path.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18
                 @default_sound_path = path
                 begin
                   add_sound(path)
                   update_sound_state
-                rescue TypeError => e
-                  err_message = e.message
-                  err_message.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
+                rescue TypeError => err
+                  err_message = err.message
+                  err_message.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18
                   ::UI.messagebox(err_message)
                 end
               end
@@ -1132,7 +1218,7 @@ module MSPhysics
                     music = MSPhysics::Music.create_from_buffer(buf, buf.size)
                     buf = nil
                     MSPhysics::Music.set_name(music, @selected_sound)
-                  rescue Exception => e
+                  rescue Exception => err
                     ::UI.messagebox("Can't play selected sound, \"#{@selected_sound}\", as it seems to be invalid!")
                   end
                 end
@@ -1159,7 +1245,8 @@ module MSPhysics
               if @selected_joint && @selected_joint.valid?
                 jdict = 'MSPhysics Joint'
                 attr = @selected_joint.get_attribute(jdict, 'Angle Units', MSPhysics::DEFAULT_ANGLE_UNITS)
-                ang_ratio = attr == 'deg' ? 1.degrees : 1
+                ang_ratio = MSPhysics::ANGLE_CONVERSION[attr]
+                ang_ratio = 1.0 unless ang_ratio
                 iang_ratio = 1.0 / ang_ratio
                 name = @selected_joint.name.to_s
                 name = 'Servo-' + @selected_joint.get_attribute(jdict, 'ID').to_s if name.empty?
@@ -1173,55 +1260,29 @@ module MSPhysics
               if @selected_joint && @selected_joint.valid?
                 jdict = 'MSPhysics Joint'
                 attr = @selected_joint.get_attribute(jdict, 'Position Units', MSPhysics::DEFAULT_POSITION_UNITS)
-                pos_ratio = case attr
-                  when 'mm'
-                    0.001
-                  when 'cm'
-                    0.01
-                  when 'dm'
-                    0.1
-                  when 'm'
-                    1.0
-                  when 'in'
-                    0.0254
-                  when 'ft'
-                    0.3048
-                  when 'yd'
-                    0.9144
-                else
-                  1.0
-                end
+                pos_ratio = MSPhysics::POSITION_CONVERSION[attr]
+                pos_ratio = 1.0 unless pos_ratio
                 ipos_ratio = 1.0 / pos_ratio
                 name = @selected_joint.name.to_s
                 name = 'Piston-' + @selected_joint.get_attribute(jdict, 'ID').to_s if name.empty?
-                min = @selected_joint.get_attribute(jdict, 'Min', fix_numeric_value(MSPhysics::Piston::DEFAULT_MIN * ipos_ratio)).to_f
-                max = @selected_joint.get_attribute(jdict, 'Max', fix_numeric_value(MSPhysics::Piston::DEFAULT_MAX * ipos_ratio)).to_f
-                controller = "slider(#{name.inspect}, 0.0, #{min}, #{max})"
-                @selected_joint.set_attribute(jdict, 'Controller', controller)
-                execute_js("$('#piston-controller').val(#{controller.inspect});")
+                if @selected_joint.get_attribute(jdict, 'Controller Mode', MSPhysics::Piston::DEFAULT_CONTROLLER_MODE).to_i == 0
+                  min = @selected_joint.get_attribute(jdict, 'Min', fix_numeric_value(MSPhysics::Piston::DEFAULT_MIN * ipos_ratio)).to_f
+                  max = @selected_joint.get_attribute(jdict, 'Max', fix_numeric_value(MSPhysics::Piston::DEFAULT_MAX * ipos_ratio)).to_f
+                  controller = "slider(#{name.inspect}, 0.0, #{min}, #{max})"
+                  @selected_joint.set_attribute(jdict, 'Controller', controller)
+                  execute_js("$('#piston-controller').val(#{controller.inspect});")
+                else
+                  controller = "slider(#{name.inspect}, 0.0, -1.0, 1.0)"
+                  @selected_joint.set_attribute(jdict, 'Controller', controller)
+                  execute_js("$('#piston-controller').val(#{controller.inspect});")
+                end
               end
             when 'curvy_piston-generate_slider'
               if @selected_joint && @selected_joint.valid?
                 jdict = 'MSPhysics Joint'
                 attr = @selected_joint.get_attribute(jdict, 'Position Units', MSPhysics::DEFAULT_POSITION_UNITS)
-                pos_ratio = case attr
-                  when 'mm'
-                    0.001
-                  when 'cm'
-                    0.01
-                  when 'dm'
-                    0.1
-                  when 'm'
-                    1.0
-                  when 'in'
-                    0.0254
-                  when 'ft'
-                    0.3048
-                  when 'yd'
-                    0.9144
-                else
-                  1.0
-                end
+                pos_ratio = MSPhysics::POSITION_CONVERSION[attr]
+                pos_ratio = 1.0 unless pos_ratio
                 ipos_ratio = 1.0 / pos_ratio
                 name = @selected_joint.name.to_s
                 name = 'CurvyPiston-' + @selected_joint.get_attribute(jdict, 'ID').to_s if name.empty?
@@ -1240,22 +1301,23 @@ module MSPhysics
               end
             when 'body-assign_props_to_all'
               if @selected_body && @selected_body.valid? && (@selected_body.name.size > 0 || ::UI.messagebox("This body is unnamed. Would you like to assign identical properties to all the unnamed bodies?", MB_YESNO) == IDYES)
+                execute_js("if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();")
                 dict = @selected_body.attribute_dictionary('MSPhysics Body')
                 if dict
-                  props = ['Ignore', 'Collidable', 'Static', 'Frozen', 'Auto Sleep', 'Enable Friction', 'Magnetic', 'Enable Script', 'Continuous Collision', 'Enable Gravity', 'Thruster Lock Axis', 'Emitter Lock Axis', 'Enable Thruster', 'Enable Emitter', 'Connect Closest Joints', 'Thruster Controller', 'Emitter Controller', 'Emitter Rate', 'Emitter Lifetime', 'Density', 'Mass', 'Static Friction', 'Kinetic Friction', 'Elasticity', 'Softness', 'Magnet Force', 'Magnet Range', 'Linear Damping', 'Angular Damping', 'Material', 'Shape', 'Weight Control']
+                  props = MSPhysics::BODY_STATES - ['Body Script'] + ['Shape', 'Shape Dir', 'Type', 'Material', 'Mass Control', 'Magnet Mode', 'Density', 'Mass', 'Static Friction', 'Kinetic Friction', 'Elasticity', 'Softness', 'Magnet Force', 'Magnet Range', 'Magnet Strength', 'Linear Damping', 'Angular Damping', 'Emitter Rate', 'Emitter Delay', 'Emitter Lifetime', 'Thruster Controller', 'Emitter Controller']
                   model = Sketchup.active_model
                   op = 'MSPhysics Body - Assign Properties to All'
-                  if Sketchup.version.to_i > 6
-                    model.start_operation(op, true)
-                  else
-                    model.start_operation(op)
-                  end
+                  Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
                   model.definitions.each { |cd|
                     cd.instances.each { |inst|
                       next if inst == @selected_body || inst.get_attribute('MSPhysics', 'Type', 'Body') != 'Body' || inst.name != @selected_body.name
                       props.each { |prop|
                         value = dict[prop]
-                        inst.set_attribute('MSPhysics Body', prop, value) if value != nil
+                        if value.nil?
+                          inst.delete_attribute('MSPhysics Body', prop)
+                        else
+                          inst.set_attribute('MSPhysics Body', prop, value)
+                        end
                       }
                     }
                   }
@@ -1264,23 +1326,29 @@ module MSPhysics
               end
             when 'body-assign_script_to_all'
               if @selected_body && @selected_body.valid? && (@selected_body.name.size > 0 || ::UI.messagebox("This body is unnamed. Would you like to assign identical script to all the unnamed bodies?", MB_YESNO) == IDYES)
+                execute_js("if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();")
                 dict = @selected_body.attribute_dictionary('MSPhysics Script')
+                script_enabled = @selected_body.get_attribute('MSPhysics Body', 'Enable Script')
                 if dict
                   props = ['Value', 'Cursor']
                   model = Sketchup.active_model
                   op = 'MSPhysics Body - Assign Script to All'
-                  if Sketchup.version.to_i > 6
-                    model.start_operation(op, true)
-                  else
-                    model.start_operation(op)
-                  end
+                  Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
                   model.definitions.each { |cd|
                     cd.instances.each { |inst|
                       next if inst == @selected_body || inst.get_attribute('MSPhysics', 'Type', 'Body') != 'Body' || inst.name != @selected_body.name
                       props.each { |prop|
-                        value = dict[prop]
-                        inst.set_attribute('MSPhysics Script', prop, value) if value != nil
+                        if dict[prop].nil?
+                          inst.delete_attribute('MSPhysics Script', prop)
+                        else
+                          inst.set_attribute('MSPhysics Script', prop, dict[prop])
+                        end
                       }
+                      if script_enabled.nil?
+                        inst.delete_attribute('MSPhysics Body', 'Enable Script')
+                      else
+                        inst.set_attribute('MSPhysics Body', 'Enable Script', script_enabled)
+                      end
                     }
                   }
                   model.commit_operation
@@ -1288,6 +1356,7 @@ module MSPhysics
               end
             when 'joint-assign_to_all'
               if @selected_joint && @selected_joint.valid?
+                execute_js("if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();")
                 dict = @selected_joint.attribute_dictionary('MSPhysics Joint')
                 name = @selected_joint.name
                 name = dict['ID'].to_s if name.empty?
@@ -1295,11 +1364,7 @@ module MSPhysics
                 if dict && name.size > 0 && type
                   model = Sketchup.active_model
                   op = 'MSPhysics Joint - Assign to All'
-                  if Sketchup.version.to_i > 6
-                    model.start_operation(op, true)
-                  else
-                    model.start_operation(op)
-                  end
+                  Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
                   msgbox_displayed = false
                   change_controllers = false
                   model.definitions.each { |cd|
@@ -1308,13 +1373,15 @@ module MSPhysics
                       inst_name = inst.name.empty? ? inst.get_attribute('MSPhysics Joint', 'ID').to_s : inst.name
                       next if inst_name != name
                       dict.each { |key, value|
-                        next if key == 'ID' || key == 'Type' || value == nil
+                        next if key == 'ID' || key == 'Type'
                         if key == 'Controller'
                           if !msgbox_displayed
                             change_controllers = ::UI.messagebox("Should the controllers be changed as well?", MB_YESNO) == IDYES
                             msgbox_displayed = true
                           end
                           inst.set_attribute('MSPhysics Joint', key, value) if change_controllers
+                        elsif value.nil?
+                          inst.delete_attribute('MSPhysics Joint', key)
                         else
                           inst.set_attribute('MSPhysics Joint', key, value)
                         end
@@ -1326,7 +1393,7 @@ module MSPhysics
               end
             end
           }
-          @dialog.add_action_callback('numeric_input_changed') { |dlg, params|
+          @dialog.add_action_callback('numeric_input_changed') { |acs, params|
             id, value = eval(params)
             dict, attr = id.split(/\-/, 2)
             words = attr.split(/\_/)
@@ -1346,6 +1413,9 @@ module MSPhysics
               when 'world_scale'
                 MSPhysics::Settings.world_scale = value
                 value = MSPhysics::Settings.world_scale
+              when 'animate_scenes_delay'
+                MSPhysics::Settings.animate_scenes_delay = value
+                value = MSPhysics::Settings.animate_scenes_delay
               end
             when 'body'
               if @selected_body && @selected_body.valid?
@@ -1356,16 +1426,16 @@ module MSPhysics
                     execute_js("$('#body-material').val('Custom'); $('#body-material').trigger('chosen:updated');")
                     @selected_body.set_attribute('MSPhysics Body', 'Material', 'Custom')
                   end
-                elsif attr == 'magnet_range'
+                elsif %w(magnet_range emitter_rate emitter_delay emitter_lifetime).include?(attr)
                   value = AMS.clamp(value, 0.0, nil)
                 elsif attr == 'linear_damping' || attr == 'angular_damping'
                   value = AMS.clamp(value, 0.0, 1.0)
                 end
                 @selected_body.set_attribute('MSPhysics Body', option, value.to_i.is_a?(Bignum) ? value.to_s : value)
               end
-            when 'joint', *MSPhysics::JOINT_NAMES
+            when 'joint', *MSPhysics::JOINT_FILE_NAMES
               if @selected_joint && @selected_joint.valid?
-                if %w(stiffness reduction_ratio strength).include?(attr)
+                if %w(stiffness reduction_ratio strength).include?(attr) || %(hinge-damp spring-damp).include?(id)
                   value = AMS.clamp(value, 0.0, 1.0)
                 elsif %w(accel damp breaking_force rate power alignment_power friction linear_friction angular_friction).include?(attr)
                   value = AMS.clamp(value, 0.0, nil)
@@ -1381,10 +1451,10 @@ module MSPhysics
                 end
               end
             end
-            execute_js("$('##{id}').val('#{ format_value(value, @precision) }');")
+            execute_js("$('##{id}').val('#{ format_value(value, PRECISION) }');")
             @activated_value = nil
           }
-          @dialog.add_action_callback('fixnum_input_changed') { |dlg, params|
+          @dialog.add_action_callback('fixnum_input_changed') { |acs, params|
             id, value = eval(params)
             dict, attr = id.split(/\-/, 2)
             words = attr.split(/\_/)
@@ -1400,18 +1470,13 @@ module MSPhysics
               end
             when 'body'
               if @selected_body && @selected_body.valid?
-                if attr == 'emitter_rate'
-                  value = AMS.clamp(value.round, 1, nil)
-                elsif attr == 'emitter_lifetime'
-                  value = AMS.clamp(value.round, 0, nil)
-                end
                 @selected_body.set_attribute('MSPhysics Body', option, value.to_i.is_a?(Bignum) ? value.to_s : value)
               end
-            when 'joint', *MSPhysics::JOINT_NAMES
+            when 'joint', *MSPhysics::JOINT_FILE_NAMES
             end
             execute_js("$('##{id}').val('#{ value.to_i }')")
           }
-          @dialog.add_action_callback('numeric_input_focused') { |dlg, params|
+          @dialog.add_action_callback('numeric_input_focused') { |acs, params|
             dict, attr = params.split(/\-/, 2)
             words = attr.split(/\_/)
             for i in 0...words.size
@@ -1433,12 +1498,12 @@ module MSPhysics
                 default = MSPhysics::DEFAULT_BODY_SETTINGS
                 @selected_body.get_attribute('MSPhysics Body', option, default[attr.to_sym])
               end
-            when 'joint', *MSPhysics::JOINT_NAMES
+            when 'joint', *MSPhysics::JOINT_FILE_NAMES
               if @selected_joint && @selected_joint.valid?
                 begin
                   #default = eval("MSPhysics::#{dict.split(/\_/).map { |w| w.capitalize }.join}::DEFAULT_#{attr.upcase}")
                   default = get_joint_default_value(@selected_joint, option)
-                rescue Exception => e
+                rescue Exception => err
                   default = 0
                 end
                 @selected_joint.get_attribute('MSPhysics Joint', option, default)
@@ -1457,7 +1522,24 @@ module MSPhysics
               @activated_value = value
             end
           }
-          @dialog.add_action_callback('controller_input_changed') { |dlg, id|
+          @dialog.add_action_callback('slider_input_changed') { |acs, params|
+            id, value = eval(params)
+            dict, attr = id.split(/\-/, 2)
+            case dict
+              when 'simulation'
+                case attr
+                  when 'key_nav_velocity'
+                    MSPhysics::Settings.key_nav_velocity = value
+                  when 'key_nav_omega'
+                    MSPhysics::Settings.key_nav_omega = value
+                  when 'key_nav_atime'
+                    MSPhysics::Settings.key_nav_atime = value
+                end
+            end
+            execute_js("$('##{id}').val('#{value}');")
+          }
+          @dialog.add_action_callback('controller_input_changed') { |acs, params|
+            id = USE_HTML_DIALOG ? params[0] : params
             dict, attr = id.split(/\-/, 2)
             words = attr.split(/\_/)
             for i in 0...words.size
@@ -1468,17 +1550,18 @@ module MSPhysics
             when 'simulation'
             when 'body'
               if @selected_body && @selected_body.valid?
-                code = dlg.get_element_value(id)
+                code = USE_HTML_DIALOG ? params[1] : @dialog.get_element_value(id)
                 @selected_body.set_attribute('MSPhysics Body', option, code)
               end
-            when 'joint', *MSPhysics::JOINT_NAMES
+            when 'joint', *MSPhysics::JOINT_FILE_NAMES
               if @selected_joint && @selected_joint.valid?
-                code = dlg.get_element_value(id)
+                code = USE_HTML_DIALOG ? params[1] : @dialog.get_element_value(id)
                 @selected_joint.set_attribute('MSPhysics Joint', option, code)
               end
             end
           }
-          @dialog.add_action_callback('text_input_changed') { |dlg, id|
+          @dialog.add_action_callback('text_input_changed') { |acs, params|
+            id = USE_HTML_DIALOG ? params[0] : params
             dict, attr = id.split(/\-/, 2)
             words = attr.split(/\_/)
             for i in 0...words.size
@@ -1488,14 +1571,14 @@ module MSPhysics
             case dict
             when 'body'
               if @selected_body && @selected_body.valid?
-                code = dlg.get_element_value(id)
+                code = USE_HTML_DIALOG ? params[1] : @dialog.get_element_value(id)
                 if attr == 'name'
                   @selected_body.name = code
                 end
               end
             when 'joint'
               if @selected_joint && @selected_joint.valid?
-                code = dlg.get_element_value(id)
+                code = USE_HTML_DIALOG ? params[1] : @dialog.get_element_value(id)
                 if attr == 'name'
                   @selected_joint.name = code
                 else
@@ -1504,7 +1587,7 @@ module MSPhysics
               end
             end
           }
-          @dialog.add_action_callback('select_input_changed') { |dlg, params|
+          @dialog.add_action_callback('select_input_changed') { |acs, params|
             id, value = eval(params)
             dict, attr = id.split(/\-/, 2)
             words = attr.split(/\_/)
@@ -1524,17 +1607,19 @@ module MSPhysics
                 MSPhysics::Settings.update_timestep = 1.0 / value.to_i
               when 'solver_model'
                 MSPhysics::Settings.solver_model = value.to_i
+              when 'joint_algorithm'
+                MSPhysics::Settings.joint_algorithm = value.to_i
+              when 'animate_scenes_state'
+                MSPhysics::Settings.animate_scenes_state = value.to_i
+              when 'key_nav_state'
+                MSPhysics::Settings.key_nav_state = value.to_i
               end
             when 'body'
               if @selected_body && @selected_body.valid?
                 model = Sketchup.active_model
                 if attr == 'material'
                   op = 'MSPhysics Body - Change Material'
-                  if Sketchup.version.to_i > 6
-                    model.start_operation(op, true)
-                  else
-                    model.start_operation(op)
-                  end
+                  Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
                   @selected_body.set_attribute('MSPhysics Body', option, value)
                   if value == MSPhysics::DEFAULT_BODY_SETTINGS[:material_name]
                     ['Material', 'Density', 'Static Friction', 'Kinetic Friction', 'Enable Friction', 'Elasticity', 'Softness'].each { |opt|
@@ -1553,6 +1638,8 @@ module MSPhysics
                   end
                   update_state
                   model.commit_operation
+                elsif %w(type magnet_mode mass_control shape shape_dir).include?(attr)
+                  @selected_body.set_attribute('MSPhysics Body', option, value.to_i)
                 else
                   @selected_body.set_attribute('MSPhysics Body', option, value)
                 end
@@ -1565,14 +1652,31 @@ module MSPhysics
               elsif attr == 'wrap'
                 @editor_wrap = value.to_s
               end
-            when 'joint', *MSPhysics::JOINT_NAMES
+            when 'joint', *MSPhysics::JOINT_FILE_NAMES
               if @selected_joint && @selected_joint.valid?
+                if attr == 'mode'
+                  value = value.to_i
+                end
                 @selected_joint.set_attribute('MSPhysics Joint', option, value)
-                update_joint_state
               end
             end
           }
-          @dialog.add_action_callback('placement_changed') { |dlg, params|
+          @dialog.add_action_callback('slider_changed') { |acs, params|
+            id, value = eval(params)
+            dict, attr = id.split(/\-/, 2)
+            case dict
+              when 'simulation'
+                case attr
+                  when 'key_nav_velocity'
+                    MSPhysics::Settings.key_nav_velocity = value
+                  when 'key_nav_omega'
+                    MSPhysics::Settings.key_nav_omega = value
+                  when 'key_nav_atime'
+                    MSPhysics::Settings.key_nav_atime = value
+                end
+            end
+          }
+          @dialog.add_action_callback('placement_changed') { |acs, params|
             tab, dw, dh, bresize = eval(params)
             last_tab = @active_tab
             @active_tab = tab
@@ -1581,7 +1685,7 @@ module MSPhysics
             update_dialog_style
             wsx = nil
             wsy = nil
-            ui_scale = Sketchup.version.to_i > 16 ? UI.scale_factor : 1.0
+            ui_scale = Sketchup.version.to_i > 16 ? ::UI.scale_factor : 1.0
             if tab == 3 && @selected_body && @selected_body.valid? && @selected_body.parent.is_a?(Sketchup::Model)
               wsx = @border_size.x + @editor_size.x * @dialog_scale * ui_scale
               wsy = @border_size.y + @editor_size.y * @dialog_scale * ui_scale
@@ -1593,11 +1697,12 @@ module MSPhysics
               if AMS::IS_PLATFORM_WINDOWS && @handle
                 AMS::Window.set_size(@handle, wsx.round, wsy.round, false)
               else
-                dlg.set_size(wsx.round, wsy.round)
+                @dialog.set_size(wsx.round, wsy.round)
               end
             end
+            update_simulation_sliders if tab == 1
           }
-          @dialog.add_action_callback('editor_size_changed') { |dlg, params|
+          @dialog.add_action_callback('editor_size_changed') { |acs, params|
             if @selected_body && @selected_body.valid? && @selected_body.parent.is_a?(Sketchup::Model)
               if !AMS::IS_PLATFORM_WINDOWS || !@handle || AMS::Window.is_restored?(@handle)
                 cw, ch = eval(params)
@@ -1606,10 +1711,10 @@ module MSPhysics
               end
             end
           }
-          @dialog.add_action_callback('mouse_enter') { |dlg, params|
+          @dialog.add_action_callback('mouse_enter') { |acs, params|
             update_simulation_state
           }
-          @dialog.add_action_callback('sound_select_changed') { |dlg, params|
+          @dialog.add_action_callback('sound_select_changed') { |acs, params|
             @selected_sound = params
             cmd = ''
             ext = Sketchup.active_model.get_attribute('MSPhysics Sound Types', @selected_sound)
@@ -1625,7 +1730,7 @@ module MSPhysics
             end
             execute_js(cmd)
           }
-          @dialog.add_action_callback('joint_label_selected') { |dlg, params|
+          @dialog.add_action_callback('joint_label_selected') { |acs, params|
             if (params =~ /Internal::/) == 0
               fid = params.split('Internal::', 2)[1]
               jdata = @body_internal_joints[fid]
@@ -1672,15 +1777,15 @@ module MSPhysics
           }
           # Set content
           dir = File.dirname(__FILE__)
-          dir.force_encoding('UTF-8') if RUBY_VERSION !~ /1.8/
+          dir.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18
           url = File.join(dir, 'html/dialog.html')
           @dialog.set_file(url)
           # Show dialog
           AMS::IS_PLATFORM_WINDOWS ? @dialog.show : @dialog.show_modal
           # Assign the on_close callback. Important: This must be called after
           # showing dialog in order to work on Mac OS X.
-          @dialog.set_on_close() {
-            execute_js("update_editor_size(); if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();")
+          do_on_close = Proc.new {
+            execute_js("update_editor_size(); if (document.activeElement instanceof HTMLInputElement) { document.activeElement.blur(); }")
             @dialog = nil
             @handle = nil
             @init_called = false
@@ -1690,12 +1795,16 @@ module MSPhysics
             @activated_value = nil
             @selected_sound = nil
             Sketchup.active_model.selection.remove_observer(@selection_observer)
+            false
           }
-          # Find dialog window handle
-          @handle = AMS::IS_PLATFORM_WINDOWS ? AMS::Sketchup.find_window_by_caption(@title) : nil
-          if @handle
-            AMS::Sketchup.ignore_dialog(@handle)
+          if USE_HTML_DIALOG
+            @dialog.set_on_closed() { do_on_close.call }
+          else
+            @dialog.set_on_close() { do_on_close.call }
           end
+          # Find dialog window handle
+          @handle = AMS::IS_PLATFORM_WINDOWS ? AMS::Sketchup.find_window_by_caption(TITLE) : nil
+          AMS::Sketchup.ignore_dialog(@handle) if @handle
           # Set dialog style
           update_dialog_style
         else
@@ -1706,7 +1815,7 @@ module MSPhysics
 
       # Determine if MSPhysics UI is open.
       # @return [Boolean]
-      def visible?
+      def open?
         @dialog ? true : false
       end
 
@@ -1728,7 +1837,7 @@ module MSPhysics
           update_state
           execute_js(msg)
         else
-          self.visible = true
+          self.open(true)
           t = ::UI.start_timer(0.25, false) {
             ::UI.stop_timer(t)
             execute_js(msg)
@@ -1802,7 +1911,7 @@ module MSPhysics
           end
           @dialog_help_box = Sketchup.read_default('MSPhysics', 'Dialog Help Box', DEFAULT_DIALOG_HELP_BOX) ? true : false
           @dialog_scale = Sketchup.read_default('MSPhysics', 'Dialog Scale', DEFAULT_DIALOG_SCALE).to_f
-        rescue Exception => e
+        rescue Exception => err
           @editor_theme = DEFAULT_EDITOR_THEME
           @editor_font = DEFAULT_EDITOR_FONT
           @editor_wrap = DEFAULT_EDITOR_WRAP
@@ -1869,8 +1978,8 @@ module MSPhysics
       def onSelectionCleared(sel)
         return if !@enabled || MSPhysics::Simulation.active?
         @selection_changed = false
-        id = UI.start_timer(0.1, false) {
-          UI.stop_timer(id)
+        id = ::UI.start_timer(0.1, false) {
+          ::UI.stop_timer(id)
           MSPhysics::Dialog.update_state unless @selection_changed
         }
       end
@@ -1881,14 +1990,14 @@ module MSPhysics
     class AppObserver < ::Sketchup::AppObserver
 
       def onNewModel(model)
-        if MSPhysics::Dialog.visible?
+        if MSPhysics::Dialog.open?
           model.selection.add_observer(MSPhysics::Dialog.selection_observer)
           MSPhysics::Dialog.update_state
         end
       end
 
       def onOpenModel(model)
-        if MSPhysics::Dialog.visible?
+        if MSPhysics::Dialog.open?
           model.selection.add_observer(MSPhysics::Dialog.selection_observer)
           MSPhysics::Dialog.update_state
         end

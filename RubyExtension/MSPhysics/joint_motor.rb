@@ -13,7 +13,7 @@ module MSPhysics
     # @param [MSPhysics::Body, nil] parent
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation
     #   in global space. Matrix origin is interpreted as the pin position.
-    #   Matrix z-axis is interpreted as the pin direction.
+    #   Matrix Z-axis is interpreted as the pin direction.
     # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group
     def initialize(world, parent, pin_tra, group = nil)
       super(world, parent, pin_tra, group)
@@ -30,16 +30,16 @@ module MSPhysics
       MSPhysics::Newton::Motor.get_cur_angle(@address)
     end
 
-    # Get current omega in radians per second.
+    # Get current angular velocity in radians per second.
     # @return [Numeric]
     def cur_omega
       MSPhysics::Newton::Motor.get_cur_omega(@address)
     end
 
-    # Get current acceleration in radians per second per second.
+    # Get current angular acceleration in radians per second per second.
     # @return [Numeric]
-    def cur_acceleration
-      MSPhysics::Newton::Motor.get_cur_acceleration(@address)
+    def cur_alpha
+      MSPhysics::Newton::Motor.get_cur_alpha(@address)
     end
 
     # Get rotational acceleration in radians per second per second.
@@ -93,7 +93,6 @@ module MSPhysics
     end
 
     # Get motor controller, magnitude and direction of the desired acceleration.
-    # By default, controller value is 1.
     # @note The actual acceleration is <tt>accel * controller</tt>.
     # @note The maximum angular rate in radians per second is
     #   <tt>accel * controller / damp</tt>.
@@ -103,7 +102,6 @@ module MSPhysics
     end
 
     # Set motor controller, magnitude and direction of the desired acceleration.
-    # By default, controller value is 1.
     # @note The actual acceleration is <tt>accel * controller</tt>.
     # @note The maximum angular rate in radians per second is
     #   <tt>accel * controller / damp</tt>.

@@ -6,6 +6,10 @@ module MSPhysics
 
     include Math
 
+    def initialize
+      super()
+    end
+
     # @param [String] script
     # @param [String] script_name
     # @param [Fixnum] line

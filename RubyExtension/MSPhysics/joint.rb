@@ -2,13 +2,33 @@ module MSPhysics
 
   # An abstract for all joints.
   # @since 1.0.0
-  class Joint
+  class Joint < Entity
 
+    DEFAULT_SOLVER_MODEL = 2
     DEFAULT_STIFFNESS = 1.00
     DEFAULT_BODIES_COLLIDABLE = false
     DEFAULT_BREAKING_FORCE = 0.0
 
     class << self
+
+      # Verify that joint is valid.
+      # @api private
+      # @param [Joint] joint
+      # @param [World, nil] world A world the joint ought to belong to or +nil+.
+      # @raise [TypeError] if joint is invalid or destroyed.
+      # @return [void]
+      def validate(joint, world = nil)
+        AMS.validate_type(joint, MSPhysics::Joint)
+        unless joint.valid?
+          raise(TypeError, "Joint #{joint} is invalid/destroyed!", caller)
+        end
+        if world != nil
+          AMS.validate_type(world, MSPhysics::World)
+          if joint.world.address != world.address
+            raise(TypeError, "Joint #{joint} belongs to a different world!", caller)
+          end
+        end
+      end
 
       # Get joint by address.
       # @param [Fixnum] address
@@ -33,7 +53,7 @@ module MSPhysics
     # @param [MSPhysics::Body, nil] parent
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation
     #   in global space. Matrix origin is interpreted as the pin position.
-    #   Matrix z-axis is interpreted as the pin direction.
+    #   Matrix Z-axis is interpreted as the pin direction.
     # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group_inst
     def initialize(world, parent, pin_tra, group_inst = nil)
       if self.class == MSPhysics::Joint
@@ -47,6 +67,7 @@ module MSPhysics
       MSPhysics::Newton::Joint.set_stiffness(@address, DEFAULT_STIFFNESS)
       MSPhysics::Newton::Joint.set_bodies_collidable(@address, DEFAULT_BODIES_COLLIDABLE)
       MSPhysics::Newton::Joint.set_breaking_force(@address, DEFAULT_BREAKING_FORCE)
+      MSPhysics::Newton::Joint.set_solver_model(@address, DEFAULT_SOLVER_MODEL)
       @name = ''
     end
 
@@ -109,7 +130,7 @@ module MSPhysics
 
     # Get joint type.
     # @return [Fixnum]
-    # @see MSPhysics::JOINT_TYPES
+    # @see MSPhysics::JOINT_ID_TO_NAME
     def type
       MSPhysics::Newton::Joint.get_type(@address)
     end
@@ -136,7 +157,7 @@ module MSPhysics
 
     # Set joint pin transformation in global space.
     # @param [Geom::Transformation, Array<Numeric>] matrix
-    # @return [Geom::Transformation] New matrix.
+    # @return [nil]
     def set_pin_matrix(matrix)
       MSPhysics::Newton::Joint.set_pin_matrix(@address, matrix)
     end
@@ -188,6 +209,24 @@ module MSPhysics
     # @param [Numeric] force
     def breaking_force=(force)
       MSPhysics::Newton::Joint.set_breaking_force(@address, force)
+    end
+
+    # Get solver model for calculating the constraint forces.
+    # @return [Fixnum] Model:
+    #   * 0 - Use best algorithm.
+    #   * 1 - Signal the engine that two joints form a kinematic loop.
+    #   * 2 - Use less accurate algorithm.
+    def solver_model
+      MSPhysics::Newton::Joint.get_solver_model(@address)
+    end
+
+    # Set solver model for calculating the constraint forces.
+    # @param [Fixnum] model Solver model:
+    #   * 0 - Use best algorithm.
+    #   * 1 - Signal the engine that two joints form a kinematic loop.
+    #   * 2 - Use less accurate algorithm.
+    def solver_model=(model)
+      MSPhysics::Newton::Joint.set_solver_model(@address, model)
     end
 
     # Get joint name.

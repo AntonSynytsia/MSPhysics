@@ -14,7 +14,7 @@ module MSPhysics
     # @param [MSPhysics::Body, nil] parent
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation
     #   in global space. Matrix origin is interpreted as the pin position.
-    #   Matrix z-axis is interpreted as the pin direction.
+    #   Matrix Z-axis is interpreted as the pin direction.
     # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group
     def initialize(world, parent, pin_tra, group = nil)
       super(world, parent, pin_tra, group)
@@ -35,17 +35,17 @@ module MSPhysics
       MSPhysics::Newton::Universal.get_cur_angle1(@address)
     end
 
-    # Get current omega in radians per second along joint Z-axis.
+    # Get current angular velocity in radians per second along joint Z-axis.
     # @return [Numeric]
     def cur_omega1
       MSPhysics::Newton::Universal.get_cur_omega1(@address)
     end
 
-    # Get current acceleration in radians per second per second along joint
-    # Z-axis.
+    # Get current angular acceleration in radians per second per second along
+    # joint Z-axis.
     # @return [Numeric]
-    def cur_acceleration1
-      MSPhysics::Newton::Universal.get_cur_acceleration1(@address)
+    def cur_alpha1
+      MSPhysics::Newton::Universal.get_cur_alpha1(@address)
     end
 
     # Get minimum angle in radians along joint Z-axis.
@@ -90,17 +90,17 @@ module MSPhysics
       MSPhysics::Newton::Universal.get_cur_angle2(@address)
     end
 
-    # Get current omega in radians per second along joint X-axis.
+    # Get current angular velocity in radians per second along joint X-axis.
     # @return [Numeric]
     def cur_omega2
       MSPhysics::Newton::Universal.get_cur_omega2(@address)
     end
 
-    # Get current acceleration in radians per second per second along joint
-    # X-axis.
+    # Get current angular acceleration in radians per second per second along
+    # joint X-axis.
     # @return [Numeric]
-    def cur_acceleration2
-      MSPhysics::Newton::Universal.get_cur_acceleration2(@address)
+    def cur_alpha2
+      MSPhysics::Newton::Universal.get_cur_alpha2(@address)
     end
 
     # Get minimum angle in radians along joint X-axis.

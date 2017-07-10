@@ -10,13 +10,14 @@ module MSPhysics
     DEFAULT_POWER = 0.0
     DEFAULT_REDUCTION_RATIO = 0.1
     DEFAULT_CONTROLLER = nil
+    DEFAULT_CONTROLLER_MODE = 0
 
     # Create a piston joint.
     # @param [MSPhysics::World] world
     # @param [MSPhysics::Body, nil] parent
     # @param [Geom::Transformation, Array<Numeric>] pin_tra Pin transformation
     #   in global space. Matrix origin is interpreted as the pin position.
-    #   Matrix z-axis is interpreted as the pin direction.
+    #   Matrix Z-axis is interpreted as the pin direction.
     # @param [Sketchup::Group, Sketchup::ComponentInstance, nil] group
     def initialize(world, parent, pin_tra, group = nil)
       super(world, parent, pin_tra, group)
@@ -28,6 +29,7 @@ module MSPhysics
       MSPhysics::Newton::Piston.set_power(@address, DEFAULT_POWER)
       MSPhysics::Newton::Piston.set_reduction_ratio(@address, DEFAULT_REDUCTION_RATIO)
       MSPhysics::Newton::Piston.set_controller(@address, DEFAULT_CONTROLLER)
+	  MSPhysics::Newton::Piston.set_controller_mode(@address, DEFAULT_CONTROLLER_MODE)
     end
 
     # Get current position in meters.
@@ -137,17 +139,37 @@ module MSPhysics
     end
 
     # Get piston controller.
-    # @return [Numeric, nil] Desired position in meters or +nil+ if piston is
-    #   turned off.
+    # @return [Numeric, nil] Returns one of the following values:
+    #   * Desired position in meters if the controller mode is 0.
+    #   * Magnitude and direction of the linear rate if controller mode is 1.
+    #   * +nil+ if piston is turned off.
     def controller
       MSPhysics::Newton::Piston.get_controller(@address)
     end
 
     # Set piston controller.
-    # @param [Numeric, nil] value Desired position in meters or +nil+ to turn
-    #   off the piston.
+    # @param [Numeric, nil] value Accepts one of the following values:
+    #   * Desired position in meters if the controller mode is 0.
+    #   * Magnitude and direction of the linear rate if controller mode is 1.
+    #   * +nil+ to turn off the piston.
     def controller=(value)
       MSPhysics::Newton::Piston.set_controller(@address, value)
+    end
+
+    # Get controller mode.
+    # @return [Fixnum] Returns one of the following values:
+    #   * 0 to control piston by position.
+    #   * 1 to control piston by speed.
+    def controller_mode
+      MSPhysics::Newton::Piston.get_controller_mode(@address)
+    end
+
+    # Set controller mode.
+    # @param [Fixnum] mode Pass one of the following values:
+    #   * 0 to control piston by position.
+    #   * 1 to control piston by speed.
+    def controller_mode=(mode)
+      MSPhysics::Newton::Piston.set_controller_mode(@address, mode)
     end
 
   end # class Piston < Joint

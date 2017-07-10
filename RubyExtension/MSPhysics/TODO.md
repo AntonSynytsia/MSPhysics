@@ -1,11 +1,11 @@
-- Implement cloth and soft bodies interface.
-- Implement user mesh collision interface.
-- Implement vehicle interface.
-- Implement fracture/split interface.
-- Make Replay compatible with LightUp, Vray, and Thea Render.
-- Get material changes working with SkIndigo.
-- Improve the performance of export to KerkyThea and SkIndigo options.
+- Add cloth and soft bodies.
+- Add user mesh collision.
+- Add vehicle interface.
+- Add fracture/split.
+- Make Replay compatible with modern rendering systems.
 - Add aerodynamics.
-- Make the UI and Control Panel to base of HtmlDialog class in SU2017.
-- Fix the improper behavior of geared joints with parent bodies.
-- Add keyboard events on the Mac OS X side.
+- Add sockets.
+- Add magnets with dipoles.
+- Add advanced particles.
+- Add custom compound from convex decomposition collision shape.
+- Rework geared joints.

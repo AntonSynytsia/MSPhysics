@@ -1,7 +1,7 @@
 module MSPhysics
 
   # @since 1.0.0
-  class SceneData
+  class SceneData < Entity
 
     # @overload initialize()
     #   Create scene data from current model.
@@ -33,19 +33,27 @@ module MSPhysics
         model.rendering_options.each { |k, v| @rendering_options[k] = v }
         model.shadow_info.each { |k, v| @shadow_info[k] = v }
         @style = model.styles.selected_style
-        @camera = duplicate_camera(model.active_view.camera)
+        @camera = MSPhysics.duplicate_camera(model.active_view.camera)
       elsif args.size == 1
         page = args[0]
         AMS.validate_type(page, Sketchup::Page)
         if Sketchup.version.to_i >= 16
           @axes = page.axes.transformation
         end
-        page.hidden_entities.each { |e| @hidden_entities << e }
-        page.layers.each { |e| @hidden_layers << e }
-        page.rendering_options.each { |k, v| @rendering_options[k] = v }
-        page.shadow_info.each { |k, v| @shadow_info[k] = v }
+        if page.hidden_entities
+          page.hidden_entities.each { |e| @hidden_entities << e }
+        end
+        if page.layers
+          page.layers.each { |layer| @hidden_layers << layer }
+        end
+        if page.rendering_options
+          page.rendering_options.each { |k, v| @rendering_options[k] = v }
+        end
+        if page.shadow_info
+          page.shadow_info.each { |k, v| @shadow_info[k] = v }
+        end
         @style = page.style
-        @camera = duplicate_camera(page.camera)
+        @camera = MSPhysics.duplicate_camera(page.camera)
         @use_axes = page.use_axes?
         @use_hidden_entities = page.use_hidden?
         @use_hidden_layers = page.use_hidden_layers?
@@ -54,32 +62,15 @@ module MSPhysics
         @use_style = page.use_style?
         @use_camera = page.use_camera?
       else
-        raise(ArgumentError, "Wrong number of arguments! Expected 0..1, but got #{args.size}.", caller)
+        raise(ArgumentError, "Wrong number of arguments! Expected 0..1 arguments but got #{args.size}.", caller)
       end
-    end
-
-    # Create copy of a camera object.
-    # @param [Sketchup::Camera] camera
-    # @return [Sketchup::Camera]
-    def duplicate_camera(camera)
-      c = Sketchup::Camera.new(camera.eye, camera.target, camera.up)
-      c.aspect_ratio = camera.aspect_ratio
-      c.perspective = camera.perspective?
-      if camera.perspective?
-        c.focal_length = camera.focal_length
-        c.fov = camera.fov
-        c.image_width = camera.image_width
-      else
-        c.height = camera.height
-      end
-      c.description = camera.description
-      return c
     end
 
     # Transition between this and the desired scene data.
     # @param [SceneData] scene_data Other scene data
     # @param [Numeric] ratio A value between 0.0 and 1.0.
-    # @return [Boolean] success
+    # @return [void]
+    # @note Manually wrap the operation.
     def transition(scene_data, ratio)
       AMS.validate_type(scene_data, SceneData)
       ratio = AMS.clamp(ratio, 0, 1)
@@ -108,7 +99,7 @@ module MSPhysics
       end
       if scene_data.use_style?
         desired_style = ratio == 0 ? @style : scene_data.style
-        model.styles.selected_style = desired_style if model.styles.selected_style != desired_style
+        model.styles.selected_style = desired_style if desired_style && model.styles.selected_style != desired_style
       end
       if scene_data.use_rendering_options?
         model.rendering_options.each { |mk, mv|
@@ -164,7 +155,31 @@ module MSPhysics
         }
       end
       if scene_data.use_camera?
-        model.active_view.camera = AMS::Geometry.transition_camera(@camera, scene_data.camera, ratio)
+        #~ model.active_view.camera = AMS::Geometry.transition_camera(@camera, scene_data.camera, ratio)
+        c1 = @camera
+        c2 = scene_data.camera
+        c3 = model.active_view.camera
+        m = c1.eye.distance(c2.eye) * 0.5
+        p0 = c1.eye
+        p1 = c1.eye + AMS::Geometry.scale_vector(c1.direction.reverse, m)
+        p2 = c2.eye + AMS::Geometry.scale_vector(c2.direction.reverse, m)
+        p3 = c2.eye
+        eye = AMS::Geometry.calc_cubic_bezier_point(ratio, p0, p1, p2, p3)
+        dir = AMS::Geometry.transition_vector(c1.direction, c2.direction, ratio)
+        up = AMS::Geometry.transition_vector(c1.up, c2.up, ratio)
+        c3.set(eye, eye + dir, up)
+        t = c1.perspective?
+        c1.perspective = c2.perspective?
+        c3.perspective = c2.perspective?
+        if c2.perspective?
+          c3.focal_length = c1.focal_length + (c2.focal_length - c1.focal_length) * ratio
+          c3.fov = c1.fov + (c2.fov - c1.fov) * ratio
+          c3.image_width = c1.image_width + (c2.image_width - c1.image_width) * ratio
+        else
+          c3.height = c1.height + (c2.height - c1.height) * ratio
+        end
+        c1.perspective = t
+        c3.description = ratio < 0.5 ? c1.description : c2.description
       end
     end
 

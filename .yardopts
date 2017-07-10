@@ -1,3 +1,10 @@
 RubyExtension/MSPhysics.rb
 RubyExtension/MSPhysics/*.rb
-- LICENCE.txt README.md CHANGELOG.md TODO.md Examples.md Overview.md
+- RubyExtension/MSPhysics/README.md \
+  RubyExtension/MSPhysics/LICENCE.txt \
+  RubyExtension/MSPhysics/CHANGELOG.md \
+  RubyExtension/MSPhysics/TODO.md \
+  RubyExtension/MSPhysics/FAQ.md \
+  RubyExtension/MSPhysics/ScriptOverview.md \
+  RubyExtension/MSPhysics/ScriptExamples.md \
+  RubyExtension/MSPhysics/ControllersOverview.md
