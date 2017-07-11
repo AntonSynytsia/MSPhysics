@@ -105,12 +105,12 @@ Follow these steps in case you intend to uninstall the plugin.
 
 ## Version
 
-1.0.0
+1.0.1
 
 
 ## Release Date
 
-July 9, 2017
+July 11, 2017
 
 
 ## ThirdParty Libraries

@@ -1,3 +1,7 @@
+## 1.0.1 - July 11, 2017
+- Fixed a crash that occurs when continuous collision check and non-collidable
+  options are enabled together.
+
 ## 1.0.0 - July 9, 2017
 - Fixed the bug with negative magnet forces. Thanks to Ali Karakus for the
   report.

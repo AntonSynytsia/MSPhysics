@@ -795,7 +795,6 @@ module MSPhysics
           }
           @groups_data[group] = gdata
         }
-        $groups_data = @groups_data
         # Save materials data
         @tmaterials_data.each { |material, data|
           gdata = {}
