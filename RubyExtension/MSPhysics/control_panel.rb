@@ -238,7 +238,7 @@ module MSPhysics
       # @return [Numeric, nil] Slider value or nil if slider with the given name
       #   doesn't exist.
       def get_slider_value(name)
-        return unless @dialog
+        return if @dialog.nil? || !@init_called
         cname = name.to_s.gsub(/[\\\"\'\v\n\t\r\f]/, '')
         data = @sliders[cname]
         return unless data
@@ -251,11 +251,10 @@ module MSPhysics
       # @param [Numeric] value
       # @return [Boolean] success
       def set_slider_value(name, value)
-        return false unless @dialog
+        return false if @dialog.nil? || !@init_called
         cname = name.to_s.gsub(/[\\\"\'\v\n\t\r\f]/, '')
         data = @sliders[cname]
-        return false unless data
-        return false if @dialog.get_element_value("lcrs-" + cname).empty?
+        return false if data.nil? || @dialog.get_element_value("lcrs-" + cname).empty?
         cmd = "sliders[\"#{cname}\"].setValue(#{value.to_f}); update_slider(\"#{cname}\");"
         execute_js(cmd)
         true
@@ -278,7 +277,7 @@ module MSPhysics
       #   italicized.
       # @return [Array, nil] An array of two values if successful
       def compute_text_size(text, opts = {})
-        return unless @dialog
+        return false if @dialog.nil? || !@init_called
         text = text.to_s
         font = opts.has_key?(:font) ? opts[:font].to_s : "Ariel"
         size = opts.has_key?(:size) ? opts[:size].to_i : 11
@@ -295,7 +294,7 @@ module MSPhysics
 
 
       def generate_slider_html(name, update_size = true)
-        return false unless @dialog
+        return false if @dialog.nil? || !@init_called
         cname = name.to_s.gsub(/[\\\"\'\v\n\t\r\f]/, '')
         data = @sliders[cname]
         return false unless data
@@ -307,7 +306,7 @@ module MSPhysics
       end
 
       def degenerate_slider_html(name, update_size = true)
-        return false unless @dialog
+        return false if @dialog.nil? || !@init_called
         cname = name.to_s.gsub(/[\\\"\'\v\n\t\r\f]/, '')
         return false if @dialog.get_element_value("lcrs-" + cname).empty?
         cmd = "remove_slider(\"#{cname}\");"

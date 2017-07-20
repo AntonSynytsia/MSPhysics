@@ -115,7 +115,7 @@ function compute_text_size(v_text, v_font, v_size, v_bold, v_italic) {
 }
 
 $( document ).ready(function() {
-  window.setTimeout(init, 10); // Timeout is needed because without it the event might not be triggered on Mac OS X.
+  window.setTimeout(init, 100); // Timeout is needed because without it the event might not be triggered on Mac OS X.
   g_interval_timer = setInterval(function() { callback('update_note') }, 1000);
 
   $( document ).mouseenter(function() {

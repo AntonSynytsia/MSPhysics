@@ -1,3 +1,6 @@
+## 1.0.2 - July 19, 2017
+- Fixed control panel error on Mac OS X.
+
 ## 1.0.1 - July 11, 2017
 - Fixed a crash that occurs when continuous collision check and non-collidable
   options are enabled together.

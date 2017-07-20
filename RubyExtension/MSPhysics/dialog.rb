@@ -54,7 +54,7 @@ module MSPhysics
       # Update state of all UI.
       # @return [void]
       def update_state
-        return unless self.open?
+        return if @dialog.nil? || !@init_called
         # Simulation dialog
         update_simulation_state
         # Joint dialog
@@ -86,7 +86,9 @@ module MSPhysics
       # Update UI simulation tab.
       # @return [void]
       def update_simulation_state
-        return unless self.open?
+        return if @dialog.nil? || !@init_called
+        model = Sketchup.active_model
+        return unless model
         cmd = ''
         cmd << "$('#simulation-animate_scenes_state').val('#{MSPhysics::Settings.animate_scenes_state}');"
         cmd << "$('#simulation-animate_scenes_state').trigger('chosen:updated');"
@@ -126,7 +128,9 @@ module MSPhysics
 
       # @return [void]
       def update_simulation_sliders
-        return unless self.open?
+        return if @dialog.nil? || !@init_called
+        model = Sketchup.active_model
+        return unless model
         cmd = ''
         cmd << "if (g_kns_velocity != null) { g_kns_velocity.setValue(#{MSPhysics::Settings.key_nav_velocity}); };"
         cmd << "if (g_kns_omega != null) { g_kns_omega.setValue(#{MSPhysics::Settings.key_nav_omega}); };"
@@ -138,8 +142,9 @@ module MSPhysics
       # Update UI properties tab.
       # @return [void]
       def update_body_state
-        return unless self.open?
+        return if @dialog.nil? || !@init_called
         model = Sketchup.active_model
+        return unless model
         bodies = []
         model.selection.each { |ent|
           next unless ent.is_a?(Sketchup::Group) || ent.is_a?(Sketchup::ComponentInstance)
@@ -386,8 +391,9 @@ module MSPhysics
       # Update UI joint tab.
       # @return [void]
       def update_joint_state
-        return unless self.open?
+        return if @dialog.nil? || !@init_called
         model = Sketchup.active_model
+        return unless model
         joints = []
         model.selection.each { |ent|
           next unless ent.is_a?(Sketchup::Group) || ent.is_a?(Sketchup::ComponentInstance)
@@ -821,8 +827,9 @@ module MSPhysics
       # Update UI sound tab.
       # @return [void]
       def update_sound_state
-        return unless self.open?
+        return if @dialog.nil? || !@init_called
         model = Sketchup.active_model
+        return unless model
         cmd = ""
         cmd << "$('#sound-list').empty();"
         dict = model.attribute_dictionary('MSPhysics Sounds', false)
@@ -1097,17 +1104,30 @@ module MSPhysics
           }
           @dialog.add_action_callback('open_link') { |acs, params|
             dir = File.dirname(__FILE__)
+            intro = 'file:///'
             if params == 'http://mspdoc/index'
               fpath = File.join(dir, 'doc/index.html')
-              fpath = "http://www.rubydoc.info/github/AntonSynytsia/MSPhysics/master/index" unless File.exist?(fpath)
+              if File.exist?(fpath)
+                fpath = intro + File.expand_path(fpath)
+              else
+                fpath = "http://www.rubydoc.info/github/AntonSynytsia/MSPhysics/master/index"
+              end
             elsif params == 'http://amsdoc/index'
               fpath = File.join(dir, '../ams_Lib/doc/index.html')
-              fpath = "http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/index" unless File.exist?(fpath)
+              if File.exist?(fpath)
+                fpath = intro + File.expand_path(fpath)
+              else
+                fpath = "http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/index"
+              end
             elsif params == 'http://rubydoc/index'
               fpath = "http://ruby-doc.org/core-#{RUBY_VERSION}/"
             elsif params == 'http://mspdoc/controller'
               fpath = File.join(dir, 'doc/file.ControllersOverview.html')
-              fpath = "http://www.rubydoc.info/github/AntonSynytsia/MSPhysics/master/file/ControllersOverview.md" unless File.exist?(fpath)
+              if File.exist?(fpath)
+                fpath = intro + File.expand_path(fpath)
+              else
+                fpath = "http://www.rubydoc.info/github/AntonSynytsia/MSPhysics/master/file/RubyExtension/MSPhysics/ControllersOverview.md"
+              end
             else
               fpath = params
             end
