@@ -74,7 +74,7 @@ as well as, to those who contributed in making this project a reality.
 1. Navigate to [MSPhysics Homepage](http://sketchucation.com/forums/viewtopic.php?f=323&t=56852).
 2. Download <i>ams_Lib_x.y.z.rbz</i> and <i>MSPhysics_x.y.z.rbz</i>.
 3. Open SketchUp.
-4 . Select <i>(Menu) Window → Preferences</i>.
+4. Select <i>(Menu) Window → Preferences</i>.
 5. Navigate to <i>Extensions</i> section within the <i>System Preferences</i> dialog.
 6. Click <i>Install Extension...</i> button, select <i>ams_Lib_x.y.z.rbz</i>, and click <i>Open</i>.
 7. Repeat the same step for <i>MSPhysics_x.y.z.rbz</i>
@@ -105,12 +105,12 @@ Follow these steps in case you intend to uninstall the plugin.
 
 ## Version
 
-1.0.2
+1.0.3
 
 
 ## Release Date
 
-July 19, 2017
+October 16, 2017
 
 
 ## ThirdParty Libraries

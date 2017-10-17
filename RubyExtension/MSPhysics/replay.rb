@@ -635,12 +635,14 @@ module MSPhysics
           data[:id] = group.entityID
           data[:definition] = @preset_definitions[group] || AMS::Group.get_definition(group)
         end
-        data[pframe] = {
-          :transformation => group.transformation,
-          :visible        => group.visible?,
-          :material       => group.material ? group.material : 0,
-          :layer          => group.layer ? group.layer : 0
-        }
+        pdata = {}
+        data[pframe] = pdata
+        pdata[:transformation] = group.transformation
+        if @record_groups
+          pdata[:visible] = group.visible?
+          pdata[:material] = group.material ? group.material : 0
+          pdata[:layer] = group.layer ? group.layer : 0
+        end
         update_data_frame_limits(data, pframe)
       end
 
@@ -757,7 +759,7 @@ module MSPhysics
       # whether their recording is enabled.
       # @param [Fixnum] pframe
       def record_all(pframe)
-        record_groups(pframe) if @record_groups
+        record_groups(pframe)
         record_materials(pframe) if @record_materials
         record_layers(pframe) if @record_layers
         record_camera(pframe) if @record_camera
@@ -1725,26 +1727,26 @@ module MSPhysics
         model = Sketchup.active_model
         pframe = AMS.clamp(pframe.to_i, @start_frame, @end_frame)
         # Activate group data
-        if @replay_groups
-          @groups_data.each { |entity, data|
-            instance = data[:instance]
-            bentity_valid = (entity.is_a?(Sketchup::Group) || entity.is_a?(Sketchup::ComponentInstance)) && entity.valid?
-            binstance_valid = instance && instance.valid?
-            if pframe < data[:start_frame] || pframe > data[:end_frame]
-              if bentity_valid && entity.visible?
-                entity.visible = false
-              end
-              if binstance_valid && instance.visible?
-                instance.visible = false
-              end
-              next
+        @groups_data.each { |entity, data|
+          instance = data[:instance]
+          bentity_valid = (entity.is_a?(Sketchup::Group) || entity.is_a?(Sketchup::ComponentInstance)) && entity.valid?
+          binstance_valid = instance && instance.valid?
+          if pframe < data[:start_frame] || pframe > data[:end_frame]
+            if bentity_valid && entity.visible?
+              entity.visible = false
             end
-            frame_data = get_frame_data(data, pframe)
-            next unless frame_data
-            material = frame_data[:material]
-            if bentity_valid
-              entity.move!(frame_data[:transformation]) if frame_data[:transformation]
-              #~ entity.transformation = frame_data[:transformation]
+            if binstance_valid && instance.visible?
+              instance.visible = false
+            end
+            next
+          end
+          frame_data = get_frame_data(data, pframe)
+          next unless frame_data
+          material = frame_data[:material]
+          if bentity_valid
+            entity.move!(frame_data[:transformation]) if frame_data[:transformation]
+            #~ entity.transformation = frame_data[:transformation]
+            if @replay_groups
               if frame_data[:visible] != nil && entity.visible? != frame_data[:visible]
                 entity.visible = frame_data[:visible]
               end
@@ -1761,9 +1763,11 @@ module MSPhysics
                 end
               end
               entity.layer = frame_data[:layer] if frame_data[:layer] && frame_data[:layer] != 0 && frame_data[:layer].valid? && entity.layer != frame_data[:layer]
-            elsif binstance_valid && pframe >= data[:start_frame] && pframe <= data[:end_frame]
-              instance.move!(frame_data[:transformation]) if frame_data[:transformation]
-              #~ instance.transformation = frame_data[:transformation]
+            end
+          elsif binstance_valid && pframe >= data[:start_frame] && pframe <= data[:end_frame]
+            instance.move!(frame_data[:transformation]) if frame_data[:transformation]
+            #~ instance.transformation = frame_data[:transformation]
+            if @replay_groups
               if frame_data[:visible] != nil && instance.visible? != frame_data[:visible]
                 instance.visible = frame_data[:visible]
               end
@@ -1781,8 +1785,8 @@ module MSPhysics
               end
               instance.layer = frame_data[:layer] if frame_data[:layer] && frame_data[:layer] != 0 && frame_data[:layer].valid? && instance.layer != frame_data[:layer]
             end
-          }
-        end
+          end
+        }
         # Activate material data
         if @replay_materials
           @materials_data.each { |material, data|
@@ -1865,14 +1869,13 @@ module MSPhysics
           return false
         end
         # Display options input box.
-        prompts = ['Start Frame', 'End Frame', 'Speed (0.01 - 10000)', 'Reverse', 'Image Type', 'Resolution', 'Anti-alias', 'Compression', 'Transparent Background   ', 'Replay Materials', 'Replay Layers', 'Replay Camera', 'Replay Render', 'Replay Shadow']
+        prompts = ['Start Frame', 'End Frame', 'Speed (0.01 - 10000)', 'Reverse', 'Image Type', 'Resolution', 'Anti-alias', 'Compression', 'Transparent Background   ', 'Replay Groups', 'Replay Materials', 'Replay Layers', 'Replay Camera', 'Replay Render', 'Replay Shadow']
         yn = 'Yes|No'
         image_types = 'bmp|jpg|png|tif'
         res = 'Model-Inherited|Custom|320x240|640x480|768x576|800x600|1024x768|1280x720|1280x1024|1920x1080'
         compression = '0.0|0.1|0.2|0.3|0.4|0.5|0.6|0.7|0.8|0.9|1.0'
-        drop_downs = ['', '', '', yn, image_types, res, yn, compression, yn, yn, yn, yn, yn, yn]
-        #values = [@start_frame, @end_frame, @speed, @reversed ? 'Yes' : 'No', 'png', 'Model-Inherited', 'Yes', '0.9', 'No', @replay_materials ? 'Yes' : 'No', @replay_layers ? 'Yes' : 'No', @replay_camera ? 'Yes' : 'No', @replay_render ? 'Yes' : 'No', @replay_shadow ? 'Yes' : 'No']
-        values = [@start_frame, @end_frame, @image_defaults[:speed], @image_defaults[:reversed], @image_defaults[:image_type], @image_defaults[:resolution], @image_defaults[:antialias], @image_defaults[:compression], @image_defaults[:tbackground], @replay_materials ? 'Yes' : 'No', @replay_layers ? 'Yes' : 'No', @replay_camera ? 'Yes' : 'No', @replay_render ? 'Yes' : 'No', @replay_shadow ? 'Yes' : 'No']
+        drop_downs = ['', '', '', yn, image_types, res, yn, compression, yn, yn, yn, yn, yn, yn, yn]
+        values = [@start_frame, @end_frame, @image_defaults[:speed], @image_defaults[:reversed], @image_defaults[:image_type], @image_defaults[:resolution], @image_defaults[:antialias], @image_defaults[:compression], @image_defaults[:tbackground],  @replay_groups ? 'Yes' : 'No', @replay_materials ? 'Yes' : 'No', @replay_layers ? 'Yes' : 'No', @replay_camera ? 'Yes' : 'No', @replay_render ? 'Yes' : 'No', @replay_shadow ? 'Yes' : 'No']
         results = ::UI.inputbox(prompts, values, drop_downs, 'Export Animation Options')
         return false unless results
         # Display Custom resolution input box if desired.
@@ -1911,12 +1914,12 @@ module MSPhysics
         orig_rep_cam = @replay_camera
         orig_rep_ren = @replay_render
         orig_rep_sha = @replay_shadow
-        @replay_groups = true
-        @replay_materials = results[9] == 'Yes'
-        @replay_layers = results[10] == 'Yes'
-        @replay_camera = results[11] == 'Yes'
-        @replay_render = results[12] == 'Yes'
-        @replay_shadow = results[13] == 'Yes'
+        @replay_groups = results[9] == 'Yes'
+        @replay_materials = results[10] == 'Yes'
+        @replay_layers = results[11] == 'Yes'
+        @replay_camera = results[12] == 'Yes'
+        @replay_render = results[13] == 'Yes'
+        @replay_shadow = results[14] == 'Yes'
         # Save defaults
         @image_defaults[:speed] = speed.to_s
         @image_defaults[:reversed] = results[3]
@@ -1968,7 +1971,7 @@ module MSPhysics
         @replay_render = orig_rep_ren
         @replay_shadow = orig_rep_sha
         # Display results
-        ::UI.messagebox("#{babort ? 'Stopped' : 'Finished'} exporting MSPhysics Replay Animation!\n\nExported #{count} frames in #{sprintf("%.2f", Time.now - start_time)} seconds.\n\nYou may now dispose of replay data to reduce file size.\n\nYou may use Movie Maker, MakeAVI, or a similar tool to combine all images into a video file. ")
+        ::UI.messagebox("#{babort ? 'Stopped' : 'Finished'} exporting MSPhysics Replay Animation!\n\nExported #{count} frames in #{sprintf("%.2f", Time.now - start_time)} seconds.\n\nYou may now dispose of replay data to reduce file size.\n\nYou may use Movie Maker, MakeAVI, or a similar tool to combine all images into a video file.")
         # Return success
         true
       end
@@ -1984,10 +1987,10 @@ module MSPhysics
           return false
         end
         # Display options input box.
-        prompts = ['Start Frame', 'End Frame', 'Speed (0.01 - 10000)   ', 'Reverse', 'Replay Materials', 'Replay Layers', 'Replay Camera', 'Replay Render', 'Replay Shadow']
+        prompts = ['Start Frame', 'End Frame', 'Speed (0.01 - 10000)   ', 'Reverse', 'Replay Groups', 'Replay Materials', 'Replay Layers', 'Replay Camera', 'Replay Render', 'Replay Shadow']
         yn = 'Yes|No'
-        drop_downs = ['', '', '', yn, yn, yn, yn, yn, yn]
-        values = [@start_frame, @end_frame, @skp_defaults[:speed],  @skp_defaults[:reversed], @replay_materials ? 'Yes' : 'No', @replay_layers ? 'Yes' : 'No', @replay_camera ? 'Yes' : 'No', @replay_render ? 'Yes' : 'No', @replay_shadow ? 'Yes' : 'No']
+        drop_downs = ['', '', '', yn, yn, yn, yn, yn, yn, yn]
+        values = [@start_frame, @end_frame, @skp_defaults[:speed],  @skp_defaults[:reversed], @replay_groups ? 'Yes' : 'No', @replay_materials ? 'Yes' : 'No', @replay_layers ? 'Yes' : 'No', @replay_camera ? 'Yes' : 'No', @replay_render ? 'Yes' : 'No', @replay_shadow ? 'Yes' : 'No']
         results = ::UI.inputbox(prompts, values, drop_downs, 'Export Animation Options')
         return false unless results
         # Select export path
@@ -2009,12 +2012,12 @@ module MSPhysics
         orig_rep_cam = @replay_camera
         orig_rep_ren = @replay_render
         orig_rep_sha = @replay_shadow
-        @replay_groups = true
-        @replay_materials = results[4] == 'Yes'
-        @replay_layers = results[5] == 'Yes'
-        @replay_camera = results[6] == 'Yes'
-        @replay_render = results[7] == 'Yes'
-        @replay_shadow = results[8] == 'Yes'
+        @replay_groups = results[4] == 'Yes'
+        @replay_materials = results[5] == 'Yes'
+        @replay_layers = results[6] == 'Yes'
+        @replay_camera = results[7] == 'Yes'
+        @replay_render = results[8] == 'Yes'
+        @replay_shadow = results[9] == 'Yes'
         # Save skp defaults
         @skp_defaults[:speed] = speed.to_s
         @skp_defaults[:reversed] = results[3]

@@ -88,15 +88,29 @@ module MSPhysics
     def create_geometry(pt1, pt2, view)
       model = Sketchup.active_model
       ents = model.active_entities
-	  op = 'MSPhysics - Create Joint'
-	  Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
+      op = 'MSPhysics - Create Joint'
+      Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
       begin
         if ents.parent.is_a?(Sketchup::ComponentDefinition)
           type = ents.parent.instances.first.get_attribute('MSPhysics', 'Type', nil)
           raise(TypeError, 'Cannot create a recursively defined joint!', caller) if type == 'Joint'
         end
         cd = model.definitions.load(@full_path)
-        tra = Geom::Transformation.new(pt1, pt1.vector_to(pt2))
+        zaxis = pt1.vector_to(pt2)
+        zlen = zaxis.length.to_f
+        edit_tra = Sketchup.version.to_i > 6 ? model.edit_transform : Geom::Transformation.new()
+        if zlen < MSPhysics::EPSILON
+          zaxis = edit_tra.zaxis
+        else
+          zaxis = AMS::Geometry.scale_vector(zaxis, 1.0 / zlen)
+        end
+        if zaxis.dot(edit_tra.zaxis).abs < 0.9999995
+          xaxis = zaxis.cross(edit_tra.zaxis).normalize
+        else
+          xaxis = zaxis.cross(edit_tra.yaxis).normalize
+        end
+        yaxis = zaxis.cross(xaxis)
+        tra = Geom::Transformation.new(xaxis, yaxis, zaxis, pt1)
         ts = Geom::Transformation.scaling(MSPhysics.get_joint_scale)
         layer = model.layers['MSPhysics Joints']
         unless layer

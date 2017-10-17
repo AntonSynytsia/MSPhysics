@@ -1,3 +1,18 @@
+## 1.0.3 - October 16, 2017
+- Improved joint connection tool. Now closest joints are determined by closest
+  distance to object's bounding box rather than distance to object's center.
+- Added an option to connect/disconnect to from all alike instances. This makes
+  the joint connection tool more user friendly when dealing with chain like
+  connections.
+- Improved angular stiffness of a Fixed joint.
+- Added <tt>MSPhysics::Joint.#get_tension1</tt>,
+  <tt>MSPhysics::Joint.#get_tension2</tt>,
+  <tt>MSPhysics::Body.#net_joint_force</tt>, and
+  <tt>MSPhysics::Body.#net_joint_torque</tt>.
+- Added context menu option in simulation to toggle visibility of a selected
+  entity.
+- Made UI dialog compatible with IE9.
+
 ## 1.0.2 - July 19, 2017
 - Fixed control panel error on Mac OS X.
 

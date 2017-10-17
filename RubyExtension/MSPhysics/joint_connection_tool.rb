@@ -36,7 +36,7 @@ module MSPhysics
       #   <tt>Sketchup::ComponentInstance</tt> instances in place of bodies.
       # @return [Array<(Hash, Hash)>] An array of two values.
       #   * The first element is a Hash of body data:
-      #     <tt>{ body => [centre, connected_ids], ... }</tt>
+      #     <tt>{ body => [connected_ids_set, definition, ptra, ptra_inv, loc_bb_min, loc_bb_max, loc_bb_center], ... }</tt>
       #   * The second element is a Hash of joint data:
       #     <tt>{ joint_id => [[joint_ent, joint_tra, parent_body], ...], ... }</tt>
       def get_connection_data(consider_world)
@@ -47,8 +47,9 @@ module MSPhysics
           end
         end
         # Gather all bodies, joints, and their data.
-        fbdata = {} # { body => [centre, connected_ids], ... }
+        fbdata = {} # { body => [loc_bb, ptra, ptra_inv, connected_ids_set], ... }
         fjdata = {} # { joint_id => [[joint_ent, joint_tra, parent_body], ...], ... }
+        bb_map = {}
         Sketchup.active_model.entities.each { |ent|
           next if !ent.is_a?(Sketchup::Group) && !ent.is_a?(Sketchup::ComponentInstance)
           ent_type = ent.get_attribute('MSPhysics', 'Type', 'Body')
@@ -60,11 +61,14 @@ module MSPhysics
             else
               body = ent
             end
-            connected_ids = ent.get_attribute('MSPhysics Body', 'Connected Joints')
-            connected_ids = connected_ids.is_a?(Array) ? connected_ids.grep(Fixnum).uniq : []
+            d = AMS::Group.get_definition(ent)
+            bb = bb_map[d]
+            unless bb
+              bb = AMS::Group.get_bounding_box_from_faces(ent, true, nil, &MSPhysics::Collision::ENTITY_VALIDATION_PROC)
+              bb_map[d] = bb
+            end
             ptra = ent.transformation
-            bb = AMS::Group.get_bounding_box_from_faces(ent, true, ptra, &MSPhysics::Collision::ENTITY_VALIDATION_PROC)
-            fbdata[body] = [bb.center, connected_ids]
+            fbdata[body] = [get_connected_joint_ids(ent), d, ptra, ptra.inverse, bb.min, bb.max, bb.center]
             cents = ent.is_a?(Sketchup::ComponentInstance) ? ent.definition.entities : ent.entities
             cents.each { |cent|
               next if !cent.is_a?(Sketchup::Group) && !cent.is_a?(Sketchup::ComponentInstance)
@@ -79,8 +83,9 @@ module MSPhysics
               xaxis.reverse! if AMS::Geometry.is_matrix_flipped?(jtra)
               jtra = Geom::Transformation.new(xaxis, jtra.yaxis, jtra.zaxis, jtra.origin)
               jdata = [cent, jtra, body]
-              if fjdata.has_key?(jid)
-                fjdata[jid] << jdata
+              jdatas = fjdata[jid]
+              if jdatas
+                jdatas << jdata
               else
                 fjdata[jid] = [jdata]
               end
@@ -96,8 +101,9 @@ module MSPhysics
             xaxis.reverse! if AMS::Geometry.is_matrix_flipped?(jtra)
             jtra = Geom::Transformation.new(xaxis, jtra.yaxis, jtra.zaxis, jtra.origin)
             jdata = [ent, jtra, nil]
-            if fjdata.has_key?(jid)
-              fjdata[jid] << jdata
+            jdatas = fjdata[jid]
+            if jdatas
+              jdatas << jdata
             else
               fjdata[jid] = [jdata]
             end
@@ -108,21 +114,21 @@ module MSPhysics
 
       # Get all joint connections from connection data.
       # @param [Hash] fbdata A hash of body data:
-      #   <tt>{ body => [centre, connected_ids], ... }</tt>
+      #   <tt>{ body => [connected_ids_set, definition, ptra, ptra_inv, loc_bb_min, loc_bb_max, loc_bb_center], ... }</tt>
       # @param [Hash] fjdata A hash of joint data:
       #   <tt>{ joint_id => [[joint_ent, joint_tra, parent_body], ...], ... }</tt>
       def get_conections_from_data(fbdata, fjdata)
         # Map all bodies with their connected joint IDs
-        jid_to_connected_bodies = {} # { joint_id => { child_body => [centre, flag], ... }, ... }
+        jid_to_connected_bodies = {} # { joint_id => { child_body => [ptra, ptra_inv, loc_bb_min, loc_bb_max, loc_bb_center, flag], ... }, ... }
         fbdata.each { |body, bdata|
-          bdata[1].each { |jid|
-            next unless fjdata.has_key?(jid)
+          bdata[0].each { |jid|
+            next unless fjdata[jid]
             data = jid_to_connected_bodies[jid]
             unless data
               data = {}
               jid_to_connected_bodies[jid] = data
             end
-            data[body] = [bdata[0], false]
+            data[body] = [bdata[2], bdata[3], bdata[4].to_a, bdata[5].to_a, bdata[6], false]
           }
         }
         # Make connections
@@ -131,44 +137,80 @@ module MSPhysics
           fjdata[jid].each { |jdata|
             closest_body = nil
             closest_dist = nil
+            closest_binside = false
+            jorigin = jdata[1].origin
             connected_bodies.each { |body, bdata|
               next if body == jdata[2]
-              dist = bdata[0].distance(jdata[1].origin).to_f
-              if closest_body.nil? || dist < closest_dist
+              # compute joint origin in local body's coordinates
+              ljpt = jorigin.transform(bdata[1])
+              # compute ljpt closest distance to body bounding box
+              min = bdata[2]
+              max = bdata[3]
+              rfpt = Geom::Point3d.new(ljpt)
+              binside = true
+              for i in 0..2
+                if (ljpt[i] < min[i])
+                  rfpt[i] = min[i]
+                  binside = false
+                elsif (ljpt[i] > max[i])
+                  rfpt[i] = max[i]
+                  binside = false
+                end
+              end
+              if binside
+                dist = bdata[4].distance(ljpt).to_f
+              else
+                dist = rfpt.distance(ljpt).to_f
+              end
+              if closest_body.nil? || (binside && !closest_binside) || (binside == closest_binside && dist < closest_dist)
                 closest_body = body
                 closest_dist = dist
+                closest_binside = binside
               end
             }
             next unless closest_body
             connections << [jdata[0], jdata[1], closest_body, jdata[2], jid]
-            connected_bodies[closest_body][1] = true
+            connected_bodies[closest_body][5] = true
             pbdata = connected_bodies[jdata[2]]
-            pbdata[1] = true if pbdata
+            pbdata[5] = true if pbdata
           }
           connected_bodies.each { |body, bdata|
-            next if bdata[1]
+            next if bdata[5]
             closest_jdata = nil
             closest_dist = nil
+            closest_binside = false
+            min = bdata[2]
+            max = bdata[3]
             fjdata[jid].each { |jdata|
               next if body == jdata[2]
-              dist = bdata[0].distance(jdata[1].origin).to_f
-              if closest_jdata.nil? || dist < closest_dist
+              # compute joint origin in local body's coordinates
+              ljpt = jdata[1].origin.transform(bdata[1])
+              # compute ljpt closest distance to body bounding box
+              rfpt = Geom::Point3d.new(ljpt)
+              binside = true
+              for i in 0..2
+                if (ljpt[i] < min[i])
+                  rfpt[i] = min[i]
+                  binside = false
+                elsif (ljpt[i] > max[i])
+                  rfpt[i] = max[i]
+                  binside = false
+                end
+              end
+              if binside
+                dist = bdata[4].distance(ljpt).to_f
+              else
+                dist = rfpt.distance(ljpt).to_f
+              end
+              if closest_jdata.nil? || (binside && !closest_binside) || (binside == closest_binside && dist < closest_dist)
                 closest_jdata = jdata
                 closest_dist = dist
+                closest_binside = binside
               end
             }
             next unless closest_jdata
             connections << [closest_jdata[0], closest_jdata[1], body, closest_jdata[2], jid]
           }
-=begin
-          connected_bodies.each { |body, bdata|
-            next if bdata[1]
-            fjdata[jid].each { |jdata|
-              next if body == jdata[2]
-              connections << [jdata[0], jdata[1], body, jdata[2], jid]
-            }
-          }
-=end
         }
         # Return all connections
         connections
@@ -240,53 +282,72 @@ module MSPhysics
         data
       end
 
-      # Get all joint ids connected to a group/component.
+      # Get all joint IDs connected to a group/component.
       # @param [Sketchup::Group, Sketchup::ComponentInstance] body
-      # @return [Array<Fixnum>]
+      # @return [Set<Fixnum>]
       def get_connected_joint_ids(body)
         ids = body.get_attribute('MSPhysics Body', 'Connected Joints')
-        ids.is_a?(Array) ? ids.grep(Fixnum).uniq : []
+        ids = [] unless ids.is_a?(Array)
+        ids_set = ::Set.new
+        if Sketchup.version.to_i < 14
+          ids.each { |id| ids_set.insert(id) if id.is_a?(Fixnum) }
+        else
+          ids.each { |id| ids_set.add(id) if id.is_a?(Fixnum) }
+        end
+        ids_set
       end
 
-      # Set connected joint ids of a group/component.
+      # Set connected joint IDs of a group/component.
       # @param [Sketchup::Group, Sketchup::ComponentInstance] body
-      # @param [Array<Fixnum>] ids
+      # @param [Array<Fixnum>, Set<Fixnum>] ids
       def set_connected_joint_ids(body, ids)
-        body.set_attribute('MSPhysics Body', 'Connected Joints', ids)
+        body.set_attribute('MSPhysics Body', 'Connected Joints', ids.to_a)
       end
 
-      # Connect joint id to a group/component.
+      # Connect joint ID to a group/component.
       # @param [Sketchup::Group, Sketchup::ComponentInstance] body
       # @param [Fixnum] id
-      # @return [Array<Fixnum>] The new joint ids of a group/component.
+      # @return [Set<Fixnum>] The new joint ids of a group/component.
       def connect_joint_id(body, id)
         ids = get_connected_joint_ids(body)
-        ids << id unless ids.include?(id)
-        body.set_attribute('MSPhysics Body', 'Connected Joints', ids)
+        if Sketchup.version.to_i < 14
+          ids.insert(id)
+        else
+          ids.add(id)
+        end
+        body.set_attribute('MSPhysics Body', 'Connected Joints', ids.to_a)
         ids
       end
 
-      # Connect joint id from a group/component.
+      # Disconnect joint ID from a group/component.
       # @param [Sketchup::Group, Sketchup::ComponentInstance] body
       # @param [Fixnum] id
-      # @return [Array<Fixnum>] The new joint ids of a group/component.
+      # @return [Set<Fixnum>] The new joint ids of a group/component.
       # @note Manually wrap the operation.
       def disconnect_joint_id(body, id)
         ids = get_connected_joint_ids(body)
         ids.delete(id)
-        body.set_attribute('MSPhysics Body', 'Connected Joints', ids)
+        body.set_attribute('MSPhysics Body', 'Connected Joints', ids.to_a)
         ids
       end
 
-      # Toggle connect joint id to a group/component.
+      # Toggle connect joint ID to a group/component.
       # @param [Sketchup::Group, Sketchup::ComponentInstance] body
       # @param [Fixnum] id
-      # @return [Array<Fixnum>] The new joint ids of a group/component.
+      # @return [Set<Fixnum>] The new joint ids of a group/component.
       # @note Manually wrap the operation.
       def toggle_connect_joint_id(body, id)
         ids = get_connected_joint_ids(body)
-        ids.include?(id) ? ids.delete(id) : ids << id
-        body.set_attribute('MSPhysics Body', 'Connected Joints', ids)
+        if ids.include?(id)
+          ids.delete(id)
+        else
+          if Sketchup.version.to_i < 14
+            ids.insert(id)
+          else
+            ids.add(id)
+          end
+        end
+        body.set_attribute('MSPhysics Body', 'Connected Joints', ids.to_a)
         ids
       end
 
@@ -479,12 +540,12 @@ module MSPhysics
     end
 
     def note(view, message)
-      return if Sketchup.version.to_i < 14
+      return if Sketchup.version.to_i < 16
       @note[:time] = Time.now
       @note[:text] = message
       sx = message.length * @text_opts[:size] * @text_opts[:hratio] + @text_opts[:padding] * 2
       sy = @text_opts[:size] * @text_opts[:vratio] + @text_opts[:padding] * 2
-      @note[:min].x = (view.vpwidth - sx) / 2
+      @note[:min].x = (view.vpwidth - sx) / 2.0
       @note[:min].y = 0
       @note[:max].x = @note[:min].x + sx
       @note[:max].y = @note[:min].y + sy
@@ -493,7 +554,7 @@ module MSPhysics
     end
 
     def warn(view, message)
-      if Sketchup.version.to_i < 14
+      if Sketchup.version.to_i < 16
         ::UI.beep
         return
       end
@@ -543,6 +604,35 @@ module MSPhysics
           JointConnectionTool.disconnect_joint_id(body, id)
         when MSPhysics::CURSORS[:select_plus_minus]
           JointConnectionTool.toggle_connect_joint_id(body, id)
+      end
+      model.commit_operation
+    end
+
+    def process_connection_multiple(body, joint, instances)
+      op = 'MSPhysics - Connecting Joint to Multiple'
+      model = Sketchup.active_model
+      Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
+      id = joint.get_attribute('MSPhysics Joint', 'ID', nil)
+      if !id.is_a?(Fixnum)
+        id = JointTool.generate_uniq_id
+        joint.set_attribute('MSPhysics Joint', 'ID', id)
+      end
+      case @cursor_id
+        when MSPhysics::CURSORS[:select_plus]
+          JointConnectionTool.connect_joint_id(body, id)
+        when MSPhysics::CURSORS[:select_minus]
+          JointConnectionTool.disconnect_joint_id(body, id)
+        when MSPhysics::CURSORS[:select_plus_minus]
+          JointConnectionTool.toggle_connect_joint_id(body, id)
+      end
+      if JointConnectionTool.get_connected_joint_ids(body).include?(id)
+        instances.each { |inst|
+          JointConnectionTool.connect_joint_id(inst, id)
+        }
+      else
+        instances.each { |inst|
+          JointConnectionTool.disconnect_joint_id(inst, id)
+        }
       end
       model.commit_operation
     end
@@ -914,16 +1004,28 @@ module MSPhysics
               elsif path[1].get_attribute('MSPhysics', 'Type', 'Body') != 'Joint'
                 return warn(view, "Interconnecting between bodies is not allowed!")
               end
-              process_connection(@picked, path[1])
+              d1 = AMS::Group.get_definition(@picked)
+              d2 = AMS::Group.get_definition(path[0])
+              if d1 == d2 && ::UI.messagebox('Would You like to connect/disconnect this joint to/from all alike instances?', MB_YESNO) == IDYES
+                instances = d1.instances
+                process_connection_multiple(@picked, path[1], instances)
+                instances.each { |inst|
+                  bdata = @fbdata[inst]
+                  bdata[0] = JointConnectionTool.get_connected_joint_ids(inst) if bdata
+                }
+              else
+                process_connection(@picked, path[1])
+                bdata = @fbdata[@picked]
+                bdata[0] = JointConnectionTool.get_connected_joint_ids(@picked) if bdata
+              end
             elsif ctype == 'Joint'
               process_connection(@picked, path[0])
+              bdata = @fbdata[@picked]
+              bdata[0] = JointConnectionTool.get_connected_joint_ids(@picked) if bdata
             else
               return warn(view, "Connecting to an instance of \"#{ctype}\" type is not allowed!")
             end
             connected_ids = JointConnectionTool.get_connected_joint_ids(@picked)
-            if @fbdata.has_key?(@picked)
-              @fbdata[@picked][1] = connected_ids
-            end
             @all_connections = JointConnectionTool.get_conections_from_data(@fbdata, @fjdata)
             @connected.clear
             @potential.clear
@@ -942,12 +1044,28 @@ module MSPhysics
             elsif ctype != 'Body'
               return warn(view, "Connecting to an instance of \"#{ctype}\" type is not allowed!")
             end
-            process_connection(path[0], @picked)
-            connected_ids = JointConnectionTool.get_connected_joint_ids(path[0])
-            id = @picked.get_attribute('MSPhysics Joint', 'ID')
-            if @fbdata.has_key?(path[0])
-              @fbdata[path[0]][1] = connected_ids
+            if @parent
+              d1 = AMS::Group.get_definition(path[0])
+              d2 = AMS::Group.get_definition(@parent)
+              if d1 == d2 && ::UI.messagebox('Would You like to connect/disconnect this joint to/from all alike instances?', MB_YESNO) == IDYES
+                instances = d1.instances
+                process_connection_multiple(path[0], @picked, instances)
+                instances.each { |inst|
+                  bdata = @fbdata[inst]
+                  bdata[0] = JointConnectionTool.get_connected_joint_ids(inst) if bdata
+                }
+              else
+                process_connection(path[0], @picked)
+                bdata = @fbdata[path[0]]
+                bdata[0] = JointConnectionTool.get_connected_joint_ids(path[0]) if bdata
+              end
+
+            else
+              process_connection(path[0], @picked)
+              bdata = @fbdata[path[0]]
+              bdata[0] = JointConnectionTool.get_connected_joint_ids(path[0]) if bdata
             end
+            id = @picked.get_attribute('MSPhysics Joint', 'ID')
             @all_connections = JointConnectionTool.get_conections_from_data(@fbdata, @fjdata)
             @connected.clear
             @potential.clear
@@ -1074,9 +1192,9 @@ module MSPhysics
                 op = 'MSPhysics - Disconnect all Bodies'
                 Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
                 @fbdata.each { |body, data|
-                  if data[1].include?(id)
-                    data[1].delete(id)
-                    body.set_attribute('MSPhysics Body', 'Connected Joints', data[1])
+                  if data[0].include?(id)
+                    data[0].delete(id)
+                    body.set_attribute('MSPhysics Body', 'Connected Joints', data[0].to_a)
                   end
                 }
                 model.commit_operation
@@ -1090,8 +1208,9 @@ module MSPhysics
               Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
               path[0].delete_attribute('MSPhysics Body', 'Connected Joints')
               model.commit_operation
-              if @fbdata.has_key?(path[0])
-                @fbdata[path[0]][1].clear
+              bdata = @fbdata[path[0]]
+              if bdata
+                bdata[0].clear
                 @all_connections = JointConnectionTool.get_conections_from_data(@fbdata, @fjdata)
               end
             }
@@ -1104,9 +1223,9 @@ module MSPhysics
               op = 'MSPhysics - Disconnect all Bodies'
               Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
               @fbdata.each { |body, data|
-                if data[1].include?(id)
-                  data[1].delete(id)
-                  body.set_attribute('MSPhysics Body', 'Connected Joints', data[1])
+                if data[0].include?(id)
+                  data[0].delete(id)
+                  body.set_attribute('MSPhysics Body', 'Connected Joints', data[0].to_a)
                 end
               }
               model.commit_operation

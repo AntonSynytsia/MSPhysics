@@ -129,7 +129,7 @@ module MSPhysics
       @fancy_note = nil
       @prev_fancy_note = nil
       @emitted_bodies = {}
-      @created_entities = []
+      @created_entities = {}
       @bb = Geom::BoundingBox.new
       @draw_queue = []
       @points_queue = []
@@ -919,7 +919,7 @@ module MSPhysics
       new_body.continuous_collision_check_enabled = true
       new_body.add_force(force)
       @emitted_bodies[new_body] = lifetime.zero? ? nil : @world.time + lifetime
-      @created_entities << new_body.group
+      @created_entities[new_body.group] = true
       new_body
     end
 
@@ -934,7 +934,7 @@ module MSPhysics
         end
       }
       @emitted_bodies.clear
-      @created_entities.each { |e|
+      @created_entities.each { |e, s|
         e.erase! if e.valid?
       }
       @created_entities.clear
@@ -959,7 +959,7 @@ module MSPhysics
     #   }
     def erase_on_end(entity)
       AMS.validate_type(entity, Sketchup::Drawingelement)
-      @created_entities << entity
+      @created_entities[entity] = true
     end
 
     # @!endgroup
@@ -2536,12 +2536,14 @@ module MSPhysics
         # Process emitted bodies.
         world_time = @world.time
         @emitted_bodies.reject! { |body, life_end|
-          next false if life_end.nil? || life_end > world_time
-          if body.valid?
+          next true unless body.valid?
+          if life_end && world_time > life_end
             @created_entities.delete(body.group)
             body.destroy(true)
+            true
+          else
+            false
           end
-          true
         }
       }
       # Update group transformations
@@ -3186,6 +3188,8 @@ module MSPhysics
       MSPhysics::Newton::World.set_destructor_proc(@world.address, destructor)
       # Enable Newton object validation
       MSPhysics::Newton.enable_object_validation(true)
+      # Clear collision cache
+      MSPhysics::Collision.clear_cache
       # Add entities
       ents = model.entities.to_a
       ents.each { |entity|
@@ -3242,6 +3246,8 @@ module MSPhysics
         end
         return unless @world
       }
+      # Clear collision cache again
+      MSPhysics::Collision.clear_cache
       # Transform all entities once to register into the undo operation.
       @saved_transformations.each { |e, t|
         e.transformation = t if e.valid?
@@ -3609,7 +3615,9 @@ module MSPhysics
       unless @picked.empty?
         if @picked[:body].valid?
           @picked[:body].continuous_collision_check_enabled = @picked[:ccc]
-          view.model.selection.remove(@picked[:body].group) unless @picked[:orig_selected]
+          if @picked[:body].group.valid?
+            view.model.selection.remove(@picked[:body].group) unless @picked[:orig_selected]
+          end
         end
         @picked.clear
         self.cursor = @original_cursor_id
@@ -3664,6 +3672,19 @@ module MSPhysics
       ph = view.pick_helper
       ph.do_pick(@cursor_pos.x, @cursor_pos.y)
       ent = ph.best_picked
+
+      menu.add_separator
+
+      if ent.visible?
+        item = menu.add_item('Hide Entity') {
+          ent.visible = false
+        }
+      else
+        item = menu.add_item('Show Entity') {
+          ent.visible = true
+        }
+      end
+
       return unless ent.is_a?(Sketchup::Group) || ent.is_a?(Sketchup::ComponentInstance)
       menu.add_separator
       sel.add(ent)

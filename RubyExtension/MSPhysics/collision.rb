@@ -8,7 +8,23 @@ module MSPhysics
       entity.get_attribute('MSPhysics', 'Type', 'Body') == 'Body' && !entity.get_attribute('MSPhysics Body', 'Ignore')
     }
 
+    @bb_cache = {}
+    @convex_cache = {}
+    @compound_cache = {}
+    @mesh_cache = {}
+
     class << self
+
+      # Call this every time prior to starting a new simulation and after
+      # finishing generating all collisions.
+      # @api private
+      # @return [void]
+      def clear_cache
+        @bb_cache.clear
+        @convex_cache.clear
+        @compound_cache.clear
+        @mesh_cache.clear
+      end
 
       # Verify that entity is valid for collision generation.
       # @api private
@@ -85,7 +101,12 @@ module MSPhysics
       def create_box(world, entity, transformation)
         MSPhysics::World.validate(world)
         validate_entity(entity)
-        bb = AMS::Group.get_bounding_box_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+        definition = AMS::Group.get_definition(entity)
+        bb = @bb_cache[definition]
+        unless @bb_cache[definition]
+          bb = AMS::Group.get_bounding_box_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+          @bb_cache[definition] = bb
+        end
         if bb.width.to_f < MSPhysics::EPSILON || bb.height.to_f < MSPhysics::EPSILON || bb.depth.to_f < MSPhysics::EPSILON
           raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
         end
@@ -114,7 +135,12 @@ module MSPhysics
       def create_sphere(world, entity, transformation)
         MSPhysics::World.validate(world)
         validate_entity(entity)
-        bb = AMS::Group.get_bounding_box_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+        definition = AMS::Group.get_definition(entity)
+        bb = @bb_cache[definition]
+        unless @bb_cache[definition]
+          bb = AMS::Group.get_bounding_box_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+          @bb_cache[definition] = bb
+        end
         if bb.width.to_f < MSPhysics::EPSILON || bb.height.to_f < MSPhysics::EPSILON || bb.depth.to_f < MSPhysics::EPSILON
           raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
         end
@@ -143,7 +169,12 @@ module MSPhysics
       def create_cone(world, entity, transformation)
         MSPhysics::World.validate(world)
         validate_entity(entity)
-        bb = AMS::Group.get_bounding_box_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+        definition = AMS::Group.get_definition(entity)
+        bb = @bb_cache[definition]
+        unless @bb_cache[definition]
+          bb = AMS::Group.get_bounding_box_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+          @bb_cache[definition] = bb
+        end
         if bb.width.to_f < MSPhysics::EPSILON || bb.height.to_f < MSPhysics::EPSILON || bb.depth.to_f < MSPhysics::EPSILON
           raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
         end
@@ -172,7 +203,12 @@ module MSPhysics
       def create_cylinder(world, entity, transformation)
         MSPhysics::World.validate(world)
         validate_entity(entity)
-        bb = AMS::Group.get_bounding_box_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+        definition = AMS::Group.get_definition(entity)
+        bb = @bb_cache[definition]
+        unless @bb_cache[definition]
+          bb = AMS::Group.get_bounding_box_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+          @bb_cache[definition] = bb
+        end
         if bb.width.to_f < MSPhysics::EPSILON || bb.height.to_f < MSPhysics::EPSILON || bb.depth.to_f < MSPhysics::EPSILON
           raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
         end
@@ -201,7 +237,12 @@ module MSPhysics
       def create_capsule(world, entity, transformation)
         MSPhysics::World.validate(world)
         validate_entity(entity)
-        bb = AMS::Group.get_bounding_box_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+        definition = AMS::Group.get_definition(entity)
+        bb = @bb_cache[definition]
+        unless @bb_cache[definition]
+          bb = AMS::Group.get_bounding_box_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+          @bb_cache[definition] = bb
+        end
         if bb.width.to_f < MSPhysics::EPSILON || bb.height.to_f < MSPhysics::EPSILON || bb.depth.to_f < MSPhysics::EPSILON
           raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
         end
@@ -230,7 +271,12 @@ module MSPhysics
       def create_chamfer_cylinder(world, entity, transformation)
         MSPhysics::World.validate(world)
         validate_entity(entity)
-        bb = AMS::Group.get_bounding_box_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+        definition = AMS::Group.get_definition(entity)
+        bb = @bb_cache[definition]
+        unless @bb_cache[definition]
+          bb = AMS::Group.get_bounding_box_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+          @bb_cache[definition] = bb
+        end
         if bb.width.to_f < MSPhysics::EPSILON || bb.height.to_f < MSPhysics::EPSILON || bb.depth.to_f < MSPhysics::EPSILON
           raise(TypeError, "Entity #{entity} has a flat bounding box. Flat collisions are invalid!", caller)
         end
@@ -262,7 +308,12 @@ module MSPhysics
       def create_convex_hull(world, entity, transform = false)
         MSPhysics::World.validate(world)
         validate_entity(entity)
-        vertices = AMS::Group.get_vertices_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+        definition = AMS::Group.get_definition(entity)
+        vertices = @convex_cache[definition]
+        unless @convex_cache[definition]
+          vertices = AMS::Group.get_vertices_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+          @convex_cache[definition] = vertices
+        end
         if vertices.size < 4
           raise(TypeError, "Entity #{entity} has too few vertices. At least four non-coplanar vertices are expected!", caller)
         end
@@ -294,7 +345,12 @@ module MSPhysics
       def create_compound(world, entity)
         MSPhysics::World.validate(world)
         validate_entity(entity)
-        point_collections = AMS::Group.get_vertices_from_faces2(entity, true, nil, &ENTITY_VALIDATION_PROC)
+        definition = AMS::Group.get_definition(entity)
+        point_collections = @compound_cache[definition]
+        unless @compound_cache[definition]
+          point_collections = AMS::Group.get_vertices_from_faces2(entity, true, nil, &ENTITY_VALIDATION_PROC)
+          @compound_cache[definition] = point_collections
+        end
         tra = entity.transformation
         s = AMS::Geometry.get_matrix_scale(tra)
         s.x *= -1 if AMS::Geometry.is_matrix_flipped?(tra)
@@ -359,7 +415,12 @@ module MSPhysics
       def create_static_mesh(world, entity)
         MSPhysics::World.validate(world)
         validate_entity(entity)
-        triplets = AMS::Group.get_polygons_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+        definition = AMS::Group.get_definition(entity)
+        point_collections = @mesh_cache[definition]
+        unless @mesh_cache[definition]
+          triplets = AMS::Group.get_polygons_from_faces(entity, true, nil, &ENTITY_VALIDATION_PROC)
+          @mesh_cache[definition] = triplets
+        end
         if triplets.empty?
           raise(TypeError, "Entity #{entity} doesn't have any faces. At least one face is required for an entity to be a valid tree collision!", caller)
         end

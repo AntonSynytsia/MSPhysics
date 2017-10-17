@@ -5,8 +5,8 @@ require 'extensions.rb'
 module MSPhysics
 
   NAME         = 'MSPhysics'.freeze
-  VERSION      = '1.0.2'.freeze
-  RELEASE_DATE = 'July 19, 2017'.freeze
+  VERSION      = '1.0.3'.freeze
+  RELEASE_DATE = 'October 16, 2017'.freeze
 
   # Create the extension.
   @extension = ::SketchupExtension.new(NAME, 'MSPhysics/main_entry')

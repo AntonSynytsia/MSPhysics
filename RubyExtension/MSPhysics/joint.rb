@@ -229,6 +229,22 @@ module MSPhysics
       MSPhysics::Newton::Joint.set_solver_model(@address, model)
     end
 
+    # Get primary tension force on a joint, which is usually the linear
+    # tension, in Newtons, in global space.
+    # @return [Geom::Vecotor3d]
+    # @since 1.0.3
+    def get_tension1
+      MSPhysics::Newton::Joint.get_tension1(@address)
+    end
+
+    # Get secondary tension force on a joint, which is usually the angular
+    # tension, in Newton-meters, in global space.
+    # @return [Geom::Vecotor3d]
+    # @since 1.0.3
+    def get_tension2
+      MSPhysics::Newton::Joint.get_tension2(@address)
+    end
+
     # Get joint name.
     # @return [String]
     def name

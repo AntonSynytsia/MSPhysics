@@ -1,5 +1,10 @@
 require 'MSPhysics.rb'
 
+# Ensure standard Set is loaded
+if Sketchup.version.to_i >= 14
+  Sketchup.require 'set'
+end
+
 # Require all files
 ext_dir = File.dirname(__FILE__)
 ext_dir.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18
@@ -419,12 +424,15 @@ module MSPhysics
     # @note Manually wrap the operation.
     def delete_all_attributes
       model = Sketchup.active_model
-      model.definitions.each { |definition|
-        delete_attributes(definition.instances)
+      model.definitions.each { |d|
+        delete_attributes(d.instances)
       }
-      model.attribute_dictionaries.delete('MSPhysics')
-      model.attribute_dictionaries.delete('MSPhysics Sounds')
-      model.attribute_dictionaries.delete('MSPhysics Replay')
+      dicts = model.attribute_dictionaries
+      if dicts
+        dicts.delete('MSPhysics')
+        dicts.delete('MSPhysics Sounds')
+        dicts.delete('MSPhysics Replay')
+      end
     end
 
     # Get physical joint scale.
@@ -576,10 +584,10 @@ module MSPhysics
           break
         end
       }
-	  if wrap_op
-	    op = 'MSPhysics - Utilizing Version'
-	    Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
-	  end
+      if wrap_op
+        op = 'MSPhysics - Utilizing Version'
+        Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
+      end
       make_compatible(false) if bmake_compatible
       if te
         te.set_text("Created with MSPhysics #{cvers}\n#{te.text}")
@@ -598,10 +606,10 @@ module MSPhysics
       model = Sketchup.active_model
       bdict = 'MSPhysics Body'
       # Start operation
-	  if wrap_op
-	    op = 'MSPhysics - Making Compatible'
-	    Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
-	  end
+      if wrap_op
+        op = 'MSPhysics - Making Compatible'
+        Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
+      end
       # Make changes
       update_timestep = model.get_attribute('MSPhysics', 'Update Timestep', MSPhysics::DEFAULT_SIMULATION_SETTINGS[:update_timestep]).to_f
       model.definitions.each { |d|
@@ -1530,32 +1538,36 @@ unless file_loaded?(__FILE__)
     str_yes = 'Yes'
     str_no = 'No'
     str_yn = str_yes + '|' + str_no
-    prompts = ['Record Materials', 'Record Layers', 'Record Camera', 'Record Render', 'Record Shadow', 'Replay Materials', 'Replay Layers', 'Replay Camera', 'Replay Render', 'Replay Shadow']
+    prompts = ['Record Groups', 'Record Materials', 'Record Layers', 'Record Camera', 'Record Render', 'Record Shadow', 'Replay Groups', 'Replay Materials', 'Replay Layers', 'Replay Camera', 'Replay Render', 'Replay Shadow']
     defaults = [
+      MSPhysics::Replay.groups_record_enabled? ? str_yes : str_no,
       MSPhysics::Replay.materials_record_enabled? ? str_yes : str_no,
       MSPhysics::Replay.layers_record_enabled? ? str_yes : str_no,
       MSPhysics::Replay.camera_record_enabled? ? str_yes : str_no,
       MSPhysics::Replay.render_record_enabled? ? str_yes : str_no,
       MSPhysics::Replay.shadow_record_enabled? ? str_yes : str_no,
+      MSPhysics::Replay.groups_replay_enabled? ? str_yes : str_no,
       MSPhysics::Replay.materials_replay_enabled? ? str_yes : str_no,
       MSPhysics::Replay.layers_replay_enabled? ? str_yes : str_no,
       MSPhysics::Replay.camera_replay_enabled? ? str_yes : str_no,
       MSPhysics::Replay.render_replay_enabled? ? str_yes : str_no,
       MSPhysics::Replay.shadow_replay_enabled? ? str_yes : str_no
     ]
-    drop_downs = [str_yn, str_yn, str_yn, str_yn, str_yn, str_yn, str_yn, str_yn, str_yn, str_yn]
+    drop_downs = [str_yn, str_yn, str_yn, str_yn, str_yn, str_yn, str_yn, str_yn, str_yn, str_yn, str_yn, str_yn]
     input = UI.inputbox(prompts, defaults, drop_downs, 'Replay Settings')
     next unless input
-    MSPhysics::Replay.materials_record_enabled = input[0] == str_yes
-    MSPhysics::Replay.layers_record_enabled = input[1] == str_yes
-    MSPhysics::Replay.camera_record_enabled = input[2] == str_yes
-    MSPhysics::Replay.render_record_enabled = input[3] == str_yes
-    MSPhysics::Replay.shadow_record_enabled = input[4] == str_yes
-    MSPhysics::Replay.materials_replay_enabled = input[5] == str_yes
-    MSPhysics::Replay.layers_replay_enabled = input[6] == str_yes
-    MSPhysics::Replay.camera_replay_enabled = input[7] == str_yes
-    MSPhysics::Replay.render_replay_enabled = input[8] == str_yes
-    MSPhysics::Replay.shadow_replay_enabled = input[9] == str_yes
+    MSPhysics::Replay.groups_record_enabled = input[0] == str_yes
+    MSPhysics::Replay.materials_record_enabled = input[1] == str_yes
+    MSPhysics::Replay.layers_record_enabled = input[2] == str_yes
+    MSPhysics::Replay.camera_record_enabled = input[3] == str_yes
+    MSPhysics::Replay.render_record_enabled = input[4] == str_yes
+    MSPhysics::Replay.shadow_record_enabled = input[5] == str_yes
+    MSPhysics::Replay.groups_replay_enabled = input[6] == str_yes
+    MSPhysics::Replay.materials_replay_enabled = input[7] == str_yes
+    MSPhysics::Replay.layers_replay_enabled = input[8] == str_yes
+    MSPhysics::Replay.camera_replay_enabled = input[9] == str_yes
+    MSPhysics::Replay.render_replay_enabled = input[10] == str_yes
+    MSPhysics::Replay.shadow_replay_enabled = input[11] == str_yes
     MSPhysics::Replay.save_replay_settings(true)
   }
   plugin_menu.set_validation_proc(item) {

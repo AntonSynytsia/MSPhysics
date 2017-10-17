@@ -90,7 +90,7 @@ input[type=checkbox]:focus {
   -webkit-transition: all 0.15s ease-in-out;
   -moz-transition: all 0.15s ease-in-out;
   cursor: pointer;
-  background: rgba(78, 191, 75, 1.0);
+  background-color: rgb(78, 191, 75);
   color: #FDFDFD;
   border: 1px solid rgba(78, 191, 75, 0.4);
   border-radius: 5px;
@@ -101,14 +101,14 @@ input[type=checkbox]:focus {
 
 .button:hover {
   outline: none;
-  background: rgba(76, 201, 73, 1.0);
+  background-color: rgb(76, 201, 73);
   color: #FFF;
   border: 1px solid rgba(76, 201, 73, 0.4);
 }
 
 .button:active {
   outline: none;
-  background: rgba(55, 219, 50, 1.0);
+  background-color: rgb(55, 219, 50);
   color: #FFF;
   border: 1px solid rgba(85, 196, 82, 0.4);
 }
@@ -118,9 +118,8 @@ input[type=checkbox]:focus {
   background-color: #FFF;
   color: #222;
   cursor: auto;
-  padding: 0.25em 0;
+  padding: 0.25em 0 0.25em 0.5em;
   margin: 0;
-  text-indent: 0.5em;
   outline: none;
   transition: all 0.25s ease-in-out;
   -webkit-transition: all 0.25s ease-in-out;
@@ -402,10 +401,12 @@ label.joint-label {
   transition: all 0.1s ease-in-out;
   -webkit-transition: all 0.1s ease-in-out;
   -moz-transition: all 0.1s ease-in-out;
+  cursor: pointer;
 }
 
 label.joint-label:hover {
   padding: 0.15em;
+  background-color: rgb(255, 255, 120);
   background-color: rgba(255, 255, 120, 0.5);
 }
 
@@ -415,10 +416,11 @@ label.joint-label-selected {
   font-weight: normal;
   padding: 0.15em;
   color: #0036C9;
-  background-color: rgba(255, 255, 120, 1.0);
+  background-color: rgb(255, 255, 120);
   transition: all 0.1s ease-in-out;
   -webkit-transition: all 0.1s ease-in-out;
   -moz-transition: all 0.1s ease-in-out;
+  cursor: pointer;
 }
 
 .help_box {
