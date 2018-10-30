@@ -1,0 +1,128 @@
+/*body {
+  color: #1a1a1a;
+}
+
+#main {
+  background: #f9f9f9;
+}
+
+#nav {
+  border: 0;
+  border-right: 1px dotted #ccc;
+  background: #f9f9f9;
+}
+
+#toc {
+  background: #f8f8f8;
+}
+
+li.r1 { background: #e7e7e7; }
+li.r2 { background: #f0f0f0; }
+
+#filecontents pre.code, .docstring pre.code,
+.tags pre.example {
+  background: #f4f4f9;
+}*/
+
+p.signature .extras,
+h3.signature .extras {
+  color: #bbb;
+}
+
+h2 small { font-weight: normal; font-size: 0.7em; display: inline; position: absolute; right: 0; }
+h2 small a {
+  display: block;
+  height: 20px;
+  border: 1px solid #aaa;
+  border-bottom: 0;
+  border-top-left-radius: 5px;
+  background: #f6f6f6;
+  position: relative;
+  padding: 2px 7px;
+}
+
+#content .signature {
+  /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#2d2d2d+0,2d2d2d+50,5e5e5e+100 */
+  background: #4f4f4f;
+  background: -moz-linear-gradient(left,  #4f4f4f 0%, #777777 100%);
+  background: -webkit-linear-gradient(left,  #4f4f4f 0%,#777777 100%);
+  background: linear-gradient(to right,  #4f4f4f 0%,#777777 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#4f4f4f', endColorstr='#777777',GradientType=1 );
+  color: #6EC7FF;
+  padding: 8px 10px;
+  border: none;
+}
+
+p.signature .aliases,
+h3.signature .aliases { display: block; font-weight: normal; font-size: 0.9em; font-family: sans-serif; margin-top: 0px; color: #DBDBDB; }
+p.signature .aliases .names,
+h3.signature .aliases .names { font-family: Monaco, Consolas, Courier, monospace; font-weight: bold; color: #DBDBDB; font-size: 1.1em; }
+
+.tags .overload .signature { margin-left: -1em; font-family: monospace; display: block; font-size: 0.9em; }
+
+.note {
+  color: #222;
+  margin: 20px 0;
+  padding: 10px;
+  border: 1px solid #DCE6F7;
+  border-radius: 3px;
+  display: block;
+}
+
+.docstring .note {
+  border-left-color: #5278BF;
+  border-left-width: 5px;
+}
+
+.summary .summary_signature {
+  padding: 4px 8px;
+  background: #f6f6f6;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+}
+
+#content .summary_signature a, #content .summary_signature a:visited {
+  color: #e72b3d;
+}
+
+.summary_signature:hover { background: #CFEBFF; border-color: #A4CCDA; cursor: pointer; }
+ul.summary.compact li { display: inline-block; margin: 0px 5px 0px 0px; line-height: 2.6em;}
+ul.summary.compact .summary_signature { padding: 5px 7px; padding-right: 4px; }
+#content .summary_signature:hover a,
+#content .summary_signature:hover a:visited {
+  background: transparent;
+  color: #049;
+}
+
+.summary_desc .object_link a, .docstring .object_link a {
+  background: #EDF4FA;
+}
+
+#content .signature a {
+  color: #FF7070;
+  background: none;
+}
+
+#content .overload .signature a {
+  color: #FF7070;
+  background: none;
+}
+
+.method_details {
+  border-top: 1px dotted #bbb;
+}
+
+/* The YARD JS doesn't size these elements unless we use the traditional
+ * content-box type of sizing.
+ */
+.box_info * {
+  box-sizing: content-box;
+}
+
+
+/* Ensure content is scrollable on small screens. */
+@media (max-width: 920px) {
+  #main {
+    overflow-y: scroll;
+  }
+}

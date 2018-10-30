@@ -1,0 +1,1050 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		339559611A0D798C00BB518A /* Ruby.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1590E61847A5A20084B06D /* Ruby.framework */; };
+		3A08D60E201DE025009D79EC /* angular_integration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E2201DE025009D79EC /* angular_integration.cpp */; };
+		3A08D60F201DE025009D79EC /* angular_integration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E2201DE025009D79EC /* angular_integration.cpp */; };
+		3A08D610201DE025009D79EC /* angular_integration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E2201DE025009D79EC /* angular_integration.cpp */; };
+		3A08D611201DE025009D79EC /* angular_integration.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E3201DE025009D79EC /* angular_integration.h */; };
+		3A08D612201DE025009D79EC /* angular_integration.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E3201DE025009D79EC /* angular_integration.h */; };
+		3A08D613201DE025009D79EC /* angular_integration.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E3201DE025009D79EC /* angular_integration.h */; };
+		3A08D614201DE025009D79EC /* geom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E4201DE025009D79EC /* geom.cpp */; };
+		3A08D615201DE025009D79EC /* geom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E4201DE025009D79EC /* geom.cpp */; };
+		3A08D616201DE025009D79EC /* geom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E4201DE025009D79EC /* geom.cpp */; };
+		3A08D617201DE025009D79EC /* geom.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E5201DE025009D79EC /* geom.h */; };
+		3A08D618201DE025009D79EC /* geom.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E5201DE025009D79EC /* geom.h */; };
+		3A08D619201DE025009D79EC /* geom.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E5201DE025009D79EC /* geom.h */; };
+		3A08D61A201DE025009D79EC /* geom_aabb_tree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E6201DE025009D79EC /* geom_aabb_tree.cpp */; };
+		3A08D61B201DE025009D79EC /* geom_aabb_tree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E6201DE025009D79EC /* geom_aabb_tree.cpp */; };
+		3A08D61C201DE025009D79EC /* geom_aabb_tree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E6201DE025009D79EC /* geom_aabb_tree.cpp */; };
+		3A08D61D201DE025009D79EC /* geom_aabb_tree.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E7201DE025009D79EC /* geom_aabb_tree.h */; };
+		3A08D61E201DE025009D79EC /* geom_aabb_tree.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E7201DE025009D79EC /* geom_aabb_tree.h */; };
+		3A08D61F201DE025009D79EC /* geom_aabb_tree.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E7201DE025009D79EC /* geom_aabb_tree.h */; };
+		3A08D620201DE025009D79EC /* geom_bounding_box.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E8201DE025009D79EC /* geom_bounding_box.cpp */; };
+		3A08D621201DE025009D79EC /* geom_bounding_box.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E8201DE025009D79EC /* geom_bounding_box.cpp */; };
+		3A08D622201DE025009D79EC /* geom_bounding_box.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E8201DE025009D79EC /* geom_bounding_box.cpp */; };
+		3A08D623201DE025009D79EC /* geom_bounding_box.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E9201DE025009D79EC /* geom_bounding_box.h */; };
+		3A08D624201DE025009D79EC /* geom_bounding_box.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E9201DE025009D79EC /* geom_bounding_box.h */; };
+		3A08D625201DE025009D79EC /* geom_bounding_box.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E9201DE025009D79EC /* geom_bounding_box.h */; };
+		3A08D626201DE025009D79EC /* geom_color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EA201DE025009D79EC /* geom_color.cpp */; };
+		3A08D627201DE025009D79EC /* geom_color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EA201DE025009D79EC /* geom_color.cpp */; };
+		3A08D628201DE025009D79EC /* geom_color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EA201DE025009D79EC /* geom_color.cpp */; };
+		3A08D629201DE025009D79EC /* geom_color.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5EB201DE025009D79EC /* geom_color.h */; };
+		3A08D62A201DE025009D79EC /* geom_color.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5EB201DE025009D79EC /* geom_color.h */; };
+		3A08D62B201DE025009D79EC /* geom_color.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5EB201DE025009D79EC /* geom_color.h */; };
+		3A08D62C201DE025009D79EC /* geom_quaternion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EC201DE025009D79EC /* geom_quaternion.cpp */; };
+		3A08D62D201DE025009D79EC /* geom_quaternion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EC201DE025009D79EC /* geom_quaternion.cpp */; };
+		3A08D62E201DE025009D79EC /* geom_quaternion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EC201DE025009D79EC /* geom_quaternion.cpp */; };
+		3A08D62F201DE025009D79EC /* geom_quaternion.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5ED201DE025009D79EC /* geom_quaternion.h */; };
+		3A08D630201DE025009D79EC /* geom_quaternion.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5ED201DE025009D79EC /* geom_quaternion.h */; };
+		3A08D631201DE025009D79EC /* geom_quaternion.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5ED201DE025009D79EC /* geom_quaternion.h */; };
+		3A08D632201DE025009D79EC /* geom_transformation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EE201DE025009D79EC /* geom_transformation.cpp */; };
+		3A08D633201DE025009D79EC /* geom_transformation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EE201DE025009D79EC /* geom_transformation.cpp */; };
+		3A08D634201DE025009D79EC /* geom_transformation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EE201DE025009D79EC /* geom_transformation.cpp */; };
+		3A08D635201DE025009D79EC /* geom_transformation.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5EF201DE025009D79EC /* geom_transformation.h */; };
+		3A08D636201DE025009D79EC /* geom_transformation.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5EF201DE025009D79EC /* geom_transformation.h */; };
+		3A08D637201DE025009D79EC /* geom_transformation.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5EF201DE025009D79EC /* geom_transformation.h */; };
+		3A08D638201DE025009D79EC /* geom_vector3d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F0201DE025009D79EC /* geom_vector3d.cpp */; };
+		3A08D639201DE025009D79EC /* geom_vector3d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F0201DE025009D79EC /* geom_vector3d.cpp */; };
+		3A08D63A201DE025009D79EC /* geom_vector3d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F0201DE025009D79EC /* geom_vector3d.cpp */; };
+		3A08D63B201DE025009D79EC /* geom_vector3d.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F1201DE025009D79EC /* geom_vector3d.h */; };
+		3A08D63C201DE025009D79EC /* geom_vector3d.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F1201DE025009D79EC /* geom_vector3d.h */; };
+		3A08D63D201DE025009D79EC /* geom_vector3d.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F1201DE025009D79EC /* geom_vector3d.h */; };
+		3A08D63E201DE025009D79EC /* msp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F2201DE025009D79EC /* msp.cpp */; };
+		3A08D63F201DE025009D79EC /* msp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F2201DE025009D79EC /* msp.cpp */; };
+		3A08D640201DE025009D79EC /* msp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F2201DE025009D79EC /* msp.cpp */; };
+		3A08D641201DE025009D79EC /* msp.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F3201DE025009D79EC /* msp.h */; };
+		3A08D642201DE025009D79EC /* msp.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F3201DE025009D79EC /* msp.h */; };
+		3A08D643201DE025009D79EC /* msp.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F3201DE025009D79EC /* msp.h */; };
+		3A08D644201DE025009D79EC /* msp_body.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F4201DE025009D79EC /* msp_body.cpp */; };
+		3A08D645201DE025009D79EC /* msp_body.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F4201DE025009D79EC /* msp_body.cpp */; };
+		3A08D646201DE025009D79EC /* msp_body.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F4201DE025009D79EC /* msp_body.cpp */; };
+		3A08D647201DE025009D79EC /* msp_body.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F5201DE025009D79EC /* msp_body.h */; };
+		3A08D648201DE025009D79EC /* msp_body.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F5201DE025009D79EC /* msp_body.h */; };
+		3A08D649201DE025009D79EC /* msp_body.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F5201DE025009D79EC /* msp_body.h */; };
+		3A08D64A201DE025009D79EC /* msp_contact.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F6201DE025009D79EC /* msp_contact.cpp */; };
+		3A08D64B201DE025009D79EC /* msp_contact.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F6201DE025009D79EC /* msp_contact.cpp */; };
+		3A08D64C201DE025009D79EC /* msp_contact.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F6201DE025009D79EC /* msp_contact.cpp */; };
+		3A08D64D201DE025009D79EC /* msp_contact.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F7201DE025009D79EC /* msp_contact.h */; };
+		3A08D64E201DE025009D79EC /* msp_contact.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F7201DE025009D79EC /* msp_contact.h */; };
+		3A08D64F201DE025009D79EC /* msp_contact.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F7201DE025009D79EC /* msp_contact.h */; };
+		3A08D650201DE025009D79EC /* msp_entity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F8201DE025009D79EC /* msp_entity.cpp */; };
+		3A08D651201DE025009D79EC /* msp_entity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F8201DE025009D79EC /* msp_entity.cpp */; };
+		3A08D652201DE025009D79EC /* msp_entity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F8201DE025009D79EC /* msp_entity.cpp */; };
+		3A08D653201DE025009D79EC /* msp_entity.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F9201DE025009D79EC /* msp_entity.h */; };
+		3A08D654201DE025009D79EC /* msp_entity.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F9201DE025009D79EC /* msp_entity.h */; };
+		3A08D655201DE025009D79EC /* msp_entity.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F9201DE025009D79EC /* msp_entity.h */; };
+		3A08D656201DE025009D79EC /* msp_fixed.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FA201DE025009D79EC /* msp_fixed.cpp */; };
+		3A08D657201DE025009D79EC /* msp_fixed.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FA201DE025009D79EC /* msp_fixed.cpp */; };
+		3A08D658201DE025009D79EC /* msp_fixed.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FA201DE025009D79EC /* msp_fixed.cpp */; };
+		3A08D659201DE025009D79EC /* msp_fixed.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FB201DE025009D79EC /* msp_fixed.h */; };
+		3A08D65A201DE025009D79EC /* msp_fixed.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FB201DE025009D79EC /* msp_fixed.h */; };
+		3A08D65B201DE025009D79EC /* msp_fixed.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FB201DE025009D79EC /* msp_fixed.h */; };
+		3A08D65C201DE025009D79EC /* msp_gear.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FC201DE025009D79EC /* msp_gear.cpp */; };
+		3A08D65D201DE025009D79EC /* msp_gear.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FC201DE025009D79EC /* msp_gear.cpp */; };
+		3A08D65E201DE025009D79EC /* msp_gear.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FC201DE025009D79EC /* msp_gear.cpp */; };
+		3A08D65F201DE025009D79EC /* msp_gear.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FD201DE025009D79EC /* msp_gear.h */; };
+		3A08D660201DE025009D79EC /* msp_gear.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FD201DE025009D79EC /* msp_gear.h */; };
+		3A08D661201DE025009D79EC /* msp_gear.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FD201DE025009D79EC /* msp_gear.h */; };
+		3A08D662201DE025009D79EC /* msp_hit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FE201DE025009D79EC /* msp_hit.cpp */; };
+		3A08D663201DE025009D79EC /* msp_hit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FE201DE025009D79EC /* msp_hit.cpp */; };
+		3A08D664201DE025009D79EC /* msp_hit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FE201DE025009D79EC /* msp_hit.cpp */; };
+		3A08D665201DE025009D79EC /* msp_hit.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FF201DE025009D79EC /* msp_hit.h */; };
+		3A08D666201DE025009D79EC /* msp_hit.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FF201DE025009D79EC /* msp_hit.h */; };
+		3A08D667201DE025009D79EC /* msp_hit.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FF201DE025009D79EC /* msp_hit.h */; };
+		3A08D668201DE025009D79EC /* msp_joint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D600201DE025009D79EC /* msp_joint.cpp */; };
+		3A08D669201DE025009D79EC /* msp_joint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D600201DE025009D79EC /* msp_joint.cpp */; };
+		3A08D66A201DE025009D79EC /* msp_joint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D600201DE025009D79EC /* msp_joint.cpp */; };
+		3A08D66B201DE025009D79EC /* msp_joint.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D601201DE025009D79EC /* msp_joint.h */; };
+		3A08D66C201DE025009D79EC /* msp_joint.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D601201DE025009D79EC /* msp_joint.h */; };
+		3A08D66D201DE025009D79EC /* msp_joint.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D601201DE025009D79EC /* msp_joint.h */; };
+		3A08D66E201DE025009D79EC /* msp_point_to_point.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D602201DE025009D79EC /* msp_point_to_point.cpp */; };
+		3A08D66F201DE025009D79EC /* msp_point_to_point.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D602201DE025009D79EC /* msp_point_to_point.cpp */; };
+		3A08D670201DE025009D79EC /* msp_point_to_point.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D602201DE025009D79EC /* msp_point_to_point.cpp */; };
+		3A08D671201DE025009D79EC /* msp_point_to_point.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D603201DE025009D79EC /* msp_point_to_point.h */; };
+		3A08D672201DE025009D79EC /* msp_point_to_point.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D603201DE025009D79EC /* msp_point_to_point.h */; };
+		3A08D673201DE025009D79EC /* msp_point_to_point.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D603201DE025009D79EC /* msp_point_to_point.h */; };
+		3A08D674201DE025009D79EC /* msp_point_to_point_actuator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D604201DE025009D79EC /* msp_point_to_point_actuator.cpp */; };
+		3A08D675201DE025009D79EC /* msp_point_to_point_actuator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D604201DE025009D79EC /* msp_point_to_point_actuator.cpp */; };
+		3A08D676201DE025009D79EC /* msp_point_to_point_actuator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D604201DE025009D79EC /* msp_point_to_point_actuator.cpp */; };
+		3A08D677201DE025009D79EC /* msp_point_to_point_actuator.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D605201DE025009D79EC /* msp_point_to_point_actuator.h */; };
+		3A08D678201DE025009D79EC /* msp_point_to_point_actuator.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D605201DE025009D79EC /* msp_point_to_point_actuator.h */; };
+		3A08D679201DE025009D79EC /* msp_point_to_point_actuator.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D605201DE025009D79EC /* msp_point_to_point_actuator.h */; };
+		3A08D67A201DE025009D79EC /* msp_world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D606201DE025009D79EC /* msp_world.cpp */; };
+		3A08D67B201DE025009D79EC /* msp_world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D606201DE025009D79EC /* msp_world.cpp */; };
+		3A08D67C201DE025009D79EC /* msp_world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D606201DE025009D79EC /* msp_world.cpp */; };
+		3A08D67D201DE025009D79EC /* msp_world.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D607201DE025009D79EC /* msp_world.h */; };
+		3A08D67E201DE025009D79EC /* msp_world.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D607201DE025009D79EC /* msp_world.h */; };
+		3A08D67F201DE025009D79EC /* msp_world.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D607201DE025009D79EC /* msp_world.h */; };
+		3A08D680201DE025009D79EC /* ruby_prep.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D608201DE025009D79EC /* ruby_prep.h */; };
+		3A08D681201DE025009D79EC /* ruby_prep.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D608201DE025009D79EC /* ruby_prep.h */; };
+		3A08D682201DE025009D79EC /* ruby_prep.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D608201DE025009D79EC /* ruby_prep.h */; };
+		3A08D683201DE025009D79EC /* ruby_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D609201DE025009D79EC /* ruby_util.cpp */; };
+		3A08D684201DE025009D79EC /* ruby_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D609201DE025009D79EC /* ruby_util.cpp */; };
+		3A08D685201DE025009D79EC /* ruby_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D609201DE025009D79EC /* ruby_util.cpp */; };
+		3A08D686201DE025009D79EC /* ruby_util.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D60A201DE025009D79EC /* ruby_util.h */; };
+		3A08D687201DE025009D79EC /* ruby_util.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D60A201DE025009D79EC /* ruby_util.h */; };
+		3A08D688201DE025009D79EC /* ruby_util.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D60A201DE025009D79EC /* ruby_util.h */; };
+		3A08D689201DE025009D79EC /* msp_lib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D60C201DE025009D79EC /* msp_lib.cpp */; };
+		3A08D68A201DE025009D79EC /* msp_lib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D60C201DE025009D79EC /* msp_lib.cpp */; };
+		3A08D68B201DE025009D79EC /* msp_lib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D60C201DE025009D79EC /* msp_lib.cpp */; };
+		3A33F15D1DC47FF600CA768D /* libSDL2-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F699E1D2FB63400F12E60 /* libSDL2-2.0.0.dylib */; };
+		3A33F15E1DC47FF600CA768D /* libSDL2_mixer-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F69A01D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib */; };
+		3A33F1601DC47FF600CA768D /* libnewton.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AF9FF711D29CEBF007FC1E1 /* libnewton.dylib */; };
+		3A3A92B81D2E4E3400B57C8D /* libnewton.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AF9FF711D29CEBF007FC1E1 /* libnewton.dylib */; };
+		3A3E45151DC4962600C15213 /* Ruby.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A3E45131DC495E900C15213 /* Ruby.framework */; };
+		3A9F699F1D2FB63400F12E60 /* libSDL2-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F699E1D2FB63400F12E60 /* libSDL2-2.0.0.dylib */; };
+		3A9F69A11D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F69A01D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib */; };
+		3A9F69A21D2FB6D100F12E60 /* libSDL2-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F699E1D2FB63400F12E60 /* libSDL2-2.0.0.dylib */; };
+		3A9F69A31D2FB6DA00F12E60 /* libSDL2_mixer-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F69A01D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib */; };
+		3AF3DBAF1D2FA51800EA962A /* libnewton.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AF9FF711D29CEBF007FC1E1 /* libnewton.dylib */; };
+		CE1590E91847A5F10084B06D /* Ruby.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1590E81847A5F10084B06D /* Ruby.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		3A33F1371DC47FF600CA768D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3AF9FF6C1D29CEBE007FC1E1 /* newton.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = D2AAC06E0554671400DB518D;
+			remoteInfo = newton;
+		};
+		3A3A92BB1D2E511D00B57C8D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3AF9FF6C1D29CEBE007FC1E1 /* newton.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = D2AAC06E0554671400DB518D;
+			remoteInfo = newton;
+		};
+		3A91ACAA1D311D6B00299CA4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3AF9FF6C1D29CEBE007FC1E1 /* newton.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = D2AAC06E0554671400DB518D;
+			remoteInfo = newton;
+		};
+		3AF9FF701D29CEBF007FC1E1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3AF9FF6C1D29CEBE007FC1E1 /* newton.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D2AAC06F0554671400DB518D;
+			remoteInfo = newton;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		33CDE5E5182703B200F7C6E8 /* msp_lib.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = msp_lib.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		3A08D5E2201DE025009D79EC /* angular_integration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = angular_integration.cpp; sourceTree = "<group>"; };
+		3A08D5E3201DE025009D79EC /* angular_integration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = angular_integration.h; sourceTree = "<group>"; };
+		3A08D5E4201DE025009D79EC /* geom.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom.cpp; sourceTree = "<group>"; };
+		3A08D5E5201DE025009D79EC /* geom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom.h; sourceTree = "<group>"; };
+		3A08D5E6201DE025009D79EC /* geom_aabb_tree.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom_aabb_tree.cpp; sourceTree = "<group>"; };
+		3A08D5E7201DE025009D79EC /* geom_aabb_tree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom_aabb_tree.h; sourceTree = "<group>"; };
+		3A08D5E8201DE025009D79EC /* geom_bounding_box.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom_bounding_box.cpp; sourceTree = "<group>"; };
+		3A08D5E9201DE025009D79EC /* geom_bounding_box.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom_bounding_box.h; sourceTree = "<group>"; };
+		3A08D5EA201DE025009D79EC /* geom_color.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom_color.cpp; sourceTree = "<group>"; };
+		3A08D5EB201DE025009D79EC /* geom_color.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom_color.h; sourceTree = "<group>"; };
+		3A08D5EC201DE025009D79EC /* geom_quaternion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom_quaternion.cpp; sourceTree = "<group>"; };
+		3A08D5ED201DE025009D79EC /* geom_quaternion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom_quaternion.h; sourceTree = "<group>"; };
+		3A08D5EE201DE025009D79EC /* geom_transformation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom_transformation.cpp; sourceTree = "<group>"; };
+		3A08D5EF201DE025009D79EC /* geom_transformation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom_transformation.h; sourceTree = "<group>"; };
+		3A08D5F0201DE025009D79EC /* geom_vector3d.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom_vector3d.cpp; sourceTree = "<group>"; };
+		3A08D5F1201DE025009D79EC /* geom_vector3d.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom_vector3d.h; sourceTree = "<group>"; };
+		3A08D5F2201DE025009D79EC /* msp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp.cpp; sourceTree = "<group>"; };
+		3A08D5F3201DE025009D79EC /* msp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp.h; sourceTree = "<group>"; };
+		3A08D5F4201DE025009D79EC /* msp_body.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_body.cpp; sourceTree = "<group>"; };
+		3A08D5F5201DE025009D79EC /* msp_body.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_body.h; sourceTree = "<group>"; };
+		3A08D5F6201DE025009D79EC /* msp_contact.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_contact.cpp; sourceTree = "<group>"; };
+		3A08D5F7201DE025009D79EC /* msp_contact.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_contact.h; sourceTree = "<group>"; };
+		3A08D5F8201DE025009D79EC /* msp_entity.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_entity.cpp; sourceTree = "<group>"; };
+		3A08D5F9201DE025009D79EC /* msp_entity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_entity.h; sourceTree = "<group>"; };
+		3A08D5FA201DE025009D79EC /* msp_fixed.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_fixed.cpp; sourceTree = "<group>"; };
+		3A08D5FB201DE025009D79EC /* msp_fixed.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_fixed.h; sourceTree = "<group>"; };
+		3A08D5FC201DE025009D79EC /* msp_gear.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_gear.cpp; sourceTree = "<group>"; };
+		3A08D5FD201DE025009D79EC /* msp_gear.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_gear.h; sourceTree = "<group>"; };
+		3A08D5FE201DE025009D79EC /* msp_hit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_hit.cpp; sourceTree = "<group>"; };
+		3A08D5FF201DE025009D79EC /* msp_hit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_hit.h; sourceTree = "<group>"; };
+		3A08D600201DE025009D79EC /* msp_joint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint.cpp; sourceTree = "<group>"; };
+		3A08D601201DE025009D79EC /* msp_joint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint.h; sourceTree = "<group>"; };
+		3A08D602201DE025009D79EC /* msp_point_to_point.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_point_to_point.cpp; sourceTree = "<group>"; };
+		3A08D603201DE025009D79EC /* msp_point_to_point.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_point_to_point.h; sourceTree = "<group>"; };
+		3A08D604201DE025009D79EC /* msp_point_to_point_actuator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_point_to_point_actuator.cpp; sourceTree = "<group>"; };
+		3A08D605201DE025009D79EC /* msp_point_to_point_actuator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_point_to_point_actuator.h; sourceTree = "<group>"; };
+		3A08D606201DE025009D79EC /* msp_world.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_world.cpp; sourceTree = "<group>"; };
+		3A08D607201DE025009D79EC /* msp_world.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_world.h; sourceTree = "<group>"; };
+		3A08D608201DE025009D79EC /* ruby_prep.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ruby_prep.h; sourceTree = "<group>"; };
+		3A08D609201DE025009D79EC /* ruby_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ruby_util.cpp; sourceTree = "<group>"; };
+		3A08D60A201DE025009D79EC /* ruby_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ruby_util.h; sourceTree = "<group>"; };
+		3A08D60C201DE025009D79EC /* msp_lib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_lib.cpp; sourceTree = "<group>"; };
+		3A33F1881DC47FF600CA768D /* msp_lib.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = msp_lib.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		3A3E45131DC495E900C15213 /* Ruby.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Ruby.framework; path = ../../ThirdParty/RubyLib/lib/mac/2.2/Ruby.framework; sourceTree = "<group>"; };
+		3A9F699E1D2FB63400F12E60 /* libSDL2-2.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libSDL2-2.0.0.dylib"; path = "../../ThirdParty/SDL2/lib/libSDL2-2.0.0.dylib"; sourceTree = "<group>"; };
+		3A9F69A01D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libSDL2_mixer-2.0.0.dylib"; path = "../../ThirdParty/SDL2_mixer/lib/libSDL2_mixer-2.0.0.dylib"; sourceTree = "<group>"; };
+		3AF9FF6C1D29CEBE007FC1E1 /* newton.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = newton.xcodeproj; sourceTree = "<group>"; };
+		CE1590E518479EAB0084B06D /* msp_lib_exports.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp_lib_exports.txt; sourceTree = "<group>"; };
+		CE1590E61847A5A20084B06D /* Ruby.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Ruby.framework; path = ../../ThirdParty/RubyLib/lib/mac/2.0/Ruby.framework; sourceTree = "<group>"; };
+		CE1590E81847A5F10084B06D /* Ruby.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Ruby.framework; path = ../../ThirdParty/RubyLib/lib/mac/1.8/Ruby.framework; sourceTree = "<group>"; };
+		CE405E8A184763D300A77187 /* msp_lib.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = msp_lib.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		33CDE5E2182703B100F7C6E8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A9F699F1D2FB63400F12E60 /* libSDL2-2.0.0.dylib in Frameworks */,
+				3A9F69A11D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib in Frameworks */,
+				3AF3DBAF1D2FA51800EA962A /* libnewton.dylib in Frameworks */,
+				339559611A0D798C00BB518A /* Ruby.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3A33F15C1DC47FF600CA768D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A33F15D1DC47FF600CA768D /* libSDL2-2.0.0.dylib in Frameworks */,
+				3A33F15E1DC47FF600CA768D /* libSDL2_mixer-2.0.0.dylib in Frameworks */,
+				3A33F1601DC47FF600CA768D /* libnewton.dylib in Frameworks */,
+				3A3E45151DC4962600C15213 /* Ruby.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CE405E82184763D300A77187 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A9F69A21D2FB6D100F12E60 /* libSDL2-2.0.0.dylib in Frameworks */,
+				3A9F69A31D2FB6DA00F12E60 /* libSDL2_mixer-2.0.0.dylib in Frameworks */,
+				3A3A92B81D2E4E3400B57C8D /* libnewton.dylib in Frameworks */,
+				CE1590E91847A5F10084B06D /* Ruby.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		33CDE5DA182703B100F7C6E8 = {
+			isa = PBXGroup;
+			children = (
+				3A08D5E0201DE025009D79EC /* Source */,
+				3AF9FF6B1D29CE93007FC1E1 /* Dependencies */,
+				CE1590E518479EAB0084B06D /* msp_lib_exports.txt */,
+				33CDE7B11827091E00F7C6E8 /* ThirdParty Frameworks */,
+				33CDE5E6182703B200F7C6E8 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		33CDE5E6182703B200F7C6E8 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				33CDE5E5182703B200F7C6E8 /* msp_lib.bundle */,
+				CE405E8A184763D300A77187 /* msp_lib.bundle */,
+				3A33F1881DC47FF600CA768D /* msp_lib.bundle */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		33CDE7B11827091E00F7C6E8 /* ThirdParty Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				3AE10BAB1D2BCB2900E0F7D0 /* 1.8 */,
+				3AE10BAA1D2BCB0700E0F7D0 /* 2.0 */,
+				3A3E45121DC495E900C15213 /* 2.2 */,
+			);
+			name = "ThirdParty Frameworks";
+			sourceTree = "<group>";
+		};
+		3A08D5E0201DE025009D79EC /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				3A08D5E1201DE025009D79EC /* common */,
+				3A08D60B201DE025009D79EC /* osx */,
+			);
+			name = Source;
+			path = ../../Source;
+			sourceTree = "<group>";
+		};
+		3A08D5E1201DE025009D79EC /* common */ = {
+			isa = PBXGroup;
+			children = (
+				3A08D5E2201DE025009D79EC /* angular_integration.cpp */,
+				3A08D5E3201DE025009D79EC /* angular_integration.h */,
+				3A08D5E4201DE025009D79EC /* geom.cpp */,
+				3A08D5E5201DE025009D79EC /* geom.h */,
+				3A08D5E6201DE025009D79EC /* geom_aabb_tree.cpp */,
+				3A08D5E7201DE025009D79EC /* geom_aabb_tree.h */,
+				3A08D5E8201DE025009D79EC /* geom_bounding_box.cpp */,
+				3A08D5E9201DE025009D79EC /* geom_bounding_box.h */,
+				3A08D5EA201DE025009D79EC /* geom_color.cpp */,
+				3A08D5EB201DE025009D79EC /* geom_color.h */,
+				3A08D5EC201DE025009D79EC /* geom_quaternion.cpp */,
+				3A08D5ED201DE025009D79EC /* geom_quaternion.h */,
+				3A08D5EE201DE025009D79EC /* geom_transformation.cpp */,
+				3A08D5EF201DE025009D79EC /* geom_transformation.h */,
+				3A08D5F0201DE025009D79EC /* geom_vector3d.cpp */,
+				3A08D5F1201DE025009D79EC /* geom_vector3d.h */,
+				3A08D5F2201DE025009D79EC /* msp.cpp */,
+				3A08D5F3201DE025009D79EC /* msp.h */,
+				3A08D5F4201DE025009D79EC /* msp_body.cpp */,
+				3A08D5F5201DE025009D79EC /* msp_body.h */,
+				3A08D5F6201DE025009D79EC /* msp_contact.cpp */,
+				3A08D5F7201DE025009D79EC /* msp_contact.h */,
+				3A08D5F8201DE025009D79EC /* msp_entity.cpp */,
+				3A08D5F9201DE025009D79EC /* msp_entity.h */,
+				3A08D5FA201DE025009D79EC /* msp_fixed.cpp */,
+				3A08D5FB201DE025009D79EC /* msp_fixed.h */,
+				3A08D5FC201DE025009D79EC /* msp_gear.cpp */,
+				3A08D5FD201DE025009D79EC /* msp_gear.h */,
+				3A08D5FE201DE025009D79EC /* msp_hit.cpp */,
+				3A08D5FF201DE025009D79EC /* msp_hit.h */,
+				3A08D600201DE025009D79EC /* msp_joint.cpp */,
+				3A08D601201DE025009D79EC /* msp_joint.h */,
+				3A08D602201DE025009D79EC /* msp_point_to_point.cpp */,
+				3A08D603201DE025009D79EC /* msp_point_to_point.h */,
+				3A08D604201DE025009D79EC /* msp_point_to_point_actuator.cpp */,
+				3A08D605201DE025009D79EC /* msp_point_to_point_actuator.h */,
+				3A08D606201DE025009D79EC /* msp_world.cpp */,
+				3A08D607201DE025009D79EC /* msp_world.h */,
+				3A08D608201DE025009D79EC /* ruby_prep.h */,
+				3A08D609201DE025009D79EC /* ruby_util.cpp */,
+				3A08D60A201DE025009D79EC /* ruby_util.h */,
+			);
+			path = common;
+			sourceTree = "<group>";
+		};
+		3A08D60B201DE025009D79EC /* osx */ = {
+			isa = PBXGroup;
+			children = (
+				3A08D60C201DE025009D79EC /* msp_lib.cpp */,
+			);
+			path = osx;
+			sourceTree = "<group>";
+		};
+		3A3E45121DC495E900C15213 /* 2.2 */ = {
+			isa = PBXGroup;
+			children = (
+				3A3E45131DC495E900C15213 /* Ruby.framework */,
+			);
+			name = 2.2;
+			sourceTree = "<group>";
+		};
+		3AE10BAA1D2BCB0700E0F7D0 /* 2.0 */ = {
+			isa = PBXGroup;
+			children = (
+				CE1590E61847A5A20084B06D /* Ruby.framework */,
+			);
+			name = 2.0;
+			sourceTree = "<group>";
+		};
+		3AE10BAB1D2BCB2900E0F7D0 /* 1.8 */ = {
+			isa = PBXGroup;
+			children = (
+				CE1590E81847A5F10084B06D /* Ruby.framework */,
+			);
+			name = 1.8;
+			sourceTree = "<group>";
+		};
+		3AF9FF6B1D29CE93007FC1E1 /* Dependencies */ = {
+			isa = PBXGroup;
+			children = (
+				3A9F69A01D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib */,
+				3A9F699E1D2FB63400F12E60 /* libSDL2-2.0.0.dylib */,
+				3AF9FF6C1D29CEBE007FC1E1 /* newton.xcodeproj */,
+			);
+			name = Dependencies;
+			sourceTree = "<group>";
+		};
+		3AF9FF6D1D29CEBE007FC1E1 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3AF9FF711D29CEBF007FC1E1 /* libnewton.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		33CDE5E3182703B100F7C6E8 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A08D62A201DE025009D79EC /* geom_color.h in Headers */,
+				3A08D678201DE025009D79EC /* msp_point_to_point_actuator.h in Headers */,
+				3A08D648201DE025009D79EC /* msp_body.h in Headers */,
+				3A08D654201DE025009D79EC /* msp_entity.h in Headers */,
+				3A08D64E201DE025009D79EC /* msp_contact.h in Headers */,
+				3A08D66C201DE025009D79EC /* msp_joint.h in Headers */,
+				3A08D61E201DE025009D79EC /* geom_aabb_tree.h in Headers */,
+				3A08D618201DE025009D79EC /* geom.h in Headers */,
+				3A08D672201DE025009D79EC /* msp_point_to_point.h in Headers */,
+				3A08D65A201DE025009D79EC /* msp_fixed.h in Headers */,
+				3A08D67E201DE025009D79EC /* msp_world.h in Headers */,
+				3A08D642201DE025009D79EC /* msp.h in Headers */,
+				3A08D666201DE025009D79EC /* msp_hit.h in Headers */,
+				3A08D681201DE025009D79EC /* ruby_prep.h in Headers */,
+				3A08D624201DE025009D79EC /* geom_bounding_box.h in Headers */,
+				3A08D630201DE025009D79EC /* geom_quaternion.h in Headers */,
+				3A08D660201DE025009D79EC /* msp_gear.h in Headers */,
+				3A08D636201DE025009D79EC /* geom_transformation.h in Headers */,
+				3A08D63C201DE025009D79EC /* geom_vector3d.h in Headers */,
+				3A08D687201DE025009D79EC /* ruby_util.h in Headers */,
+				3A08D612201DE025009D79EC /* angular_integration.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3A33F1621DC47FF600CA768D /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A08D62B201DE025009D79EC /* geom_color.h in Headers */,
+				3A08D679201DE025009D79EC /* msp_point_to_point_actuator.h in Headers */,
+				3A08D649201DE025009D79EC /* msp_body.h in Headers */,
+				3A08D655201DE025009D79EC /* msp_entity.h in Headers */,
+				3A08D64F201DE025009D79EC /* msp_contact.h in Headers */,
+				3A08D66D201DE025009D79EC /* msp_joint.h in Headers */,
+				3A08D61F201DE025009D79EC /* geom_aabb_tree.h in Headers */,
+				3A08D619201DE025009D79EC /* geom.h in Headers */,
+				3A08D673201DE025009D79EC /* msp_point_to_point.h in Headers */,
+				3A08D65B201DE025009D79EC /* msp_fixed.h in Headers */,
+				3A08D67F201DE025009D79EC /* msp_world.h in Headers */,
+				3A08D643201DE025009D79EC /* msp.h in Headers */,
+				3A08D667201DE025009D79EC /* msp_hit.h in Headers */,
+				3A08D682201DE025009D79EC /* ruby_prep.h in Headers */,
+				3A08D625201DE025009D79EC /* geom_bounding_box.h in Headers */,
+				3A08D631201DE025009D79EC /* geom_quaternion.h in Headers */,
+				3A08D661201DE025009D79EC /* msp_gear.h in Headers */,
+				3A08D637201DE025009D79EC /* geom_transformation.h in Headers */,
+				3A08D63D201DE025009D79EC /* geom_vector3d.h in Headers */,
+				3A08D688201DE025009D79EC /* ruby_util.h in Headers */,
+				3A08D613201DE025009D79EC /* angular_integration.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CE405E84184763D300A77187 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A08D629201DE025009D79EC /* geom_color.h in Headers */,
+				3A08D677201DE025009D79EC /* msp_point_to_point_actuator.h in Headers */,
+				3A08D647201DE025009D79EC /* msp_body.h in Headers */,
+				3A08D653201DE025009D79EC /* msp_entity.h in Headers */,
+				3A08D64D201DE025009D79EC /* msp_contact.h in Headers */,
+				3A08D66B201DE025009D79EC /* msp_joint.h in Headers */,
+				3A08D61D201DE025009D79EC /* geom_aabb_tree.h in Headers */,
+				3A08D617201DE025009D79EC /* geom.h in Headers */,
+				3A08D671201DE025009D79EC /* msp_point_to_point.h in Headers */,
+				3A08D659201DE025009D79EC /* msp_fixed.h in Headers */,
+				3A08D67D201DE025009D79EC /* msp_world.h in Headers */,
+				3A08D641201DE025009D79EC /* msp.h in Headers */,
+				3A08D665201DE025009D79EC /* msp_hit.h in Headers */,
+				3A08D680201DE025009D79EC /* ruby_prep.h in Headers */,
+				3A08D623201DE025009D79EC /* geom_bounding_box.h in Headers */,
+				3A08D62F201DE025009D79EC /* geom_quaternion.h in Headers */,
+				3A08D65F201DE025009D79EC /* msp_gear.h in Headers */,
+				3A08D635201DE025009D79EC /* geom_transformation.h in Headers */,
+				3A08D63B201DE025009D79EC /* geom_vector3d.h in Headers */,
+				3A08D686201DE025009D79EC /* ruby_util.h in Headers */,
+				3A08D611201DE025009D79EC /* angular_integration.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		33CDE5E4182703B100F7C6E8 /* Ruby 2.0 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 33CDE5E9182703B200F7C6E8 /* Build configuration list for PBXNativeTarget "Ruby 2.0" */;
+			buildPhases = (
+				33CDE5E1182703B100F7C6E8 /* Sources */,
+				33CDE5E2182703B100F7C6E8 /* Frameworks */,
+				33CDE5E3182703B100F7C6E8 /* Headers */,
+				3AF3DB721D2F610500EA962A /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3A91ACAB1D311D6B00299CA4 /* PBXTargetDependency */,
+			);
+			name = "Ruby 2.0";
+			productName = "MSPhysics Library";
+			productReference = 33CDE5E5182703B200F7C6E8 /* msp_lib.bundle */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+		3A33F1351DC47FF600CA768D /* Ruby 2.2 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3A33F1851DC47FF600CA768D /* Build configuration list for PBXNativeTarget "Ruby 2.2" */;
+			buildPhases = (
+				3A33F13A1DC47FF600CA768D /* Sources */,
+				3A33F15C1DC47FF600CA768D /* Frameworks */,
+				3A33F1621DC47FF600CA768D /* Headers */,
+				3A33F1841DC47FF600CA768D /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3A33F1361DC47FF600CA768D /* PBXTargetDependency */,
+			);
+			name = "Ruby 2.2";
+			productName = "MSPhysics Library";
+			productReference = 3A33F1881DC47FF600CA768D /* msp_lib.bundle */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+		CE405E7E184763D300A77187 /* Ruby 1.8 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CE405E87184763D300A77187 /* Build configuration list for PBXNativeTarget "Ruby 1.8" */;
+			buildPhases = (
+				CE405E7F184763D300A77187 /* Sources */,
+				CE405E82184763D300A77187 /* Frameworks */,
+				CE405E84184763D300A77187 /* Headers */,
+				3A9F69A41D2FB7E500F12E60 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3A3A92BC1D2E511D00B57C8D /* PBXTargetDependency */,
+			);
+			name = "Ruby 1.8";
+			productName = "MSPhysics Library";
+			productReference = CE405E8A184763D300A77187 /* msp_lib.bundle */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		33CDE5DC182703B100F7C6E8 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0620;
+				ORGANIZATIONNAME = SketchUp;
+			};
+			buildConfigurationList = 33CDE5DF182703B100F7C6E8 /* Build configuration list for PBXProject "msp_lib" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 33CDE5DA182703B100F7C6E8;
+			productRefGroup = 33CDE5E6182703B200F7C6E8 /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 3AF9FF6D1D29CEBE007FC1E1 /* Products */;
+					ProjectRef = 3AF9FF6C1D29CEBE007FC1E1 /* newton.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				CE405E7E184763D300A77187 /* Ruby 1.8 */,
+				33CDE5E4182703B100F7C6E8 /* Ruby 2.0 */,
+				3A33F1351DC47FF600CA768D /* Ruby 2.2 */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		3AF9FF711D29CEBF007FC1E1 /* libnewton.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libnewton.dylib;
+			remoteRef = 3AF9FF701D29CEBF007FC1E1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		3A33F1841DC47FF600CA768D /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/libnewton.dylib\" \"@loader_path/../libnewton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";";
+		};
+		3A9F69A41D2FB7E500F12E60 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/libnewton.dylib\" \"@loader_path/../libnewton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";";
+		};
+		3AF3DB721D2F610500EA962A /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/libnewton.dylib\" \"@loader_path/../libnewton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		33CDE5E1182703B100F7C6E8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A08D64B201DE025009D79EC /* msp_contact.cpp in Sources */,
+				3A08D669201DE025009D79EC /* msp_joint.cpp in Sources */,
+				3A08D675201DE025009D79EC /* msp_point_to_point_actuator.cpp in Sources */,
+				3A08D63F201DE025009D79EC /* msp.cpp in Sources */,
+				3A08D627201DE025009D79EC /* geom_color.cpp in Sources */,
+				3A08D60F201DE025009D79EC /* angular_integration.cpp in Sources */,
+				3A08D615201DE025009D79EC /* geom.cpp in Sources */,
+				3A08D645201DE025009D79EC /* msp_body.cpp in Sources */,
+				3A08D66F201DE025009D79EC /* msp_point_to_point.cpp in Sources */,
+				3A08D68A201DE025009D79EC /* msp_lib.cpp in Sources */,
+				3A08D663201DE025009D79EC /* msp_hit.cpp in Sources */,
+				3A08D639201DE025009D79EC /* geom_vector3d.cpp in Sources */,
+				3A08D633201DE025009D79EC /* geom_transformation.cpp in Sources */,
+				3A08D62D201DE025009D79EC /* geom_quaternion.cpp in Sources */,
+				3A08D657201DE025009D79EC /* msp_fixed.cpp in Sources */,
+				3A08D61B201DE025009D79EC /* geom_aabb_tree.cpp in Sources */,
+				3A08D621201DE025009D79EC /* geom_bounding_box.cpp in Sources */,
+				3A08D651201DE025009D79EC /* msp_entity.cpp in Sources */,
+				3A08D684201DE025009D79EC /* ruby_util.cpp in Sources */,
+				3A08D67B201DE025009D79EC /* msp_world.cpp in Sources */,
+				3A08D65D201DE025009D79EC /* msp_gear.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3A33F13A1DC47FF600CA768D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A08D64C201DE025009D79EC /* msp_contact.cpp in Sources */,
+				3A08D66A201DE025009D79EC /* msp_joint.cpp in Sources */,
+				3A08D676201DE025009D79EC /* msp_point_to_point_actuator.cpp in Sources */,
+				3A08D640201DE025009D79EC /* msp.cpp in Sources */,
+				3A08D628201DE025009D79EC /* geom_color.cpp in Sources */,
+				3A08D610201DE025009D79EC /* angular_integration.cpp in Sources */,
+				3A08D616201DE025009D79EC /* geom.cpp in Sources */,
+				3A08D646201DE025009D79EC /* msp_body.cpp in Sources */,
+				3A08D670201DE025009D79EC /* msp_point_to_point.cpp in Sources */,
+				3A08D68B201DE025009D79EC /* msp_lib.cpp in Sources */,
+				3A08D664201DE025009D79EC /* msp_hit.cpp in Sources */,
+				3A08D63A201DE025009D79EC /* geom_vector3d.cpp in Sources */,
+				3A08D634201DE025009D79EC /* geom_transformation.cpp in Sources */,
+				3A08D62E201DE025009D79EC /* geom_quaternion.cpp in Sources */,
+				3A08D658201DE025009D79EC /* msp_fixed.cpp in Sources */,
+				3A08D61C201DE025009D79EC /* geom_aabb_tree.cpp in Sources */,
+				3A08D622201DE025009D79EC /* geom_bounding_box.cpp in Sources */,
+				3A08D652201DE025009D79EC /* msp_entity.cpp in Sources */,
+				3A08D685201DE025009D79EC /* ruby_util.cpp in Sources */,
+				3A08D67C201DE025009D79EC /* msp_world.cpp in Sources */,
+				3A08D65E201DE025009D79EC /* msp_gear.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CE405E7F184763D300A77187 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A08D64A201DE025009D79EC /* msp_contact.cpp in Sources */,
+				3A08D668201DE025009D79EC /* msp_joint.cpp in Sources */,
+				3A08D674201DE025009D79EC /* msp_point_to_point_actuator.cpp in Sources */,
+				3A08D63E201DE025009D79EC /* msp.cpp in Sources */,
+				3A08D626201DE025009D79EC /* geom_color.cpp in Sources */,
+				3A08D60E201DE025009D79EC /* angular_integration.cpp in Sources */,
+				3A08D614201DE025009D79EC /* geom.cpp in Sources */,
+				3A08D644201DE025009D79EC /* msp_body.cpp in Sources */,
+				3A08D66E201DE025009D79EC /* msp_point_to_point.cpp in Sources */,
+				3A08D689201DE025009D79EC /* msp_lib.cpp in Sources */,
+				3A08D662201DE025009D79EC /* msp_hit.cpp in Sources */,
+				3A08D638201DE025009D79EC /* geom_vector3d.cpp in Sources */,
+				3A08D632201DE025009D79EC /* geom_transformation.cpp in Sources */,
+				3A08D62C201DE025009D79EC /* geom_quaternion.cpp in Sources */,
+				3A08D656201DE025009D79EC /* msp_fixed.cpp in Sources */,
+				3A08D61A201DE025009D79EC /* geom_aabb_tree.cpp in Sources */,
+				3A08D620201DE025009D79EC /* geom_bounding_box.cpp in Sources */,
+				3A08D650201DE025009D79EC /* msp_entity.cpp in Sources */,
+				3A08D683201DE025009D79EC /* ruby_util.cpp in Sources */,
+				3A08D67A201DE025009D79EC /* msp_world.cpp in Sources */,
+				3A08D65C201DE025009D79EC /* msp_gear.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		3A33F1361DC47FF600CA768D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = newton;
+			targetProxy = 3A33F1371DC47FF600CA768D /* PBXContainerItemProxy */;
+		};
+		3A3A92BC1D2E511D00B57C8D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = newton;
+			targetProxy = 3A3A92BB1D2E511D00B57C8D /* PBXContainerItemProxy */;
+		};
+		3A91ACAB1D311D6B00299CA4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = newton;
+			targetProxy = 3A91ACAA1D311D6B00299CA4 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		33CDE5E7182703B200F7C6E8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libstdc++";
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CONFIGURATION_BUILD_DIR = "$(SRCROOT)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)$(CURRENT_ARCH)/$(TARGET_NAME)";
+				CONFIGURATION_TEMP_DIR = "$(PROJECT_TEMP_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)$(CURRENT_ARCH)/$(TARGET_NAME)";
+				COPY_PHASE_STRIP = NO;
+				EXECUTABLE_EXTENSION = bundle;
+				EXPORTED_SYMBOLS_FILE = msp_lib_exports.txt;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+					_MACOSX_VER,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACH_O_TYPE = mh_bundle;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = msp_lib;
+				SDKROOT = macosx;
+				VALID_ARCHS = "i386 x86_64";
+			};
+			name = Debug;
+		};
+		33CDE5E8182703B200F7C6E8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libstdc++";
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CONFIGURATION_BUILD_DIR = "$(SRCROOT)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)$(CURRENT_ARCH)/$(TARGET_NAME)";
+				CONFIGURATION_TEMP_DIR = "$(PROJECT_TEMP_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)$(CURRENT_ARCH)/$(TARGET_NAME)";
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				EXECUTABLE_EXTENSION = bundle;
+				EXPORTED_SYMBOLS_FILE = msp_lib_exports.txt;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					_MACOSX_VER,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACH_O_TYPE = mh_bundle;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				PRODUCT_NAME = msp_lib;
+				SDKROOT = macosx;
+				VALID_ARCHS = "i386 x86_64";
+			};
+			name = Release;
+		};
+		33CDE5EA182703B200F7C6E8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../ThirdParty/RubyLib/lib/mac/2.0\"",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					RUBY_VERSION20,
+					USE_SDL,
+				);
+				HEADER_SEARCH_PATHS = (
+					../../ThirdParty/RubyLib/include/ruby/2.0/mac,
+					"../../ThirdParty/RubyLib/include/ruby/2.0/mac/universal-darwin12.5.0",
+					../../ThirdParty/NewtonDynamics/dgNewton,
+					../../ThirdParty/SDL2/include,
+					../../ThirdParty/SDL2_mixer/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					../../ThirdParty/SDL2/lib,
+					../../ThirdParty/SDL2_mixer/lib,
+				);
+			};
+			name = Debug;
+		};
+		33CDE5EB182703B200F7C6E8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../ThirdParty/RubyLib/lib/mac/2.0\"",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					RUBY_VERSION20,
+					USE_SDL,
+				);
+				HEADER_SEARCH_PATHS = (
+					../../ThirdParty/RubyLib/include/ruby/2.0/mac,
+					"../../ThirdParty/RubyLib/include/ruby/2.0/mac/universal-darwin12.5.0",
+					../../ThirdParty/NewtonDynamics/dgNewton,
+					../../ThirdParty/SDL2/include,
+					../../ThirdParty/SDL2_mixer/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					../../ThirdParty/SDL2/lib,
+					../../ThirdParty/SDL2_mixer/lib,
+				);
+			};
+			name = Release;
+		};
+		3A33F1861DC47FF600CA768D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../ThirdParty/RubyLib/lib/mac/2.2\"",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					RUBY_VERSION22,
+					USE_SDL,
+				);
+				HEADER_SEARCH_PATHS = (
+					../../ThirdParty/RubyLib/include/ruby/2.2/mac,
+					"../../ThirdParty/RubyLib/include/ruby/2.2/mac/x86_64-darwin14",
+					../../ThirdParty/NewtonDynamics/dgNewton,
+					../../ThirdParty/SDL2/include,
+					../../ThirdParty/SDL2_mixer/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					../../ThirdParty/SDL2/lib,
+					../../ThirdParty/SDL2_mixer/lib,
+				);
+			};
+			name = Debug;
+		};
+		3A33F1871DC47FF600CA768D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../ThirdParty/RubyLib/lib/mac/2.2\"",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					RUBY_VERSION22,
+					USE_SDL,
+				);
+				HEADER_SEARCH_PATHS = (
+					../../ThirdParty/RubyLib/include/ruby/2.2/mac,
+					"../../ThirdParty/RubyLib/include/ruby/2.2/mac/x86_64-darwin14",
+					../../ThirdParty/NewtonDynamics/dgNewton,
+					../../ThirdParty/SDL2/include,
+					../../ThirdParty/SDL2_mixer/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					../../ThirdParty/SDL2/lib,
+					../../ThirdParty/SDL2_mixer/lib,
+				);
+			};
+			name = Release;
+		};
+		CE405E88184763D300A77187 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../ThirdParty/RubyLib/lib/mac/1.8\"",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					RUBY_VERSION18,
+					USE_SDL,
+				);
+				HEADER_SEARCH_PATHS = (
+					../../ThirdParty/RubyLib/include/ruby/1.8/mac,
+					../../ThirdParty/NewtonDynamics/dgNewton,
+					../../ThirdParty/SDL2/include,
+					../../ThirdParty/SDL2_mixer/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					../../ThirdParty/SDL2/lib,
+					../../ThirdParty/SDL2_mixer/lib,
+				);
+			};
+			name = Debug;
+		};
+		CE405E89184763D300A77187 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../ThirdParty/RubyLib/lib/mac/1.8\"",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					RUBY_VERSION18,
+					USE_SDL,
+				);
+				HEADER_SEARCH_PATHS = (
+					../../ThirdParty/RubyLib/include/ruby/1.8/mac,
+					../../ThirdParty/NewtonDynamics/dgNewton,
+					../../ThirdParty/SDL2/include,
+					../../ThirdParty/SDL2_mixer/include,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					../../ThirdParty/SDL2/lib,
+					../../ThirdParty/SDL2_mixer/lib,
+				);
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		33CDE5DF182703B100F7C6E8 /* Build configuration list for PBXProject "msp_lib" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				33CDE5E7182703B200F7C6E8 /* Debug */,
+				33CDE5E8182703B200F7C6E8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		33CDE5E9182703B200F7C6E8 /* Build configuration list for PBXNativeTarget "Ruby 2.0" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				33CDE5EA182703B200F7C6E8 /* Debug */,
+				33CDE5EB182703B200F7C6E8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3A33F1851DC47FF600CA768D /* Build configuration list for PBXNativeTarget "Ruby 2.2" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3A33F1861DC47FF600CA768D /* Debug */,
+				3A33F1871DC47FF600CA768D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CE405E87184763D300A77187 /* Build configuration list for PBXNativeTarget "Ruby 1.8" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CE405E88184763D300A77187 /* Debug */,
+				CE405E89184763D300A77187 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 33CDE5DC182703B100F7C6E8 /* Project object */;
+}
