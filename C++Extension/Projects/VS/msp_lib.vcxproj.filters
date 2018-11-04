@@ -1,0 +1,216 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="main">
+      <UniqueIdentifier>{d2fb7d5f-16cb-4c78-98a3-8a60a6cbb0bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win">
+      <UniqueIdentifier>{e2c680d7-0a53-4006-afbd-9264da36717f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Source\win\msp_lib.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\win\stdafx.cpp">
+      <Filter>win</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\angular_integration.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_bodies.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_body.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_collision.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_gear.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint_ball_and_socket.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint_corkscrew.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint_curvy_piston.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint_curvy_slider.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint_fixed.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint_hinge.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint_motor.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint_piston.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint_plane.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint_point_to_point.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint_servo.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint_slider.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint_spring.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint_universal.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joint_up_vector.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_joystick.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_music.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_newton.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_particle.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_sdl.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_sdl_mixer.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_sound.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_util.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\main\msp_world.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Source\win\stdafx.h">
+      <Filter>win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\win\targetver.h">
+      <Filter>win</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\angular_integration.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_bodies.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_body.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_collision.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_gear.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint_ball_and_socket.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint_corkscrew.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint_curvy_piston.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint_curvy_slider.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint_fixed.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint_hinge.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint_motor.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint_piston.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint_plane.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint_point_to_point.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint_servo.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint_slider.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint_spring.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint_universal.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joint_up_vector.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_joystick.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_music.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_newton.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_particle.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_sdl.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_sdl_mixer.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_sound.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_util.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\msp_world.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\main\ruby_prep.h">
+      <Filter>main</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

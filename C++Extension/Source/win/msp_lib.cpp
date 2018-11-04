@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "../common/msp.h"
+#include "../main/msp.h"
 
 extern "C"
 

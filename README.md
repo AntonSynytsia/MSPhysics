@@ -51,9 +51,6 @@ playing FPS games in SketchUp, in fullscreen mode, without having various
 keyboard commands taking control over the simulation. All that is possible with
 MSPhysics.
 
-Huge credit goes to Julio Jerez for writing the Newton Dynamics physics engine;
-as well as, to those who contributed in making this project a reality.
-
 
 ## Access
 
@@ -69,50 +66,6 @@ as well as, to those who contributed in making this project a reality.
 * [AMS_Library 3.5.0+](http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835)
 
 
-## Installation Instructions
-
-1. Navigate to [MSPhysics Homepage](http://sketchucation.com/forums/viewtopic.php?f=323&t=56852).
-2. Download <i>ams_Lib_x.y.z.rbz</i> and <i>MSPhysics_x.y.z.rbz</i>.
-3. Open SketchUp.
-4. Select <i>(Menu) Window → Preferences</i>.
-5. Navigate to <i>Extensions</i> section within the <i>System Preferences</i> dialog.
-6. Click <i>Install Extension...</i> button, select <i>ams_Lib_x.y.z.rbz</i>, and click <i>Open</i>.
-7. Repeat the same step for <i>MSPhysics_x.y.z.rbz</i>
-8. Ensure that both <i>AMS Library</i> and <i>MSPhysics</i> extensions are checked.
-
-
-## Uninstallation Instructions
-
-Follow these steps in case you intend to uninstall the plugin.
-
-1. Navigate to the desired Plugins folder:
-    * On Windows
-        * For SU8 and below the plugins folder is located in
-            * <tt>C:\Program Files (x86)\Google\Google SketchUp #\</tt>
-        * For SU2013 the plugins folder is located in
-            * <tt>C:\Program Files (x86)\SketchUp\SketchUp 2013\</tt>
-        * For SU2014 and later the plugins folder is located in
-            * <tt>C:\Users\[User Name]\AppData\Roaming\SketchUp\SketchUp 20##\SketchUp\</tt>
-            * <tt>%appdata%\SketchUp\SketchUp 20##\SketchUp\</tt>
-            * <tt>C:\ProgramData\SketchUp\SketchUp 20##\SketchUp\Plugins</tt>
-    * On Mac OS X
-        * For SU8 and below the plugins folder is located in
-            * <tt>[YOUR USER NAME]/Library/Application Support/Google SketchUp #/SketchUp/plugins</tt>
-        * For SU2013 and later the plugins folder is located in
-            * <tt>> Library > Application Support > SketchUp # > SketchUp > Plugins</tt>
-2. Select <i>ams_Lib</i> folder, <i>ams_Lib.rb</i> file, <i>MSPhysics</i> folder, and <i>MSPhysics.rb</i> file and delete them.
-
-
-## Version
-
-1.0.3
-
-
-## Release Date
-
-October 16, 2017
-
-
 ## ThirdParty Libraries
 
 * NewtonDynamics 3.14
@@ -124,24 +77,6 @@ October 16, 2017
 * dhtmlxSlider 4.6
 
 
-## Licence
+## License
 
-[MIT](http://opensource.org/licenses/MIT) © 2014-2017, Anton Synytsia
-
-
-## Credits
-
-* **Julio Jerez** for [NewtonDynamics](http://newtondynamics.com/forum/index.php) physics engine.
-* **Chris Phillips** for some ideas from [SketchyPhysics](https://code.google.com/p/sketchyphysics/).
-* **István Nagy (PituPhysics)**, **Faust07**, and many others for testing.
-
-
-## Copyright
-
-© 2014-2017 Anton Synytsia.
-All Rights Reserved.
-
-
-## Author
-
-Anton Synytsia {mailto:anton.synytsia@gmail.com}
+[MIT](http://opensource.org/licenses/MIT) (C) 2014 - 2018, Anton Synytsia

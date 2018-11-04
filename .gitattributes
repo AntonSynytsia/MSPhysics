@@ -6,6 +6,10 @@
 *.cpp -crlf
 *.h -crlf
 *.rb -crlf
+*.js -crlf
+*.css -crlf
+*.html -crlf
+*.md -crlf
 
 # Custom for Visual Studio
 *.cs     diff=csharp
