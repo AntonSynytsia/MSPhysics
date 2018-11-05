@@ -52,21 +52,14 @@ keyboard commands taking control over the simulation. All that is possible with
 MSPhysics.
 
 
-## Access
-
-* (Menu) Plugins → MSPhysics → [option]
-* (Context Menu) MSPhysics → [Option]
-* MSPhysics Toolbars
-
-
-## Compatibility and Requirements
+# Compatibility and Requirements
 
 * Microsoft Windows XP or later / Mac OS X 10.6+
 * SketchUp 6 or later. SU2017 64bit is recommended!
 * [AMS_Library 3.5.0+](http://sketchucation.com/forums/viewtopic.php?f=323&t=55067#p499835)
 
 
-## ThirdParty Libraries
+# ThirdParty Libraries
 
 * NewtonDynamics 3.14
 * SDL 2.0.5
@@ -75,8 +68,3 @@ MSPhysics.
 * Ace 1.2.6
 * Chosen 1.7.0
 * dhtmlxSlider 4.6
-
-
-## License
-
-[MIT](http://opensource.org/licenses/MIT) (C) 2014 - 2018, Anton Synytsia
