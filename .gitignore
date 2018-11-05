@@ -1,5 +1,9 @@
 /C++Extension/Projects/VS/.vs
-/C++Extension/Projects/VS/Win32/
-/C++Extension/Projects/VS/x64/
+/C++Extension/Projects/VS/Win32
+/C++Extension/Projects/VS/x64
+/C++Extension/Projects/xCode/Release
+/C++Extension/Projects/xCode/Debug
 
 *.user
+*.DS_Store
+

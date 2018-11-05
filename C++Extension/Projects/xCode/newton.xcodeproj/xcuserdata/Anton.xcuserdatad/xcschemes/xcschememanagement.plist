@@ -3,15 +3,14 @@
 <plist version="1.0">
 <dict>
 	<key>SchemeUserState</key>
-	<dict>
-		<key>newton.xcscheme</key>
-		<dict>
-			<key>orderHint</key>
-			<integer>3</integer>
-		</dict>
-	</dict>
+	<dict/>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
+		<key>3A5C3A68218FD0A400A72BE6</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
 		<key>D2AAC06E0554671400DB518D</key>
 		<dict>
 			<key>primary</key>

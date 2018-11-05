@@ -7,167 +7,390 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		339559611A0D798C00BB518A /* Ruby.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1590E61847A5A20084B06D /* Ruby.framework */; };
-		3A08D60E201DE025009D79EC /* angular_integration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E2201DE025009D79EC /* angular_integration.cpp */; };
-		3A08D60F201DE025009D79EC /* angular_integration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E2201DE025009D79EC /* angular_integration.cpp */; };
-		3A08D610201DE025009D79EC /* angular_integration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E2201DE025009D79EC /* angular_integration.cpp */; };
-		3A08D611201DE025009D79EC /* angular_integration.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E3201DE025009D79EC /* angular_integration.h */; };
-		3A08D612201DE025009D79EC /* angular_integration.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E3201DE025009D79EC /* angular_integration.h */; };
-		3A08D613201DE025009D79EC /* angular_integration.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E3201DE025009D79EC /* angular_integration.h */; };
-		3A08D614201DE025009D79EC /* geom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E4201DE025009D79EC /* geom.cpp */; };
-		3A08D615201DE025009D79EC /* geom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E4201DE025009D79EC /* geom.cpp */; };
-		3A08D616201DE025009D79EC /* geom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E4201DE025009D79EC /* geom.cpp */; };
-		3A08D617201DE025009D79EC /* geom.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E5201DE025009D79EC /* geom.h */; };
-		3A08D618201DE025009D79EC /* geom.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E5201DE025009D79EC /* geom.h */; };
-		3A08D619201DE025009D79EC /* geom.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E5201DE025009D79EC /* geom.h */; };
-		3A08D61A201DE025009D79EC /* geom_aabb_tree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E6201DE025009D79EC /* geom_aabb_tree.cpp */; };
-		3A08D61B201DE025009D79EC /* geom_aabb_tree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E6201DE025009D79EC /* geom_aabb_tree.cpp */; };
-		3A08D61C201DE025009D79EC /* geom_aabb_tree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E6201DE025009D79EC /* geom_aabb_tree.cpp */; };
-		3A08D61D201DE025009D79EC /* geom_aabb_tree.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E7201DE025009D79EC /* geom_aabb_tree.h */; };
-		3A08D61E201DE025009D79EC /* geom_aabb_tree.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E7201DE025009D79EC /* geom_aabb_tree.h */; };
-		3A08D61F201DE025009D79EC /* geom_aabb_tree.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E7201DE025009D79EC /* geom_aabb_tree.h */; };
-		3A08D620201DE025009D79EC /* geom_bounding_box.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E8201DE025009D79EC /* geom_bounding_box.cpp */; };
-		3A08D621201DE025009D79EC /* geom_bounding_box.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E8201DE025009D79EC /* geom_bounding_box.cpp */; };
-		3A08D622201DE025009D79EC /* geom_bounding_box.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5E8201DE025009D79EC /* geom_bounding_box.cpp */; };
-		3A08D623201DE025009D79EC /* geom_bounding_box.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E9201DE025009D79EC /* geom_bounding_box.h */; };
-		3A08D624201DE025009D79EC /* geom_bounding_box.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E9201DE025009D79EC /* geom_bounding_box.h */; };
-		3A08D625201DE025009D79EC /* geom_bounding_box.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5E9201DE025009D79EC /* geom_bounding_box.h */; };
-		3A08D626201DE025009D79EC /* geom_color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EA201DE025009D79EC /* geom_color.cpp */; };
-		3A08D627201DE025009D79EC /* geom_color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EA201DE025009D79EC /* geom_color.cpp */; };
-		3A08D628201DE025009D79EC /* geom_color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EA201DE025009D79EC /* geom_color.cpp */; };
-		3A08D629201DE025009D79EC /* geom_color.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5EB201DE025009D79EC /* geom_color.h */; };
-		3A08D62A201DE025009D79EC /* geom_color.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5EB201DE025009D79EC /* geom_color.h */; };
-		3A08D62B201DE025009D79EC /* geom_color.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5EB201DE025009D79EC /* geom_color.h */; };
-		3A08D62C201DE025009D79EC /* geom_quaternion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EC201DE025009D79EC /* geom_quaternion.cpp */; };
-		3A08D62D201DE025009D79EC /* geom_quaternion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EC201DE025009D79EC /* geom_quaternion.cpp */; };
-		3A08D62E201DE025009D79EC /* geom_quaternion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EC201DE025009D79EC /* geom_quaternion.cpp */; };
-		3A08D62F201DE025009D79EC /* geom_quaternion.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5ED201DE025009D79EC /* geom_quaternion.h */; };
-		3A08D630201DE025009D79EC /* geom_quaternion.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5ED201DE025009D79EC /* geom_quaternion.h */; };
-		3A08D631201DE025009D79EC /* geom_quaternion.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5ED201DE025009D79EC /* geom_quaternion.h */; };
-		3A08D632201DE025009D79EC /* geom_transformation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EE201DE025009D79EC /* geom_transformation.cpp */; };
-		3A08D633201DE025009D79EC /* geom_transformation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EE201DE025009D79EC /* geom_transformation.cpp */; };
-		3A08D634201DE025009D79EC /* geom_transformation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5EE201DE025009D79EC /* geom_transformation.cpp */; };
-		3A08D635201DE025009D79EC /* geom_transformation.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5EF201DE025009D79EC /* geom_transformation.h */; };
-		3A08D636201DE025009D79EC /* geom_transformation.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5EF201DE025009D79EC /* geom_transformation.h */; };
-		3A08D637201DE025009D79EC /* geom_transformation.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5EF201DE025009D79EC /* geom_transformation.h */; };
-		3A08D638201DE025009D79EC /* geom_vector3d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F0201DE025009D79EC /* geom_vector3d.cpp */; };
-		3A08D639201DE025009D79EC /* geom_vector3d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F0201DE025009D79EC /* geom_vector3d.cpp */; };
-		3A08D63A201DE025009D79EC /* geom_vector3d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F0201DE025009D79EC /* geom_vector3d.cpp */; };
-		3A08D63B201DE025009D79EC /* geom_vector3d.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F1201DE025009D79EC /* geom_vector3d.h */; };
-		3A08D63C201DE025009D79EC /* geom_vector3d.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F1201DE025009D79EC /* geom_vector3d.h */; };
-		3A08D63D201DE025009D79EC /* geom_vector3d.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F1201DE025009D79EC /* geom_vector3d.h */; };
-		3A08D63E201DE025009D79EC /* msp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F2201DE025009D79EC /* msp.cpp */; };
-		3A08D63F201DE025009D79EC /* msp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F2201DE025009D79EC /* msp.cpp */; };
-		3A08D640201DE025009D79EC /* msp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F2201DE025009D79EC /* msp.cpp */; };
-		3A08D641201DE025009D79EC /* msp.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F3201DE025009D79EC /* msp.h */; };
-		3A08D642201DE025009D79EC /* msp.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F3201DE025009D79EC /* msp.h */; };
-		3A08D643201DE025009D79EC /* msp.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F3201DE025009D79EC /* msp.h */; };
-		3A08D644201DE025009D79EC /* msp_body.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F4201DE025009D79EC /* msp_body.cpp */; };
-		3A08D645201DE025009D79EC /* msp_body.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F4201DE025009D79EC /* msp_body.cpp */; };
-		3A08D646201DE025009D79EC /* msp_body.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F4201DE025009D79EC /* msp_body.cpp */; };
-		3A08D647201DE025009D79EC /* msp_body.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F5201DE025009D79EC /* msp_body.h */; };
-		3A08D648201DE025009D79EC /* msp_body.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F5201DE025009D79EC /* msp_body.h */; };
-		3A08D649201DE025009D79EC /* msp_body.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F5201DE025009D79EC /* msp_body.h */; };
-		3A08D64A201DE025009D79EC /* msp_contact.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F6201DE025009D79EC /* msp_contact.cpp */; };
-		3A08D64B201DE025009D79EC /* msp_contact.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F6201DE025009D79EC /* msp_contact.cpp */; };
-		3A08D64C201DE025009D79EC /* msp_contact.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F6201DE025009D79EC /* msp_contact.cpp */; };
-		3A08D64D201DE025009D79EC /* msp_contact.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F7201DE025009D79EC /* msp_contact.h */; };
-		3A08D64E201DE025009D79EC /* msp_contact.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F7201DE025009D79EC /* msp_contact.h */; };
-		3A08D64F201DE025009D79EC /* msp_contact.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F7201DE025009D79EC /* msp_contact.h */; };
-		3A08D650201DE025009D79EC /* msp_entity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F8201DE025009D79EC /* msp_entity.cpp */; };
-		3A08D651201DE025009D79EC /* msp_entity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F8201DE025009D79EC /* msp_entity.cpp */; };
-		3A08D652201DE025009D79EC /* msp_entity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5F8201DE025009D79EC /* msp_entity.cpp */; };
-		3A08D653201DE025009D79EC /* msp_entity.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F9201DE025009D79EC /* msp_entity.h */; };
-		3A08D654201DE025009D79EC /* msp_entity.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F9201DE025009D79EC /* msp_entity.h */; };
-		3A08D655201DE025009D79EC /* msp_entity.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5F9201DE025009D79EC /* msp_entity.h */; };
-		3A08D656201DE025009D79EC /* msp_fixed.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FA201DE025009D79EC /* msp_fixed.cpp */; };
-		3A08D657201DE025009D79EC /* msp_fixed.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FA201DE025009D79EC /* msp_fixed.cpp */; };
-		3A08D658201DE025009D79EC /* msp_fixed.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FA201DE025009D79EC /* msp_fixed.cpp */; };
-		3A08D659201DE025009D79EC /* msp_fixed.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FB201DE025009D79EC /* msp_fixed.h */; };
-		3A08D65A201DE025009D79EC /* msp_fixed.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FB201DE025009D79EC /* msp_fixed.h */; };
-		3A08D65B201DE025009D79EC /* msp_fixed.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FB201DE025009D79EC /* msp_fixed.h */; };
-		3A08D65C201DE025009D79EC /* msp_gear.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FC201DE025009D79EC /* msp_gear.cpp */; };
-		3A08D65D201DE025009D79EC /* msp_gear.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FC201DE025009D79EC /* msp_gear.cpp */; };
-		3A08D65E201DE025009D79EC /* msp_gear.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FC201DE025009D79EC /* msp_gear.cpp */; };
-		3A08D65F201DE025009D79EC /* msp_gear.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FD201DE025009D79EC /* msp_gear.h */; };
-		3A08D660201DE025009D79EC /* msp_gear.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FD201DE025009D79EC /* msp_gear.h */; };
-		3A08D661201DE025009D79EC /* msp_gear.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FD201DE025009D79EC /* msp_gear.h */; };
-		3A08D662201DE025009D79EC /* msp_hit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FE201DE025009D79EC /* msp_hit.cpp */; };
-		3A08D663201DE025009D79EC /* msp_hit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FE201DE025009D79EC /* msp_hit.cpp */; };
-		3A08D664201DE025009D79EC /* msp_hit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D5FE201DE025009D79EC /* msp_hit.cpp */; };
-		3A08D665201DE025009D79EC /* msp_hit.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FF201DE025009D79EC /* msp_hit.h */; };
-		3A08D666201DE025009D79EC /* msp_hit.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FF201DE025009D79EC /* msp_hit.h */; };
-		3A08D667201DE025009D79EC /* msp_hit.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D5FF201DE025009D79EC /* msp_hit.h */; };
-		3A08D668201DE025009D79EC /* msp_joint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D600201DE025009D79EC /* msp_joint.cpp */; };
-		3A08D669201DE025009D79EC /* msp_joint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D600201DE025009D79EC /* msp_joint.cpp */; };
-		3A08D66A201DE025009D79EC /* msp_joint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D600201DE025009D79EC /* msp_joint.cpp */; };
-		3A08D66B201DE025009D79EC /* msp_joint.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D601201DE025009D79EC /* msp_joint.h */; };
-		3A08D66C201DE025009D79EC /* msp_joint.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D601201DE025009D79EC /* msp_joint.h */; };
-		3A08D66D201DE025009D79EC /* msp_joint.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D601201DE025009D79EC /* msp_joint.h */; };
-		3A08D66E201DE025009D79EC /* msp_point_to_point.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D602201DE025009D79EC /* msp_point_to_point.cpp */; };
-		3A08D66F201DE025009D79EC /* msp_point_to_point.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D602201DE025009D79EC /* msp_point_to_point.cpp */; };
-		3A08D670201DE025009D79EC /* msp_point_to_point.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D602201DE025009D79EC /* msp_point_to_point.cpp */; };
-		3A08D671201DE025009D79EC /* msp_point_to_point.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D603201DE025009D79EC /* msp_point_to_point.h */; };
-		3A08D672201DE025009D79EC /* msp_point_to_point.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D603201DE025009D79EC /* msp_point_to_point.h */; };
-		3A08D673201DE025009D79EC /* msp_point_to_point.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D603201DE025009D79EC /* msp_point_to_point.h */; };
-		3A08D674201DE025009D79EC /* msp_point_to_point_actuator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D604201DE025009D79EC /* msp_point_to_point_actuator.cpp */; };
-		3A08D675201DE025009D79EC /* msp_point_to_point_actuator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D604201DE025009D79EC /* msp_point_to_point_actuator.cpp */; };
-		3A08D676201DE025009D79EC /* msp_point_to_point_actuator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D604201DE025009D79EC /* msp_point_to_point_actuator.cpp */; };
-		3A08D677201DE025009D79EC /* msp_point_to_point_actuator.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D605201DE025009D79EC /* msp_point_to_point_actuator.h */; };
-		3A08D678201DE025009D79EC /* msp_point_to_point_actuator.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D605201DE025009D79EC /* msp_point_to_point_actuator.h */; };
-		3A08D679201DE025009D79EC /* msp_point_to_point_actuator.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D605201DE025009D79EC /* msp_point_to_point_actuator.h */; };
-		3A08D67A201DE025009D79EC /* msp_world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D606201DE025009D79EC /* msp_world.cpp */; };
-		3A08D67B201DE025009D79EC /* msp_world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D606201DE025009D79EC /* msp_world.cpp */; };
-		3A08D67C201DE025009D79EC /* msp_world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D606201DE025009D79EC /* msp_world.cpp */; };
-		3A08D67D201DE025009D79EC /* msp_world.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D607201DE025009D79EC /* msp_world.h */; };
-		3A08D67E201DE025009D79EC /* msp_world.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D607201DE025009D79EC /* msp_world.h */; };
-		3A08D67F201DE025009D79EC /* msp_world.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D607201DE025009D79EC /* msp_world.h */; };
-		3A08D680201DE025009D79EC /* ruby_prep.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D608201DE025009D79EC /* ruby_prep.h */; };
-		3A08D681201DE025009D79EC /* ruby_prep.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D608201DE025009D79EC /* ruby_prep.h */; };
-		3A08D682201DE025009D79EC /* ruby_prep.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D608201DE025009D79EC /* ruby_prep.h */; };
-		3A08D683201DE025009D79EC /* ruby_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D609201DE025009D79EC /* ruby_util.cpp */; };
-		3A08D684201DE025009D79EC /* ruby_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D609201DE025009D79EC /* ruby_util.cpp */; };
-		3A08D685201DE025009D79EC /* ruby_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D609201DE025009D79EC /* ruby_util.cpp */; };
-		3A08D686201DE025009D79EC /* ruby_util.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D60A201DE025009D79EC /* ruby_util.h */; };
-		3A08D687201DE025009D79EC /* ruby_util.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D60A201DE025009D79EC /* ruby_util.h */; };
-		3A08D688201DE025009D79EC /* ruby_util.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A08D60A201DE025009D79EC /* ruby_util.h */; };
-		3A08D689201DE025009D79EC /* msp_lib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D60C201DE025009D79EC /* msp_lib.cpp */; };
-		3A08D68A201DE025009D79EC /* msp_lib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D60C201DE025009D79EC /* msp_lib.cpp */; };
-		3A08D68B201DE025009D79EC /* msp_lib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A08D60C201DE025009D79EC /* msp_lib.cpp */; };
 		3A33F15D1DC47FF600CA768D /* libSDL2-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F699E1D2FB63400F12E60 /* libSDL2-2.0.0.dylib */; };
 		3A33F15E1DC47FF600CA768D /* libSDL2_mixer-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F69A01D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib */; };
-		3A33F1601DC47FF600CA768D /* libnewton.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AF9FF711D29CEBF007FC1E1 /* libnewton.dylib */; };
-		3A3A92B81D2E4E3400B57C8D /* libnewton.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AF9FF711D29CEBF007FC1E1 /* libnewton.dylib */; };
-		3A3E45151DC4962600C15213 /* Ruby.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A3E45131DC495E900C15213 /* Ruby.framework */; };
+		3A5C372D218FC97D00A72BE6 /* libSDL2-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F699E1D2FB63400F12E60 /* libSDL2-2.0.0.dylib */; };
+		3A5C372E218FC97D00A72BE6 /* libSDL2_mixer-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F69A01D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib */; };
+		3A5C390B218FCCA800A72BE6 /* angular_integration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38CA218FCCA700A72BE6 /* angular_integration.cpp */; };
+		3A5C390C218FCCA800A72BE6 /* angular_integration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38CA218FCCA700A72BE6 /* angular_integration.cpp */; };
+		3A5C390D218FCCA800A72BE6 /* angular_integration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38CA218FCCA700A72BE6 /* angular_integration.cpp */; };
+		3A5C390E218FCCA800A72BE6 /* angular_integration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38CA218FCCA700A72BE6 /* angular_integration.cpp */; };
+		3A5C390F218FCCA800A72BE6 /* angular_integration.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38CB218FCCA700A72BE6 /* angular_integration.h */; };
+		3A5C3910218FCCA800A72BE6 /* angular_integration.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38CB218FCCA700A72BE6 /* angular_integration.h */; };
+		3A5C3911218FCCA800A72BE6 /* angular_integration.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38CB218FCCA700A72BE6 /* angular_integration.h */; };
+		3A5C3912218FCCA800A72BE6 /* angular_integration.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38CB218FCCA700A72BE6 /* angular_integration.h */; };
+		3A5C3913218FCCA800A72BE6 /* msp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38CC218FCCA700A72BE6 /* msp.cpp */; };
+		3A5C3914218FCCA800A72BE6 /* msp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38CC218FCCA700A72BE6 /* msp.cpp */; };
+		3A5C3915218FCCA800A72BE6 /* msp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38CC218FCCA700A72BE6 /* msp.cpp */; };
+		3A5C3916218FCCA800A72BE6 /* msp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38CC218FCCA700A72BE6 /* msp.cpp */; };
+		3A5C3917218FCCA800A72BE6 /* msp.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38CD218FCCA700A72BE6 /* msp.h */; };
+		3A5C3918218FCCA800A72BE6 /* msp.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38CD218FCCA700A72BE6 /* msp.h */; };
+		3A5C3919218FCCA800A72BE6 /* msp.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38CD218FCCA700A72BE6 /* msp.h */; };
+		3A5C391A218FCCA800A72BE6 /* msp.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38CD218FCCA700A72BE6 /* msp.h */; };
+		3A5C391B218FCCA800A72BE6 /* msp_bodies.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38CE218FCCA700A72BE6 /* msp_bodies.cpp */; };
+		3A5C391C218FCCA800A72BE6 /* msp_bodies.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38CE218FCCA700A72BE6 /* msp_bodies.cpp */; };
+		3A5C391D218FCCA800A72BE6 /* msp_bodies.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38CE218FCCA700A72BE6 /* msp_bodies.cpp */; };
+		3A5C391E218FCCA800A72BE6 /* msp_bodies.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38CE218FCCA700A72BE6 /* msp_bodies.cpp */; };
+		3A5C391F218FCCA800A72BE6 /* msp_bodies.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38CF218FCCA700A72BE6 /* msp_bodies.h */; };
+		3A5C3920218FCCA800A72BE6 /* msp_bodies.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38CF218FCCA700A72BE6 /* msp_bodies.h */; };
+		3A5C3921218FCCA800A72BE6 /* msp_bodies.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38CF218FCCA700A72BE6 /* msp_bodies.h */; };
+		3A5C3922218FCCA800A72BE6 /* msp_bodies.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38CF218FCCA700A72BE6 /* msp_bodies.h */; };
+		3A5C3923218FCCA800A72BE6 /* msp_body.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D0218FCCA700A72BE6 /* msp_body.cpp */; };
+		3A5C3924218FCCA800A72BE6 /* msp_body.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D0218FCCA700A72BE6 /* msp_body.cpp */; };
+		3A5C3925218FCCA800A72BE6 /* msp_body.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D0218FCCA700A72BE6 /* msp_body.cpp */; };
+		3A5C3926218FCCA800A72BE6 /* msp_body.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D0218FCCA700A72BE6 /* msp_body.cpp */; };
+		3A5C3927218FCCA800A72BE6 /* msp_body.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D1218FCCA700A72BE6 /* msp_body.h */; };
+		3A5C3928218FCCA800A72BE6 /* msp_body.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D1218FCCA700A72BE6 /* msp_body.h */; };
+		3A5C3929218FCCA800A72BE6 /* msp_body.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D1218FCCA700A72BE6 /* msp_body.h */; };
+		3A5C392A218FCCA800A72BE6 /* msp_body.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D1218FCCA700A72BE6 /* msp_body.h */; };
+		3A5C392B218FCCA800A72BE6 /* msp_collision.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D2218FCCA700A72BE6 /* msp_collision.cpp */; };
+		3A5C392C218FCCA800A72BE6 /* msp_collision.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D2218FCCA700A72BE6 /* msp_collision.cpp */; };
+		3A5C392D218FCCA800A72BE6 /* msp_collision.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D2218FCCA700A72BE6 /* msp_collision.cpp */; };
+		3A5C392E218FCCA800A72BE6 /* msp_collision.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D2218FCCA700A72BE6 /* msp_collision.cpp */; };
+		3A5C392F218FCCA800A72BE6 /* msp_collision.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D3218FCCA700A72BE6 /* msp_collision.h */; };
+		3A5C3930218FCCA800A72BE6 /* msp_collision.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D3218FCCA700A72BE6 /* msp_collision.h */; };
+		3A5C3931218FCCA800A72BE6 /* msp_collision.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D3218FCCA700A72BE6 /* msp_collision.h */; };
+		3A5C3932218FCCA800A72BE6 /* msp_collision.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D3218FCCA700A72BE6 /* msp_collision.h */; };
+		3A5C3933218FCCA800A72BE6 /* msp_gear.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D4218FCCA700A72BE6 /* msp_gear.cpp */; };
+		3A5C3934218FCCA800A72BE6 /* msp_gear.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D4218FCCA700A72BE6 /* msp_gear.cpp */; };
+		3A5C3935218FCCA800A72BE6 /* msp_gear.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D4218FCCA700A72BE6 /* msp_gear.cpp */; };
+		3A5C3936218FCCA800A72BE6 /* msp_gear.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D4218FCCA700A72BE6 /* msp_gear.cpp */; };
+		3A5C3937218FCCA800A72BE6 /* msp_gear.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D5218FCCA700A72BE6 /* msp_gear.h */; };
+		3A5C3938218FCCA800A72BE6 /* msp_gear.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D5218FCCA700A72BE6 /* msp_gear.h */; };
+		3A5C3939218FCCA800A72BE6 /* msp_gear.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D5218FCCA700A72BE6 /* msp_gear.h */; };
+		3A5C393A218FCCA800A72BE6 /* msp_gear.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D5218FCCA700A72BE6 /* msp_gear.h */; };
+		3A5C393B218FCCA800A72BE6 /* msp_joint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D6218FCCA700A72BE6 /* msp_joint.cpp */; };
+		3A5C393C218FCCA800A72BE6 /* msp_joint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D6218FCCA700A72BE6 /* msp_joint.cpp */; };
+		3A5C393D218FCCA800A72BE6 /* msp_joint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D6218FCCA700A72BE6 /* msp_joint.cpp */; };
+		3A5C393E218FCCA800A72BE6 /* msp_joint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D6218FCCA700A72BE6 /* msp_joint.cpp */; };
+		3A5C393F218FCCA800A72BE6 /* msp_joint.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D7218FCCA700A72BE6 /* msp_joint.h */; };
+		3A5C3940218FCCA800A72BE6 /* msp_joint.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D7218FCCA700A72BE6 /* msp_joint.h */; };
+		3A5C3941218FCCA800A72BE6 /* msp_joint.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D7218FCCA700A72BE6 /* msp_joint.h */; };
+		3A5C3942218FCCA800A72BE6 /* msp_joint.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D7218FCCA700A72BE6 /* msp_joint.h */; };
+		3A5C3943218FCCA800A72BE6 /* msp_joint_ball_and_socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D8218FCCA700A72BE6 /* msp_joint_ball_and_socket.cpp */; };
+		3A5C3944218FCCA800A72BE6 /* msp_joint_ball_and_socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D8218FCCA700A72BE6 /* msp_joint_ball_and_socket.cpp */; };
+		3A5C3945218FCCA800A72BE6 /* msp_joint_ball_and_socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D8218FCCA700A72BE6 /* msp_joint_ball_and_socket.cpp */; };
+		3A5C3946218FCCA800A72BE6 /* msp_joint_ball_and_socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D8218FCCA700A72BE6 /* msp_joint_ball_and_socket.cpp */; };
+		3A5C3947218FCCA800A72BE6 /* msp_joint_ball_and_socket.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D9218FCCA700A72BE6 /* msp_joint_ball_and_socket.h */; };
+		3A5C3948218FCCA800A72BE6 /* msp_joint_ball_and_socket.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D9218FCCA700A72BE6 /* msp_joint_ball_and_socket.h */; };
+		3A5C3949218FCCA800A72BE6 /* msp_joint_ball_and_socket.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D9218FCCA700A72BE6 /* msp_joint_ball_and_socket.h */; };
+		3A5C394A218FCCA800A72BE6 /* msp_joint_ball_and_socket.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D9218FCCA700A72BE6 /* msp_joint_ball_and_socket.h */; };
+		3A5C394B218FCCA800A72BE6 /* msp_joint_corkscrew.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38DA218FCCA700A72BE6 /* msp_joint_corkscrew.cpp */; };
+		3A5C394C218FCCA800A72BE6 /* msp_joint_corkscrew.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38DA218FCCA700A72BE6 /* msp_joint_corkscrew.cpp */; };
+		3A5C394D218FCCA800A72BE6 /* msp_joint_corkscrew.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38DA218FCCA700A72BE6 /* msp_joint_corkscrew.cpp */; };
+		3A5C394E218FCCA800A72BE6 /* msp_joint_corkscrew.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38DA218FCCA700A72BE6 /* msp_joint_corkscrew.cpp */; };
+		3A5C394F218FCCA800A72BE6 /* msp_joint_corkscrew.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DB218FCCA700A72BE6 /* msp_joint_corkscrew.h */; };
+		3A5C3950218FCCA800A72BE6 /* msp_joint_corkscrew.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DB218FCCA700A72BE6 /* msp_joint_corkscrew.h */; };
+		3A5C3951218FCCA800A72BE6 /* msp_joint_corkscrew.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DB218FCCA700A72BE6 /* msp_joint_corkscrew.h */; };
+		3A5C3952218FCCA800A72BE6 /* msp_joint_corkscrew.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DB218FCCA700A72BE6 /* msp_joint_corkscrew.h */; };
+		3A5C3953218FCCA800A72BE6 /* msp_joint_curvy_piston.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38DC218FCCA700A72BE6 /* msp_joint_curvy_piston.cpp */; };
+		3A5C3954218FCCA800A72BE6 /* msp_joint_curvy_piston.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38DC218FCCA700A72BE6 /* msp_joint_curvy_piston.cpp */; };
+		3A5C3955218FCCA800A72BE6 /* msp_joint_curvy_piston.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38DC218FCCA700A72BE6 /* msp_joint_curvy_piston.cpp */; };
+		3A5C3956218FCCA800A72BE6 /* msp_joint_curvy_piston.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38DC218FCCA700A72BE6 /* msp_joint_curvy_piston.cpp */; };
+		3A5C3957218FCCA800A72BE6 /* msp_joint_curvy_piston.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DD218FCCA700A72BE6 /* msp_joint_curvy_piston.h */; };
+		3A5C3958218FCCA800A72BE6 /* msp_joint_curvy_piston.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DD218FCCA700A72BE6 /* msp_joint_curvy_piston.h */; };
+		3A5C3959218FCCA800A72BE6 /* msp_joint_curvy_piston.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DD218FCCA700A72BE6 /* msp_joint_curvy_piston.h */; };
+		3A5C395A218FCCA800A72BE6 /* msp_joint_curvy_piston.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DD218FCCA700A72BE6 /* msp_joint_curvy_piston.h */; };
+		3A5C395B218FCCA800A72BE6 /* msp_joint_curvy_slider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38DE218FCCA700A72BE6 /* msp_joint_curvy_slider.cpp */; };
+		3A5C395C218FCCA800A72BE6 /* msp_joint_curvy_slider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38DE218FCCA700A72BE6 /* msp_joint_curvy_slider.cpp */; };
+		3A5C395D218FCCA800A72BE6 /* msp_joint_curvy_slider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38DE218FCCA700A72BE6 /* msp_joint_curvy_slider.cpp */; };
+		3A5C395E218FCCA800A72BE6 /* msp_joint_curvy_slider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38DE218FCCA700A72BE6 /* msp_joint_curvy_slider.cpp */; };
+		3A5C395F218FCCA800A72BE6 /* msp_joint_curvy_slider.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DF218FCCA700A72BE6 /* msp_joint_curvy_slider.h */; };
+		3A5C3960218FCCA800A72BE6 /* msp_joint_curvy_slider.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DF218FCCA700A72BE6 /* msp_joint_curvy_slider.h */; };
+		3A5C3961218FCCA800A72BE6 /* msp_joint_curvy_slider.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DF218FCCA700A72BE6 /* msp_joint_curvy_slider.h */; };
+		3A5C3962218FCCA800A72BE6 /* msp_joint_curvy_slider.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DF218FCCA700A72BE6 /* msp_joint_curvy_slider.h */; };
+		3A5C3963218FCCA800A72BE6 /* msp_joint_fixed.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E0218FCCA700A72BE6 /* msp_joint_fixed.cpp */; };
+		3A5C3964218FCCA800A72BE6 /* msp_joint_fixed.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E0218FCCA700A72BE6 /* msp_joint_fixed.cpp */; };
+		3A5C3965218FCCA800A72BE6 /* msp_joint_fixed.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E0218FCCA700A72BE6 /* msp_joint_fixed.cpp */; };
+		3A5C3966218FCCA800A72BE6 /* msp_joint_fixed.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E0218FCCA700A72BE6 /* msp_joint_fixed.cpp */; };
+		3A5C3967218FCCA800A72BE6 /* msp_joint_fixed.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E1218FCCA700A72BE6 /* msp_joint_fixed.h */; };
+		3A5C3968218FCCA800A72BE6 /* msp_joint_fixed.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E1218FCCA700A72BE6 /* msp_joint_fixed.h */; };
+		3A5C3969218FCCA800A72BE6 /* msp_joint_fixed.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E1218FCCA700A72BE6 /* msp_joint_fixed.h */; };
+		3A5C396A218FCCA800A72BE6 /* msp_joint_fixed.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E1218FCCA700A72BE6 /* msp_joint_fixed.h */; };
+		3A5C396B218FCCA800A72BE6 /* msp_joint_hinge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E2218FCCA700A72BE6 /* msp_joint_hinge.cpp */; };
+		3A5C396C218FCCA800A72BE6 /* msp_joint_hinge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E2218FCCA700A72BE6 /* msp_joint_hinge.cpp */; };
+		3A5C396D218FCCA800A72BE6 /* msp_joint_hinge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E2218FCCA700A72BE6 /* msp_joint_hinge.cpp */; };
+		3A5C396E218FCCA800A72BE6 /* msp_joint_hinge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E2218FCCA700A72BE6 /* msp_joint_hinge.cpp */; };
+		3A5C396F218FCCA800A72BE6 /* msp_joint_hinge.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E3218FCCA700A72BE6 /* msp_joint_hinge.h */; };
+		3A5C3970218FCCA800A72BE6 /* msp_joint_hinge.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E3218FCCA700A72BE6 /* msp_joint_hinge.h */; };
+		3A5C3971218FCCA800A72BE6 /* msp_joint_hinge.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E3218FCCA700A72BE6 /* msp_joint_hinge.h */; };
+		3A5C3972218FCCA800A72BE6 /* msp_joint_hinge.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E3218FCCA700A72BE6 /* msp_joint_hinge.h */; };
+		3A5C3973218FCCA800A72BE6 /* msp_joint_motor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E4218FCCA700A72BE6 /* msp_joint_motor.cpp */; };
+		3A5C3974218FCCA800A72BE6 /* msp_joint_motor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E4218FCCA700A72BE6 /* msp_joint_motor.cpp */; };
+		3A5C3975218FCCA800A72BE6 /* msp_joint_motor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E4218FCCA700A72BE6 /* msp_joint_motor.cpp */; };
+		3A5C3976218FCCA800A72BE6 /* msp_joint_motor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E4218FCCA700A72BE6 /* msp_joint_motor.cpp */; };
+		3A5C3977218FCCA800A72BE6 /* msp_joint_motor.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E5218FCCA700A72BE6 /* msp_joint_motor.h */; };
+		3A5C3978218FCCA800A72BE6 /* msp_joint_motor.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E5218FCCA700A72BE6 /* msp_joint_motor.h */; };
+		3A5C3979218FCCA800A72BE6 /* msp_joint_motor.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E5218FCCA700A72BE6 /* msp_joint_motor.h */; };
+		3A5C397A218FCCA800A72BE6 /* msp_joint_motor.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E5218FCCA700A72BE6 /* msp_joint_motor.h */; };
+		3A5C397B218FCCA800A72BE6 /* msp_joint_piston.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E6218FCCA700A72BE6 /* msp_joint_piston.cpp */; };
+		3A5C397C218FCCA800A72BE6 /* msp_joint_piston.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E6218FCCA700A72BE6 /* msp_joint_piston.cpp */; };
+		3A5C397D218FCCA800A72BE6 /* msp_joint_piston.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E6218FCCA700A72BE6 /* msp_joint_piston.cpp */; };
+		3A5C397E218FCCA800A72BE6 /* msp_joint_piston.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E6218FCCA700A72BE6 /* msp_joint_piston.cpp */; };
+		3A5C397F218FCCA800A72BE6 /* msp_joint_piston.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E7218FCCA700A72BE6 /* msp_joint_piston.h */; };
+		3A5C3980218FCCA800A72BE6 /* msp_joint_piston.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E7218FCCA700A72BE6 /* msp_joint_piston.h */; };
+		3A5C3981218FCCA800A72BE6 /* msp_joint_piston.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E7218FCCA700A72BE6 /* msp_joint_piston.h */; };
+		3A5C3982218FCCA800A72BE6 /* msp_joint_piston.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E7218FCCA700A72BE6 /* msp_joint_piston.h */; };
+		3A5C3983218FCCA800A72BE6 /* msp_joint_plane.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E8218FCCA700A72BE6 /* msp_joint_plane.cpp */; };
+		3A5C3984218FCCA800A72BE6 /* msp_joint_plane.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E8218FCCA700A72BE6 /* msp_joint_plane.cpp */; };
+		3A5C3985218FCCA800A72BE6 /* msp_joint_plane.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E8218FCCA700A72BE6 /* msp_joint_plane.cpp */; };
+		3A5C3986218FCCA800A72BE6 /* msp_joint_plane.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E8218FCCA700A72BE6 /* msp_joint_plane.cpp */; };
+		3A5C3987218FCCA800A72BE6 /* msp_joint_plane.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E9218FCCA700A72BE6 /* msp_joint_plane.h */; };
+		3A5C3988218FCCA800A72BE6 /* msp_joint_plane.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E9218FCCA700A72BE6 /* msp_joint_plane.h */; };
+		3A5C3989218FCCA800A72BE6 /* msp_joint_plane.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E9218FCCA700A72BE6 /* msp_joint_plane.h */; };
+		3A5C398A218FCCA800A72BE6 /* msp_joint_plane.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E9218FCCA700A72BE6 /* msp_joint_plane.h */; };
+		3A5C398B218FCCA800A72BE6 /* msp_joint_point_to_point.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38EA218FCCA700A72BE6 /* msp_joint_point_to_point.cpp */; };
+		3A5C398C218FCCA800A72BE6 /* msp_joint_point_to_point.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38EA218FCCA700A72BE6 /* msp_joint_point_to_point.cpp */; };
+		3A5C398D218FCCA800A72BE6 /* msp_joint_point_to_point.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38EA218FCCA700A72BE6 /* msp_joint_point_to_point.cpp */; };
+		3A5C398E218FCCA800A72BE6 /* msp_joint_point_to_point.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38EA218FCCA700A72BE6 /* msp_joint_point_to_point.cpp */; };
+		3A5C398F218FCCA800A72BE6 /* msp_joint_point_to_point.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38EB218FCCA700A72BE6 /* msp_joint_point_to_point.h */; };
+		3A5C3990218FCCA800A72BE6 /* msp_joint_point_to_point.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38EB218FCCA700A72BE6 /* msp_joint_point_to_point.h */; };
+		3A5C3991218FCCA800A72BE6 /* msp_joint_point_to_point.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38EB218FCCA700A72BE6 /* msp_joint_point_to_point.h */; };
+		3A5C3992218FCCA800A72BE6 /* msp_joint_point_to_point.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38EB218FCCA700A72BE6 /* msp_joint_point_to_point.h */; };
+		3A5C3993218FCCA800A72BE6 /* msp_joint_servo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38EC218FCCA700A72BE6 /* msp_joint_servo.cpp */; };
+		3A5C3994218FCCA800A72BE6 /* msp_joint_servo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38EC218FCCA700A72BE6 /* msp_joint_servo.cpp */; };
+		3A5C3995218FCCA800A72BE6 /* msp_joint_servo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38EC218FCCA700A72BE6 /* msp_joint_servo.cpp */; };
+		3A5C3996218FCCA800A72BE6 /* msp_joint_servo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38EC218FCCA700A72BE6 /* msp_joint_servo.cpp */; };
+		3A5C3997218FCCA800A72BE6 /* msp_joint_servo.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38ED218FCCA700A72BE6 /* msp_joint_servo.h */; };
+		3A5C3998218FCCA800A72BE6 /* msp_joint_servo.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38ED218FCCA700A72BE6 /* msp_joint_servo.h */; };
+		3A5C3999218FCCA800A72BE6 /* msp_joint_servo.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38ED218FCCA700A72BE6 /* msp_joint_servo.h */; };
+		3A5C399A218FCCA800A72BE6 /* msp_joint_servo.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38ED218FCCA700A72BE6 /* msp_joint_servo.h */; };
+		3A5C399B218FCCA800A72BE6 /* msp_joint_slider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38EE218FCCA700A72BE6 /* msp_joint_slider.cpp */; };
+		3A5C399C218FCCA800A72BE6 /* msp_joint_slider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38EE218FCCA700A72BE6 /* msp_joint_slider.cpp */; };
+		3A5C399D218FCCA800A72BE6 /* msp_joint_slider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38EE218FCCA700A72BE6 /* msp_joint_slider.cpp */; };
+		3A5C399E218FCCA800A72BE6 /* msp_joint_slider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38EE218FCCA700A72BE6 /* msp_joint_slider.cpp */; };
+		3A5C399F218FCCA800A72BE6 /* msp_joint_slider.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38EF218FCCA700A72BE6 /* msp_joint_slider.h */; };
+		3A5C39A0218FCCA800A72BE6 /* msp_joint_slider.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38EF218FCCA700A72BE6 /* msp_joint_slider.h */; };
+		3A5C39A1218FCCA800A72BE6 /* msp_joint_slider.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38EF218FCCA700A72BE6 /* msp_joint_slider.h */; };
+		3A5C39A2218FCCA800A72BE6 /* msp_joint_slider.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38EF218FCCA700A72BE6 /* msp_joint_slider.h */; };
+		3A5C39A3218FCCA800A72BE6 /* msp_joint_spring.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F0218FCCA700A72BE6 /* msp_joint_spring.cpp */; };
+		3A5C39A4218FCCA800A72BE6 /* msp_joint_spring.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F0218FCCA700A72BE6 /* msp_joint_spring.cpp */; };
+		3A5C39A5218FCCA800A72BE6 /* msp_joint_spring.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F0218FCCA700A72BE6 /* msp_joint_spring.cpp */; };
+		3A5C39A6218FCCA800A72BE6 /* msp_joint_spring.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F0218FCCA700A72BE6 /* msp_joint_spring.cpp */; };
+		3A5C39A7218FCCA800A72BE6 /* msp_joint_spring.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F1218FCCA700A72BE6 /* msp_joint_spring.h */; };
+		3A5C39A8218FCCA800A72BE6 /* msp_joint_spring.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F1218FCCA700A72BE6 /* msp_joint_spring.h */; };
+		3A5C39A9218FCCA800A72BE6 /* msp_joint_spring.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F1218FCCA700A72BE6 /* msp_joint_spring.h */; };
+		3A5C39AA218FCCA800A72BE6 /* msp_joint_spring.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F1218FCCA700A72BE6 /* msp_joint_spring.h */; };
+		3A5C39AB218FCCA800A72BE6 /* msp_joint_universal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F2218FCCA700A72BE6 /* msp_joint_universal.cpp */; };
+		3A5C39AC218FCCA800A72BE6 /* msp_joint_universal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F2218FCCA700A72BE6 /* msp_joint_universal.cpp */; };
+		3A5C39AD218FCCA800A72BE6 /* msp_joint_universal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F2218FCCA700A72BE6 /* msp_joint_universal.cpp */; };
+		3A5C39AE218FCCA800A72BE6 /* msp_joint_universal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F2218FCCA700A72BE6 /* msp_joint_universal.cpp */; };
+		3A5C39AF218FCCA800A72BE6 /* msp_joint_universal.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F3218FCCA700A72BE6 /* msp_joint_universal.h */; };
+		3A5C39B0218FCCA800A72BE6 /* msp_joint_universal.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F3218FCCA700A72BE6 /* msp_joint_universal.h */; };
+		3A5C39B1218FCCA800A72BE6 /* msp_joint_universal.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F3218FCCA700A72BE6 /* msp_joint_universal.h */; };
+		3A5C39B2218FCCA800A72BE6 /* msp_joint_universal.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F3218FCCA700A72BE6 /* msp_joint_universal.h */; };
+		3A5C39B3218FCCA800A72BE6 /* msp_joint_up_vector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F4218FCCA700A72BE6 /* msp_joint_up_vector.cpp */; };
+		3A5C39B4218FCCA800A72BE6 /* msp_joint_up_vector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F4218FCCA700A72BE6 /* msp_joint_up_vector.cpp */; };
+		3A5C39B5218FCCA800A72BE6 /* msp_joint_up_vector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F4218FCCA700A72BE6 /* msp_joint_up_vector.cpp */; };
+		3A5C39B6218FCCA800A72BE6 /* msp_joint_up_vector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F4218FCCA700A72BE6 /* msp_joint_up_vector.cpp */; };
+		3A5C39B7218FCCA800A72BE6 /* msp_joint_up_vector.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F5218FCCA700A72BE6 /* msp_joint_up_vector.h */; };
+		3A5C39B8218FCCA800A72BE6 /* msp_joint_up_vector.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F5218FCCA700A72BE6 /* msp_joint_up_vector.h */; };
+		3A5C39B9218FCCA800A72BE6 /* msp_joint_up_vector.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F5218FCCA700A72BE6 /* msp_joint_up_vector.h */; };
+		3A5C39BA218FCCA800A72BE6 /* msp_joint_up_vector.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F5218FCCA700A72BE6 /* msp_joint_up_vector.h */; };
+		3A5C39BB218FCCA800A72BE6 /* msp_joystick.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F6218FCCA700A72BE6 /* msp_joystick.cpp */; };
+		3A5C39BC218FCCA800A72BE6 /* msp_joystick.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F6218FCCA700A72BE6 /* msp_joystick.cpp */; };
+		3A5C39BD218FCCA800A72BE6 /* msp_joystick.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F6218FCCA700A72BE6 /* msp_joystick.cpp */; };
+		3A5C39BE218FCCA800A72BE6 /* msp_joystick.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F6218FCCA700A72BE6 /* msp_joystick.cpp */; };
+		3A5C39BF218FCCA800A72BE6 /* msp_joystick.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F7218FCCA700A72BE6 /* msp_joystick.h */; };
+		3A5C39C0218FCCA800A72BE6 /* msp_joystick.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F7218FCCA700A72BE6 /* msp_joystick.h */; };
+		3A5C39C1218FCCA800A72BE6 /* msp_joystick.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F7218FCCA700A72BE6 /* msp_joystick.h */; };
+		3A5C39C2218FCCA800A72BE6 /* msp_joystick.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F7218FCCA700A72BE6 /* msp_joystick.h */; };
+		3A5C39C3218FCCA800A72BE6 /* msp_music.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F8218FCCA700A72BE6 /* msp_music.cpp */; };
+		3A5C39C4218FCCA800A72BE6 /* msp_music.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F8218FCCA700A72BE6 /* msp_music.cpp */; };
+		3A5C39C5218FCCA800A72BE6 /* msp_music.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F8218FCCA700A72BE6 /* msp_music.cpp */; };
+		3A5C39C6218FCCA800A72BE6 /* msp_music.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F8218FCCA700A72BE6 /* msp_music.cpp */; };
+		3A5C39C7218FCCA800A72BE6 /* msp_music.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F9218FCCA700A72BE6 /* msp_music.h */; };
+		3A5C39C8218FCCA800A72BE6 /* msp_music.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F9218FCCA700A72BE6 /* msp_music.h */; };
+		3A5C39C9218FCCA800A72BE6 /* msp_music.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F9218FCCA700A72BE6 /* msp_music.h */; };
+		3A5C39CA218FCCA800A72BE6 /* msp_music.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F9218FCCA700A72BE6 /* msp_music.h */; };
+		3A5C39CB218FCCA800A72BE6 /* msp_newton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38FA218FCCA700A72BE6 /* msp_newton.cpp */; };
+		3A5C39CC218FCCA800A72BE6 /* msp_newton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38FA218FCCA700A72BE6 /* msp_newton.cpp */; };
+		3A5C39CD218FCCA800A72BE6 /* msp_newton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38FA218FCCA700A72BE6 /* msp_newton.cpp */; };
+		3A5C39CE218FCCA800A72BE6 /* msp_newton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38FA218FCCA700A72BE6 /* msp_newton.cpp */; };
+		3A5C39CF218FCCA800A72BE6 /* msp_newton.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38FB218FCCA700A72BE6 /* msp_newton.h */; };
+		3A5C39D0218FCCA800A72BE6 /* msp_newton.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38FB218FCCA700A72BE6 /* msp_newton.h */; };
+		3A5C39D1218FCCA800A72BE6 /* msp_newton.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38FB218FCCA700A72BE6 /* msp_newton.h */; };
+		3A5C39D2218FCCA800A72BE6 /* msp_newton.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38FB218FCCA700A72BE6 /* msp_newton.h */; };
+		3A5C39D3218FCCA800A72BE6 /* msp_particle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38FC218FCCA700A72BE6 /* msp_particle.cpp */; };
+		3A5C39D4218FCCA800A72BE6 /* msp_particle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38FC218FCCA700A72BE6 /* msp_particle.cpp */; };
+		3A5C39D5218FCCA800A72BE6 /* msp_particle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38FC218FCCA700A72BE6 /* msp_particle.cpp */; };
+		3A5C39D6218FCCA800A72BE6 /* msp_particle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38FC218FCCA700A72BE6 /* msp_particle.cpp */; };
+		3A5C39D7218FCCA800A72BE6 /* msp_particle.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38FD218FCCA700A72BE6 /* msp_particle.h */; };
+		3A5C39D8218FCCA800A72BE6 /* msp_particle.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38FD218FCCA700A72BE6 /* msp_particle.h */; };
+		3A5C39D9218FCCA800A72BE6 /* msp_particle.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38FD218FCCA700A72BE6 /* msp_particle.h */; };
+		3A5C39DA218FCCA800A72BE6 /* msp_particle.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38FD218FCCA700A72BE6 /* msp_particle.h */; };
+		3A5C39DB218FCCA800A72BE6 /* msp_sdl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38FE218FCCA700A72BE6 /* msp_sdl.cpp */; };
+		3A5C39DC218FCCA800A72BE6 /* msp_sdl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38FE218FCCA700A72BE6 /* msp_sdl.cpp */; };
+		3A5C39DD218FCCA800A72BE6 /* msp_sdl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38FE218FCCA700A72BE6 /* msp_sdl.cpp */; };
+		3A5C39DE218FCCA800A72BE6 /* msp_sdl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38FE218FCCA700A72BE6 /* msp_sdl.cpp */; };
+		3A5C39DF218FCCA800A72BE6 /* msp_sdl.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38FF218FCCA700A72BE6 /* msp_sdl.h */; };
+		3A5C39E0218FCCA800A72BE6 /* msp_sdl.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38FF218FCCA700A72BE6 /* msp_sdl.h */; };
+		3A5C39E1218FCCA800A72BE6 /* msp_sdl.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38FF218FCCA700A72BE6 /* msp_sdl.h */; };
+		3A5C39E2218FCCA800A72BE6 /* msp_sdl.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38FF218FCCA700A72BE6 /* msp_sdl.h */; };
+		3A5C39E3218FCCA800A72BE6 /* msp_sdl_mixer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3900218FCCA700A72BE6 /* msp_sdl_mixer.cpp */; };
+		3A5C39E4218FCCA800A72BE6 /* msp_sdl_mixer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3900218FCCA700A72BE6 /* msp_sdl_mixer.cpp */; };
+		3A5C39E5218FCCA800A72BE6 /* msp_sdl_mixer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3900218FCCA700A72BE6 /* msp_sdl_mixer.cpp */; };
+		3A5C39E6218FCCA800A72BE6 /* msp_sdl_mixer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3900218FCCA700A72BE6 /* msp_sdl_mixer.cpp */; };
+		3A5C39E7218FCCA800A72BE6 /* msp_sdl_mixer.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3901218FCCA700A72BE6 /* msp_sdl_mixer.h */; };
+		3A5C39E8218FCCA800A72BE6 /* msp_sdl_mixer.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3901218FCCA700A72BE6 /* msp_sdl_mixer.h */; };
+		3A5C39E9218FCCA800A72BE6 /* msp_sdl_mixer.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3901218FCCA700A72BE6 /* msp_sdl_mixer.h */; };
+		3A5C39EA218FCCA800A72BE6 /* msp_sdl_mixer.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3901218FCCA700A72BE6 /* msp_sdl_mixer.h */; };
+		3A5C39EB218FCCA800A72BE6 /* msp_sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3902218FCCA700A72BE6 /* msp_sound.cpp */; };
+		3A5C39EC218FCCA800A72BE6 /* msp_sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3902218FCCA700A72BE6 /* msp_sound.cpp */; };
+		3A5C39ED218FCCA800A72BE6 /* msp_sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3902218FCCA700A72BE6 /* msp_sound.cpp */; };
+		3A5C39EE218FCCA800A72BE6 /* msp_sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3902218FCCA700A72BE6 /* msp_sound.cpp */; };
+		3A5C39EF218FCCA800A72BE6 /* msp_sound.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3903218FCCA700A72BE6 /* msp_sound.h */; };
+		3A5C39F0218FCCA800A72BE6 /* msp_sound.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3903218FCCA700A72BE6 /* msp_sound.h */; };
+		3A5C39F1218FCCA800A72BE6 /* msp_sound.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3903218FCCA700A72BE6 /* msp_sound.h */; };
+		3A5C39F2218FCCA800A72BE6 /* msp_sound.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3903218FCCA700A72BE6 /* msp_sound.h */; };
+		3A5C39F3218FCCA800A72BE6 /* msp_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3904218FCCA700A72BE6 /* msp_util.cpp */; };
+		3A5C39F4218FCCA800A72BE6 /* msp_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3904218FCCA700A72BE6 /* msp_util.cpp */; };
+		3A5C39F5218FCCA800A72BE6 /* msp_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3904218FCCA700A72BE6 /* msp_util.cpp */; };
+		3A5C39F6218FCCA800A72BE6 /* msp_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3904218FCCA700A72BE6 /* msp_util.cpp */; };
+		3A5C39F7218FCCA800A72BE6 /* msp_util.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3905218FCCA700A72BE6 /* msp_util.h */; };
+		3A5C39F8218FCCA800A72BE6 /* msp_util.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3905218FCCA700A72BE6 /* msp_util.h */; };
+		3A5C39F9218FCCA800A72BE6 /* msp_util.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3905218FCCA700A72BE6 /* msp_util.h */; };
+		3A5C39FA218FCCA800A72BE6 /* msp_util.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3905218FCCA700A72BE6 /* msp_util.h */; };
+		3A5C39FB218FCCA800A72BE6 /* msp_world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3906218FCCA700A72BE6 /* msp_world.cpp */; };
+		3A5C39FC218FCCA800A72BE6 /* msp_world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3906218FCCA700A72BE6 /* msp_world.cpp */; };
+		3A5C39FD218FCCA800A72BE6 /* msp_world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3906218FCCA700A72BE6 /* msp_world.cpp */; };
+		3A5C39FE218FCCA800A72BE6 /* msp_world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3906218FCCA700A72BE6 /* msp_world.cpp */; };
+		3A5C39FF218FCCA800A72BE6 /* msp_world.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3907218FCCA700A72BE6 /* msp_world.h */; };
+		3A5C3A00218FCCA800A72BE6 /* msp_world.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3907218FCCA700A72BE6 /* msp_world.h */; };
+		3A5C3A01218FCCA800A72BE6 /* msp_world.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3907218FCCA700A72BE6 /* msp_world.h */; };
+		3A5C3A02218FCCA800A72BE6 /* msp_world.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3907218FCCA700A72BE6 /* msp_world.h */; };
+		3A5C3A03218FCCA800A72BE6 /* ruby_prep.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3908218FCCA700A72BE6 /* ruby_prep.h */; };
+		3A5C3A04218FCCA800A72BE6 /* ruby_prep.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3908218FCCA700A72BE6 /* ruby_prep.h */; };
+		3A5C3A05218FCCA800A72BE6 /* ruby_prep.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3908218FCCA700A72BE6 /* ruby_prep.h */; };
+		3A5C3A06218FCCA800A72BE6 /* ruby_prep.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3908218FCCA700A72BE6 /* ruby_prep.h */; };
+		3A5C3A07218FCCA800A72BE6 /* msp_lib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C390A218FCCA700A72BE6 /* msp_lib.cpp */; };
+		3A5C3A08218FCCA800A72BE6 /* msp_lib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C390A218FCCA700A72BE6 /* msp_lib.cpp */; };
+		3A5C3A09218FCCA800A72BE6 /* msp_lib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C390A218FCCA700A72BE6 /* msp_lib.cpp */; };
+		3A5C3A0A218FCCA800A72BE6 /* msp_lib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C390A218FCCA700A72BE6 /* msp_lib.cpp */; };
+		3A5C3A0D218FCF9800A72BE6 /* Ruby.Framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A5C3A0C218FCF9800A72BE6 /* Ruby.Framework */; };
+		3A5C3A14218FCFEE00A72BE6 /* Ruby.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A5C3A13218FCFEE00A72BE6 /* Ruby.framework */; };
+		3A5C3A16218FD00000A72BE6 /* Ruby.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A5C3A15218FD00000A72BE6 /* Ruby.framework */; };
+		3A5C3A18218FD00F00A72BE6 /* Ruby.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A5C3A17218FD00F00A72BE6 /* Ruby.framework */; };
+		3A5C3A1D218FD02800A72BE6 /* msp_sdl_mixer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3900218FCCA700A72BE6 /* msp_sdl_mixer.cpp */; };
+		3A5C3A1E218FD02800A72BE6 /* msp_particle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38FC218FCCA700A72BE6 /* msp_particle.cpp */; };
+		3A5C3A1F218FD02800A72BE6 /* msp_lib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C390A218FCCA700A72BE6 /* msp_lib.cpp */; };
+		3A5C3A20218FD02800A72BE6 /* msp_joint_hinge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E2218FCCA700A72BE6 /* msp_joint_hinge.cpp */; };
+		3A5C3A21218FD02800A72BE6 /* msp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38CC218FCCA700A72BE6 /* msp.cpp */; };
+		3A5C3A22218FD02800A72BE6 /* msp_sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3902218FCCA700A72BE6 /* msp_sound.cpp */; };
+		3A5C3A23218FD02800A72BE6 /* msp_bodies.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38CE218FCCA700A72BE6 /* msp_bodies.cpp */; };
+		3A5C3A24218FD02800A72BE6 /* msp_joint_fixed.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E0218FCCA700A72BE6 /* msp_joint_fixed.cpp */; };
+		3A5C3A25218FD02800A72BE6 /* msp_joint_universal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F2218FCCA700A72BE6 /* msp_joint_universal.cpp */; };
+		3A5C3A26218FD02800A72BE6 /* msp_sdl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38FE218FCCA700A72BE6 /* msp_sdl.cpp */; };
+		3A5C3A27218FD02800A72BE6 /* msp_joint_curvy_piston.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38DC218FCCA700A72BE6 /* msp_joint_curvy_piston.cpp */; };
+		3A5C3A28218FD02800A72BE6 /* msp_music.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F8218FCCA700A72BE6 /* msp_music.cpp */; };
+		3A5C3A29218FD02800A72BE6 /* msp_joint_motor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E4218FCCA700A72BE6 /* msp_joint_motor.cpp */; };
+		3A5C3A2A218FD02800A72BE6 /* msp_joint_plane.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E8218FCCA700A72BE6 /* msp_joint_plane.cpp */; };
+		3A5C3A2B218FD02800A72BE6 /* msp_body.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D0218FCCA700A72BE6 /* msp_body.cpp */; };
+		3A5C3A2C218FD02800A72BE6 /* msp_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3904218FCCA700A72BE6 /* msp_util.cpp */; };
+		3A5C3A2D218FD02800A72BE6 /* msp_joint_up_vector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F4218FCCA700A72BE6 /* msp_joint_up_vector.cpp */; };
+		3A5C3A2E218FD02800A72BE6 /* msp_gear.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D4218FCCA700A72BE6 /* msp_gear.cpp */; };
+		3A5C3A2F218FD02800A72BE6 /* msp_joint_slider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38EE218FCCA700A72BE6 /* msp_joint_slider.cpp */; };
+		3A5C3A30218FD02800A72BE6 /* msp_joint_spring.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F0218FCCA700A72BE6 /* msp_joint_spring.cpp */; };
+		3A5C3A31218FD02800A72BE6 /* msp_joint_point_to_point.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38EA218FCCA700A72BE6 /* msp_joint_point_to_point.cpp */; };
+		3A5C3A32218FD02800A72BE6 /* msp_world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C3906218FCCA700A72BE6 /* msp_world.cpp */; };
+		3A5C3A33218FD02800A72BE6 /* msp_joint_corkscrew.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38DA218FCCA700A72BE6 /* msp_joint_corkscrew.cpp */; };
+		3A5C3A34218FD02800A72BE6 /* msp_newton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38FA218FCCA700A72BE6 /* msp_newton.cpp */; };
+		3A5C3A35218FD02800A72BE6 /* msp_joint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D6218FCCA700A72BE6 /* msp_joint.cpp */; };
+		3A5C3A36218FD02800A72BE6 /* msp_joint_curvy_slider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38DE218FCCA700A72BE6 /* msp_joint_curvy_slider.cpp */; };
+		3A5C3A37218FD02800A72BE6 /* msp_joystick.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38F6218FCCA700A72BE6 /* msp_joystick.cpp */; };
+		3A5C3A38218FD02800A72BE6 /* msp_joint_ball_and_socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D8218FCCA700A72BE6 /* msp_joint_ball_and_socket.cpp */; };
+		3A5C3A39218FD02800A72BE6 /* msp_joint_piston.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38E6218FCCA700A72BE6 /* msp_joint_piston.cpp */; };
+		3A5C3A3A218FD02800A72BE6 /* msp_collision.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38D2218FCCA700A72BE6 /* msp_collision.cpp */; };
+		3A5C3A3B218FD02800A72BE6 /* angular_integration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38CA218FCCA700A72BE6 /* angular_integration.cpp */; };
+		3A5C3A3C218FD02800A72BE6 /* msp_joint_servo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A5C38EC218FCCA700A72BE6 /* msp_joint_servo.cpp */; };
+		3A5C3A3E218FD02800A72BE6 /* Ruby.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A5C3A15218FD00000A72BE6 /* Ruby.framework */; };
+		3A5C3A3F218FD02800A72BE6 /* libSDL2-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F699E1D2FB63400F12E60 /* libSDL2-2.0.0.dylib */; };
+		3A5C3A40218FD02800A72BE6 /* libSDL2_mixer-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F69A01D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib */; };
+		3A5C3A43218FD02800A72BE6 /* msp_joint_piston.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E7218FCCA700A72BE6 /* msp_joint_piston.h */; };
+		3A5C3A44218FD02800A72BE6 /* msp_util.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3905218FCCA700A72BE6 /* msp_util.h */; };
+		3A5C3A45218FD02800A72BE6 /* msp_joint_spring.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F1218FCCA700A72BE6 /* msp_joint_spring.h */; };
+		3A5C3A46218FD02800A72BE6 /* msp_sdl.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38FF218FCCA700A72BE6 /* msp_sdl.h */; };
+		3A5C3A47218FD02800A72BE6 /* msp_joint_motor.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E5218FCCA700A72BE6 /* msp_joint_motor.h */; };
+		3A5C3A48218FD02800A72BE6 /* msp_joint_universal.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F3218FCCA700A72BE6 /* msp_joint_universal.h */; };
+		3A5C3A49218FD02800A72BE6 /* msp_joint_up_vector.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F5218FCCA700A72BE6 /* msp_joint_up_vector.h */; };
+		3A5C3A4A218FD02800A72BE6 /* msp_joystick.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F7218FCCA700A72BE6 /* msp_joystick.h */; };
+		3A5C3A4B218FD02800A72BE6 /* msp_joint_servo.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38ED218FCCA700A72BE6 /* msp_joint_servo.h */; };
+		3A5C3A4C218FD02800A72BE6 /* msp_joint_ball_and_socket.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D9218FCCA700A72BE6 /* msp_joint_ball_and_socket.h */; };
+		3A5C3A4D218FD02800A72BE6 /* msp_gear.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D5218FCCA700A72BE6 /* msp_gear.h */; };
+		3A5C3A4E218FD02800A72BE6 /* msp_particle.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38FD218FCCA700A72BE6 /* msp_particle.h */; };
+		3A5C3A4F218FD02800A72BE6 /* msp_music.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38F9218FCCA700A72BE6 /* msp_music.h */; };
+		3A5C3A50218FD02800A72BE6 /* msp_joint.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D7218FCCA700A72BE6 /* msp_joint.h */; };
+		3A5C3A51218FD02800A72BE6 /* msp_world.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3907218FCCA700A72BE6 /* msp_world.h */; };
+		3A5C3A52218FD02800A72BE6 /* msp_joint_corkscrew.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DB218FCCA700A72BE6 /* msp_joint_corkscrew.h */; };
+		3A5C3A53218FD02800A72BE6 /* msp_bodies.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38CF218FCCA700A72BE6 /* msp_bodies.h */; };
+		3A5C3A54218FD02800A72BE6 /* msp_joint_fixed.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E1218FCCA700A72BE6 /* msp_joint_fixed.h */; };
+		3A5C3A55218FD02800A72BE6 /* msp_newton.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38FB218FCCA700A72BE6 /* msp_newton.h */; };
+		3A5C3A56218FD02800A72BE6 /* msp_collision.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D3218FCCA700A72BE6 /* msp_collision.h */; };
+		3A5C3A57218FD02800A72BE6 /* msp_joint_plane.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E9218FCCA700A72BE6 /* msp_joint_plane.h */; };
+		3A5C3A58218FD02800A72BE6 /* msp_body.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38D1218FCCA700A72BE6 /* msp_body.h */; };
+		3A5C3A59218FD02800A72BE6 /* msp_sound.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3903218FCCA700A72BE6 /* msp_sound.h */; };
+		3A5C3A5A218FD02800A72BE6 /* msp_joint_hinge.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38E3218FCCA700A72BE6 /* msp_joint_hinge.h */; };
+		3A5C3A5B218FD02800A72BE6 /* angular_integration.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38CB218FCCA700A72BE6 /* angular_integration.h */; };
+		3A5C3A5C218FD02800A72BE6 /* ruby_prep.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3908218FCCA700A72BE6 /* ruby_prep.h */; };
+		3A5C3A5D218FD02800A72BE6 /* msp.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38CD218FCCA700A72BE6 /* msp.h */; };
+		3A5C3A5E218FD02800A72BE6 /* msp_sdl_mixer.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C3901218FCCA700A72BE6 /* msp_sdl_mixer.h */; };
+		3A5C3A5F218FD02800A72BE6 /* msp_joint_slider.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38EF218FCCA700A72BE6 /* msp_joint_slider.h */; };
+		3A5C3A60218FD02800A72BE6 /* msp_joint_curvy_slider.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DF218FCCA700A72BE6 /* msp_joint_curvy_slider.h */; };
+		3A5C3A61218FD02800A72BE6 /* msp_joint_point_to_point.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38EB218FCCA700A72BE6 /* msp_joint_point_to_point.h */; };
+		3A5C3A62218FD02800A72BE6 /* msp_joint_curvy_piston.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DD218FCCA700A72BE6 /* msp_joint_curvy_piston.h */; };
+		3A5C3B3B218FD55C00A72BE6 /* newton.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A5C3B39218FD16C00A72BE6 /* newton.dylib */; };
+		3A5C3B3C218FD56500A72BE6 /* newton.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A5C3B39218FD16C00A72BE6 /* newton.dylib */; };
+		3A5C3B3D218FD56B00A72BE6 /* newton.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AF9FF711D29CEBF007FC1E1 /* newton.a */; };
+		3A5C3B3E218FD57100A72BE6 /* newton.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AF9FF711D29CEBF007FC1E1 /* newton.a */; };
+		3A5C3B40218FD64B00A72BE6 /* newton.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A5C3B39218FD16C00A72BE6 /* newton.dylib */; };
 		3A9F699F1D2FB63400F12E60 /* libSDL2-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F699E1D2FB63400F12E60 /* libSDL2-2.0.0.dylib */; };
 		3A9F69A11D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F69A01D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib */; };
 		3A9F69A21D2FB6D100F12E60 /* libSDL2-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F699E1D2FB63400F12E60 /* libSDL2-2.0.0.dylib */; };
 		3A9F69A31D2FB6DA00F12E60 /* libSDL2_mixer-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F69A01D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib */; };
-		3AF3DBAF1D2FA51800EA962A /* libnewton.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AF9FF711D29CEBF007FC1E1 /* libnewton.dylib */; };
-		CE1590E91847A5F10084B06D /* Ruby.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE1590E81847A5F10084B06D /* Ruby.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		3A33F1371DC47FF600CA768D /* PBXContainerItemProxy */ = {
+		3A5C3B38218FD16C00A72BE6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 3AF9FF6C1D29CEBE007FC1E1 /* newton.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = D2AAC06E0554671400DB518D;
-			remoteInfo = newton;
+			proxyType = 2;
+			remoteGlobalIDString = 3A5C3B36218FD0A400A72BE6;
+			remoteInfo = "newton - 64";
 		};
-		3A3A92BB1D2E511D00B57C8D /* PBXContainerItemProxy */ = {
+		3A5C3B43218FD75700A72BE6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 3AF9FF6C1D29CEBE007FC1E1 /* newton.xcodeproj */;
 			proxyType = 1;
-			remoteGlobalIDString = D2AAC06E0554671400DB518D;
-			remoteInfo = newton;
+			remoteGlobalIDString = 3A5C3A68218FD0A400A72BE6;
+			remoteInfo = "newton - 64";
 		};
-		3A91ACAA1D311D6B00299CA4 /* PBXContainerItemProxy */ = {
+		3A5C3B45218FD75C00A72BE6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3AF9FF6C1D29CEBE007FC1E1 /* newton.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 3A5C3A68218FD0A400A72BE6;
+			remoteInfo = "newton - 64";
+		};
+		3A5C3B47218FD76100A72BE6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3AF9FF6C1D29CEBE007FC1E1 /* newton.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 3A5C3A68218FD0A400A72BE6;
+			remoteInfo = "newton - 64";
+		};
+		3A5C3B49218FD76700A72BE6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 3AF9FF6C1D29CEBE007FC1E1 /* newton.xcodeproj */;
 			proxyType = 1;
 			remoteGlobalIDString = D2AAC06E0554671400DB518D;
-			remoteInfo = newton;
+			remoteInfo = "newton - 32";
+		};
+		3A5C3B4B218FD76B00A72BE6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3AF9FF6C1D29CEBE007FC1E1 /* newton.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = D2AAC06E0554671400DB518D;
+			remoteInfo = "newton - 32";
 		};
 		3AF9FF701D29CEBF007FC1E1 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -180,56 +403,81 @@
 
 /* Begin PBXFileReference section */
 		33CDE5E5182703B200F7C6E8 /* msp_lib.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = msp_lib.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
-		3A08D5E2201DE025009D79EC /* angular_integration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = angular_integration.cpp; sourceTree = "<group>"; };
-		3A08D5E3201DE025009D79EC /* angular_integration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = angular_integration.h; sourceTree = "<group>"; };
-		3A08D5E4201DE025009D79EC /* geom.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom.cpp; sourceTree = "<group>"; };
-		3A08D5E5201DE025009D79EC /* geom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom.h; sourceTree = "<group>"; };
-		3A08D5E6201DE025009D79EC /* geom_aabb_tree.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom_aabb_tree.cpp; sourceTree = "<group>"; };
-		3A08D5E7201DE025009D79EC /* geom_aabb_tree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom_aabb_tree.h; sourceTree = "<group>"; };
-		3A08D5E8201DE025009D79EC /* geom_bounding_box.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom_bounding_box.cpp; sourceTree = "<group>"; };
-		3A08D5E9201DE025009D79EC /* geom_bounding_box.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom_bounding_box.h; sourceTree = "<group>"; };
-		3A08D5EA201DE025009D79EC /* geom_color.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom_color.cpp; sourceTree = "<group>"; };
-		3A08D5EB201DE025009D79EC /* geom_color.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom_color.h; sourceTree = "<group>"; };
-		3A08D5EC201DE025009D79EC /* geom_quaternion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom_quaternion.cpp; sourceTree = "<group>"; };
-		3A08D5ED201DE025009D79EC /* geom_quaternion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom_quaternion.h; sourceTree = "<group>"; };
-		3A08D5EE201DE025009D79EC /* geom_transformation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom_transformation.cpp; sourceTree = "<group>"; };
-		3A08D5EF201DE025009D79EC /* geom_transformation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom_transformation.h; sourceTree = "<group>"; };
-		3A08D5F0201DE025009D79EC /* geom_vector3d.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geom_vector3d.cpp; sourceTree = "<group>"; };
-		3A08D5F1201DE025009D79EC /* geom_vector3d.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geom_vector3d.h; sourceTree = "<group>"; };
-		3A08D5F2201DE025009D79EC /* msp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp.cpp; sourceTree = "<group>"; };
-		3A08D5F3201DE025009D79EC /* msp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp.h; sourceTree = "<group>"; };
-		3A08D5F4201DE025009D79EC /* msp_body.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_body.cpp; sourceTree = "<group>"; };
-		3A08D5F5201DE025009D79EC /* msp_body.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_body.h; sourceTree = "<group>"; };
-		3A08D5F6201DE025009D79EC /* msp_contact.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_contact.cpp; sourceTree = "<group>"; };
-		3A08D5F7201DE025009D79EC /* msp_contact.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_contact.h; sourceTree = "<group>"; };
-		3A08D5F8201DE025009D79EC /* msp_entity.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_entity.cpp; sourceTree = "<group>"; };
-		3A08D5F9201DE025009D79EC /* msp_entity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_entity.h; sourceTree = "<group>"; };
-		3A08D5FA201DE025009D79EC /* msp_fixed.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_fixed.cpp; sourceTree = "<group>"; };
-		3A08D5FB201DE025009D79EC /* msp_fixed.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_fixed.h; sourceTree = "<group>"; };
-		3A08D5FC201DE025009D79EC /* msp_gear.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_gear.cpp; sourceTree = "<group>"; };
-		3A08D5FD201DE025009D79EC /* msp_gear.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_gear.h; sourceTree = "<group>"; };
-		3A08D5FE201DE025009D79EC /* msp_hit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_hit.cpp; sourceTree = "<group>"; };
-		3A08D5FF201DE025009D79EC /* msp_hit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_hit.h; sourceTree = "<group>"; };
-		3A08D600201DE025009D79EC /* msp_joint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint.cpp; sourceTree = "<group>"; };
-		3A08D601201DE025009D79EC /* msp_joint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint.h; sourceTree = "<group>"; };
-		3A08D602201DE025009D79EC /* msp_point_to_point.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_point_to_point.cpp; sourceTree = "<group>"; };
-		3A08D603201DE025009D79EC /* msp_point_to_point.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_point_to_point.h; sourceTree = "<group>"; };
-		3A08D604201DE025009D79EC /* msp_point_to_point_actuator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_point_to_point_actuator.cpp; sourceTree = "<group>"; };
-		3A08D605201DE025009D79EC /* msp_point_to_point_actuator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_point_to_point_actuator.h; sourceTree = "<group>"; };
-		3A08D606201DE025009D79EC /* msp_world.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_world.cpp; sourceTree = "<group>"; };
-		3A08D607201DE025009D79EC /* msp_world.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_world.h; sourceTree = "<group>"; };
-		3A08D608201DE025009D79EC /* ruby_prep.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ruby_prep.h; sourceTree = "<group>"; };
-		3A08D609201DE025009D79EC /* ruby_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ruby_util.cpp; sourceTree = "<group>"; };
-		3A08D60A201DE025009D79EC /* ruby_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ruby_util.h; sourceTree = "<group>"; };
-		3A08D60C201DE025009D79EC /* msp_lib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_lib.cpp; sourceTree = "<group>"; };
 		3A33F1881DC47FF600CA768D /* msp_lib.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = msp_lib.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
-		3A3E45131DC495E900C15213 /* Ruby.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Ruby.framework; path = ../../ThirdParty/RubyLib/lib/mac/2.2/Ruby.framework; sourceTree = "<group>"; };
+		3A5C3736218FC97D00A72BE6 /* msp_lib.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = msp_lib.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		3A5C38CA218FCCA700A72BE6 /* angular_integration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = angular_integration.cpp; sourceTree = "<group>"; };
+		3A5C38CB218FCCA700A72BE6 /* angular_integration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = angular_integration.h; sourceTree = "<group>"; };
+		3A5C38CC218FCCA700A72BE6 /* msp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp.cpp; sourceTree = "<group>"; };
+		3A5C38CD218FCCA700A72BE6 /* msp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp.h; sourceTree = "<group>"; };
+		3A5C38CE218FCCA700A72BE6 /* msp_bodies.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_bodies.cpp; sourceTree = "<group>"; };
+		3A5C38CF218FCCA700A72BE6 /* msp_bodies.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_bodies.h; sourceTree = "<group>"; };
+		3A5C38D0218FCCA700A72BE6 /* msp_body.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_body.cpp; sourceTree = "<group>"; };
+		3A5C38D1218FCCA700A72BE6 /* msp_body.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_body.h; sourceTree = "<group>"; };
+		3A5C38D2218FCCA700A72BE6 /* msp_collision.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_collision.cpp; sourceTree = "<group>"; };
+		3A5C38D3218FCCA700A72BE6 /* msp_collision.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_collision.h; sourceTree = "<group>"; };
+		3A5C38D4218FCCA700A72BE6 /* msp_gear.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_gear.cpp; sourceTree = "<group>"; };
+		3A5C38D5218FCCA700A72BE6 /* msp_gear.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_gear.h; sourceTree = "<group>"; };
+		3A5C38D6218FCCA700A72BE6 /* msp_joint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint.cpp; sourceTree = "<group>"; };
+		3A5C38D7218FCCA700A72BE6 /* msp_joint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint.h; sourceTree = "<group>"; };
+		3A5C38D8218FCCA700A72BE6 /* msp_joint_ball_and_socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint_ball_and_socket.cpp; sourceTree = "<group>"; };
+		3A5C38D9218FCCA700A72BE6 /* msp_joint_ball_and_socket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint_ball_and_socket.h; sourceTree = "<group>"; };
+		3A5C38DA218FCCA700A72BE6 /* msp_joint_corkscrew.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint_corkscrew.cpp; sourceTree = "<group>"; };
+		3A5C38DB218FCCA700A72BE6 /* msp_joint_corkscrew.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint_corkscrew.h; sourceTree = "<group>"; };
+		3A5C38DC218FCCA700A72BE6 /* msp_joint_curvy_piston.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint_curvy_piston.cpp; sourceTree = "<group>"; };
+		3A5C38DD218FCCA700A72BE6 /* msp_joint_curvy_piston.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint_curvy_piston.h; sourceTree = "<group>"; };
+		3A5C38DE218FCCA700A72BE6 /* msp_joint_curvy_slider.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint_curvy_slider.cpp; sourceTree = "<group>"; };
+		3A5C38DF218FCCA700A72BE6 /* msp_joint_curvy_slider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint_curvy_slider.h; sourceTree = "<group>"; };
+		3A5C38E0218FCCA700A72BE6 /* msp_joint_fixed.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint_fixed.cpp; sourceTree = "<group>"; };
+		3A5C38E1218FCCA700A72BE6 /* msp_joint_fixed.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint_fixed.h; sourceTree = "<group>"; };
+		3A5C38E2218FCCA700A72BE6 /* msp_joint_hinge.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint_hinge.cpp; sourceTree = "<group>"; };
+		3A5C38E3218FCCA700A72BE6 /* msp_joint_hinge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint_hinge.h; sourceTree = "<group>"; };
+		3A5C38E4218FCCA700A72BE6 /* msp_joint_motor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint_motor.cpp; sourceTree = "<group>"; };
+		3A5C38E5218FCCA700A72BE6 /* msp_joint_motor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint_motor.h; sourceTree = "<group>"; };
+		3A5C38E6218FCCA700A72BE6 /* msp_joint_piston.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint_piston.cpp; sourceTree = "<group>"; };
+		3A5C38E7218FCCA700A72BE6 /* msp_joint_piston.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint_piston.h; sourceTree = "<group>"; };
+		3A5C38E8218FCCA700A72BE6 /* msp_joint_plane.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint_plane.cpp; sourceTree = "<group>"; };
+		3A5C38E9218FCCA700A72BE6 /* msp_joint_plane.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint_plane.h; sourceTree = "<group>"; };
+		3A5C38EA218FCCA700A72BE6 /* msp_joint_point_to_point.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint_point_to_point.cpp; sourceTree = "<group>"; };
+		3A5C38EB218FCCA700A72BE6 /* msp_joint_point_to_point.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint_point_to_point.h; sourceTree = "<group>"; };
+		3A5C38EC218FCCA700A72BE6 /* msp_joint_servo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint_servo.cpp; sourceTree = "<group>"; };
+		3A5C38ED218FCCA700A72BE6 /* msp_joint_servo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint_servo.h; sourceTree = "<group>"; };
+		3A5C38EE218FCCA700A72BE6 /* msp_joint_slider.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint_slider.cpp; sourceTree = "<group>"; };
+		3A5C38EF218FCCA700A72BE6 /* msp_joint_slider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint_slider.h; sourceTree = "<group>"; };
+		3A5C38F0218FCCA700A72BE6 /* msp_joint_spring.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint_spring.cpp; sourceTree = "<group>"; };
+		3A5C38F1218FCCA700A72BE6 /* msp_joint_spring.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint_spring.h; sourceTree = "<group>"; };
+		3A5C38F2218FCCA700A72BE6 /* msp_joint_universal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint_universal.cpp; sourceTree = "<group>"; };
+		3A5C38F3218FCCA700A72BE6 /* msp_joint_universal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint_universal.h; sourceTree = "<group>"; };
+		3A5C38F4218FCCA700A72BE6 /* msp_joint_up_vector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joint_up_vector.cpp; sourceTree = "<group>"; };
+		3A5C38F5218FCCA700A72BE6 /* msp_joint_up_vector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joint_up_vector.h; sourceTree = "<group>"; };
+		3A5C38F6218FCCA700A72BE6 /* msp_joystick.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_joystick.cpp; sourceTree = "<group>"; };
+		3A5C38F7218FCCA700A72BE6 /* msp_joystick.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_joystick.h; sourceTree = "<group>"; };
+		3A5C38F8218FCCA700A72BE6 /* msp_music.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_music.cpp; sourceTree = "<group>"; };
+		3A5C38F9218FCCA700A72BE6 /* msp_music.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_music.h; sourceTree = "<group>"; };
+		3A5C38FA218FCCA700A72BE6 /* msp_newton.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_newton.cpp; sourceTree = "<group>"; };
+		3A5C38FB218FCCA700A72BE6 /* msp_newton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_newton.h; sourceTree = "<group>"; };
+		3A5C38FC218FCCA700A72BE6 /* msp_particle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_particle.cpp; sourceTree = "<group>"; };
+		3A5C38FD218FCCA700A72BE6 /* msp_particle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_particle.h; sourceTree = "<group>"; };
+		3A5C38FE218FCCA700A72BE6 /* msp_sdl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_sdl.cpp; sourceTree = "<group>"; };
+		3A5C38FF218FCCA700A72BE6 /* msp_sdl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_sdl.h; sourceTree = "<group>"; };
+		3A5C3900218FCCA700A72BE6 /* msp_sdl_mixer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_sdl_mixer.cpp; sourceTree = "<group>"; };
+		3A5C3901218FCCA700A72BE6 /* msp_sdl_mixer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_sdl_mixer.h; sourceTree = "<group>"; };
+		3A5C3902218FCCA700A72BE6 /* msp_sound.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_sound.cpp; sourceTree = "<group>"; };
+		3A5C3903218FCCA700A72BE6 /* msp_sound.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_sound.h; sourceTree = "<group>"; };
+		3A5C3904218FCCA700A72BE6 /* msp_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_util.cpp; sourceTree = "<group>"; };
+		3A5C3905218FCCA700A72BE6 /* msp_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_util.h; sourceTree = "<group>"; };
+		3A5C3906218FCCA700A72BE6 /* msp_world.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_world.cpp; sourceTree = "<group>"; };
+		3A5C3907218FCCA700A72BE6 /* msp_world.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = msp_world.h; sourceTree = "<group>"; };
+		3A5C3908218FCCA700A72BE6 /* ruby_prep.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ruby_prep.h; sourceTree = "<group>"; };
+		3A5C390A218FCCA700A72BE6 /* msp_lib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = msp_lib.cpp; sourceTree = "<group>"; };
+		3A5C3A0C218FCF9800A72BE6 /* Ruby.Framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Ruby.Framework; path = ../../ThirdParty/Ruby/lib/mac/2.5/Ruby.Framework; sourceTree = "<group>"; };
+		3A5C3A13218FCFEE00A72BE6 /* Ruby.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Ruby.framework; path = ../../ThirdParty/Ruby/lib/mac/2.2/Ruby.framework; sourceTree = "<group>"; };
+		3A5C3A15218FD00000A72BE6 /* Ruby.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Ruby.framework; path = ../../ThirdParty/Ruby/lib/mac/2.0/Ruby.framework; sourceTree = "<group>"; };
+		3A5C3A17218FD00F00A72BE6 /* Ruby.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Ruby.framework; path = ../../ThirdParty/Ruby/lib/mac/1.8/Ruby.framework; sourceTree = "<group>"; };
+		3A5C3A67218FD02800A72BE6 /* msp_lib.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = msp_lib.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		3A9F699E1D2FB63400F12E60 /* libSDL2-2.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libSDL2-2.0.0.dylib"; path = "../../ThirdParty/SDL2/lib/libSDL2-2.0.0.dylib"; sourceTree = "<group>"; };
 		3A9F69A01D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libSDL2_mixer-2.0.0.dylib"; path = "../../ThirdParty/SDL2_mixer/lib/libSDL2_mixer-2.0.0.dylib"; sourceTree = "<group>"; };
 		3AF9FF6C1D29CEBE007FC1E1 /* newton.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = newton.xcodeproj; sourceTree = "<group>"; };
 		CE1590E518479EAB0084B06D /* msp_lib_exports.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = msp_lib_exports.txt; sourceTree = "<group>"; };
-		CE1590E61847A5A20084B06D /* Ruby.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Ruby.framework; path = ../../ThirdParty/RubyLib/lib/mac/2.0/Ruby.framework; sourceTree = "<group>"; };
-		CE1590E81847A5F10084B06D /* Ruby.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Ruby.framework; path = ../../ThirdParty/RubyLib/lib/mac/1.8/Ruby.framework; sourceTree = "<group>"; };
 		CE405E8A184763D300A77187 /* msp_lib.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = msp_lib.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -238,10 +486,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3A5C3B3C218FD56500A72BE6 /* newton.dylib in Frameworks */,
+				3A5C3A16218FD00000A72BE6 /* Ruby.framework in Frameworks */,
 				3A9F699F1D2FB63400F12E60 /* libSDL2-2.0.0.dylib in Frameworks */,
 				3A9F69A11D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib in Frameworks */,
-				3AF3DBAF1D2FA51800EA962A /* libnewton.dylib in Frameworks */,
-				339559611A0D798C00BB518A /* Ruby.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -249,10 +497,32 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3A5C3B3B218FD55C00A72BE6 /* newton.dylib in Frameworks */,
+				3A5C3A14218FCFEE00A72BE6 /* Ruby.framework in Frameworks */,
 				3A33F15D1DC47FF600CA768D /* libSDL2-2.0.0.dylib in Frameworks */,
 				3A33F15E1DC47FF600CA768D /* libSDL2_mixer-2.0.0.dylib in Frameworks */,
-				3A33F1601DC47FF600CA768D /* libnewton.dylib in Frameworks */,
-				3A3E45151DC4962600C15213 /* Ruby.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3A5C372C218FC97D00A72BE6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A5C3B40218FD64B00A72BE6 /* newton.dylib in Frameworks */,
+				3A5C3A0D218FCF9800A72BE6 /* Ruby.Framework in Frameworks */,
+				3A5C372D218FC97D00A72BE6 /* libSDL2-2.0.0.dylib in Frameworks */,
+				3A5C372E218FC97D00A72BE6 /* libSDL2_mixer-2.0.0.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3A5C3A3D218FD02800A72BE6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A5C3B3D218FD56B00A72BE6 /* newton.a in Frameworks */,
+				3A5C3A3E218FD02800A72BE6 /* Ruby.framework in Frameworks */,
+				3A5C3A3F218FD02800A72BE6 /* libSDL2-2.0.0.dylib in Frameworks */,
+				3A5C3A40218FD02800A72BE6 /* libSDL2_mixer-2.0.0.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -260,10 +530,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3A5C3B3E218FD57100A72BE6 /* newton.a in Frameworks */,
+				3A5C3A18218FD00F00A72BE6 /* Ruby.framework in Frameworks */,
 				3A9F69A21D2FB6D100F12E60 /* libSDL2-2.0.0.dylib in Frameworks */,
 				3A9F69A31D2FB6DA00F12E60 /* libSDL2_mixer-2.0.0.dylib in Frameworks */,
-				3A3A92B81D2E4E3400B57C8D /* libnewton.dylib in Frameworks */,
-				CE1590E91847A5F10084B06D /* Ruby.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -273,11 +543,12 @@
 		33CDE5DA182703B100F7C6E8 = {
 			isa = PBXGroup;
 			children = (
-				3A08D5E0201DE025009D79EC /* Source */,
+				3A5C38C9218FCCA700A72BE6 /* main */,
+				3A5C3909218FCCA700A72BE6 /* osx */,
 				3AF9FF6B1D29CE93007FC1E1 /* Dependencies */,
 				CE1590E518479EAB0084B06D /* msp_lib_exports.txt */,
-				33CDE7B11827091E00F7C6E8 /* ThirdParty Frameworks */,
 				33CDE5E6182703B200F7C6E8 /* Products */,
+				3A5C3A0B218FCF9800A72BE6 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -287,108 +558,101 @@
 				33CDE5E5182703B200F7C6E8 /* msp_lib.bundle */,
 				CE405E8A184763D300A77187 /* msp_lib.bundle */,
 				3A33F1881DC47FF600CA768D /* msp_lib.bundle */,
+				3A5C3736218FC97D00A72BE6 /* msp_lib.bundle */,
+				3A5C3A67218FD02800A72BE6 /* msp_lib.bundle */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		33CDE7B11827091E00F7C6E8 /* ThirdParty Frameworks */ = {
+		3A5C38C9218FCCA700A72BE6 /* main */ = {
 			isa = PBXGroup;
 			children = (
-				3AE10BAB1D2BCB2900E0F7D0 /* 1.8 */,
-				3AE10BAA1D2BCB0700E0F7D0 /* 2.0 */,
-				3A3E45121DC495E900C15213 /* 2.2 */,
+				3A5C38CA218FCCA700A72BE6 /* angular_integration.cpp */,
+				3A5C38CB218FCCA700A72BE6 /* angular_integration.h */,
+				3A5C38CC218FCCA700A72BE6 /* msp.cpp */,
+				3A5C38CD218FCCA700A72BE6 /* msp.h */,
+				3A5C38CE218FCCA700A72BE6 /* msp_bodies.cpp */,
+				3A5C38CF218FCCA700A72BE6 /* msp_bodies.h */,
+				3A5C38D0218FCCA700A72BE6 /* msp_body.cpp */,
+				3A5C38D1218FCCA700A72BE6 /* msp_body.h */,
+				3A5C38D2218FCCA700A72BE6 /* msp_collision.cpp */,
+				3A5C38D3218FCCA700A72BE6 /* msp_collision.h */,
+				3A5C38D4218FCCA700A72BE6 /* msp_gear.cpp */,
+				3A5C38D5218FCCA700A72BE6 /* msp_gear.h */,
+				3A5C38D6218FCCA700A72BE6 /* msp_joint.cpp */,
+				3A5C38D7218FCCA700A72BE6 /* msp_joint.h */,
+				3A5C38D8218FCCA700A72BE6 /* msp_joint_ball_and_socket.cpp */,
+				3A5C38D9218FCCA700A72BE6 /* msp_joint_ball_and_socket.h */,
+				3A5C38DA218FCCA700A72BE6 /* msp_joint_corkscrew.cpp */,
+				3A5C38DB218FCCA700A72BE6 /* msp_joint_corkscrew.h */,
+				3A5C38DC218FCCA700A72BE6 /* msp_joint_curvy_piston.cpp */,
+				3A5C38DD218FCCA700A72BE6 /* msp_joint_curvy_piston.h */,
+				3A5C38DE218FCCA700A72BE6 /* msp_joint_curvy_slider.cpp */,
+				3A5C38DF218FCCA700A72BE6 /* msp_joint_curvy_slider.h */,
+				3A5C38E0218FCCA700A72BE6 /* msp_joint_fixed.cpp */,
+				3A5C38E1218FCCA700A72BE6 /* msp_joint_fixed.h */,
+				3A5C38E2218FCCA700A72BE6 /* msp_joint_hinge.cpp */,
+				3A5C38E3218FCCA700A72BE6 /* msp_joint_hinge.h */,
+				3A5C38E4218FCCA700A72BE6 /* msp_joint_motor.cpp */,
+				3A5C38E5218FCCA700A72BE6 /* msp_joint_motor.h */,
+				3A5C38E6218FCCA700A72BE6 /* msp_joint_piston.cpp */,
+				3A5C38E7218FCCA700A72BE6 /* msp_joint_piston.h */,
+				3A5C38E8218FCCA700A72BE6 /* msp_joint_plane.cpp */,
+				3A5C38E9218FCCA700A72BE6 /* msp_joint_plane.h */,
+				3A5C38EA218FCCA700A72BE6 /* msp_joint_point_to_point.cpp */,
+				3A5C38EB218FCCA700A72BE6 /* msp_joint_point_to_point.h */,
+				3A5C38EC218FCCA700A72BE6 /* msp_joint_servo.cpp */,
+				3A5C38ED218FCCA700A72BE6 /* msp_joint_servo.h */,
+				3A5C38EE218FCCA700A72BE6 /* msp_joint_slider.cpp */,
+				3A5C38EF218FCCA700A72BE6 /* msp_joint_slider.h */,
+				3A5C38F0218FCCA700A72BE6 /* msp_joint_spring.cpp */,
+				3A5C38F1218FCCA700A72BE6 /* msp_joint_spring.h */,
+				3A5C38F2218FCCA700A72BE6 /* msp_joint_universal.cpp */,
+				3A5C38F3218FCCA700A72BE6 /* msp_joint_universal.h */,
+				3A5C38F4218FCCA700A72BE6 /* msp_joint_up_vector.cpp */,
+				3A5C38F5218FCCA700A72BE6 /* msp_joint_up_vector.h */,
+				3A5C38F6218FCCA700A72BE6 /* msp_joystick.cpp */,
+				3A5C38F7218FCCA700A72BE6 /* msp_joystick.h */,
+				3A5C38F8218FCCA700A72BE6 /* msp_music.cpp */,
+				3A5C38F9218FCCA700A72BE6 /* msp_music.h */,
+				3A5C38FA218FCCA700A72BE6 /* msp_newton.cpp */,
+				3A5C38FB218FCCA700A72BE6 /* msp_newton.h */,
+				3A5C38FC218FCCA700A72BE6 /* msp_particle.cpp */,
+				3A5C38FD218FCCA700A72BE6 /* msp_particle.h */,
+				3A5C38FE218FCCA700A72BE6 /* msp_sdl.cpp */,
+				3A5C38FF218FCCA700A72BE6 /* msp_sdl.h */,
+				3A5C3900218FCCA700A72BE6 /* msp_sdl_mixer.cpp */,
+				3A5C3901218FCCA700A72BE6 /* msp_sdl_mixer.h */,
+				3A5C3902218FCCA700A72BE6 /* msp_sound.cpp */,
+				3A5C3903218FCCA700A72BE6 /* msp_sound.h */,
+				3A5C3904218FCCA700A72BE6 /* msp_util.cpp */,
+				3A5C3905218FCCA700A72BE6 /* msp_util.h */,
+				3A5C3906218FCCA700A72BE6 /* msp_world.cpp */,
+				3A5C3907218FCCA700A72BE6 /* msp_world.h */,
+				3A5C3908218FCCA700A72BE6 /* ruby_prep.h */,
 			);
-			name = "ThirdParty Frameworks";
+			name = main;
+			path = ../../Source/main;
 			sourceTree = "<group>";
 		};
-		3A08D5E0201DE025009D79EC /* Source */ = {
+		3A5C3909218FCCA700A72BE6 /* osx */ = {
 			isa = PBXGroup;
 			children = (
-				3A08D5E1201DE025009D79EC /* common */,
-				3A08D60B201DE025009D79EC /* osx */,
+				3A5C390A218FCCA700A72BE6 /* msp_lib.cpp */,
 			);
-			name = Source;
-			path = ../../Source;
+			name = osx;
+			path = ../../Source/osx;
 			sourceTree = "<group>";
 		};
-		3A08D5E1201DE025009D79EC /* common */ = {
+		3A5C3A0B218FCF9800A72BE6 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				3A08D5E2201DE025009D79EC /* angular_integration.cpp */,
-				3A08D5E3201DE025009D79EC /* angular_integration.h */,
-				3A08D5E4201DE025009D79EC /* geom.cpp */,
-				3A08D5E5201DE025009D79EC /* geom.h */,
-				3A08D5E6201DE025009D79EC /* geom_aabb_tree.cpp */,
-				3A08D5E7201DE025009D79EC /* geom_aabb_tree.h */,
-				3A08D5E8201DE025009D79EC /* geom_bounding_box.cpp */,
-				3A08D5E9201DE025009D79EC /* geom_bounding_box.h */,
-				3A08D5EA201DE025009D79EC /* geom_color.cpp */,
-				3A08D5EB201DE025009D79EC /* geom_color.h */,
-				3A08D5EC201DE025009D79EC /* geom_quaternion.cpp */,
-				3A08D5ED201DE025009D79EC /* geom_quaternion.h */,
-				3A08D5EE201DE025009D79EC /* geom_transformation.cpp */,
-				3A08D5EF201DE025009D79EC /* geom_transformation.h */,
-				3A08D5F0201DE025009D79EC /* geom_vector3d.cpp */,
-				3A08D5F1201DE025009D79EC /* geom_vector3d.h */,
-				3A08D5F2201DE025009D79EC /* msp.cpp */,
-				3A08D5F3201DE025009D79EC /* msp.h */,
-				3A08D5F4201DE025009D79EC /* msp_body.cpp */,
-				3A08D5F5201DE025009D79EC /* msp_body.h */,
-				3A08D5F6201DE025009D79EC /* msp_contact.cpp */,
-				3A08D5F7201DE025009D79EC /* msp_contact.h */,
-				3A08D5F8201DE025009D79EC /* msp_entity.cpp */,
-				3A08D5F9201DE025009D79EC /* msp_entity.h */,
-				3A08D5FA201DE025009D79EC /* msp_fixed.cpp */,
-				3A08D5FB201DE025009D79EC /* msp_fixed.h */,
-				3A08D5FC201DE025009D79EC /* msp_gear.cpp */,
-				3A08D5FD201DE025009D79EC /* msp_gear.h */,
-				3A08D5FE201DE025009D79EC /* msp_hit.cpp */,
-				3A08D5FF201DE025009D79EC /* msp_hit.h */,
-				3A08D600201DE025009D79EC /* msp_joint.cpp */,
-				3A08D601201DE025009D79EC /* msp_joint.h */,
-				3A08D602201DE025009D79EC /* msp_point_to_point.cpp */,
-				3A08D603201DE025009D79EC /* msp_point_to_point.h */,
-				3A08D604201DE025009D79EC /* msp_point_to_point_actuator.cpp */,
-				3A08D605201DE025009D79EC /* msp_point_to_point_actuator.h */,
-				3A08D606201DE025009D79EC /* msp_world.cpp */,
-				3A08D607201DE025009D79EC /* msp_world.h */,
-				3A08D608201DE025009D79EC /* ruby_prep.h */,
-				3A08D609201DE025009D79EC /* ruby_util.cpp */,
-				3A08D60A201DE025009D79EC /* ruby_util.h */,
+				3A5C3A13218FCFEE00A72BE6 /* Ruby.framework */,
+				3A5C3A15218FD00000A72BE6 /* Ruby.framework */,
+				3A5C3A17218FD00F00A72BE6 /* Ruby.framework */,
+				3A5C3A0C218FCF9800A72BE6 /* Ruby.Framework */,
 			);
-			path = common;
-			sourceTree = "<group>";
-		};
-		3A08D60B201DE025009D79EC /* osx */ = {
-			isa = PBXGroup;
-			children = (
-				3A08D60C201DE025009D79EC /* msp_lib.cpp */,
-			);
-			path = osx;
-			sourceTree = "<group>";
-		};
-		3A3E45121DC495E900C15213 /* 2.2 */ = {
-			isa = PBXGroup;
-			children = (
-				3A3E45131DC495E900C15213 /* Ruby.framework */,
-			);
-			name = 2.2;
-			sourceTree = "<group>";
-		};
-		3AE10BAA1D2BCB0700E0F7D0 /* 2.0 */ = {
-			isa = PBXGroup;
-			children = (
-				CE1590E61847A5A20084B06D /* Ruby.framework */,
-			);
-			name = 2.0;
-			sourceTree = "<group>";
-		};
-		3AE10BAB1D2BCB2900E0F7D0 /* 1.8 */ = {
-			isa = PBXGroup;
-			children = (
-				CE1590E81847A5F10084B06D /* Ruby.framework */,
-			);
-			name = 1.8;
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		3AF9FF6B1D29CE93007FC1E1 /* Dependencies */ = {
@@ -404,7 +668,8 @@
 		3AF9FF6D1D29CEBE007FC1E1 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				3AF9FF711D29CEBF007FC1E1 /* libnewton.dylib */,
+				3AF9FF711D29CEBF007FC1E1 /* newton.a */,
+				3A5C3B39218FD16C00A72BE6 /* newton.dylib */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -416,27 +681,38 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3A08D62A201DE025009D79EC /* geom_color.h in Headers */,
-				3A08D678201DE025009D79EC /* msp_point_to_point_actuator.h in Headers */,
-				3A08D648201DE025009D79EC /* msp_body.h in Headers */,
-				3A08D654201DE025009D79EC /* msp_entity.h in Headers */,
-				3A08D64E201DE025009D79EC /* msp_contact.h in Headers */,
-				3A08D66C201DE025009D79EC /* msp_joint.h in Headers */,
-				3A08D61E201DE025009D79EC /* geom_aabb_tree.h in Headers */,
-				3A08D618201DE025009D79EC /* geom.h in Headers */,
-				3A08D672201DE025009D79EC /* msp_point_to_point.h in Headers */,
-				3A08D65A201DE025009D79EC /* msp_fixed.h in Headers */,
-				3A08D67E201DE025009D79EC /* msp_world.h in Headers */,
-				3A08D642201DE025009D79EC /* msp.h in Headers */,
-				3A08D666201DE025009D79EC /* msp_hit.h in Headers */,
-				3A08D681201DE025009D79EC /* ruby_prep.h in Headers */,
-				3A08D624201DE025009D79EC /* geom_bounding_box.h in Headers */,
-				3A08D630201DE025009D79EC /* geom_quaternion.h in Headers */,
-				3A08D660201DE025009D79EC /* msp_gear.h in Headers */,
-				3A08D636201DE025009D79EC /* geom_transformation.h in Headers */,
-				3A08D63C201DE025009D79EC /* geom_vector3d.h in Headers */,
-				3A08D687201DE025009D79EC /* ruby_util.h in Headers */,
-				3A08D612201DE025009D79EC /* angular_integration.h in Headers */,
+				3A5C3980218FCCA800A72BE6 /* msp_joint_piston.h in Headers */,
+				3A5C39F8218FCCA800A72BE6 /* msp_util.h in Headers */,
+				3A5C39A8218FCCA800A72BE6 /* msp_joint_spring.h in Headers */,
+				3A5C39E0218FCCA800A72BE6 /* msp_sdl.h in Headers */,
+				3A5C3978218FCCA800A72BE6 /* msp_joint_motor.h in Headers */,
+				3A5C39B0218FCCA800A72BE6 /* msp_joint_universal.h in Headers */,
+				3A5C39B8218FCCA800A72BE6 /* msp_joint_up_vector.h in Headers */,
+				3A5C39C0218FCCA800A72BE6 /* msp_joystick.h in Headers */,
+				3A5C3998218FCCA800A72BE6 /* msp_joint_servo.h in Headers */,
+				3A5C3948218FCCA800A72BE6 /* msp_joint_ball_and_socket.h in Headers */,
+				3A5C3938218FCCA800A72BE6 /* msp_gear.h in Headers */,
+				3A5C39D8218FCCA800A72BE6 /* msp_particle.h in Headers */,
+				3A5C39C8218FCCA800A72BE6 /* msp_music.h in Headers */,
+				3A5C3940218FCCA800A72BE6 /* msp_joint.h in Headers */,
+				3A5C3A00218FCCA800A72BE6 /* msp_world.h in Headers */,
+				3A5C3950218FCCA800A72BE6 /* msp_joint_corkscrew.h in Headers */,
+				3A5C3920218FCCA800A72BE6 /* msp_bodies.h in Headers */,
+				3A5C3968218FCCA800A72BE6 /* msp_joint_fixed.h in Headers */,
+				3A5C39D0218FCCA800A72BE6 /* msp_newton.h in Headers */,
+				3A5C3930218FCCA800A72BE6 /* msp_collision.h in Headers */,
+				3A5C3988218FCCA800A72BE6 /* msp_joint_plane.h in Headers */,
+				3A5C3928218FCCA800A72BE6 /* msp_body.h in Headers */,
+				3A5C39F0218FCCA800A72BE6 /* msp_sound.h in Headers */,
+				3A5C3970218FCCA800A72BE6 /* msp_joint_hinge.h in Headers */,
+				3A5C3910218FCCA800A72BE6 /* angular_integration.h in Headers */,
+				3A5C3A04218FCCA800A72BE6 /* ruby_prep.h in Headers */,
+				3A5C3918218FCCA800A72BE6 /* msp.h in Headers */,
+				3A5C39E8218FCCA800A72BE6 /* msp_sdl_mixer.h in Headers */,
+				3A5C39A0218FCCA800A72BE6 /* msp_joint_slider.h in Headers */,
+				3A5C3960218FCCA800A72BE6 /* msp_joint_curvy_slider.h in Headers */,
+				3A5C3990218FCCA800A72BE6 /* msp_joint_point_to_point.h in Headers */,
+				3A5C3958218FCCA800A72BE6 /* msp_joint_curvy_piston.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -444,27 +720,116 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3A08D62B201DE025009D79EC /* geom_color.h in Headers */,
-				3A08D679201DE025009D79EC /* msp_point_to_point_actuator.h in Headers */,
-				3A08D649201DE025009D79EC /* msp_body.h in Headers */,
-				3A08D655201DE025009D79EC /* msp_entity.h in Headers */,
-				3A08D64F201DE025009D79EC /* msp_contact.h in Headers */,
-				3A08D66D201DE025009D79EC /* msp_joint.h in Headers */,
-				3A08D61F201DE025009D79EC /* geom_aabb_tree.h in Headers */,
-				3A08D619201DE025009D79EC /* geom.h in Headers */,
-				3A08D673201DE025009D79EC /* msp_point_to_point.h in Headers */,
-				3A08D65B201DE025009D79EC /* msp_fixed.h in Headers */,
-				3A08D67F201DE025009D79EC /* msp_world.h in Headers */,
-				3A08D643201DE025009D79EC /* msp.h in Headers */,
-				3A08D667201DE025009D79EC /* msp_hit.h in Headers */,
-				3A08D682201DE025009D79EC /* ruby_prep.h in Headers */,
-				3A08D625201DE025009D79EC /* geom_bounding_box.h in Headers */,
-				3A08D631201DE025009D79EC /* geom_quaternion.h in Headers */,
-				3A08D661201DE025009D79EC /* msp_gear.h in Headers */,
-				3A08D637201DE025009D79EC /* geom_transformation.h in Headers */,
-				3A08D63D201DE025009D79EC /* geom_vector3d.h in Headers */,
-				3A08D688201DE025009D79EC /* ruby_util.h in Headers */,
-				3A08D613201DE025009D79EC /* angular_integration.h in Headers */,
+				3A5C3981218FCCA800A72BE6 /* msp_joint_piston.h in Headers */,
+				3A5C39F9218FCCA800A72BE6 /* msp_util.h in Headers */,
+				3A5C39A9218FCCA800A72BE6 /* msp_joint_spring.h in Headers */,
+				3A5C39E1218FCCA800A72BE6 /* msp_sdl.h in Headers */,
+				3A5C3979218FCCA800A72BE6 /* msp_joint_motor.h in Headers */,
+				3A5C39B1218FCCA800A72BE6 /* msp_joint_universal.h in Headers */,
+				3A5C39B9218FCCA800A72BE6 /* msp_joint_up_vector.h in Headers */,
+				3A5C39C1218FCCA800A72BE6 /* msp_joystick.h in Headers */,
+				3A5C3999218FCCA800A72BE6 /* msp_joint_servo.h in Headers */,
+				3A5C3949218FCCA800A72BE6 /* msp_joint_ball_and_socket.h in Headers */,
+				3A5C3939218FCCA800A72BE6 /* msp_gear.h in Headers */,
+				3A5C39D9218FCCA800A72BE6 /* msp_particle.h in Headers */,
+				3A5C39C9218FCCA800A72BE6 /* msp_music.h in Headers */,
+				3A5C3941218FCCA800A72BE6 /* msp_joint.h in Headers */,
+				3A5C3A01218FCCA800A72BE6 /* msp_world.h in Headers */,
+				3A5C3951218FCCA800A72BE6 /* msp_joint_corkscrew.h in Headers */,
+				3A5C3921218FCCA800A72BE6 /* msp_bodies.h in Headers */,
+				3A5C3969218FCCA800A72BE6 /* msp_joint_fixed.h in Headers */,
+				3A5C39D1218FCCA800A72BE6 /* msp_newton.h in Headers */,
+				3A5C3931218FCCA800A72BE6 /* msp_collision.h in Headers */,
+				3A5C3989218FCCA800A72BE6 /* msp_joint_plane.h in Headers */,
+				3A5C3929218FCCA800A72BE6 /* msp_body.h in Headers */,
+				3A5C39F1218FCCA800A72BE6 /* msp_sound.h in Headers */,
+				3A5C3971218FCCA800A72BE6 /* msp_joint_hinge.h in Headers */,
+				3A5C3911218FCCA800A72BE6 /* angular_integration.h in Headers */,
+				3A5C3A05218FCCA800A72BE6 /* ruby_prep.h in Headers */,
+				3A5C3919218FCCA800A72BE6 /* msp.h in Headers */,
+				3A5C39E9218FCCA800A72BE6 /* msp_sdl_mixer.h in Headers */,
+				3A5C39A1218FCCA800A72BE6 /* msp_joint_slider.h in Headers */,
+				3A5C3961218FCCA800A72BE6 /* msp_joint_curvy_slider.h in Headers */,
+				3A5C3991218FCCA800A72BE6 /* msp_joint_point_to_point.h in Headers */,
+				3A5C3959218FCCA800A72BE6 /* msp_joint_curvy_piston.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3A5C3731218FC97D00A72BE6 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A5C3982218FCCA800A72BE6 /* msp_joint_piston.h in Headers */,
+				3A5C39FA218FCCA800A72BE6 /* msp_util.h in Headers */,
+				3A5C39AA218FCCA800A72BE6 /* msp_joint_spring.h in Headers */,
+				3A5C39E2218FCCA800A72BE6 /* msp_sdl.h in Headers */,
+				3A5C397A218FCCA800A72BE6 /* msp_joint_motor.h in Headers */,
+				3A5C39B2218FCCA800A72BE6 /* msp_joint_universal.h in Headers */,
+				3A5C39BA218FCCA800A72BE6 /* msp_joint_up_vector.h in Headers */,
+				3A5C39C2218FCCA800A72BE6 /* msp_joystick.h in Headers */,
+				3A5C399A218FCCA800A72BE6 /* msp_joint_servo.h in Headers */,
+				3A5C394A218FCCA800A72BE6 /* msp_joint_ball_and_socket.h in Headers */,
+				3A5C393A218FCCA800A72BE6 /* msp_gear.h in Headers */,
+				3A5C39DA218FCCA800A72BE6 /* msp_particle.h in Headers */,
+				3A5C39CA218FCCA800A72BE6 /* msp_music.h in Headers */,
+				3A5C3942218FCCA800A72BE6 /* msp_joint.h in Headers */,
+				3A5C3A02218FCCA800A72BE6 /* msp_world.h in Headers */,
+				3A5C3952218FCCA800A72BE6 /* msp_joint_corkscrew.h in Headers */,
+				3A5C3922218FCCA800A72BE6 /* msp_bodies.h in Headers */,
+				3A5C396A218FCCA800A72BE6 /* msp_joint_fixed.h in Headers */,
+				3A5C39D2218FCCA800A72BE6 /* msp_newton.h in Headers */,
+				3A5C3932218FCCA800A72BE6 /* msp_collision.h in Headers */,
+				3A5C398A218FCCA800A72BE6 /* msp_joint_plane.h in Headers */,
+				3A5C392A218FCCA800A72BE6 /* msp_body.h in Headers */,
+				3A5C39F2218FCCA800A72BE6 /* msp_sound.h in Headers */,
+				3A5C3972218FCCA800A72BE6 /* msp_joint_hinge.h in Headers */,
+				3A5C3912218FCCA800A72BE6 /* angular_integration.h in Headers */,
+				3A5C3A06218FCCA800A72BE6 /* ruby_prep.h in Headers */,
+				3A5C391A218FCCA800A72BE6 /* msp.h in Headers */,
+				3A5C39EA218FCCA800A72BE6 /* msp_sdl_mixer.h in Headers */,
+				3A5C39A2218FCCA800A72BE6 /* msp_joint_slider.h in Headers */,
+				3A5C3962218FCCA800A72BE6 /* msp_joint_curvy_slider.h in Headers */,
+				3A5C3992218FCCA800A72BE6 /* msp_joint_point_to_point.h in Headers */,
+				3A5C395A218FCCA800A72BE6 /* msp_joint_curvy_piston.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3A5C3A42218FD02800A72BE6 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A5C3A43218FD02800A72BE6 /* msp_joint_piston.h in Headers */,
+				3A5C3A44218FD02800A72BE6 /* msp_util.h in Headers */,
+				3A5C3A45218FD02800A72BE6 /* msp_joint_spring.h in Headers */,
+				3A5C3A46218FD02800A72BE6 /* msp_sdl.h in Headers */,
+				3A5C3A47218FD02800A72BE6 /* msp_joint_motor.h in Headers */,
+				3A5C3A48218FD02800A72BE6 /* msp_joint_universal.h in Headers */,
+				3A5C3A49218FD02800A72BE6 /* msp_joint_up_vector.h in Headers */,
+				3A5C3A4A218FD02800A72BE6 /* msp_joystick.h in Headers */,
+				3A5C3A4B218FD02800A72BE6 /* msp_joint_servo.h in Headers */,
+				3A5C3A4C218FD02800A72BE6 /* msp_joint_ball_and_socket.h in Headers */,
+				3A5C3A4D218FD02800A72BE6 /* msp_gear.h in Headers */,
+				3A5C3A4E218FD02800A72BE6 /* msp_particle.h in Headers */,
+				3A5C3A4F218FD02800A72BE6 /* msp_music.h in Headers */,
+				3A5C3A50218FD02800A72BE6 /* msp_joint.h in Headers */,
+				3A5C3A51218FD02800A72BE6 /* msp_world.h in Headers */,
+				3A5C3A52218FD02800A72BE6 /* msp_joint_corkscrew.h in Headers */,
+				3A5C3A53218FD02800A72BE6 /* msp_bodies.h in Headers */,
+				3A5C3A54218FD02800A72BE6 /* msp_joint_fixed.h in Headers */,
+				3A5C3A55218FD02800A72BE6 /* msp_newton.h in Headers */,
+				3A5C3A56218FD02800A72BE6 /* msp_collision.h in Headers */,
+				3A5C3A57218FD02800A72BE6 /* msp_joint_plane.h in Headers */,
+				3A5C3A58218FD02800A72BE6 /* msp_body.h in Headers */,
+				3A5C3A59218FD02800A72BE6 /* msp_sound.h in Headers */,
+				3A5C3A5A218FD02800A72BE6 /* msp_joint_hinge.h in Headers */,
+				3A5C3A5B218FD02800A72BE6 /* angular_integration.h in Headers */,
+				3A5C3A5C218FD02800A72BE6 /* ruby_prep.h in Headers */,
+				3A5C3A5D218FD02800A72BE6 /* msp.h in Headers */,
+				3A5C3A5E218FD02800A72BE6 /* msp_sdl_mixer.h in Headers */,
+				3A5C3A5F218FD02800A72BE6 /* msp_joint_slider.h in Headers */,
+				3A5C3A60218FD02800A72BE6 /* msp_joint_curvy_slider.h in Headers */,
+				3A5C3A61218FD02800A72BE6 /* msp_joint_point_to_point.h in Headers */,
+				3A5C3A62218FD02800A72BE6 /* msp_joint_curvy_piston.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -472,36 +837,47 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3A08D629201DE025009D79EC /* geom_color.h in Headers */,
-				3A08D677201DE025009D79EC /* msp_point_to_point_actuator.h in Headers */,
-				3A08D647201DE025009D79EC /* msp_body.h in Headers */,
-				3A08D653201DE025009D79EC /* msp_entity.h in Headers */,
-				3A08D64D201DE025009D79EC /* msp_contact.h in Headers */,
-				3A08D66B201DE025009D79EC /* msp_joint.h in Headers */,
-				3A08D61D201DE025009D79EC /* geom_aabb_tree.h in Headers */,
-				3A08D617201DE025009D79EC /* geom.h in Headers */,
-				3A08D671201DE025009D79EC /* msp_point_to_point.h in Headers */,
-				3A08D659201DE025009D79EC /* msp_fixed.h in Headers */,
-				3A08D67D201DE025009D79EC /* msp_world.h in Headers */,
-				3A08D641201DE025009D79EC /* msp.h in Headers */,
-				3A08D665201DE025009D79EC /* msp_hit.h in Headers */,
-				3A08D680201DE025009D79EC /* ruby_prep.h in Headers */,
-				3A08D623201DE025009D79EC /* geom_bounding_box.h in Headers */,
-				3A08D62F201DE025009D79EC /* geom_quaternion.h in Headers */,
-				3A08D65F201DE025009D79EC /* msp_gear.h in Headers */,
-				3A08D635201DE025009D79EC /* geom_transformation.h in Headers */,
-				3A08D63B201DE025009D79EC /* geom_vector3d.h in Headers */,
-				3A08D686201DE025009D79EC /* ruby_util.h in Headers */,
-				3A08D611201DE025009D79EC /* angular_integration.h in Headers */,
+				3A5C397F218FCCA800A72BE6 /* msp_joint_piston.h in Headers */,
+				3A5C39F7218FCCA800A72BE6 /* msp_util.h in Headers */,
+				3A5C39A7218FCCA800A72BE6 /* msp_joint_spring.h in Headers */,
+				3A5C39DF218FCCA800A72BE6 /* msp_sdl.h in Headers */,
+				3A5C3977218FCCA800A72BE6 /* msp_joint_motor.h in Headers */,
+				3A5C39AF218FCCA800A72BE6 /* msp_joint_universal.h in Headers */,
+				3A5C39B7218FCCA800A72BE6 /* msp_joint_up_vector.h in Headers */,
+				3A5C39BF218FCCA800A72BE6 /* msp_joystick.h in Headers */,
+				3A5C3997218FCCA800A72BE6 /* msp_joint_servo.h in Headers */,
+				3A5C3947218FCCA800A72BE6 /* msp_joint_ball_and_socket.h in Headers */,
+				3A5C3937218FCCA800A72BE6 /* msp_gear.h in Headers */,
+				3A5C39D7218FCCA800A72BE6 /* msp_particle.h in Headers */,
+				3A5C39C7218FCCA800A72BE6 /* msp_music.h in Headers */,
+				3A5C393F218FCCA800A72BE6 /* msp_joint.h in Headers */,
+				3A5C39FF218FCCA800A72BE6 /* msp_world.h in Headers */,
+				3A5C394F218FCCA800A72BE6 /* msp_joint_corkscrew.h in Headers */,
+				3A5C391F218FCCA800A72BE6 /* msp_bodies.h in Headers */,
+				3A5C3967218FCCA800A72BE6 /* msp_joint_fixed.h in Headers */,
+				3A5C39CF218FCCA800A72BE6 /* msp_newton.h in Headers */,
+				3A5C392F218FCCA800A72BE6 /* msp_collision.h in Headers */,
+				3A5C3987218FCCA800A72BE6 /* msp_joint_plane.h in Headers */,
+				3A5C3927218FCCA800A72BE6 /* msp_body.h in Headers */,
+				3A5C39EF218FCCA800A72BE6 /* msp_sound.h in Headers */,
+				3A5C396F218FCCA800A72BE6 /* msp_joint_hinge.h in Headers */,
+				3A5C390F218FCCA800A72BE6 /* angular_integration.h in Headers */,
+				3A5C3A03218FCCA800A72BE6 /* ruby_prep.h in Headers */,
+				3A5C3917218FCCA800A72BE6 /* msp.h in Headers */,
+				3A5C39E7218FCCA800A72BE6 /* msp_sdl_mixer.h in Headers */,
+				3A5C399F218FCCA800A72BE6 /* msp_joint_slider.h in Headers */,
+				3A5C395F218FCCA800A72BE6 /* msp_joint_curvy_slider.h in Headers */,
+				3A5C398F218FCCA800A72BE6 /* msp_joint_point_to_point.h in Headers */,
+				3A5C3957218FCCA800A72BE6 /* msp_joint_curvy_piston.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		33CDE5E4182703B100F7C6E8 /* Ruby 2.0 */ = {
+		33CDE5E4182703B100F7C6E8 /* Ruby 2.0 - 64 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 33CDE5E9182703B200F7C6E8 /* Build configuration list for PBXNativeTarget "Ruby 2.0" */;
+			buildConfigurationList = 33CDE5E9182703B200F7C6E8 /* Build configuration list for PBXNativeTarget "Ruby 2.0 - 64" */;
 			buildPhases = (
 				33CDE5E1182703B100F7C6E8 /* Sources */,
 				33CDE5E2182703B100F7C6E8 /* Frameworks */,
@@ -511,16 +887,16 @@
 			buildRules = (
 			);
 			dependencies = (
-				3A91ACAB1D311D6B00299CA4 /* PBXTargetDependency */,
+				3A5C3B48218FD76100A72BE6 /* PBXTargetDependency */,
 			);
-			name = "Ruby 2.0";
+			name = "Ruby 2.0 - 64";
 			productName = "MSPhysics Library";
 			productReference = 33CDE5E5182703B200F7C6E8 /* msp_lib.bundle */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
-		3A33F1351DC47FF600CA768D /* Ruby 2.2 */ = {
+		3A33F1351DC47FF600CA768D /* Ruby 2.2 - 64 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3A33F1851DC47FF600CA768D /* Build configuration list for PBXNativeTarget "Ruby 2.2" */;
+			buildConfigurationList = 3A33F1851DC47FF600CA768D /* Build configuration list for PBXNativeTarget "Ruby 2.2 - 64" */;
 			buildPhases = (
 				3A33F13A1DC47FF600CA768D /* Sources */,
 				3A33F15C1DC47FF600CA768D /* Frameworks */,
@@ -530,16 +906,54 @@
 			buildRules = (
 			);
 			dependencies = (
-				3A33F1361DC47FF600CA768D /* PBXTargetDependency */,
+				3A5C3B46218FD75C00A72BE6 /* PBXTargetDependency */,
 			);
-			name = "Ruby 2.2";
+			name = "Ruby 2.2 - 64";
 			productName = "MSPhysics Library";
 			productReference = 3A33F1881DC47FF600CA768D /* msp_lib.bundle */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
-		CE405E7E184763D300A77187 /* Ruby 1.8 */ = {
+		3A5C3728218FC97D00A72BE6 /* Ruby 2.5 - 64 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CE405E87184763D300A77187 /* Build configuration list for PBXNativeTarget "Ruby 1.8" */;
+			buildConfigurationList = 3A5C3733218FC97D00A72BE6 /* Build configuration list for PBXNativeTarget "Ruby 2.5 - 64" */;
+			buildPhases = (
+				3A5C372B218FC97D00A72BE6 /* Sources */,
+				3A5C372C218FC97D00A72BE6 /* Frameworks */,
+				3A5C3731218FC97D00A72BE6 /* Headers */,
+				3A5C3732218FC97D00A72BE6 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3A5C3B44218FD75700A72BE6 /* PBXTargetDependency */,
+			);
+			name = "Ruby 2.5 - 64";
+			productName = "MSPhysics Library";
+			productReference = 3A5C3736218FC97D00A72BE6 /* msp_lib.bundle */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+		3A5C3A19218FD02800A72BE6 /* Ruby 2.0 - 32 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3A5C3A64218FD02800A72BE6 /* Build configuration list for PBXNativeTarget "Ruby 2.0 - 32" */;
+			buildPhases = (
+				3A5C3A1C218FD02800A72BE6 /* Sources */,
+				3A5C3A3D218FD02800A72BE6 /* Frameworks */,
+				3A5C3A42218FD02800A72BE6 /* Headers */,
+				3A5C3A63218FD02800A72BE6 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3A5C3B4A218FD76700A72BE6 /* PBXTargetDependency */,
+			);
+			name = "Ruby 2.0 - 32";
+			productName = "MSPhysics Library";
+			productReference = 3A5C3A67218FD02800A72BE6 /* msp_lib.bundle */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+		CE405E7E184763D300A77187 /* Ruby 1.8 - 32 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CE405E87184763D300A77187 /* Build configuration list for PBXNativeTarget "Ruby 1.8 - 32" */;
 			buildPhases = (
 				CE405E7F184763D300A77187 /* Sources */,
 				CE405E82184763D300A77187 /* Frameworks */,
@@ -549,9 +963,9 @@
 			buildRules = (
 			);
 			dependencies = (
-				3A3A92BC1D2E511D00B57C8D /* PBXTargetDependency */,
+				3A5C3B4C218FD76B00A72BE6 /* PBXTargetDependency */,
 			);
-			name = "Ruby 1.8";
+			name = "Ruby 1.8 - 32";
 			productName = "MSPhysics Library";
 			productReference = CE405E8A184763D300A77187 /* msp_lib.bundle */;
 			productType = "com.apple.product-type.library.dynamic";
@@ -562,8 +976,30 @@
 		33CDE5DC182703B100F7C6E8 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0620;
+				LastUpgradeCheck = 1010;
 				ORGANIZATIONNAME = SketchUp;
+				TargetAttributes = {
+					33CDE5E4182703B100F7C6E8 = {
+						DevelopmentTeam = B5Q422W65M;
+						ProvisioningStyle = Automatic;
+					};
+					3A33F1351DC47FF600CA768D = {
+						DevelopmentTeam = B5Q422W65M;
+						ProvisioningStyle = Automatic;
+					};
+					3A5C3728218FC97D00A72BE6 = {
+						DevelopmentTeam = B5Q422W65M;
+						ProvisioningStyle = Automatic;
+					};
+					3A5C3A19218FD02800A72BE6 = {
+						DevelopmentTeam = B5Q422W65M;
+						ProvisioningStyle = Automatic;
+					};
+					CE405E7E184763D300A77187 = {
+						DevelopmentTeam = B5Q422W65M;
+						ProvisioningStyle = Automatic;
+					};
+				};
 			};
 			buildConfigurationList = 33CDE5DF182703B100F7C6E8 /* Build configuration list for PBXProject "msp_lib" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -583,18 +1019,27 @@
 			);
 			projectRoot = "";
 			targets = (
-				CE405E7E184763D300A77187 /* Ruby 1.8 */,
-				33CDE5E4182703B100F7C6E8 /* Ruby 2.0 */,
-				3A33F1351DC47FF600CA768D /* Ruby 2.2 */,
+				CE405E7E184763D300A77187 /* Ruby 1.8 - 32 */,
+				3A5C3A19218FD02800A72BE6 /* Ruby 2.0 - 32 */,
+				33CDE5E4182703B100F7C6E8 /* Ruby 2.0 - 64 */,
+				3A33F1351DC47FF600CA768D /* Ruby 2.2 - 64 */,
+				3A5C3728218FC97D00A72BE6 /* Ruby 2.5 - 64 */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		3AF9FF711D29CEBF007FC1E1 /* libnewton.dylib */ = {
+		3A5C3B39218FD16C00A72BE6 /* newton.dylib */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
-			path = libnewton.dylib;
+			path = newton.dylib;
+			remoteRef = 3A5C3B38218FD16C00A72BE6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		3AF9FF711D29CEBF007FC1E1 /* newton.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = newton.a;
 			remoteRef = 3AF9FF701D29CEBF007FC1E1 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -612,7 +1057,33 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/libnewton.dylib\" \"@loader_path/../libnewton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";";
+			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/newton.dylib\" \"@loader_path/../newton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";\n";
+		};
+		3A5C3732218FC97D00A72BE6 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/newton.dylib\" \"@loader_path/../newton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";\n";
+		};
+		3A5C3A63218FD02800A72BE6 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/newton.dylib\" \"@loader_path/../newton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";\n";
 		};
 		3A9F69A41D2FB7E500F12E60 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -625,7 +1096,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/libnewton.dylib\" \"@loader_path/../libnewton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";";
+			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/newton.dylib\" \"@loader_path/../newton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";\n";
 		};
 		3AF3DB721D2F610500EA962A /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -638,7 +1109,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/libnewton.dylib\" \"@loader_path/../libnewton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";";
+			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/newton.dylib\" \"@loader_path/../newton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -647,27 +1118,38 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3A08D64B201DE025009D79EC /* msp_contact.cpp in Sources */,
-				3A08D669201DE025009D79EC /* msp_joint.cpp in Sources */,
-				3A08D675201DE025009D79EC /* msp_point_to_point_actuator.cpp in Sources */,
-				3A08D63F201DE025009D79EC /* msp.cpp in Sources */,
-				3A08D627201DE025009D79EC /* geom_color.cpp in Sources */,
-				3A08D60F201DE025009D79EC /* angular_integration.cpp in Sources */,
-				3A08D615201DE025009D79EC /* geom.cpp in Sources */,
-				3A08D645201DE025009D79EC /* msp_body.cpp in Sources */,
-				3A08D66F201DE025009D79EC /* msp_point_to_point.cpp in Sources */,
-				3A08D68A201DE025009D79EC /* msp_lib.cpp in Sources */,
-				3A08D663201DE025009D79EC /* msp_hit.cpp in Sources */,
-				3A08D639201DE025009D79EC /* geom_vector3d.cpp in Sources */,
-				3A08D633201DE025009D79EC /* geom_transformation.cpp in Sources */,
-				3A08D62D201DE025009D79EC /* geom_quaternion.cpp in Sources */,
-				3A08D657201DE025009D79EC /* msp_fixed.cpp in Sources */,
-				3A08D61B201DE025009D79EC /* geom_aabb_tree.cpp in Sources */,
-				3A08D621201DE025009D79EC /* geom_bounding_box.cpp in Sources */,
-				3A08D651201DE025009D79EC /* msp_entity.cpp in Sources */,
-				3A08D684201DE025009D79EC /* ruby_util.cpp in Sources */,
-				3A08D67B201DE025009D79EC /* msp_world.cpp in Sources */,
-				3A08D65D201DE025009D79EC /* msp_gear.cpp in Sources */,
+				3A5C39E4218FCCA800A72BE6 /* msp_sdl_mixer.cpp in Sources */,
+				3A5C39D4218FCCA800A72BE6 /* msp_particle.cpp in Sources */,
+				3A5C3A08218FCCA800A72BE6 /* msp_lib.cpp in Sources */,
+				3A5C396C218FCCA800A72BE6 /* msp_joint_hinge.cpp in Sources */,
+				3A5C3914218FCCA800A72BE6 /* msp.cpp in Sources */,
+				3A5C39EC218FCCA800A72BE6 /* msp_sound.cpp in Sources */,
+				3A5C391C218FCCA800A72BE6 /* msp_bodies.cpp in Sources */,
+				3A5C3964218FCCA800A72BE6 /* msp_joint_fixed.cpp in Sources */,
+				3A5C39AC218FCCA800A72BE6 /* msp_joint_universal.cpp in Sources */,
+				3A5C39DC218FCCA800A72BE6 /* msp_sdl.cpp in Sources */,
+				3A5C3954218FCCA800A72BE6 /* msp_joint_curvy_piston.cpp in Sources */,
+				3A5C39C4218FCCA800A72BE6 /* msp_music.cpp in Sources */,
+				3A5C3974218FCCA800A72BE6 /* msp_joint_motor.cpp in Sources */,
+				3A5C3984218FCCA800A72BE6 /* msp_joint_plane.cpp in Sources */,
+				3A5C3924218FCCA800A72BE6 /* msp_body.cpp in Sources */,
+				3A5C39F4218FCCA800A72BE6 /* msp_util.cpp in Sources */,
+				3A5C39B4218FCCA800A72BE6 /* msp_joint_up_vector.cpp in Sources */,
+				3A5C3934218FCCA800A72BE6 /* msp_gear.cpp in Sources */,
+				3A5C399C218FCCA800A72BE6 /* msp_joint_slider.cpp in Sources */,
+				3A5C39A4218FCCA800A72BE6 /* msp_joint_spring.cpp in Sources */,
+				3A5C398C218FCCA800A72BE6 /* msp_joint_point_to_point.cpp in Sources */,
+				3A5C39FC218FCCA800A72BE6 /* msp_world.cpp in Sources */,
+				3A5C394C218FCCA800A72BE6 /* msp_joint_corkscrew.cpp in Sources */,
+				3A5C39CC218FCCA800A72BE6 /* msp_newton.cpp in Sources */,
+				3A5C393C218FCCA800A72BE6 /* msp_joint.cpp in Sources */,
+				3A5C395C218FCCA800A72BE6 /* msp_joint_curvy_slider.cpp in Sources */,
+				3A5C39BC218FCCA800A72BE6 /* msp_joystick.cpp in Sources */,
+				3A5C3944218FCCA800A72BE6 /* msp_joint_ball_and_socket.cpp in Sources */,
+				3A5C397C218FCCA800A72BE6 /* msp_joint_piston.cpp in Sources */,
+				3A5C392C218FCCA800A72BE6 /* msp_collision.cpp in Sources */,
+				3A5C390C218FCCA800A72BE6 /* angular_integration.cpp in Sources */,
+				3A5C3994218FCCA800A72BE6 /* msp_joint_servo.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -675,27 +1157,116 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3A08D64C201DE025009D79EC /* msp_contact.cpp in Sources */,
-				3A08D66A201DE025009D79EC /* msp_joint.cpp in Sources */,
-				3A08D676201DE025009D79EC /* msp_point_to_point_actuator.cpp in Sources */,
-				3A08D640201DE025009D79EC /* msp.cpp in Sources */,
-				3A08D628201DE025009D79EC /* geom_color.cpp in Sources */,
-				3A08D610201DE025009D79EC /* angular_integration.cpp in Sources */,
-				3A08D616201DE025009D79EC /* geom.cpp in Sources */,
-				3A08D646201DE025009D79EC /* msp_body.cpp in Sources */,
-				3A08D670201DE025009D79EC /* msp_point_to_point.cpp in Sources */,
-				3A08D68B201DE025009D79EC /* msp_lib.cpp in Sources */,
-				3A08D664201DE025009D79EC /* msp_hit.cpp in Sources */,
-				3A08D63A201DE025009D79EC /* geom_vector3d.cpp in Sources */,
-				3A08D634201DE025009D79EC /* geom_transformation.cpp in Sources */,
-				3A08D62E201DE025009D79EC /* geom_quaternion.cpp in Sources */,
-				3A08D658201DE025009D79EC /* msp_fixed.cpp in Sources */,
-				3A08D61C201DE025009D79EC /* geom_aabb_tree.cpp in Sources */,
-				3A08D622201DE025009D79EC /* geom_bounding_box.cpp in Sources */,
-				3A08D652201DE025009D79EC /* msp_entity.cpp in Sources */,
-				3A08D685201DE025009D79EC /* ruby_util.cpp in Sources */,
-				3A08D67C201DE025009D79EC /* msp_world.cpp in Sources */,
-				3A08D65E201DE025009D79EC /* msp_gear.cpp in Sources */,
+				3A5C39E5218FCCA800A72BE6 /* msp_sdl_mixer.cpp in Sources */,
+				3A5C39D5218FCCA800A72BE6 /* msp_particle.cpp in Sources */,
+				3A5C3A09218FCCA800A72BE6 /* msp_lib.cpp in Sources */,
+				3A5C396D218FCCA800A72BE6 /* msp_joint_hinge.cpp in Sources */,
+				3A5C3915218FCCA800A72BE6 /* msp.cpp in Sources */,
+				3A5C39ED218FCCA800A72BE6 /* msp_sound.cpp in Sources */,
+				3A5C391D218FCCA800A72BE6 /* msp_bodies.cpp in Sources */,
+				3A5C3965218FCCA800A72BE6 /* msp_joint_fixed.cpp in Sources */,
+				3A5C39AD218FCCA800A72BE6 /* msp_joint_universal.cpp in Sources */,
+				3A5C39DD218FCCA800A72BE6 /* msp_sdl.cpp in Sources */,
+				3A5C3955218FCCA800A72BE6 /* msp_joint_curvy_piston.cpp in Sources */,
+				3A5C39C5218FCCA800A72BE6 /* msp_music.cpp in Sources */,
+				3A5C3975218FCCA800A72BE6 /* msp_joint_motor.cpp in Sources */,
+				3A5C3985218FCCA800A72BE6 /* msp_joint_plane.cpp in Sources */,
+				3A5C3925218FCCA800A72BE6 /* msp_body.cpp in Sources */,
+				3A5C39F5218FCCA800A72BE6 /* msp_util.cpp in Sources */,
+				3A5C39B5218FCCA800A72BE6 /* msp_joint_up_vector.cpp in Sources */,
+				3A5C3935218FCCA800A72BE6 /* msp_gear.cpp in Sources */,
+				3A5C399D218FCCA800A72BE6 /* msp_joint_slider.cpp in Sources */,
+				3A5C39A5218FCCA800A72BE6 /* msp_joint_spring.cpp in Sources */,
+				3A5C398D218FCCA800A72BE6 /* msp_joint_point_to_point.cpp in Sources */,
+				3A5C39FD218FCCA800A72BE6 /* msp_world.cpp in Sources */,
+				3A5C394D218FCCA800A72BE6 /* msp_joint_corkscrew.cpp in Sources */,
+				3A5C39CD218FCCA800A72BE6 /* msp_newton.cpp in Sources */,
+				3A5C393D218FCCA800A72BE6 /* msp_joint.cpp in Sources */,
+				3A5C395D218FCCA800A72BE6 /* msp_joint_curvy_slider.cpp in Sources */,
+				3A5C39BD218FCCA800A72BE6 /* msp_joystick.cpp in Sources */,
+				3A5C3945218FCCA800A72BE6 /* msp_joint_ball_and_socket.cpp in Sources */,
+				3A5C397D218FCCA800A72BE6 /* msp_joint_piston.cpp in Sources */,
+				3A5C392D218FCCA800A72BE6 /* msp_collision.cpp in Sources */,
+				3A5C390D218FCCA800A72BE6 /* angular_integration.cpp in Sources */,
+				3A5C3995218FCCA800A72BE6 /* msp_joint_servo.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3A5C372B218FC97D00A72BE6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A5C39E6218FCCA800A72BE6 /* msp_sdl_mixer.cpp in Sources */,
+				3A5C39D6218FCCA800A72BE6 /* msp_particle.cpp in Sources */,
+				3A5C3A0A218FCCA800A72BE6 /* msp_lib.cpp in Sources */,
+				3A5C396E218FCCA800A72BE6 /* msp_joint_hinge.cpp in Sources */,
+				3A5C3916218FCCA800A72BE6 /* msp.cpp in Sources */,
+				3A5C39EE218FCCA800A72BE6 /* msp_sound.cpp in Sources */,
+				3A5C391E218FCCA800A72BE6 /* msp_bodies.cpp in Sources */,
+				3A5C3966218FCCA800A72BE6 /* msp_joint_fixed.cpp in Sources */,
+				3A5C39AE218FCCA800A72BE6 /* msp_joint_universal.cpp in Sources */,
+				3A5C39DE218FCCA800A72BE6 /* msp_sdl.cpp in Sources */,
+				3A5C3956218FCCA800A72BE6 /* msp_joint_curvy_piston.cpp in Sources */,
+				3A5C39C6218FCCA800A72BE6 /* msp_music.cpp in Sources */,
+				3A5C3976218FCCA800A72BE6 /* msp_joint_motor.cpp in Sources */,
+				3A5C3986218FCCA800A72BE6 /* msp_joint_plane.cpp in Sources */,
+				3A5C3926218FCCA800A72BE6 /* msp_body.cpp in Sources */,
+				3A5C39F6218FCCA800A72BE6 /* msp_util.cpp in Sources */,
+				3A5C39B6218FCCA800A72BE6 /* msp_joint_up_vector.cpp in Sources */,
+				3A5C3936218FCCA800A72BE6 /* msp_gear.cpp in Sources */,
+				3A5C399E218FCCA800A72BE6 /* msp_joint_slider.cpp in Sources */,
+				3A5C39A6218FCCA800A72BE6 /* msp_joint_spring.cpp in Sources */,
+				3A5C398E218FCCA800A72BE6 /* msp_joint_point_to_point.cpp in Sources */,
+				3A5C39FE218FCCA800A72BE6 /* msp_world.cpp in Sources */,
+				3A5C394E218FCCA800A72BE6 /* msp_joint_corkscrew.cpp in Sources */,
+				3A5C39CE218FCCA800A72BE6 /* msp_newton.cpp in Sources */,
+				3A5C393E218FCCA800A72BE6 /* msp_joint.cpp in Sources */,
+				3A5C395E218FCCA800A72BE6 /* msp_joint_curvy_slider.cpp in Sources */,
+				3A5C39BE218FCCA800A72BE6 /* msp_joystick.cpp in Sources */,
+				3A5C3946218FCCA800A72BE6 /* msp_joint_ball_and_socket.cpp in Sources */,
+				3A5C397E218FCCA800A72BE6 /* msp_joint_piston.cpp in Sources */,
+				3A5C392E218FCCA800A72BE6 /* msp_collision.cpp in Sources */,
+				3A5C390E218FCCA800A72BE6 /* angular_integration.cpp in Sources */,
+				3A5C3996218FCCA800A72BE6 /* msp_joint_servo.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3A5C3A1C218FD02800A72BE6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A5C3A1D218FD02800A72BE6 /* msp_sdl_mixer.cpp in Sources */,
+				3A5C3A1E218FD02800A72BE6 /* msp_particle.cpp in Sources */,
+				3A5C3A1F218FD02800A72BE6 /* msp_lib.cpp in Sources */,
+				3A5C3A20218FD02800A72BE6 /* msp_joint_hinge.cpp in Sources */,
+				3A5C3A21218FD02800A72BE6 /* msp.cpp in Sources */,
+				3A5C3A22218FD02800A72BE6 /* msp_sound.cpp in Sources */,
+				3A5C3A23218FD02800A72BE6 /* msp_bodies.cpp in Sources */,
+				3A5C3A24218FD02800A72BE6 /* msp_joint_fixed.cpp in Sources */,
+				3A5C3A25218FD02800A72BE6 /* msp_joint_universal.cpp in Sources */,
+				3A5C3A26218FD02800A72BE6 /* msp_sdl.cpp in Sources */,
+				3A5C3A27218FD02800A72BE6 /* msp_joint_curvy_piston.cpp in Sources */,
+				3A5C3A28218FD02800A72BE6 /* msp_music.cpp in Sources */,
+				3A5C3A29218FD02800A72BE6 /* msp_joint_motor.cpp in Sources */,
+				3A5C3A2A218FD02800A72BE6 /* msp_joint_plane.cpp in Sources */,
+				3A5C3A2B218FD02800A72BE6 /* msp_body.cpp in Sources */,
+				3A5C3A2C218FD02800A72BE6 /* msp_util.cpp in Sources */,
+				3A5C3A2D218FD02800A72BE6 /* msp_joint_up_vector.cpp in Sources */,
+				3A5C3A2E218FD02800A72BE6 /* msp_gear.cpp in Sources */,
+				3A5C3A2F218FD02800A72BE6 /* msp_joint_slider.cpp in Sources */,
+				3A5C3A30218FD02800A72BE6 /* msp_joint_spring.cpp in Sources */,
+				3A5C3A31218FD02800A72BE6 /* msp_joint_point_to_point.cpp in Sources */,
+				3A5C3A32218FD02800A72BE6 /* msp_world.cpp in Sources */,
+				3A5C3A33218FD02800A72BE6 /* msp_joint_corkscrew.cpp in Sources */,
+				3A5C3A34218FD02800A72BE6 /* msp_newton.cpp in Sources */,
+				3A5C3A35218FD02800A72BE6 /* msp_joint.cpp in Sources */,
+				3A5C3A36218FD02800A72BE6 /* msp_joint_curvy_slider.cpp in Sources */,
+				3A5C3A37218FD02800A72BE6 /* msp_joystick.cpp in Sources */,
+				3A5C3A38218FD02800A72BE6 /* msp_joint_ball_and_socket.cpp in Sources */,
+				3A5C3A39218FD02800A72BE6 /* msp_joint_piston.cpp in Sources */,
+				3A5C3A3A218FD02800A72BE6 /* msp_collision.cpp in Sources */,
+				3A5C3A3B218FD02800A72BE6 /* angular_integration.cpp in Sources */,
+				3A5C3A3C218FD02800A72BE6 /* msp_joint_servo.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -703,47 +1274,68 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3A08D64A201DE025009D79EC /* msp_contact.cpp in Sources */,
-				3A08D668201DE025009D79EC /* msp_joint.cpp in Sources */,
-				3A08D674201DE025009D79EC /* msp_point_to_point_actuator.cpp in Sources */,
-				3A08D63E201DE025009D79EC /* msp.cpp in Sources */,
-				3A08D626201DE025009D79EC /* geom_color.cpp in Sources */,
-				3A08D60E201DE025009D79EC /* angular_integration.cpp in Sources */,
-				3A08D614201DE025009D79EC /* geom.cpp in Sources */,
-				3A08D644201DE025009D79EC /* msp_body.cpp in Sources */,
-				3A08D66E201DE025009D79EC /* msp_point_to_point.cpp in Sources */,
-				3A08D689201DE025009D79EC /* msp_lib.cpp in Sources */,
-				3A08D662201DE025009D79EC /* msp_hit.cpp in Sources */,
-				3A08D638201DE025009D79EC /* geom_vector3d.cpp in Sources */,
-				3A08D632201DE025009D79EC /* geom_transformation.cpp in Sources */,
-				3A08D62C201DE025009D79EC /* geom_quaternion.cpp in Sources */,
-				3A08D656201DE025009D79EC /* msp_fixed.cpp in Sources */,
-				3A08D61A201DE025009D79EC /* geom_aabb_tree.cpp in Sources */,
-				3A08D620201DE025009D79EC /* geom_bounding_box.cpp in Sources */,
-				3A08D650201DE025009D79EC /* msp_entity.cpp in Sources */,
-				3A08D683201DE025009D79EC /* ruby_util.cpp in Sources */,
-				3A08D67A201DE025009D79EC /* msp_world.cpp in Sources */,
-				3A08D65C201DE025009D79EC /* msp_gear.cpp in Sources */,
+				3A5C39E3218FCCA800A72BE6 /* msp_sdl_mixer.cpp in Sources */,
+				3A5C39D3218FCCA800A72BE6 /* msp_particle.cpp in Sources */,
+				3A5C3A07218FCCA800A72BE6 /* msp_lib.cpp in Sources */,
+				3A5C396B218FCCA800A72BE6 /* msp_joint_hinge.cpp in Sources */,
+				3A5C3913218FCCA800A72BE6 /* msp.cpp in Sources */,
+				3A5C39EB218FCCA800A72BE6 /* msp_sound.cpp in Sources */,
+				3A5C391B218FCCA800A72BE6 /* msp_bodies.cpp in Sources */,
+				3A5C3963218FCCA800A72BE6 /* msp_joint_fixed.cpp in Sources */,
+				3A5C39AB218FCCA800A72BE6 /* msp_joint_universal.cpp in Sources */,
+				3A5C39DB218FCCA800A72BE6 /* msp_sdl.cpp in Sources */,
+				3A5C3953218FCCA800A72BE6 /* msp_joint_curvy_piston.cpp in Sources */,
+				3A5C39C3218FCCA800A72BE6 /* msp_music.cpp in Sources */,
+				3A5C3973218FCCA800A72BE6 /* msp_joint_motor.cpp in Sources */,
+				3A5C3983218FCCA800A72BE6 /* msp_joint_plane.cpp in Sources */,
+				3A5C3923218FCCA800A72BE6 /* msp_body.cpp in Sources */,
+				3A5C39F3218FCCA800A72BE6 /* msp_util.cpp in Sources */,
+				3A5C39B3218FCCA800A72BE6 /* msp_joint_up_vector.cpp in Sources */,
+				3A5C3933218FCCA800A72BE6 /* msp_gear.cpp in Sources */,
+				3A5C399B218FCCA800A72BE6 /* msp_joint_slider.cpp in Sources */,
+				3A5C39A3218FCCA800A72BE6 /* msp_joint_spring.cpp in Sources */,
+				3A5C398B218FCCA800A72BE6 /* msp_joint_point_to_point.cpp in Sources */,
+				3A5C39FB218FCCA800A72BE6 /* msp_world.cpp in Sources */,
+				3A5C394B218FCCA800A72BE6 /* msp_joint_corkscrew.cpp in Sources */,
+				3A5C39CB218FCCA800A72BE6 /* msp_newton.cpp in Sources */,
+				3A5C393B218FCCA800A72BE6 /* msp_joint.cpp in Sources */,
+				3A5C395B218FCCA800A72BE6 /* msp_joint_curvy_slider.cpp in Sources */,
+				3A5C39BB218FCCA800A72BE6 /* msp_joystick.cpp in Sources */,
+				3A5C3943218FCCA800A72BE6 /* msp_joint_ball_and_socket.cpp in Sources */,
+				3A5C397B218FCCA800A72BE6 /* msp_joint_piston.cpp in Sources */,
+				3A5C392B218FCCA800A72BE6 /* msp_collision.cpp in Sources */,
+				3A5C390B218FCCA800A72BE6 /* angular_integration.cpp in Sources */,
+				3A5C3993218FCCA800A72BE6 /* msp_joint_servo.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		3A33F1361DC47FF600CA768D /* PBXTargetDependency */ = {
+		3A5C3B44218FD75700A72BE6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = newton;
-			targetProxy = 3A33F1371DC47FF600CA768D /* PBXContainerItemProxy */;
+			name = "newton - 64";
+			targetProxy = 3A5C3B43218FD75700A72BE6 /* PBXContainerItemProxy */;
 		};
-		3A3A92BC1D2E511D00B57C8D /* PBXTargetDependency */ = {
+		3A5C3B46218FD75C00A72BE6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = newton;
-			targetProxy = 3A3A92BB1D2E511D00B57C8D /* PBXContainerItemProxy */;
+			name = "newton - 64";
+			targetProxy = 3A5C3B45218FD75C00A72BE6 /* PBXContainerItemProxy */;
 		};
-		3A91ACAB1D311D6B00299CA4 /* PBXTargetDependency */ = {
+		3A5C3B48218FD76100A72BE6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = newton;
-			targetProxy = 3A91ACAA1D311D6B00299CA4 /* PBXContainerItemProxy */;
+			name = "newton - 64";
+			targetProxy = 3A5C3B47218FD76100A72BE6 /* PBXContainerItemProxy */;
+		};
+		3A5C3B4A218FD76700A72BE6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "newton - 32";
+			targetProxy = 3A5C3B49218FD76700A72BE6 /* PBXContainerItemProxy */;
+		};
+		3A5C3B4C218FD76B00A72BE6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "newton - 32";
+			targetProxy = 3A5C3B4B218FD76B00A72BE6 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -754,18 +1346,36 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libstdc++";
+				CLANG_CXX_LIBRARY = "compiler-default";
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CONFIGURATION_BUILD_DIR = "$(SRCROOT)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)$(CURRENT_ARCH)/$(TARGET_NAME)";
-				CONFIGURATION_TEMP_DIR = "$(PROJECT_TEMP_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)$(CURRENT_ARCH)/$(TARGET_NAME)";
+				CONFIGURATION_BUILD_DIR = "$(SRCROOT)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/$(TARGET_NAME)";
+				CONFIGURATION_TEMP_DIR = "$(PROJECT_TEMP_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/$(TARGET_NAME)";
 				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
 				EXECUTABLE_EXTENSION = bundle;
 				EXPORTED_SYMBOLS_FILE = msp_lib_exports.txt;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -775,10 +1385,24 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					../../ThirdParty/SDL2/include,
+					../../ThirdParty/SDL2_mixer/include,
+					../../ThirdParty/NewtonDynamics/dMath,
+					../../ThirdParty/NewtonDynamics/dgNewton,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					../../ThirdParty/SDL2/lib,
+					../../ThirdParty/SDL2_mixer/lib,
+				);
 				MACH_O_TYPE = mh_bundle;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = msp_lib;
 				SDKROOT = macosx;
@@ -792,18 +1416,35 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libstdc++";
+				CLANG_CXX_LIBRARY = "compiler-default";
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CONFIGURATION_BUILD_DIR = "$(SRCROOT)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)$(CURRENT_ARCH)/$(TARGET_NAME)";
-				CONFIGURATION_TEMP_DIR = "$(PROJECT_TEMP_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)$(CURRENT_ARCH)/$(TARGET_NAME)";
+				CONFIGURATION_BUILD_DIR = "$(SRCROOT)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/$(TARGET_NAME)";
+				CONFIGURATION_TEMP_DIR = "$(PROJECT_TEMP_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/$(TARGET_NAME)";
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				EXECUTABLE_EXTENSION = bundle;
 				EXPORTED_SYMBOLS_FILE = msp_lib_exports.txt;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					_MACOSX_VER,
@@ -811,10 +1452,24 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					../../ThirdParty/SDL2/include,
+					../../ThirdParty/SDL2_mixer/include,
+					../../ThirdParty/NewtonDynamics/dMath,
+					../../ThirdParty/NewtonDynamics/dgNewton,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					../../ThirdParty/SDL2/lib,
+					../../ThirdParty/SDL2_mixer/lib,
+				);
 				MACH_O_TYPE = mh_bundle;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRODUCT_NAME = msp_lib;
 				SDKROOT = macosx;
 				VALID_ARCHS = "i386 x86_64";
@@ -825,12 +1480,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = B5Q422W65M;
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../ThirdParty/RubyLib/lib/mac/2.0\"",
+					"\"$(SRCROOT)/../../ThirdParty/Ruby/lib/mac/2.0\"",
 				);
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -838,17 +1497,14 @@
 					USE_SDL,
 				);
 				HEADER_SEARCH_PATHS = (
-					../../ThirdParty/RubyLib/include/ruby/2.0/mac,
-					"../../ThirdParty/RubyLib/include/ruby/2.0/mac/universal-darwin12.5.0",
-					../../ThirdParty/NewtonDynamics/dgNewton,
-					../../ThirdParty/SDL2/include,
-					../../ThirdParty/SDL2_mixer/include,
-				);
-				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					../../ThirdParty/SDL2/lib,
-					../../ThirdParty/SDL2_mixer/lib,
+					../../ThirdParty/Ruby/include/2.0/mac,
+					"../../ThirdParty/Ruby/include/2.0/mac/universal-darwin12.5.0",
 				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				VALID_ARCHS = x86_64;
 			};
 			name = Debug;
 		};
@@ -856,12 +1512,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = B5Q422W65M;
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../ThirdParty/RubyLib/lib/mac/2.0\"",
+					"\"$(SRCROOT)/../../ThirdParty/Ruby/lib/mac/2.0\"",
 				);
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -869,17 +1529,14 @@
 					USE_SDL,
 				);
 				HEADER_SEARCH_PATHS = (
-					../../ThirdParty/RubyLib/include/ruby/2.0/mac,
-					"../../ThirdParty/RubyLib/include/ruby/2.0/mac/universal-darwin12.5.0",
-					../../ThirdParty/NewtonDynamics/dgNewton,
-					../../ThirdParty/SDL2/include,
-					../../ThirdParty/SDL2_mixer/include,
-				);
-				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					../../ThirdParty/SDL2/lib,
-					../../ThirdParty/SDL2_mixer/lib,
+					../../ThirdParty/Ruby/include/2.0/mac,
+					"../../ThirdParty/Ruby/include/2.0/mac/universal-darwin12.5.0",
 				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				VALID_ARCHS = x86_64;
 			};
 			name = Release;
 		};
@@ -887,12 +1544,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = B5Q422W65M;
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../ThirdParty/RubyLib/lib/mac/2.2\"",
+					"\"$(SRCROOT)/../../ThirdParty/Ruby/lib/mac/2.2\"",
 				);
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -900,17 +1561,14 @@
 					USE_SDL,
 				);
 				HEADER_SEARCH_PATHS = (
-					../../ThirdParty/RubyLib/include/ruby/2.2/mac,
-					"../../ThirdParty/RubyLib/include/ruby/2.2/mac/x86_64-darwin14",
-					../../ThirdParty/NewtonDynamics/dgNewton,
-					../../ThirdParty/SDL2/include,
-					../../ThirdParty/SDL2_mixer/include,
-				);
-				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					../../ThirdParty/SDL2/lib,
-					../../ThirdParty/SDL2_mixer/lib,
+					../../ThirdParty/Ruby/include/2.2/mac,
+					"../../ThirdParty/Ruby/include/2.2/mac/x86_64-darwin14",
 				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				VALID_ARCHS = x86_64;
 			};
 			name = Debug;
 		};
@@ -918,12 +1576,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = B5Q422W65M;
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../ThirdParty/RubyLib/lib/mac/2.2\"",
+					"\"$(SRCROOT)/../../ThirdParty/Ruby/lib/mac/2.2\"",
 				);
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -931,17 +1593,146 @@
 					USE_SDL,
 				);
 				HEADER_SEARCH_PATHS = (
-					../../ThirdParty/RubyLib/include/ruby/2.2/mac,
-					"../../ThirdParty/RubyLib/include/ruby/2.2/mac/x86_64-darwin14",
-					../../ThirdParty/NewtonDynamics/dgNewton,
-					../../ThirdParty/SDL2/include,
-					../../ThirdParty/SDL2_mixer/include,
-				);
-				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					../../ThirdParty/SDL2/lib,
-					../../ThirdParty/SDL2_mixer/lib,
+					../../ThirdParty/Ruby/include/2.2/mac,
+					"../../ThirdParty/Ruby/include/2.2/mac/x86_64-darwin14",
 				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				VALID_ARCHS = x86_64;
+			};
+			name = Release;
+		};
+		3A5C3734218FC97D00A72BE6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = B5Q422W65M;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../ThirdParty/Ruby/lib/mac/2.5\"",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					RUBY_VERSION25,
+					USE_SDL,
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					../../ThirdParty/Ruby/include/2.5/mac,
+					"../../ThirdParty/Ruby/include/2.5/mac/x86_64-darwin17",
+				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				PRODUCT_NAME = msp_lib;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				VALID_ARCHS = x86_64;
+			};
+			name = Debug;
+		};
+		3A5C3735218FC97D00A72BE6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = B5Q422W65M;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../ThirdParty/Ruby/lib/mac/2.5\"",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					RUBY_VERSION25,
+					USE_SDL,
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					../../ThirdParty/Ruby/include/2.5/mac,
+					"../../ThirdParty/Ruby/include/2.5/mac/x86_64-darwin17",
+				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				PRODUCT_NAME = msp_lib;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				VALID_ARCHS = x86_64;
+			};
+			name = Release;
+		};
+		3A5C3A65218FD02800A72BE6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = B5Q422W65M;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../ThirdParty/Ruby/lib/mac/2.0\"",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					RUBY_VERSION20,
+					USE_SDL,
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					../../ThirdParty/Ruby/include/2.0/mac,
+					"../../ThirdParty/Ruby/include/2.0/mac/universal-darwin12.5.0",
+				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_NAME = msp_lib;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				VALID_ARCHS = i386;
+			};
+			name = Debug;
+		};
+		3A5C3A66218FD02800A72BE6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = B5Q422W65M;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../ThirdParty/Ruby/lib/mac/2.0\"",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					RUBY_VERSION20,
+					USE_SDL,
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					../../ThirdParty/Ruby/include/2.0/mac,
+					"../../ThirdParty/Ruby/include/2.0/mac/universal-darwin12.5.0",
+				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PRODUCT_NAME = msp_lib;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				VALID_ARCHS = i386;
 			};
 			name = Release;
 		};
@@ -949,12 +1740,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = B5Q422W65M;
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../ThirdParty/RubyLib/lib/mac/1.8\"",
+					"\"$(SRCROOT)/../../ThirdParty/Ruby/lib/mac/1.8\"",
 				);
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -962,16 +1757,13 @@
 					USE_SDL,
 				);
 				HEADER_SEARCH_PATHS = (
-					../../ThirdParty/RubyLib/include/ruby/1.8/mac,
-					../../ThirdParty/NewtonDynamics/dgNewton,
-					../../ThirdParty/SDL2/include,
-					../../ThirdParty/SDL2_mixer/include,
-				);
-				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					../../ThirdParty/SDL2/lib,
-					../../ThirdParty/SDL2_mixer/lib,
+					../../ThirdParty/Ruby/include/1.8/mac,
 				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				VALID_ARCHS = i386;
 			};
 			name = Debug;
 		};
@@ -979,12 +1771,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = B5Q422W65M;
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../ThirdParty/RubyLib/lib/mac/1.8\"",
+					"\"$(SRCROOT)/../../ThirdParty/Ruby/lib/mac/1.8\"",
 				);
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -992,16 +1788,13 @@
 					USE_SDL,
 				);
 				HEADER_SEARCH_PATHS = (
-					../../ThirdParty/RubyLib/include/ruby/1.8/mac,
-					../../ThirdParty/NewtonDynamics/dgNewton,
-					../../ThirdParty/SDL2/include,
-					../../ThirdParty/SDL2_mixer/include,
-				);
-				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					../../ThirdParty/SDL2/lib,
-					../../ThirdParty/SDL2_mixer/lib,
+					../../ThirdParty/Ruby/include/1.8/mac,
 				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				VALID_ARCHS = i386;
 			};
 			name = Release;
 		};
@@ -1017,7 +1810,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		33CDE5E9182703B200F7C6E8 /* Build configuration list for PBXNativeTarget "Ruby 2.0" */ = {
+		33CDE5E9182703B200F7C6E8 /* Build configuration list for PBXNativeTarget "Ruby 2.0 - 64" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				33CDE5EA182703B200F7C6E8 /* Debug */,
@@ -1026,7 +1819,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		3A33F1851DC47FF600CA768D /* Build configuration list for PBXNativeTarget "Ruby 2.2" */ = {
+		3A33F1851DC47FF600CA768D /* Build configuration list for PBXNativeTarget "Ruby 2.2 - 64" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				3A33F1861DC47FF600CA768D /* Debug */,
@@ -1035,7 +1828,25 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CE405E87184763D300A77187 /* Build configuration list for PBXNativeTarget "Ruby 1.8" */ = {
+		3A5C3733218FC97D00A72BE6 /* Build configuration list for PBXNativeTarget "Ruby 2.5 - 64" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3A5C3734218FC97D00A72BE6 /* Debug */,
+				3A5C3735218FC97D00A72BE6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3A5C3A64218FD02800A72BE6 /* Build configuration list for PBXNativeTarget "Ruby 2.0 - 32" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3A5C3A65218FD02800A72BE6 /* Debug */,
+				3A5C3A66218FD02800A72BE6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CE405E87184763D300A77187 /* Build configuration list for PBXNativeTarget "Ruby 1.8 - 32" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CE405E88184763D300A77187 /* Debug */,

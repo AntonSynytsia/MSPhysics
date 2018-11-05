@@ -4,35 +4,35 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
-		<key>Ruby 1.8.xcscheme</key>
+		<key>Ruby 1.8 - 32.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
-		<key>Ruby 2.0.xcscheme</key>
+		<key>Ruby 2.0 - 32.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>1</integer>
 		</dict>
-		<key>Ruby 2.2.xcscheme</key>
+		<key>Ruby 2.0 - 64.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>2</integer>
 		</dict>
+		<key>Ruby 2.2 - 64.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
+		<key>Ruby 2.5 - 64.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>4</integer>
+		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
-		<key>33CDE5E4182703B100F7C6E8</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
-		<key>3A33F1351DC47FF600CA768D</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
-		<key>CE405E7E184763D300A77187</key>
+		<key>3A5C3728218FC97D00A72BE6</key>
 		<dict>
 			<key>primary</key>
 			<true/>
