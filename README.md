@@ -7,7 +7,7 @@
 [GitHub](https://github.com/AntonSynytsia/MSPhysics)
 
 
-## Overview
+# Overview
 
 MSPhysics is a real-time physics simulation extension for SketchUp.
 
