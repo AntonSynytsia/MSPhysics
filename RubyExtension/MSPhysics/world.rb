@@ -34,10 +34,8 @@ module MSPhysics
 
     end # class << self
 
-    # @param [Numeric] scale A value between 0.1 and 100.0. If you're simulating
-    #   tiny objects, it's good to set world scale to a big value, like 40.
-    def initialize(scale = 1)
-      @address = MSPhysics::Newton::World.create(scale)
+    def initialize
+      @address = MSPhysics::Newton::World.create()
       MSPhysics::Newton::World.set_user_data(@address, self)
     end
 
@@ -310,12 +308,6 @@ module MSPhysics
     # @param [Numeric] tolerance Default value is 0.001. Minimum value is 0.001.
     def contact_merge_tolerance=(tolerance)
       MSPhysics::Newton::World.set_contact_merge_tolerance(@address, tolerance)
-    end
-
-    # Get world scale.
-    # @return [Numeric] A value between 0.1 and 100.
-    def scale
-      MSPhysics::Newton::World.get_scale(@address)
     end
 
   end # class World

@@ -1,6 +1,4 @@
 RubyExtension/MSPhysics.rb
-Documentation/MSPhysics.rb
-Documentation/MSPhysics/*.rb
 RubyExtension/MSPhysics/*.rb
   README.md \
   LICENCE.txt \

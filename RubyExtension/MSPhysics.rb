@@ -5,17 +5,17 @@ require 'extensions.rb'
 module MSPhysics
 
   NAME         = 'MSPhysics'.freeze
-  VERSION      = '1.0.3'.freeze
-  RELEASE_DATE = 'October 16, 2017'.freeze
+  VERSION      = '1.1.0'.freeze
+  RELEASE_DATE = 'January 1, 2019'.freeze
 
   # Create the extension.
   @extension = ::SketchupExtension.new(NAME, 'MSPhysics/main_entry')
 
   # Attach some nice info.
-  @extension.description = "A realtime physics simulation tool, similar to SketchyPhysics."
+  @extension.description = "A realtime physics simulator."
   @extension.version     = VERSION
-  @extension.copyright   = 'MIT © 2014-2017, Anton Synytsia'
-  @extension.creator     = 'Anton Synytsia (anton.synytsia@gmail.com)'
+  @extension.copyright   = '2014-2018, Anton Synytsia'
+  @extension.creator     = 'Anton Synytsia'
 
   # Register and load the extension on start-up.
   ::Sketchup.register_extension(@extension, true)

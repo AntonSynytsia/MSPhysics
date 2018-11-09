@@ -68,7 +68,7 @@ ext_manager.add_ruby('gear_connection_tool')
 ext_manager.add_ruby('replay')
 ext_manager.add_ruby('scene_data')
 ext_manager.require_all
-ext_manager.clean_up(true)
+ext_manager.clean_up(false)
 
 # @since 1.0.0
 module MSPhysics
@@ -226,7 +226,6 @@ module MSPhysics
     :gravity                    => -9.801,  # in m/s/s along Z-axis
     :material_thickness         => 0.002,   # thickness b/w 0.0 and 1/32 meters
     :contact_merge_tolerance    => 0.005,   # 0.001+
-    :world_scale                => 9,       # 1 - 100
     :continuous_collision_check => false,   # boolean
     :full_screen_mode           => false,   # boolean
     :ignore_hidden_instances    => false,   # boolean
