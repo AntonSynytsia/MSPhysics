@@ -1,6 +1,7 @@
 require 'sketchup.rb'
 require 'extensions.rb'
 
+
 # @since 1.0.0
 module MSPhysics
 
@@ -9,7 +10,8 @@ module MSPhysics
   RELEASE_DATE = 'January 1, 2019'.freeze
 
   # Create the extension.
-  @extension = ::SketchupExtension.new(NAME, 'MSPhysics/main_entry')
+  dir = ::File.expand_path(::File.dirname(__FILE__))
+  @extension = ::SketchupExtension.new(NAME, ::File.join(dir, 'MSPhysics/main_entry'))
 
   # Attach some nice info.
   @extension.description = "A realtime physics simulator."

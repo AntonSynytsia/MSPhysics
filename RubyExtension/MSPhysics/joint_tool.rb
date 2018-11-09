@@ -141,7 +141,7 @@ class MSPhysics::JointTool
   def assign_attributes(ent)
     ent.set_attribute('MSPhysics', 'Type', 'Joint')
     ent.set_attribute('MSPhysics Joint', 'Type', MSPhysics::JOINT_ID_TO_NAME[@joint_id])
-    ent.set_attribute('MSPhysics Joint', 'ID', JointTool.generate_uniq_id)
+    ent.set_attribute('MSPhysics Joint', 'ID', self.class.generate_uniq_id)
   end
 
   def draw_geometry(pt1, pt2, view)

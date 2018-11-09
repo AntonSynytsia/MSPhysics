@@ -45,7 +45,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
       :onMouseWheelRotate     => nil,
       :onMouseWheelTilt       => nil
     }
-    super
+
+    super()
   end
 
   # @api private

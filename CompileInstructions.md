@@ -1,5 +1,7 @@
-# Windows
-Follow instructions below to compile msp_lib.so and newton.dll for Windows, on Visual Studio:
+# Compile Instructions
+
+## Windows
+Refer to the following instructions to compile msp_lib.so and newton.dll for Windows, on Visual Studio:
 
 1. Set build configuration to Release (X.Y).
 2. Set build platform to x86 or x64.
@@ -11,8 +13,8 @@ Follow instructions below to compile msp_lib.so and newton.dll for Windows, on V
    to the following binary folder:
    /RubyExtension/MSPhysics/libraries/stage/[win32/win64]/
 
-# Max OS X
-Follow instructions below to compile msp_lib.bundle and newton.dylib for Mac OS X, on xCode:
+## Max OS X
+Refer to the following instructions to compile msp_lib.bundle and newton.dylib for Mac OS X, on xCode:
 
 1. Set active scheme to "Ruby (X.Y) - [32/64]"
 2. Execute (Menu) Product > Archive

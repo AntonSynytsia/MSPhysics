@@ -15,7 +15,7 @@ module MSPhysics::Settings
     # @!visibility private
     def init
       Sketchup.add_observer(MSPhysics::Settings::AppObserver.new)
-      MSPhysics::Settings.load_options
+      self.load_options
     end
 
     # Save settings to registry
@@ -477,7 +477,7 @@ module MSPhysics::Settings
   class AppObserver < ::Sketchup::AppObserver
 
     def onQuit
-      MSPhysics::Settings.save_options
+      ::MSPhysics::Settings.save_options
     end
 
   end # class AppObserver

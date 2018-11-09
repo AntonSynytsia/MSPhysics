@@ -26,7 +26,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
     def start(from_selection = false)
       return false if @@instance
       MSPhysics::Replay.reset
-      @@instance = Simulation.new(from_selection)
+      @@instance = self.new(from_selection)
       Sketchup.active_model.select_tool(@@instance)
       true
     end
@@ -49,7 +49,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
     def external_control(from_selection = false)
       return if @@instance
       MSPhysics::Replay.reset
-      @@instance = Simulation.new(from_selection)
+      @@instance = self.new(from_selection)
       @@instance.configure_for_external_control
       Sketchup.active_model.select_tool(@@instance)
       @@instance
@@ -663,8 +663,8 @@ class MSPhysics::Simulation < MSPhysics::Entity
   # @return [Body, nil]
   def find_body_by_group(group)
     AMS.validate_type(group, Sketchup::Group, Sketchup::ComponentInstance)
-    data = MSPhysics::Newton::Body.get_body_data_by_group(group)
-    data.is_a?(MSPhysics::Body) && data.world == @world ? data : nil
+    data = MSPhysics::Newton::Body.get_body_data_by_group(@world.address, group)
+    data.is_a?(MSPhysics::Body) ? data : nil
   end
 
   # Reference body by group name.
@@ -1086,8 +1086,8 @@ class MSPhysics::Simulation < MSPhysics::Entity
     data[:twr] = opts.has_key?(:twr) ? opts[:twr].to_f : @fancy_note_defaults[:twr]
     data[:thr] = opts.has_key?(:thr) ? opts[:thr].to_f : @fancy_note_defaults[:thr]
     unless MSPhysics::ControlPanel.open?
-      MSPhysics::ControlPanel.open(true)
-      MSPhysics::ControlPanel.show(false)
+      MSPhysics::ControlPanel.open
+      MSPhysics::ControlPanel.hide
     end
     size = MSPhysics::ControlPanel.compute_text_size(data[:text], data)
     unless size
@@ -2244,7 +2244,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
 
   def do_on_update(view)
     if @error
-      Simulation.reset
+      self.class.reset
       return false
     end
     # Update control panel opacity
@@ -2278,7 +2278,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
     @frame += 1
     # Call onPreFrame event
     call_event(:onPreFrame)
-    return false unless Simulation.active?
+    return false unless self.class.active?
     # Update world update_rate times
     world_address = @world.address
     @update_rate.times {
@@ -2286,7 +2286,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
       world_time = @world.time
       # Call onPreUpdate event
       call_event(:onPreUpdate)
-      return false unless Simulation.active?
+      return false unless self.class.active?
       # Update key sliders
       MSPhysics::CommonContext.update_key_sliders(@update_timestep)
       # Process thrusters
@@ -2300,7 +2300,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
           err_message.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18
           puts "An exception occurred while evaluating thruster controller!\nController:\n#{data[:controller]}\n#{err.class}:\n#{err_message}"
         end
-        return false unless Simulation.active?
+        return false unless self.class.active?
         next true unless body.valid?
         begin
           if value.is_a?(Numeric)
@@ -2333,7 +2333,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
           err_message.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18
           puts "An exception occurred while evaluating emitter controller!\nController:\n#{data[:controller]}\n#{err.class}:\n#{err_message}"
         end
-        return false unless Simulation.active?
+        return false unless self.class.active?
         next true unless body.valid?
         begin
           if value.is_a?(Numeric)
@@ -2396,7 +2396,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
           err_message.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18
           puts "An exception occurred while evaluating joint controller!\nController:\n#{controller}\n#{err.class}:\n#{err_message}"
         end
-        return false unless Simulation.active?
+        return false unless self.class.active?
         next true if !joint.valid?
         begin
           if joint.is_a?(Servo) || joint.is_a?(Piston) || joint.is_a?(CurvyPiston)
@@ -2461,7 +2461,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
       @world.update(@update_timestep)
       # Call onUpdate event
       call_event(:onUpdate)
-      return false unless Simulation.active?
+      return false unless self.class.active?
       # Call onTouch event
       count = MSPhysics::Newton::World.get_touch_data_count(world_address)
       for i in 0...count
@@ -2481,7 +2481,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
           rescue Exception => err
             abort(err)
           end
-          return false unless Simulation.active?
+          return false unless self.class.active?
         end
       end
       # Call onTouching event
@@ -2503,7 +2503,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
           rescue Exception => err
             abort(err)
           end
-          return false unless Simulation.active?
+          return false unless self.class.active?
         end
       end
       # Call onUntouch event
@@ -2525,12 +2525,12 @@ class MSPhysics::Simulation < MSPhysics::Entity
           rescue Exception => err
             abort(err)
           end
-          return false unless Simulation.active?
+          return false unless self.class.active?
         end
       end
       # Call onPostUpdate event
       call_event(:onPostUpdate)
-      return false unless Simulation.active?
+      return false unless self.class.active?
       # Process emitted bodies.
       world_time = @world.time
       @emitted_bodies.reject! { |body, life_end|
@@ -2562,10 +2562,10 @@ class MSPhysics::Simulation < MSPhysics::Entity
     update_particles
     # Call onTick event
     call_event(:onTick)
-    return false unless Simulation.active?
+    return false unless self.class.active?
     # Call onPostFrame event
     call_event(:onPostFrame)
-    return false unless Simulation.active?
+    return false unless self.class.active?
     # Process 3D sounds.
     MSPhysics::Sound.update_effects
     # Update Camera
@@ -2818,7 +2818,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
 
   def abort(err)
     @error = err
-    Simulation.reset
+    self.class.reset
   end
 
   def init_joint(joint_ent, pin_matrix, child_body, parent_body)
@@ -3182,7 +3182,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
     @update_timestep_inv = 1.0 / @update_timestep
     # Create world
     @world = MSPhysics::World.new()
-    destructor = Proc.new { Simulation.reset }
+    destructor = Proc.new { self.class.reset }
     MSPhysics::Newton::World.set_destructor_proc(@world.address, destructor)
     # Enable Newton object validation
     MSPhysics::Newton.enable_object_validation(true)
@@ -3218,7 +3218,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
             err_backtrace.each { |i| i.force_encoding('UTF-8') }
           end
           #~ puts "Entity at index #{index} was not added to simulation:\n#{err.class}:\n#{err_message}\nTrace:\n#{err_backtrace.join("\n")}\n\n"
-          puts "Entity at index #{index} was not added to simulation:\n#{err.class}:\n#{err_message}\n\n"
+          puts "Entity at index #{index} was not added to simulation:\n#{err.class}:\n#{err_message}\n#{err.backtrace.join("\n")}\n"
         end
       elsif type == 'Buoyancy Plane'
         dict = 'MSPhysics Buoyancy Plane'
@@ -3312,10 +3312,10 @@ class MSPhysics::Simulation < MSPhysics::Entity
     end
     # Call onStart event
     call_event(:onStart)
-    return unless Simulation.active?
+    return unless self.class.active?
     # Display control panel on Max OS X
     if !MSPhysics::ControlPanel.open? && !AMS::IS_PLATFORM_WINDOWS
-      MSPhysics::ControlPanel.open(true)
+      MSPhysics::ControlPanel.open
     end
     # Start the animation
     view.animation = @animation_enabled ? self : nil
@@ -3381,7 +3381,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
     # Show cursor if hidden
     AMS::Cursor.show(true) if AMS::IS_PLATFORM_WINDOWS
     # Close control panel
-    MSPhysics::ControlPanel.open(false)
+    MSPhysics::ControlPanel.close
     MSPhysics::ControlPanel.remove_sliders
     # Clear variables of the common context
     MSPhysics::CommonContext.reset_variables
@@ -3510,7 +3510,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   end
 
   def onCancel(reason, view)
-    Simulation.reset
+    self.class.reset
   end
 
   def resume(view)
@@ -3546,7 +3546,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
     @cursor_pos.x = x
     @cursor_pos.y = y
     call_event(:onMouseMove, x, y, view) unless @paused
-    return unless Simulation.active?
+    return unless self.class.active?
   end
 
   def onLButtonDown(flags, x, y, view)
@@ -3586,7 +3586,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
       abort(err)
       return
     end
-    return unless Simulation.active?
+    return unless self.class.active?
     # Pick body if the body is not static.
     return if body.static? || @mode == 1
     loc_pick_pt = pick_pt.transform(body.get_matrix.inverse)
@@ -3661,7 +3661,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
       self.toggle_play
     }
     menu.add_item('Reset') {
-      Simulation.reset
+      self.class.reset
     }
 
     model = Sketchup.active_model
@@ -3780,7 +3780,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
     draw_fullscreen_note(view)
     draw_fancy_note(view)
     draw_queues(view)
-    return unless Simulation.active?
+    return unless self.class.active?
     view.drawing_color = 'black'
     view.line_width = 5
     view.line_stipple = ''
@@ -3793,7 +3793,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   end
 
   def swo_deactivate
-    Simulation.reset
+    self.class.reset
   end
 
 
@@ -3816,7 +3816,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
     return if @menu_entered
     case key
       when 'escape'
-        Simulation.reset
+        self.class.reset
         return
       when 'pause'
         toggle_play

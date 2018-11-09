@@ -1,5 +1,3 @@
-require 'MSPhysics.rb'
-
 tload_me = true
 
 # Load and verify AMS Library

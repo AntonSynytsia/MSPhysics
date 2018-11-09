@@ -1,5 +1,3 @@
-require 'MSPhysics.rb'
-
 # Ensure standard Set is loaded
 if Sketchup.version.to_i >= 14
   Sketchup.require 'set'
@@ -788,7 +786,11 @@ unless file_loaded?(__FILE__)
   sim_toolbar = UI::Toolbar.new('MSPhysics')
 
   cmd = UI::Command.new('Toggle UI') {
-    MSPhysics::Dialog.open(!MSPhysics::Dialog.open?)
+    if MSPhysics::Dialog.open?
+	  MSPhysics::Dialog.close
+	else
+      MSPhysics::Dialog.open
+	end
   }
   cmd.set_validation_proc {
     next MF_GRAYED unless Sketchup.active_model

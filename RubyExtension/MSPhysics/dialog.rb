@@ -1877,7 +1877,7 @@ module MSPhysics::Dialog
         update_state
         execute_js(msg)
       else
-        self.open(true)
+        self.open
         t = ::UI.start_timer(0.25, false) {
           ::UI.stop_timer(t)
           execute_js(msg)

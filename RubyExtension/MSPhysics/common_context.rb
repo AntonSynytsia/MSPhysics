@@ -214,8 +214,8 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   #   slider('Rotate', 0, -10, 10, 0.01)
   def slider(name, default_value = 0.0, min = 0.0, max = 1.0, step = 1.0)
     unless MSPhysics::ControlPanel.slider_exists?(name)
-      MSPhysics::ControlPanel.open(true)
-      MSPhysics::ControlPanel.show(true)
+      MSPhysics::ControlPanel.open
+      MSPhysics::ControlPanel.show
       MSPhysics::ControlPanel.add_slider(name, default_value, min, max, step)
     end
     MSPhysics::ControlPanel.get_slider_value(name)
