@@ -22,7 +22,7 @@ if AMS::IS_PLATFORM_WINDOWS
 else
   ext_manager.add_required_library('libSDL2-2.0.0')
   ext_manager.add_required_library('libSDL2_mixer-2.0.0')
-  ext_manager.add_required_library('libnewton')
+  ext_manager.add_required_library('newton')
 end
 ext_manager.add_c_extension('msp_lib')
 ext_manager.add_ruby_no_require('main')

@@ -126,7 +126,7 @@ module MSPhysics::ControlPanel
       @dialog.set_file(url)
 
       # Show dialog
-      if AMS::ClothWorks::IS_PLATFORM_WINDOWS || USE_HTML_DIALOG
+      if AMS::IS_PLATFORM_WINDOWS || USE_HTML_DIALOG
         @dialog.show
       else
         @dialog.show_modal
