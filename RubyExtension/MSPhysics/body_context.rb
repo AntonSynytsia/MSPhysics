@@ -52,7 +52,7 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
   # @api private
   # @param [String] script
   # @param [String] script_name
-  # @param [Fixnum] line
+  # @param [Integer] line
   def eval_script(script, script_name, line)
     eval(script, binding, script_name, line)
   end
@@ -70,7 +70,7 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
   #   }
   # @param [Symbol, String] events
   # @yield A block of code.
-  # @return [Fixnum] The number of events assigned.
+  # @return [Integer] The number of events assigned.
   def on(*events, &block)
     count = 0
     events.flatten.each { |evt|
@@ -313,7 +313,7 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
   # Assign a block of code to the onKeyDown event.
   # @yield This event is called when the key is pressed.
   # @yieldparam [String] key Virtual key name.
-  # @yieldparam [Fixnum] val Virtual key constant value.
+  # @yieldparam [Integer] val Virtual key constant value.
   # @yieldparam [String] char Actual key character.
   # @note Windows only!
   # @see http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/file/Keyboard.md Virtual-Key Names
@@ -324,7 +324,7 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
   # Assign a block of code to the onKeyUp event.
   # @yield This event is called when the key is released.
   # @yieldparam [String] key Virtual key name.
-  # @yieldparam [Fixnum] val Virtual key constant value.
+  # @yieldparam [Integer] val Virtual key constant value.
   # @yieldparam [String] char Actual key character.
   # @note Windows only!
   # @see http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/file/Keyboard.md Virtual-Key Names
@@ -335,7 +335,7 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
   # Assign a block of code to the onKeyExtended event.
   # @yield This event is called when the key is held down.
   # @yieldparam [String] key Virtual key name.
-  # @yieldparam [Fixnum] val Virtual key constant value.
+  # @yieldparam [Integer] val Virtual key constant value.
   # @yieldparam [String] char Actual key character.
   # @note Windows only!
   # @see http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/file/Keyboard.md Virtual-Key Names
@@ -345,8 +345,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onMouseMove event.
   # @yield This event is called when the mouse is moved.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @yieldparam [Sketchup::View] view
   def onMouseMove(&block)
     set_event_proc(:onMouseMove, block)
@@ -354,8 +354,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onLButtonDown event.
   # @yield This event is called when the left mouse button is pressed.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @note Windows only!
   def onLButtonDown(&block)
     set_event_proc(:onLButtonDown, block)
@@ -363,8 +363,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onLButtonUp event.
   # @yield This event is called when the left mouse button is released.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @note Windows only!
   def onLButtonUp(&block)
     set_event_proc(:onLButtonUp, block)
@@ -372,8 +372,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onLButtonDoubleClick event.
   # @yield This event is called when the left mouse button is double clicked.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @note Windows only!
   def onLButtonDoubleClick(&block)
     set_event_proc(:onLButtonDoubleClick, block)
@@ -381,8 +381,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onRButtonDown event.
   # @yield This event is called when the right mouse button is pressed.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @note Windows only!
   def onRButtonDown(&block)
     set_event_proc(:onRButtonDown, block)
@@ -390,8 +390,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onRButtonUp event.
   # @yield This event is called when the right mouse button is released.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @note Windows only!
   def onRButtonUp(&block)
     set_event_proc(:onRButtonUp, block)
@@ -399,8 +399,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onRButtonDoubleClick event.
   # @yield This event is called when the right mouse button is double clicked.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @note Windows only!
   def onRButtonDoubleClick(&block)
     set_event_proc(:onRButtonDoubleClick, block)
@@ -408,8 +408,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onMButtonDown event.
   # @yield This event is called when the middle mouse button is pressed.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @note Windows only!
   def onMButtonDown(&block)
     set_event_proc(:onMButtonDown, block)
@@ -417,8 +417,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onMButtonUp event.
   # @yield This event is called when the middle mouse button is released.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @note Windows only!
   def onMButtonUp(&block)
     set_event_proc(:onMButtonUp, block)
@@ -426,8 +426,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onMButtonDoubleClick event.
   # @yield This event is called when the middle mouse button is double clicked.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @note Windows only!
   def onMButtonDoubleClick(&block)
     set_event_proc(:onMButtonDoubleClick, block)
@@ -435,8 +435,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onXButton1Down event.
   # @yield This event is called when the X1 mouse button is pressed.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @note Windows only!
   def onXButton1Down(&block)
     set_event_proc(:onXButton1Down, block)
@@ -444,8 +444,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onXButton1Up event.
   # @yield This event is called when the X1 mouse button is released.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @note Windows only!
   def onXButton1Up(&block)
     set_event_proc(:onXButton1Up, block)
@@ -453,8 +453,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onXButton1DoubleClick event.
   # @yield This event is called when the X1 mouse button is double clicked.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @note Windows only!
   def onXButton1DoubleClick(&block)
     set_event_proc(:onXButton1DoubleClick, block)
@@ -462,8 +462,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onXButton2Down event.
   # @yield This event is called when the X2 mouse button is pressed.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @note Windows only!
   def onXButton2Down(&block)
     set_event_proc(:onXButton2Down, block)
@@ -471,8 +471,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onXButton2Up event.
   # @yield This event is called when the X2 mouse button is released.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @note Windows only!
   def onXButton2Up(&block)
     set_event_proc(:onXButton2Up, block)
@@ -480,8 +480,8 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onXButton2DoubleClick event.
   # @yield This event is called when the X2 mouse button is double clicked.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
   # @note Windows only!
   def onXButton2DoubleClick(&block)
     set_event_proc(:onXButton2DoubleClick, block)
@@ -489,9 +489,9 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onMouseWheelRotate event.
   # @yield This event is called when the mouse wheel is rotated.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
-  # @yieldparam [Fixnum] dir Rotate direction: +-1+ - down, +1+ - up.
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
+  # @yieldparam [Integer] dir Rotate direction: +-1+ - down, +1+ - up.
   # @note Windows only!
   def onMouseWheelRotate(&block)
     set_event_proc(:onMouseWheelRotate, block)
@@ -499,9 +499,9 @@ class MSPhysics::BodyContext < MSPhysics::CommonContext
 
   # Assign a block of code to the onMouseWheelTilt event.
   # @yield This event is called when the mouse wheel is tilted.
-  # @yieldparam [Fixnum] x
-  # @yieldparam [Fixnum] y
-  # @yieldparam [Fixnum] dir Tilt direction: +-1+ - left, +1+ - right.
+  # @yieldparam [Integer] x
+  # @yieldparam [Integer] y
+  # @yieldparam [Integer] dir Tilt direction: +-1+ - left, +1+ - right.
   # @note Windows only!
   def onMouseWheelTilt(&block)
     set_event_proc(:onMouseWheelTilt, block)

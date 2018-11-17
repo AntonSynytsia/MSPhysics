@@ -74,7 +74,7 @@ class MSPhysics::JointConnectionTool < MSPhysics::Entity
             jtype = cent.get_attribute('MSPhysics Joint', 'Type')
             next if !jtype.is_a?(String) || !MSPhysics::JOINT_NAMES.include?(jtype)
             jid = cent.get_attribute('MSPhysics Joint', 'ID', nil)
-            next unless jid.is_a?(Fixnum)
+            next unless jid.is_a?(Integer)
             jtra = ptra * cent.transformation
             next unless AMS::Geometry.is_matrix_uniform?(jtra)
             xaxis = jtra.xaxis
@@ -92,7 +92,7 @@ class MSPhysics::JointConnectionTool < MSPhysics::Entity
           jtype = ent.get_attribute('MSPhysics Joint', 'Type')
           next if !jtype.is_a?(String) || !MSPhysics::JOINT_NAMES.include?(jtype)
           jid = ent.get_attribute('MSPhysics Joint', 'ID', nil)
-          next unless jid.is_a?(Fixnum)
+          next unless jid.is_a?(Integer)
           jtra = ent.transformation
           next unless AMS::Geometry.is_matrix_uniform?(jtra)
           xaxis = jtra.xaxis
@@ -254,7 +254,7 @@ class MSPhysics::JointConnectionTool < MSPhysics::Entity
     end
 
     # Get joint by its id.
-    # @param [Fixnum] joint_id
+    # @param [Integer] joint_id
     # @return [Array] An array of joint data. Each joint data represents an
     #   array of two elements. The first element of joint data is joint
     #   entity. The second element of joint data is joint parent entity.
@@ -282,30 +282,30 @@ class MSPhysics::JointConnectionTool < MSPhysics::Entity
 
     # Get all joint IDs connected to a group/component.
     # @param [Sketchup::Group, Sketchup::ComponentInstance] body
-    # @return [Set<Fixnum>]
+    # @return [Set<Integer>]
     def get_connected_joint_ids(body)
       ids = body.get_attribute('MSPhysics Body', 'Connected Joints')
       ids = [] unless ids.is_a?(Array)
       ids_set = ::Set.new
       if Sketchup.version.to_i < 14
-        ids.each { |id| ids_set.insert(id) if id.is_a?(Fixnum) }
+        ids.each { |id| ids_set.insert(id) if id.is_a?(Integer) }
       else
-        ids.each { |id| ids_set.add(id) if id.is_a?(Fixnum) }
+        ids.each { |id| ids_set.add(id) if id.is_a?(Integer) }
       end
       ids_set
     end
 
     # Set connected joint IDs of a group/component.
     # @param [Sketchup::Group, Sketchup::ComponentInstance] body
-    # @param [Array<Fixnum>, Set<Fixnum>] ids
+    # @param [Array<Integer>, Set<Integer>] ids
     def set_connected_joint_ids(body, ids)
       body.set_attribute('MSPhysics Body', 'Connected Joints', ids.to_a)
     end
 
     # Connect joint ID to a group/component.
     # @param [Sketchup::Group, Sketchup::ComponentInstance] body
-    # @param [Fixnum] id
-    # @return [Set<Fixnum>] The new joint ids of a group/component.
+    # @param [Integer] id
+    # @return [Set<Integer>] The new joint ids of a group/component.
     def connect_joint_id(body, id)
       ids = get_connected_joint_ids(body)
       if Sketchup.version.to_i < 14
@@ -319,8 +319,8 @@ class MSPhysics::JointConnectionTool < MSPhysics::Entity
 
     # Disconnect joint ID from a group/component.
     # @param [Sketchup::Group, Sketchup::ComponentInstance] body
-    # @param [Fixnum] id
-    # @return [Set<Fixnum>] The new joint ids of a group/component.
+    # @param [Integer] id
+    # @return [Set<Integer>] The new joint ids of a group/component.
     # @note Manually wrap the operation.
     def disconnect_joint_id(body, id)
       ids = get_connected_joint_ids(body)
@@ -331,8 +331,8 @@ class MSPhysics::JointConnectionTool < MSPhysics::Entity
 
     # Toggle connect joint ID to a group/component.
     # @param [Sketchup::Group, Sketchup::ComponentInstance] body
-    # @param [Fixnum] id
-    # @return [Set<Fixnum>] The new joint ids of a group/component.
+    # @param [Integer] id
+    # @return [Set<Integer>] The new joint ids of a group/component.
     # @note Manually wrap the operation.
     def toggle_connect_joint_id(body, id)
       ids = get_connected_joint_ids(body)
@@ -591,7 +591,7 @@ class MSPhysics::JointConnectionTool < MSPhysics::Entity
     model = Sketchup.active_model
     Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
     id = joint.get_attribute('MSPhysics Joint', 'ID', nil)
-    if !id.is_a?(Fixnum)
+    if !id.is_a?(Integer)
       id = JointTool.generate_uniq_id
       joint.set_attribute('MSPhysics Joint', 'ID', id)
     end
@@ -611,7 +611,7 @@ class MSPhysics::JointConnectionTool < MSPhysics::Entity
     model = Sketchup.active_model
     Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
     id = joint.get_attribute('MSPhysics Joint', 'ID', nil)
-    if !id.is_a?(Fixnum)
+    if !id.is_a?(Integer)
       id = JointTool.generate_uniq_id
       joint.set_attribute('MSPhysics Joint', 'ID', id)
     end
@@ -1090,7 +1090,7 @@ class MSPhysics::JointConnectionTool < MSPhysics::Entity
             @picked = path[1]
             @picked_type = 'Joint'
             id = @picked.get_attribute('MSPhysics Joint', 'ID')
-            if id.is_a?(Fixnum)
+            if id.is_a?(Integer)
               @all_connections.each { |jdata|
                 if jdata[0] == @picked && jdata[3] == @parent
                   @connected << jdata[2]
@@ -1122,7 +1122,7 @@ class MSPhysics::JointConnectionTool < MSPhysics::Entity
           @picked = path[0]
           @picked_type = 'Joint'
           id = @picked.get_attribute('MSPhysics Joint', 'ID')
-          if id.is_a?(Fixnum)
+          if id.is_a?(Integer)
             @all_connections.each { |jdata|
               if jdata[0] == @picked && jdata[3] == @parent
                 @connected << jdata[2]
@@ -1185,7 +1185,7 @@ class MSPhysics::JointConnectionTool < MSPhysics::Entity
         elsif (path[1].is_a?(Sketchup::Group) || path[1].is_a?(Sketchup::ComponentInstance)) && path[1].get_attribute('MSPhysics', 'Type', 'Body') == 'Joint'
           model.selection.add(path[1])
           id = path[1].get_attribute('MSPhysics Joint', 'ID')
-          if id.is_a?(Fixnum)
+          if id.is_a?(Integer)
             menu.add_item('Disconnect all Bodies') {
               op = 'MSPhysics - Disconnect all Bodies'
               Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)
@@ -1216,7 +1216,7 @@ class MSPhysics::JointConnectionTool < MSPhysics::Entity
       elsif type == 'Joint'
         model.selection.add(path[0])
         id = path[0].get_attribute('MSPhysics Joint', 'ID')
-        if id.is_a?(Fixnum)
+        if id.is_a?(Integer)
           menu.add_item('Disconnect all Bodies') {
             op = 'MSPhysics - Disconnect all Bodies'
             Sketchup.version.to_i > 6 ? model.start_operation(op, true, false, false) : model.start_operation(op)

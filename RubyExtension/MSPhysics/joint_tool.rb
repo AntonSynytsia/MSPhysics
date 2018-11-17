@@ -2,7 +2,7 @@
 class MSPhysics::JointTool
   class << self
 
-    # @return [Fixnum]
+    # @return [Integer]
     def generate_uniq_id
       ids = []
       Sketchup.active_model.definitions.each { |cd|
@@ -10,7 +10,7 @@ class MSPhysics::JointTool
           type = inst.get_attribute('MSPhysics', 'Type', 'Body')
           if type == 'Joint'
             id = inst.get_attribute('MSPhysics Joint', 'ID', nil)
-            ids << id if id.is_a?(Fixnum)
+            ids << id if id.is_a?(Integer)
           end
         }
       }
@@ -22,7 +22,7 @@ class MSPhysics::JointTool
 
   end # class << self
 
-  # @param [Fixnum] joint_id See {MSPhysics::JOINT_ID_TO_NAME} for valid joint IDs.
+  # @param [Integer] joint_id See {MSPhysics::JOINT_ID_TO_NAME} for valid joint IDs.
   def initialize(joint_id)
     @joint_id = joint_id.to_i
     joint_fname = MSPhysics::JOINT_ID_TO_FILE_NAME[@joint_id]

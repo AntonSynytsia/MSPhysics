@@ -1,32 +1,41 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
-*.txt -crlf
-*.c -crlf
-*.cpp -crlf
-*.h -crlf
-*.rb -crlf
-*.js -crlf
-*.css -crlf
-*.html -crlf
-*.md -crlf
+*.txt       text eol=lf filter=spabs
+*.c         text eol=lf filter=spabs
+*.cpp       text eol=lf filter=spabs
+*.h         text eol=lf filter=spabs
+*.rb        text eol=lf filter=spabs
+*.js        text eol=lf filter=spabs
+*.css       text eol=lf filter=spabs
+*.html      text eol=lf filter=spabs
+*.md        text eol=lf filter=spabs
 
 # Custom for Visual Studio
-*.cs     diff=csharp
-*.sln    merge=union
-*.csproj merge=union
-*.vbproj merge=union
-*.fsproj merge=union
-*.dbproj merge=union
+*.cs        text eol=crlf diff=csharp
+*.sln       text eol=crlf merge=union
+*.csproj    text eol=crlf merge=union
+*.vbproj    text eol=crlf merge=union
+*.fsproj    text eol=crlf merge=union
+*.dbproj    text eol=crlf merge=union
 
 # Standard to msysgit
-*.doc    diff=astextplain
-*.DOC    diff=astextplain
-*.docx   diff=astextplain
-*.DOCX   diff=astextplain
-*.dot    diff=astextplain
-*.DOT    diff=astextplain
-*.pdf    diff=astextplain
-*.PDF    diff=astextplain
-*.rtf    diff=astextplain
-*.RTF    diff=astextplain
+*.doc       diff=astextplain
+*.DOC       diff=astextplain
+*.docx      diff=astextplain
+*.DOCX      diff=astextplain
+*.dot       diff=astextplain
+*.DOT       diff=astextplain
+*.pdf       diff=astextplain
+*.PDF       diff=astextplain
+*.rtf       diff=astextplain
+*.RTF       diff=astextplain
+
+
+*.png       binary
+*.jpg       binary
+*.skp       binary
+*.so        binary
+*.bundle    binary
+*.dll       binary
+*.dylib     binary

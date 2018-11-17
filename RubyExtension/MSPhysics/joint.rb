@@ -31,7 +31,7 @@ module MSPhysics
       end
 
       # Get joint by address.
-      # @param [Fixnum] address
+      # @param [Integer] address
       # @return [Joint, nil] A Joint object if successful.
       # @raise [TypeError] if the address is invalid.
       def joint_by_address(address)
@@ -78,7 +78,7 @@ module MSPhysics
     end
 
     # Get pointer the joint.
-    # @return [Fixnum]
+    # @return [Integer]
     def address
       @address
     end
@@ -123,13 +123,13 @@ module MSPhysics
     end
 
     # Get joint maximum degrees of freedom.
-    # @return [Fixnum]
+    # @return [Integer]
     def dof
       MSPhysics::Newton::Joint.get_dof(@address)
     end
 
     # Get joint type.
-    # @return [Fixnum]
+    # @return [Integer]
     # @see MSPhysics::JOINT_ID_TO_NAME
     def type
       MSPhysics::Newton::Joint.get_type(@address)
@@ -163,7 +163,7 @@ module MSPhysics
     end
 
     # Get joint pin transformation in global space.
-    # @param [Fixnum] mode
+    # @param [Integer] mode
     #  * Pass 0 to obtain aligned pin matrix in global space with respect to the
     #    child body.
     #  * Pass 1 to obtain aligned pin matrix in global space with respect to the
@@ -212,7 +212,7 @@ module MSPhysics
     end
 
     # Get solver model for calculating the constraint forces.
-    # @return [Fixnum] Model:
+    # @return [Integer] Model:
     #   * 0 - Use best algorithm.
     #   * 1 - Signal the engine that two joints form a kinematic loop.
     #   * 2 - Use less accurate algorithm.
@@ -221,7 +221,7 @@ module MSPhysics
     end
 
     # Set solver model for calculating the constraint forces.
-    # @param [Fixnum] model Solver model:
+    # @param [Integer] model Solver model:
     #   * 0 - Use best algorithm.
     #   * 1 - Signal the engine that two joints form a kinematic loop.
     #   * 2 - Use less accurate algorithm.

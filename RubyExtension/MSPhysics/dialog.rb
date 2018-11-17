@@ -1012,7 +1012,7 @@ module MSPhysics::Dialog
     # @api private
     # Format value into string.
     # @param [Numeric] value
-    # @param [Fixnum] precision
+    # @param [Integer] precision
     # @return [String]
     def format_value(value, precision = 2)
       precision = AMS.clamp(precision.to_i, 0, 10)
@@ -1473,7 +1473,7 @@ module MSPhysics::Dialog
         @activated_value = nil
       }
 
-      @dialog.add_action_callback('fixnum_input_changed') { |acs, params|
+      @dialog.add_action_callback('Integer_input_changed') { |acs, params|
         id, value = eval(params)
         dict, attr = id.split(/\-/, 2)
         words = attr.split(/\_/)
@@ -1946,7 +1946,7 @@ module MSPhysics::Dialog
         @editor_wrap = Sketchup.read_default('MSPhysics', 'Editor Wrap', DEFAULT_EDITOR_WRAP).to_s
         @editor_print_margin = Sketchup.read_default('MSPhysics', 'Editor Print Margin', DEFAULT_EDITOR_PRINT_MARGIN) ? true : false
         @editor_size = Kernel.eval(Sketchup.read_default('MSPhysics', 'Editor Size', DEFAULT_EDITOR_SIZE.inspect))
-        if !@editor_size.is_a?(Array) || !@editor_size.x.is_a?(Fixnum) || !@editor_size.y.is_a?(Fixnum)
+        if !@editor_size.is_a?(Array) || !@editor_size.x.is_a?(Integer) || !@editor_size.y.is_a?(Integer)
           @editor_size = DEFAULT_EDITOR_SIZE.dup
         end
         @dialog_help_box = Sketchup.read_default('MSPhysics', 'Dialog Help Box', DEFAULT_DIALOG_HELP_BOX) ? true : false

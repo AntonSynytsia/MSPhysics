@@ -38,13 +38,13 @@ module MSPhysics
 
     # Append point to the curve.
     # @param [Geom::Point3d] position
-    # @return [Fixnum] point index.
+    # @return [Integer] point index.
     def add_point(position)
       MSPhysics::Newton::CurvyPiston.add_point(@address, position)
     end
 
     # Remove point from curve at index.
-    # @param [Fixnum] index
+    # @param [Integer] index
     # @return [Boolean] success
     def remove_point(index)
       MSPhysics::Newton::CurvyPiston.remove_point(@address, index)
@@ -57,13 +57,13 @@ module MSPhysics
     end
 
     # Get the number of points that make up the curve.
-    # @return [Fixnum]
+    # @return [Integer]
     def points_size
       MSPhysics::Newton::CurvyPiston.get_points_size(@address)
     end
 
     # Remove all points that make up the curve.
-    # @return [Fixnum] The number of points removed.
+    # @return [Integer] The number of points removed.
     def clear
       MSPhysics::Newton::CurvyPiston.clear_points(@address)
     end
@@ -75,7 +75,7 @@ module MSPhysics
     end
 
     # Get point position by index.
-    # @param [Fixnum] index
+    # @param [Integer] index
     # @return [Geom::Point3d, nil] Point position in global space if the index
     #   references an existing point; +nil+ otherwise.
     def get_point_position(index)
@@ -83,7 +83,7 @@ module MSPhysics
     end
 
     # Set point position by index.
-    # @param [Fixnum] index
+    # @param [Integer] index
     # @param [Geom::Point3d] position Point position in global space.
     # @return [Boolean] success
     def set_point_position(index, position)
@@ -212,7 +212,7 @@ module MSPhysics
     end
 
     # Get controller mode.
-    # @return [Fixnum] Returns one of the following values:
+    # @return [Integer] Returns one of the following values:
     #   * 0 to control curvy piston by position.
     #   * 1 to control curvy piston by speed - strict.
     #   * 2 to control curvy piston by speed - adaptive.
@@ -221,7 +221,7 @@ module MSPhysics
     end
 
     # Set controller mode.
-    # @param [Fixnum] mode Pass one of the following values:
+    # @param [Integer] mode Pass one of the following values:
     #   * 0 to control curvy piston by position.
     #   * 1 to control curvy piston by speed - strict.
     #   * 2 to control curvy piston by speed - adaptive.

@@ -88,7 +88,7 @@ module MSPhysics
     end
 
     # Get mode.
-    # @return [Fixnum]
+    # @return [Integer]
     #   * 0 - if using spring accel, damp, and strength options.
     #   * 1 - if using Hooke's spring constant and drag coefficient.
     def mode
@@ -96,7 +96,7 @@ module MSPhysics
     end
 
     # Set mode.
-    # @param [Fixnum] value
+    # @param [Integer] value
     #   * 0 - use spring accel, damp, and strength options.
     #   * 1 - use Hooke's spring constant and drag coefficient options.
     def mode=(value)

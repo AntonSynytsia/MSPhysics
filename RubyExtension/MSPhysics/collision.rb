@@ -48,10 +48,10 @@ module MSPhysics::Collision
     # Create a physics collision.
     # @param [World] world
     # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
-    # @param [Fixnum] shape_id Shape ID. See {MSPhysics::SHAPE_NAMES}
+    # @param [Integer] shape_id Shape ID. See {MSPhysics::SHAPE_NAMES}
     # @param [Geom::Transformation, nil] transformation A local transform to
     #   apply to the collision.
-    # @return [Fixnum] Collision address
+    # @return [Integer] Collision address
     def create(world, entity, shape_id, transformation = nil)
       MSPhysics::World.validate(world)
       validate_entity(entity)
@@ -83,7 +83,7 @@ module MSPhysics::Collision
 
     # Create a null collision.
     # @param [World] world
-    # @return [Fixnum] Collision address
+    # @return [Integer] Collision address
     def create_null(world)
       MSPhysics::World.validate(world)
       MSPhysics::Newton::Collision.create_null(world.address)
@@ -94,7 +94,7 @@ module MSPhysics::Collision
     # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
     # @param [Geom::Transformation, nil] transformation A transform to apply
     #   to the collision.
-    # @return [Fixnum] Collision address
+    # @return [Integer] Collision address
     # @raise [TypeError] if calculated bounding box turns out flat.
     def create_box(world, entity, transformation)
       MSPhysics::World.validate(world)
@@ -128,7 +128,7 @@ module MSPhysics::Collision
     # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
     # @param [Geom::Transformation, nil] transformation A transform to apply
     #   to the collision.
-    # @return [Fixnum] Collision address
+    # @return [Integer] Collision address
     # @raise [TypeError] if calculated bounding box turns out flat.
     def create_sphere(world, entity, transformation)
       MSPhysics::World.validate(world)
@@ -162,7 +162,7 @@ module MSPhysics::Collision
     # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
     # @param [Geom::Transformation, nil] transformation A transform to apply
     #   to the collision.
-    # @return [Fixnum] Collision address
+    # @return [Integer] Collision address
     # @raise [TypeError] if calculated bounding box turns out flat.
     def create_cone(world, entity, transformation)
       MSPhysics::World.validate(world)
@@ -196,7 +196,7 @@ module MSPhysics::Collision
     # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
     # @param [Geom::Transformation, nil] transformation A transform to apply
     #   to the collision.
-    # @return [Fixnum] Collision address
+    # @return [Integer] Collision address
     # @raise [TypeError] if calculated bounding box turns out flat.
     def create_cylinder(world, entity, transformation)
       MSPhysics::World.validate(world)
@@ -230,7 +230,7 @@ module MSPhysics::Collision
     # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
     # @param [Geom::Transformation, nil] transformation A transform to apply
     #   to the collision.
-    # @return [Fixnum] Collision address
+    # @return [Integer] Collision address
     # @raise [TypeError] if calculated bounding box turns out flat.
     def create_capsule(world, entity, transformation)
       MSPhysics::World.validate(world)
@@ -264,7 +264,7 @@ module MSPhysics::Collision
     # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
     # @param [Geom::Transformation, nil] transformation A transform to apply
     #   to the collision.
-    # @return [Fixnum] Collision address
+    # @return [Integer] Collision address
     # @raise [TypeError] if calculated bounding box turns out flat.
     def create_chamfer_cylinder(world, entity, transformation)
       MSPhysics::World.validate(world)
@@ -299,7 +299,7 @@ module MSPhysics::Collision
     # @param [Boolean] transform Whether to offset the collision. Usually this
     #   parameter is set true if the entity is a sub-collision of some parent
     #   collision.
-    # @return [Fixnum] Collision address
+    # @return [Integer] Collision address
     # @raise [TypeError] if entity has too few vertices.
     # @raise [TypeError] if entity has all vertices coplanar.
     # @raise [TypeError] if the engine failed to generate convex hull.
@@ -338,7 +338,7 @@ module MSPhysics::Collision
     # is considered a convex collision.
     # @param [World] world
     # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
-    # @return [Fixnum] Collision address
+    # @return [Integer] Collision address
     # @raise [TypeError] if entity doesn't have any valid sub-collisions.
     def create_compound(world, entity)
       MSPhysics::World.validate(world)
@@ -378,7 +378,7 @@ module MSPhysics::Collision
     # is considered a convex collision.
     # @param [World] world
     # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
-    # @return [Fixnum] Collision address
+    # @return [Integer] Collision address
     # @raise [TypeError] if entity doesn't have any valid sub-collisions.
     def create_compound2(world, entity)
       MSPhysics::World.validate(world)
@@ -408,7 +408,7 @@ module MSPhysics::Collision
     # Create a static tree/scene collision.
     # @param [World] world
     # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
-    # @return [Fixnum] Collision address
+    # @return [Integer] Collision address
     # @raise [TypeError] if entity has no faces.
     def create_static_mesh(world, entity)
       MSPhysics::World.validate(world)
@@ -440,7 +440,7 @@ module MSPhysics::Collision
     # Create a static tree/scene collision.
     # @param [World] world
     # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
-    # @return [Fixnum] Collision address
+    # @return [Integer] Collision address
     # @raise [TypeError] if entity has no faces.
     def create_static_mesh2(world, entity)
       MSPhysics::World.validate(world)

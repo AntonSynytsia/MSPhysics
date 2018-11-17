@@ -12,7 +12,7 @@ module MSPhysics
 
     # @param [String] script
     # @param [String] script_name
-    # @param [Fixnum] line
+    # @param [Integer] line
     def eval_script(script, script_name, line)
       eval(script, binding, script_name, line)
     end

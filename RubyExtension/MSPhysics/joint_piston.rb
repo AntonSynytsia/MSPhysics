@@ -157,7 +157,7 @@ module MSPhysics
     end
 
     # Get controller mode.
-    # @return [Fixnum] Returns one of the following values:
+    # @return [Integer] Returns one of the following values:
     #   * 0 to control piston by position.
     #   * 1 to control piston by speed.
     def controller_mode
@@ -165,7 +165,7 @@ module MSPhysics
     end
 
     # Set controller mode.
-    # @param [Fixnum] mode Pass one of the following values:
+    # @param [Integer] mode Pass one of the following values:
     #   * 0 to control piston by position.
     #   * 1 to control piston by speed.
     def controller_mode=(mode)

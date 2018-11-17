@@ -22,7 +22,7 @@ module MSPhysics::ControlPanel
   class << self
 
     # Acquire handle to the control panel.
-    # @return [Fixnum, nil]
+    # @return [Integer, nil]
     def handle
       @handle
     end
@@ -257,7 +257,7 @@ module MSPhysics::ControlPanel
     end
 
     # Destroy all range sliders.
-    # @return [Fixnum] Number of sliders removed.
+    # @return [Integer] Number of sliders removed.
     def remove_sliders
       size = @sliders.size
       @sliders.clear
@@ -300,7 +300,7 @@ module MSPhysics::ControlPanel
     end
 
     # Get the number of sliders in the control panel.
-    # @return [Fixnum]
+    # @return [Integer]
     def sliders_count
       @sliders.size
     end
@@ -310,7 +310,7 @@ module MSPhysics::ControlPanel
     # @param [String] text
     # @param [Hash] opts
     # @option opts [String] :font ("Ariel") Text font.
-    # @option opts [Fixnum] :size (11) Font size in pixels.
+    # @option opts [Integer] :size (11) Font size in pixels.
     # @option opts [Boolean] :bold (false) Whether to have the text bold.
     # @option opts [Boolean] :italic (false) Whether to have the text
     #   italicized.

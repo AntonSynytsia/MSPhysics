@@ -148,7 +148,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   # @!group Time
 
   # Get simulation frame.
-  # @return [Fixnum]
+  # @return [Integer]
   # @example Using in controller
   #   (frame > 100) ? 1 : 0
   def frame
@@ -160,8 +160,8 @@ class MSPhysics::CommonContext < MSPhysics::Entity
 
   # Get state of a keyboard key.
   # @note The <tt>vk</tt> parameter is not case sensitive.
-  # @param [String, Symbol, Fixnum] vk Virtual key code or name.
-  # @return [Fixnum] +1+ if down, +0+ if up.
+  # @param [String, Symbol, Integer] vk Virtual key code or name.
+  # @return [Integer] +1+ if down, +0+ if up.
   # @see http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/file/Keyboard.md Virtual-Key Names
   # @see http://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx Virtual Key Codes (Windows).
   # @example Using in controller
@@ -173,8 +173,8 @@ class MSPhysics::CommonContext < MSPhysics::Entity
 
   # Get toggled state of a keyboard key.
   # @note The <tt>vk</tt> parameter is not case sensitive.
-  # @param [String, Symbol, Fixnum] vk Virtual key code or name.
-  # @return [Fixnum] +1+ if toggled down, +0+ if toggled up.
+  # @param [String, Symbol, Integer] vk Virtual key code or name.
+  # @return [Integer] +1+ if toggled down, +0+ if toggled up.
   # @see http://www.rubydoc.info/github/AntonSynytsia/AMS-Library/master/file/Keyboard.md Virtual-Key Names
   # @see http://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx Virtual Key Codes (Windows).
   # @example Using in controller
@@ -285,7 +285,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   #   - <tt>start</tt> : The start button.
   #   - <tt>leftb</tt> : The left thumbstick button.
   #   - <tt>rightb</tt> : The right thumbstick button.
-  # @return [Fixnum] +1+ if the button is down; +0+ if the button is up.
+  # @return [Integer] +1+ if the button is down; +0+ if the button is up.
   # @example
   #   onUpdate {
   #     value = joybutton(:lt)
@@ -297,7 +297,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   end
 
   # Get joy-pad value.
-  # @return [Fixnum] Returns one of the following values:
+  # @return [Integer] Returns one of the following values:
   # - +0+ if hat is centered
   # - +1+ if hat is up
   # - +2+ if hat is right
@@ -382,7 +382,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
 
   # Output from keys NUMPAD6 and NUMPAD4 or centered-X-axis position on the
   # joy-pad.
-  # @return [Fixnum] -1, 0, or 1.
+  # @return [Integer] -1, 0, or 1.
   def numx
     return 0 if AMS::IS_PLATFORM_WINDOWS && !AMS::Sketchup.is_main_window_active?
     v = AMS::Keyboard.key('numpad6') - AMS::Keyboard.key('numpad4')
@@ -393,7 +393,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
 
   # Output from keys NUMPAD8 and NUMPAD5 or centered-Y-axis position on the
   # joy-pad.
-  # @return [Fixnum] -1, 0, or 1.
+  # @return [Integer] -1, 0, or 1.
   def numy
     return 0 if AMS::IS_PLATFORM_WINDOWS && !AMS::Sketchup.is_main_window_active?
     v = AMS::Keyboard.key('numpad8') - AMS::Keyboard.key('numpad5')
@@ -454,7 +454,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   # Increment the accumulator by one at a specific rate and offset.
   # @param [Numeric] rate Accumulate every [rate] seconds.
   # @param [Numeric] delay The time to wait, in seconds, before starting.
-  # @return [Fixnum] The accumulator value
+  # @return [Integer] The accumulator value
   # @example Using in controller
   #   accumulator(0.25, 2)
   def accumulator(rate, delay = 0.0)
@@ -467,7 +467,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   # @param [Numeric] hold The time, in seconds, to hold the repeater turned on
   #   whenever it is triggered.
   # @param [Numeric] delay The time to wait, in seconds, before starting.
-  # @return [Fixnum] 1 or 0
+  # @return [Integer] 1 or 0
   # @example Using in controller
   #   repeater(1, 0.4, 0)
   def repeater(rate, hold, delay = 0.0)
@@ -480,7 +480,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   # @param [Numeric] rate Repeat every [rate] seconds.
   # @param [Numeric] delay The time to wait, in seconds, before starting.
   # @param [Object] id Unique repeat identifier.
-  # @return [Fixnum] 1 or 0
+  # @return [Integer] 1 or 0
   # @example Output frame every 0.25 seconds.
   #   onTick {
   #     if singular_repeater(0.25) == 1

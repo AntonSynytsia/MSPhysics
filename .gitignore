@@ -6,4 +6,5 @@
 
 *.user
 *.DS_Store
-
+.yardoc
+/doc

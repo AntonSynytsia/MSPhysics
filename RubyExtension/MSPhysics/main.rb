@@ -462,20 +462,20 @@ module MSPhysics
     end
 
     # Get float size of the Newton Dynamics physics SDK.
-    # @return [Fixnum]
+    # @return [Integer]
     def newton_float_size
       MSPhysics::Newton.get_float_size
     end
 
     # Get memory used by the Newton Dynamics physics SDK at the current time.
-    # @return [Fixnum]
+    # @return [Integer]
     def newton_memory_used
       MSPhysics::Newton.get_memory_used
     end
 
     # Create a watermark text.
-    # @param [Fixnum] x X position on screen.
-    # @param [Fixnum] y Y position on screen.
+    # @param [Integer] x X position on screen.
+    # @param [Integer] y Y position on screen.
     # @param [String] text Watermark text.
     # @param [String] name Watermark name.
     # @param [String] component Watermark component.
@@ -511,8 +511,8 @@ module MSPhysics
     end
 
     # Create a watermark text without material or layer.
-    # @param [Fixnum] x X position on screen.
-    # @param [Fixnum] y Y position on screen.
+    # @param [Integer] x X position on screen.
+    # @param [Integer] y Y position on screen.
     # @param [String] text Watermark text.
     # @param [String] name Watermark name.
     # @param [String] component Watermark component.

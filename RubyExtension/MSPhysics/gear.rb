@@ -27,7 +27,7 @@ module MSPhysics
       end
 
       # Get gear by address.
-      # @param [Fixnum] address
+      # @param [Integer] address
       # @return [Gear, nil] A Gear object if successful.
       # @raise [TypeError] if the address is invalid.
       def gear_by_address(address)
@@ -64,7 +64,7 @@ module MSPhysics
     end
 
     # Get pointer the gear.
-    # @return [Fixnum]
+    # @return [Integer]
     def address
       @address
     end

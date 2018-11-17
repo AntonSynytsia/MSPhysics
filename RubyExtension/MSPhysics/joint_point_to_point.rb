@@ -66,7 +66,7 @@ module MSPhysics
     end
 
     # Get mode.
-    # @return [Fixnum]
+    # @return [Integer]
     #   * 0 - preserve distance.
     #   * 1 - preserve distance and direction.
     def mode
@@ -74,7 +74,7 @@ module MSPhysics
     end
 
     # Set mode.
-    # @param [Fixnum] value
+    # @param [Integer] value
     #   * 0 - preserve distance.
     #   * 1 - preserve distance and direction.
     def mode=(value)

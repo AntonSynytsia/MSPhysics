@@ -32,13 +32,13 @@ module MSPhysics
 
     # Append point to the curve.
     # @param [Geom::Point3d] position
-    # @return [Fixnum] point index.
+    # @return [Integer] point index.
     def add_point(position)
       MSPhysics::Newton::CurvySlider.add_point(@address, position)
     end
 
     # Remove point from curve at index.
-    # @param [Fixnum] index
+    # @param [Integer] index
     # @return [Boolean] success
     def remove_point(index)
       MSPhysics::Newton::CurvySlider.remove_point(@address, index)
@@ -51,13 +51,13 @@ module MSPhysics
     end
 
     # Get the number of points that make up the curve.
-    # @return [Fixnum]
+    # @return [Integer]
     def points_size
       MSPhysics::Newton::CurvySlider.get_points_size(@address)
     end
 
     # Remove all points that make up the curve.
-    # @return [Fixnum] The number of points removed.
+    # @return [Integer] The number of points removed.
     def clear
       MSPhysics::Newton::CurvySlider.clear_points(@address)
     end
@@ -69,7 +69,7 @@ module MSPhysics
     end
 
     # Get point position by index.
-    # @param [Fixnum] index
+    # @param [Integer] index
     # @return [Geom::Point3d, nil] Point position in global space if the index
     #   references an existing point; +nil+ otherwise.
     def get_point_position(index)
@@ -77,7 +77,7 @@ module MSPhysics
     end
 
     # Set point position by index.
-    # @param [Fixnum] index
+    # @param [Integer] index
     # @param [Geom::Point3d] position Point position in global space.
     # @return [Boolean] success
     def set_point_position(index, position)

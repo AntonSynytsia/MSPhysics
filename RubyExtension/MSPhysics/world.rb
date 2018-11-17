@@ -17,7 +17,7 @@ module MSPhysics
       end
 
       # Get world by world address.
-      # @param [Fixnum] address
+      # @param [Integer] address
       # @return [World, nil] A World object if successful.
       def world_by_address(address)
         data = MSPhysics::Newton::World.get_user_data(address.to_i)
@@ -46,7 +46,7 @@ module MSPhysics
     end
 
     # Get pointer to the world.
-    # @return [Fixnum]
+    # @return [Integer]
     def address
       @address
     end
@@ -58,32 +58,32 @@ module MSPhysics
     end
 
     # Get world default contact material id.
-    # @return [Fixnum]
+    # @return [Integer]
     def default_material_id
       MSPhysics::Newton::World.get_default_material_id(@address)
     end
 
     # Get the maximum possible number of threads to be used by the world.
-    # @return [Fixnum]
+    # @return [Integer]
     def max_possible_threads_count
       MSPhysics::Newton::World.get_max_possible_threads_count(@address)
     end
 
     # Get the desired maximum number of threads to be used by the world.
-    # @return [Fixnum]
+    # @return [Integer]
     def max_threads_count
       MSPhysics::Newton::World.get_max_threads_count(@address)
     end
 
     # Set the desired maximum number of threads to be used by the world.
-    # @param [Fixnum] count This value is clamped between one and the maximum
+    # @param [Integer] count This value is clamped between one and the maximum
     #   number of CPUs can be used in the system.
     def max_threads_count=(count)
       MSPhysics::Newton::World.set_max_threads_count(@address, count.to_i)
     end
 
     # Get the number of threads currently used by the world.
-    # @return [Fixnum]
+    # @return [Integer]
     def cur_threads_count
       MSPhysics::Newton::World.get_cur_threads_count(@address)
     end
@@ -129,19 +129,19 @@ module MSPhysics
     end
 
     # Get the number of bodies in the world.
-    # @return [Fixnum]
+    # @return [Integer]
     def body_count
       MSPhysics::Newton::World.get_body_count(@address)
     end
 
     # Get the number of constraints in the world.
-    # @return [Fixnum]
+    # @return [Integer]
     def constraint_count
       MSPhysics::Newton::World.get_constraint_count(@address)
     end
 
     # Destroy all bodies in the world.
-    # @return [Fixnum] The number of bodies destroyed.
+    # @return [Integer] The number of bodies destroyed.
     def destroy_all_bodies
       MSPhysics::Newton::World.destroy_all_bodies(@address)
     end
@@ -175,13 +175,13 @@ module MSPhysics
     end
 
     # Get world solver model.
-    # @return [Fixnum] Number of passes, a value between 1 and 256.
+    # @return [Integer] Number of passes, a value between 1 and 256.
     def solver_model
       MSPhysics::Newton::World.get_solver_model(@address)
     end
 
     # Set world solver model.
-    # @param [Fixnum] model Number of passes, a value between 1 and 256.
+    # @param [Integer] model Number of passes, a value between 1 and 256.
     def solver_model=(model)
       MSPhysics::Newton::World.set_solver_model(@address, model.to_i)
     end
@@ -243,7 +243,7 @@ module MSPhysics
     #   orientation and start position. Pass nil to ray cast from body's current
     #   transformation.
     # @param [Geom::Point3d, Array<Numeric>] target Ray destination point.
-    # @param [Fixnum] max_hits Maximum number of hits, a value b/w 1 and 256.
+    # @param [Integer] max_hits Maximum number of hits, a value b/w 1 and 256.
     # @return [Array<Hit>]
     def continuous_convex_ray_cast(body, transformation, target, max_hits = 16)
       MSPhysics::Body.validate(body, self)

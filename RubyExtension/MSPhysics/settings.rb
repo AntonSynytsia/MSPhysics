@@ -35,7 +35,7 @@ module MSPhysics::Settings
     end
 
     # Get the state of keyboard navigation.
-    # @return [Fixnum] State:
+    # @return [Integer] State:
     #   * 0 - off/stop
     #   * 1 - normal
     #   * 2 - upright
@@ -46,7 +46,7 @@ module MSPhysics::Settings
     end
 
     # Set the state of keyboard navigation.
-    # @param [Fixnum] state State:
+    # @param [Integer] state State:
     #   * 0 - off/stop
     #   * 1 - normal
     #   * 2 - upright
@@ -106,7 +106,7 @@ module MSPhysics::Settings
     end
 
     # Get the state of scenes animation.
-    # @return [Fixnum] State:
+    # @return [Integer] State:
     #   * 0 - off/stop
     #   * 1 - one way
     #   * 2 - repeat forth and back
@@ -118,7 +118,7 @@ module MSPhysics::Settings
     end
 
     # Set the state of scenes animation.
-    # @param [Fixnum] state State:
+    # @param [Integer] state State:
     #   * 0 - off/stop
     #   * 1 - one way
     #   * 2 - repeat forth and back
@@ -278,7 +278,7 @@ module MSPhysics::Settings
     end
 
     # Get simulation solver model.
-    # @return [Fixnum] Number of passes, a value between 1 and 256.
+    # @return [Integer] Number of passes, a value between 1 and 256.
     def solver_model
       default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:solver_model]
       attr = Sketchup.active_model.get_attribute('MSPhysics', 'Solver Model', default)
@@ -286,7 +286,7 @@ module MSPhysics::Settings
     end
 
     # Set simulation solver model.
-    # @param [Fixnum] model Number of passes, a value between 1 and 256.
+    # @param [Integer] model Number of passes, a value between 1 and 256.
     def solver_model=(model)
       model = AMS.clamp(model.to_i, 1, 256)
       Sketchup.active_model.set_attribute('MSPhysics', 'Solver Model', model)
@@ -295,7 +295,7 @@ module MSPhysics::Settings
     end
 
     # Get joint solver model.
-    # @return [Fixnum] 0 - Accurate; 1 - Don't Use; 2 - Fast.
+    # @return [Integer] 0 - Accurate; 1 - Don't Use; 2 - Fast.
     def joint_algorithm
       default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:joint_algorithm]
       attr = Sketchup.active_model.get_attribute('MSPhysics', 'Joint Algorithm', default)
@@ -305,7 +305,7 @@ module MSPhysics::Settings
     # Set joint solver model.
     # @note Changing this property won't have an effect until simulation is
     #   restarted.
-    # @param [Fixnum] model Joint solver model:
+    # @param [Integer] model Joint solver model:
     #   * 0 - Accurate: Slow but robust
     #   * 1 - Don't Use
     #   * 2 - Fast: Fast but flexible
@@ -333,7 +333,7 @@ module MSPhysics::Settings
 
     # Get simulation update rate, the number of times to update newton world
     # per frame.
-    # @return [Fixnum] A value between 1 and 100.
+    # @return [Integer] A value between 1 and 100.
     def update_rate
       default = MSPhysics::DEFAULT_SIMULATION_SETTINGS[:update_rate]
       attr = Sketchup.active_model.get_attribute('MSPhysics', 'Update Rate', default)
@@ -342,7 +342,7 @@ module MSPhysics::Settings
 
     # Set simulation update rate, the number of times to update newton world
     # per frame.
-    # @param [Fixnum] rate A value between 1 and 100.
+    # @param [Integer] rate A value between 1 and 100.
     def update_rate=(rate)
       rate = AMS.clamp(rate.to_i, 1, 100)
       Sketchup.active_model.set_attribute('MSPhysics', 'Update Rate', rate)

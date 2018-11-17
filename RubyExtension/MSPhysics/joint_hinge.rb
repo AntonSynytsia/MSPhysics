@@ -95,7 +95,7 @@ module MSPhysics
     end
 
     # Get mode.
-    # @return [Fixnum]
+    # @return [Integer]
     #   * 0 - if using friction option
     #   * 1 - if using spring accel, damp, and strength options.
     #   * 2 - if using Hooke's spring constant and drag coefficient.
@@ -104,7 +104,7 @@ module MSPhysics
     end
 
     # Set mode.
-    # @param [Fixnum] value
+    # @param [Integer] value
     #   * 0 - use friction option
     #   * 1 - use spring accel, damp, and strength options.
     #   * 2 - use Hooke's spring constant and drag coefficient options.

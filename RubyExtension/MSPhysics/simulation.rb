@@ -217,11 +217,11 @@ class MSPhysics::Simulation < MSPhysics::Entity
 
   # @!attribute [r] frame
   #   Get simulation frame.
-  #   @return [Fixnum]
+  #   @return [Integer]
 
   # @!attribute [r] fps
   #   Get simulation update rate in frames per second.
-  #   @return [Fixnum]
+  #   @return [Integer]
 
 
   attr_reader :world, :frame, :fps
@@ -276,14 +276,14 @@ class MSPhysics::Simulation < MSPhysics::Entity
 
   # Get simulation update rate, the number of times to update newton world
   # per frame.
-  # @return [Fixnum] A value between 1 and 100.
+  # @return [Integer] A value between 1 and 100.
   def update_rate
     @update_rate
   end
 
   # Set simulation update rate, the number of times to update newton world
   # per frame.
-  # @param [Fixnum] rate A value between 1 and 100.
+  # @param [Integer] rate A value between 1 and 100.
   def update_rate=(rate)
     @update_rate = AMS.clamp(rate.to_i, 1, 100)
   end
@@ -309,7 +309,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   end
 
   # Get simulation mode.
-  # @return [Fixnum] Returns one of the following values:
+  # @return [Integer] Returns one of the following values:
   # * 0 - Interactive mode: The pick and drag tool and orbiting camera via the
   #   middle mouse button is enabled.
   # * 1 - Game mode: The pick and drag tool and orbiting camera via the middle
@@ -319,7 +319,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   end
 
   # Set simulation mode.
-  # @param [Fixnum] value Pass one of the following values:
+  # @param [Integer] value Pass one of the following values:
   # * 0 - Interactive mode: The pick and drag tool and orbiting camera via the
   #   middle mouse button is enabled.
   # * 1 - Game mode: The pick and drag tool and orbiting camera via the middle
@@ -332,7 +332,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   # @!group Cursor Functions
 
   # Get active cursor.
-  # @return [Fixnum] Cursor id.
+  # @return [Integer] Cursor id.
   def cursor
     @cursor_id
   end
@@ -345,8 +345,8 @@ class MSPhysics::Simulation < MSPhysics::Entity
   #     # Set target cursor.
   #     simulation.cursor = MSPhysics::CURSORS[:target]
   #   }
-  # @param [Fixnum] id Cursor id.
-  # @return [Fixnum] The new cursor id.
+  # @param [Integer] id Cursor id.
+  # @return [Integer] The new cursor id.
   # @see MSPhysics::CURSORS
   def cursor=(id)
     @cursor_id = id.to_i
@@ -355,14 +355,14 @@ class MSPhysics::Simulation < MSPhysics::Entity
   end
 
   # Get cursor position in view coordinates.
-  # @return [Array<Fixnum>] +[x,y]+
+  # @return [Array<Integer>] +[x,y]+
   def get_cursor_pos
     [@cursor_pos.x, @cursor_pos.y]
   end
 
   # Set cursor position in view coordinates.
-  # @param [Fixnum] x
-  # @param [Fixnum] y
+  # @param [Integer] x
+  # @param [Integer] y
   # @note Windows only!
   def set_cursor_pos(x, y)
     if AMS::IS_PLATFORM_WINDOWS
@@ -410,7 +410,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   # Stimulate automatic scene transitioning.
   # @note Other settings like, delay and reverse mode, are acquired from the
   #   settings.
-  # @param [Fixnum] state
+  # @param [Integer] state
   #   * 0 - off/stop
   #   * 1 - one way
   #   * 2 - repeat forth and back
@@ -922,7 +922,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   end
 
   # Destroy all emitted bodies and the entities associated with them.
-  # @return [Fixnum] The number of emitted bodies destroyed.
+  # @return [Integer] The number of emitted bodies destroyed.
   def destroy_all_emitted_bodies
     count = 0
     @emitted_bodies.each { |body, life|
@@ -984,13 +984,13 @@ class MSPhysics::Simulation < MSPhysics::Entity
   end
 
   # Get log-line text limit.
-  # @return [Fixnum]
+  # @return [Integer]
   def log_line_limit
     @log_line[:limit]
   end
 
   # Set log-line text limit.
-  # @param [Fixnum] limit Desired limit, a value between 1 and 1000.
+  # @param [Integer] limit Desired limit, a value between 1 and 1000.
   def log_line_limit=(limit)
     @log_line[:limit] = AMS.clamp(limit, 1, 1000)
     ls = @log_line[:log].size
@@ -1041,17 +1041,17 @@ class MSPhysics::Simulation < MSPhysics::Entity
   # @param [String] text
   # @param [Hash] opts
   # @option opts [String] :font ("Ariel") Text font.
-  # @option opts [Fixnum] :size (11) Font size in pixels.
+  # @option opts [Integer] :size (11) Font size in pixels.
   # @option opts [Boolean] :bold (false) Whether to have the text bold.
   # @option opts [Boolean] :italic (false) Whether to have the text
   #   italicized.
-  # @option opts [Fixnum] :align (TextAlignLeft) Text float:
+  # @option opts [Integer] :align (TextAlignLeft) Text float:
   #   <tt>TextAlignLeft</tt>, <tt>TextAlignCenter</tt>, or
   #   <tt>TextAlignRight</tt>.
   # @option opts [Sketchup::Color] :color Text color.
   # @option opts [Sketchup::Color, nil] :background Background color.
   #   Pass +nil+ to have a text without background.
-  # @option opts [Fixnum] :padding Background padding in pixels.
+  # @option opts [Integer] :padding Background padding in pixels.
   # @option opts [Numeric] :hratio (0.0) Horizontal position ratio on
   #   screen.
   # @option opts [Numeric] :vratio (0.0) Vertical position ratio on
@@ -1163,7 +1163,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   #     N define this polygon.
   # @param [Array<Geom::Point3d, Array<Numeric>>] points An array of points.
   # @param [Sketchup::Color, Array, String] color Drawing color.
-  # @param [Fixnum] width Line width in pixels.
+  # @param [Integer] width Line width in pixels.
   # @param [String] stipple Line stipple. Use one of the following:
   #  * <tt>"."</tt> - dotted line
   #  * <tt>"-"</tt> - short-dashed line
@@ -1232,8 +1232,8 @@ class MSPhysics::Simulation < MSPhysics::Entity
 
   # Draw 3D points with custom style.
   # @param [Array<Geom::Point3d, Array<Numeric>>] points An array of points.
-  # @param [Fixnum] size Point size in pixels.
-  # @param [Fixnum] style Point style. Use one of the following:
+  # @param [Integer] size Point size in pixels.
+  # @param [Integer] style Point style. Use one of the following:
   #   0. none
   #   1. open square
   #   2. filled square
@@ -1243,7 +1243,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   #   6. open triangle
   #   7. filled triangle
   # @param [Sketchup::Color, Array, String] color Point color.
-  # @param [Fixnum] width Line width in pixels.
+  # @param [Integer] width Line width in pixels.
   # @param [String] stipple Line stipple. Use one of the following:
   #  * <tt>"."</tt> - dotted line
   #  * <tt>"-"</tt> - short-dashed line
@@ -1274,11 +1274,11 @@ class MSPhysics::Simulation < MSPhysics::Entity
   #     end
   #   }
   # @param [String] name The name of embedded sound.
-  # @param [Fixnum] channel The channel to play the sound at. Pass -1 to play
+  # @param [Integer] channel The channel to play the sound at. Pass -1 to play
   #   sound at the available channel.
-  # @param [Fixnum] repeat The number of times to play the sound plus one.
+  # @param [Integer] repeat The number of times to play the sound plus one.
   #   Pass -1 to play sound infinite times.
-  # @return [Fixnum, nil] A channel the sound is set to be played on or nil if
+  # @return [Integer, nil] A channel the sound is set to be played on or nil if
   #   mixer failed to play sound.
   # @raise [TypeError] if sound is invalid.
   def play_sound(name, channel = -1, repeat = 0)
@@ -1309,11 +1309,11 @@ class MSPhysics::Simulation < MSPhysics::Entity
   # @note On Windows, this can load WAVE, AIFF, RIFF, OGG, VOC, and FLAC
   #   formats. Mac OS X is limited to WAVE sounds.
   # @param [String] path Full path of the sound.
-  # @param [Fixnum] channel The channel to play the sound at. Pass -1 to play
+  # @param [Integer] channel The channel to play the sound at. Pass -1 to play
   #   sound at the available channel.
-  # @param [Fixnum] repeat The number of times to play the sound plus one.
+  # @param [Integer] repeat The number of times to play the sound plus one.
   #   Pass -1 to play sound infinite times.
-  # @return [Fixnum, nil] A channel the sound is set to be played on or nil if
+  # @return [Integer, nil] A channel the sound is set to be played on or nil if
   #   mixer failed to play sound.
   # @raise [TypeError] if sound is invalid.
   def play_sound2(path, channel = -1, repeat = 0)
@@ -1322,7 +1322,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   end
 
   # Stop the currently playing sound at channel.
-  # @param [Fixnum] channel The channel returned by {#play_sound} or
+  # @param [Integer] channel The channel returned by {#play_sound} or
   #   {#play_sound2} functions. Pass -1 to stop all sounds.
   # @return [Boolean] success
   def stop_sound(channel)
@@ -1335,7 +1335,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   #   camera orientation. You don't need to call this function every frame if
   #   sound remains in constant position. You do, however, need to call this
   #   function if sound position changes.
-  # @param [Fixnum] channel The channel the sound is being played on.
+  # @param [Integer] channel The channel the sound is being played on.
   # @param [Geom::Point3d, Array<Numeric>] pos Sound position in global space.
   # @param [Numeric] max_hearing_range The maximum hearing range of the sound
   #   in meters.
@@ -1351,7 +1351,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   #     simulation.play_music("MyBackgroundMusic", -1)
   #   }
   # @param [String] name The name of embedded music.
-  # @param [Fixnum] repeat The number of times to play the music plus one.
+  # @param [Integer] repeat The number of times to play the music plus one.
   #   Pass -1 to play music infinite times.
   # @return [Boolean] success
   # @raise [TypeError] if music is invalid.
@@ -1379,7 +1379,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   # Play music from path. This can load WAVE, AIFF, RIFF, OGG, FLAC, MOD, IT,
   # XM, and S3M formats.
   # @param [String] path Full path of the music.
-  # @param [Fixnum] repeat The number of times to play the music plus one.
+  # @param [Integer] repeat The number of times to play the music plus one.
   #   Pass -1 to play music infinite times.
   # @return [Boolean] success
   # @raise [TypeError] if music is invalid.
@@ -1404,18 +1404,18 @@ class MSPhysics::Simulation < MSPhysics::Entity
   #   won't yield any sounds.
   # @note Some instruments have notes that never seem to end. For this reason
   #   it might come in handy to use {#stop_midi_note} function when needed.
-  # @param [Fixnum] instrument A value between 0 and 127. See link below for
+  # @param [Integer] instrument A value between 0 and 127. See link below for
   #   supported instruments and their identifiers.
-  # @param [Fixnum] note A value between 0 and 127. Each instrument has a
+  # @param [Integer] note A value between 0 and 127. Each instrument has a
   #   maximum of 128 notes.
-  # @param [Fixnum] channel A value between 0 and 15. Each note has a maximum
+  # @param [Integer] channel A value between 0 and 15. Each note has a maximum
   #   of 16 channels. To play multiple sounds of same type at the same time,
   #   change channel value to an unused one. Remember that channel 9 is
   #   subjected to different instrument patch and it will change the behaviour
   #   of this function; see note above.
-  # @param [Fixnum] volume A value between 0 and 127. 0 means quiet/far and
+  # @param [Integer] volume A value between 0 and 127. 0 means quiet/far and
   #   127 means close/loud.
-  # @return [Fixnum, nil] Midi note ID or nil if MIDI interface failed to play
+  # @return [Integer, nil] Midi note ID or nil if MIDI interface failed to play
   #   the note.
   # @see http://wiki.fourthwoods.com/midi_file_format#general_midi_instrument_patch_map General MIDI Instrument Patch Map
   def play_midi_note(instrument, note = 63, channel = 0, volume = 127)
@@ -1423,7 +1423,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   end
 
   # Stop MIDI note.
-  # @param [Fixnum] id A MIDI note identifier returned by the
+  # @param [Integer] id A MIDI note identifier returned by the
   #   {#play_midi_note} function. Pass -1 to stop all midi notes.
   # @return [Boolean] success
   def stop_midi_note(id)
@@ -1479,7 +1479,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   #       simulation.position_midi_note(id, this.get_position(1), 100) if id
   #     end
   #   }
-  # @param [Fixnum] id A MIDI note identifier returned by the
+  # @param [Integer] id A MIDI note identifier returned by the
   #   {#play_midi_note} function.
   # @param [Geom::Point3d, Array<Numeric>] pos MIDI note position in global
   #   space.
@@ -1509,9 +1509,9 @@ class MSPhysics::Simulation < MSPhysics::Entity
   # @option opts [Numeric] :scale (1.01) Radius scale ratio per second, a
   #   value between 1.0e-4 and 1.0e6. If radius becomes less than 0.001 or more
   #   than 10000, the particle is automatically destroyed.
-  # @option opts [Sketchup::Color, Array, String, Fixnum] :color1 ('Gray')
+  # @option opts [Sketchup::Color, Array, String, Integer] :color1 ('Gray')
   #   Starting color.
-  # @option opts [Sketchup::Color, Array, String, Fixnum] :color2 (nil) Ending
+  # @option opts [Sketchup::Color, Array, String, Integer] :color2 (nil) Ending
   #   color. Pass nil to have the ending color remain same as the starting
   #   color.
   # @option opts [Numeric] :alpha1 (1.0) Starting opacity, a value between
@@ -1522,12 +1522,12 @@ class MSPhysics::Simulation < MSPhysics::Entity
   # @option opts [Numeric] :fade (0.0) A time ratio it should take the effect
   #   to fade into the starting opacity and fade out from the ending opacity,
   #   a value between 0.0 and 1.0.
-  # @option opts [Fixnum] :lifetime (3.0) Particle lifetime in seconds, a value
+  # @option opts [Integer] :lifetime (3.0) Particle lifetime in seconds, a value
   #   greater than zero.
-  # @option opts [Fixnum] :num_seg (16) Number of segments the particle is to
+  # @option opts [Integer] :num_seg (16) Number of segments the particle is to
   #   consist of, a value between 3 and 360.
   # @option opts [Numeric] :rot_angle (0.0) Rotate angle in radians.
-  # @option opts [Fixnum] :type (1)
+  # @option opts [Integer] :type (1)
   #   1. Defines a 2D circular particle that is drawn through view drawing
   #      functions. This type is fast, but particle shade and shadow is not
   #      present. Also, this particle doesn't blend quite well with other
@@ -1624,7 +1624,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
   end
 
   # Get number of particles.
-  # @return [Fixnum]
+  # @return [Integer]
   def particles_count
     @particles.size + MSPhysics::C::Particle.size
   end

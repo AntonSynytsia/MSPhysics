@@ -108,7 +108,7 @@ class MSPhysics::SceneData < MSPhysics::Entity
             model.rendering_options[mk] = AMS::Geometry.transition_color(s1v, s2v, ratio)
           elsif mv.is_a?(Numeric)
             v = AMS::Geometry.transition_number(s1v, s2v, ratio)
-            model.rendering_options[mk] = mv.is_a?(Fixnum) ? v.round : v
+            model.rendering_options[mk] = mv.is_a?(Integer) ? v.round : v
           elsif mv.is_a?(TrueClass) || mv.is_a?(FalseClass) || mv.is_a?(String) || mv.is_a?(Symbol)
             model.rendering_options[mk] = ratio == 0 ? s1v : s2v
           end
@@ -122,7 +122,7 @@ class MSPhysics::SceneData < MSPhysics::Entity
         if s1v.class == mv.class && s2v.class == mv.class
           if mv.is_a?(Numeric) && mk !~ /time_t/i
             v = AMS::Geometry.transition_number(s1v, s2v, ratio)
-            model.shadow_info[mk] = mv.is_a?(Fixnum) ? v.round : v
+            model.shadow_info[mk] = mv.is_a?(Integer) ? v.round : v
           elsif mv.is_a?(Time)
             s1v = s1v.getutc
             s2v = s2v.getutc

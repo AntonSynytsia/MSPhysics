@@ -57,7 +57,7 @@ module MSPhysics
       end
 
       # Get body by body address.
-      # @param [Fixnum] address
+      # @param [Integer] address
       # @return [Body, nil]
       def body_by_address(address)
         data = MSPhysics::Newton::Body.get_user_data(address.to_i)
@@ -130,10 +130,10 @@ module MSPhysics
     #     considering +"null"+ or +"static_mesh"+ collision shapes).
     #   @param [World] world
     #   @param [Sketchup::Group, Sketchup::ComponentInstance] entity
-    #   @param [Fixnum] shape_id Shape ID. See {MSPhysics::SHAPE_NAMES}
+    #   @param [Integer] shape_id Shape ID. See {MSPhysics::SHAPE_NAMES}
     #   @param [Geom::Transformation, nil] offset_tra A local transform to apply
     #     to the collision.
-    #   @param [Fixnum] type_id Body type: 0 -> dynamic; 1 -> kinematic.
+    #   @param [Integer] type_id Body type: 0 -> dynamic; 1 -> kinematic.
     #   @raise [TypeError] if the specified world is invalid.
     #   @raise [TypeError] if the specified entity is invalid.
     #   @raise [TypeError] if the specified collision shape is invalid.
@@ -144,7 +144,7 @@ module MSPhysics
     #     transformation matrix or +nil+ to create new body at the current
     #     location.
     #   @param [Boolean] reapply_forces Whether to reapply force and torque.
-    #   @param [Fixnum] type_id Body type: 0 -> dynamic; 1 -> kinematic.
+    #   @param [Integer] type_id Body type: 0 -> dynamic; 1 -> kinematic.
     #   @raise [TypeError] if the specified body is invalid.
     #   @raise [TypeError] if the specified transformation matrix is not acceptable.
     def initialize(*args)
@@ -204,13 +204,13 @@ module MSPhysics
     end
 
     # Get pointer to the body.
-    # @return [Fixnum]
+    # @return [Integer]
     def address
       @address
     end
 
     # Get pointer to the collision associated with the body.
-    # @return [Fixnum]
+    # @return [Integer]
     def collision_address
       MSPhysics::Newton::Body.get_collision(@address)
     end
@@ -222,7 +222,7 @@ module MSPhysics
     end
 
     # Get body type.
-    # @return [Fixnum] Type: 0 -> dynamic; 1 -> kinematic
+    # @return [Integer] Type: 0 -> dynamic; 1 -> kinematic
     def type
       MSPhysics::Newton::Body.get_type(@address)
     end
@@ -295,7 +295,7 @@ module MSPhysics
     end
 
     # Get body position.
-    # @param [Fixnum] mode
+    # @param [Integer] mode
     #   * 0 - get body's origin in global space.
     #   * 1 - get body's centre of mass in global space.
     # @return [Geom::Point3d]
@@ -306,7 +306,7 @@ module MSPhysics
     # Set body position.
     # @overload set_position(position, mode = 0)
     #   @param [Geom::Point3d, Array<Numeric>] position A point in global space.
-    #   @param [Fixnum] mode
+    #   @param [Integer] mode
     #     * 0 - reposition body origin to a desired location in global space.
     #     * 1 - reposition body centre of mass to a desired location in global
     #       space.
@@ -314,7 +314,7 @@ module MSPhysics
     #   @param [Numeric] px X position in global space.
     #   @param [Numeric] py Y position in global space.
     #   @param [Numeric] pz Z position in global space.
-    #   @param [Fixnum] mode
+    #   @param [Integer] mode
     #     * 0 - reposition body origin to a desired location in global space.
     #     * 1 - reposition body centre of mass to a desired location in global
     #       space.
@@ -655,7 +655,7 @@ module MSPhysics
 
     # Remove all bodies from the non-collidable list; the bodies that were set
     # non-collidable by the {#set_non_collidable_with} function.
-    # @return [Fixnum] The number of bodies unmarked.
+    # @return [Integer] The number of bodies unmarked.
     def clear_non_collidable_bodies
       MSPhysics::Newton::Body.clear_non_collidable_bodies(@address)
     end
@@ -725,7 +725,7 @@ module MSPhysics
     end
 
     # Get the mode for controlling the way this magnet should work.
-    # @return [Fixnum] Returns one of the following values:
+    # @return [Integer] Returns one of the following values:
     # - 1; to have the magnet force be calculated with the following
     #   equation: actual_magnet_force = f * (d - r)^2 / r^2; where f is the
     #   maximum magnet force (in Newtons), d is the distance between this magnet
@@ -742,7 +742,7 @@ module MSPhysics
     end
 
     # Set the mode for controlling the way this magnet should work.
-    # @param [Fixnum] mode
+    # @param [Integer] mode
     # - Pass 1 to have the magnet force be calculated with the following
     #   equation: actual_magnet_force = f * (d - r)^2 / r^2; where f is the
     #   maximum magnet force (in Newtons), d is the distance between this magnet
@@ -1183,12 +1183,12 @@ module MSPhysics
     # Create a copy of the body.
     # @overload copy(reapply_forces, type)
     #   @param [Boolean] reapply_forces Whether to reapply force and torque.
-    #   @param [Fixnum] type Type: 0 -> dynamic; 1 -> kinematic.
+    #   @param [Integer] type Type: 0 -> dynamic; 1 -> kinematic.
     # @overload copy(transformation, reapply_forces, type)
     #   @param [Geom::Transformation, Array<Numeric>] transformation New
     #     transformation matrix.
     #   @param [Boolean] reapply_forces Whether to reapply force and torque.
-    #   @param [Fixnum] type Type: 0 -> dynamic; 1 -> kinematic.
+    #   @param [Integer] type Type: 0 -> dynamic; 1 -> kinematic.
     #   @raise [TypeError] if the specified transformation matrix is not
     #     uniform.
     # @return [Body] A new body object.
@@ -1359,7 +1359,7 @@ module MSPhysics
     end
 
     # Detach all attached bodies from this body.
-    # @return [Fixnum] Number of bodies detached.
+    # @return [Integer] Number of bodies detached.
     # @see attach
     # @see detach
     # @see attached?

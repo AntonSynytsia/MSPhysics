@@ -591,13 +591,13 @@ module MSPhysics::Replay
     end
 
     # Get starting frame of all data recorded.
-    # @return [Fixnum, nil]
+    # @return [Integer, nil]
     def start_frame
       @start_frame
     end
 
     # Get ending frame of all data recorded.
-    # @return [Fixnum, nil]
+    # @return [Integer, nil]
     def end_frame
       @end_frame
     end
@@ -624,7 +624,7 @@ module MSPhysics::Replay
 
     # Record group/component.
     # @param [Sketchup::Group, Sketchup::ComponentInstance] group
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     def record_group(group, pframe)
       data = @tgroups_data[group]
       unless data
@@ -645,7 +645,7 @@ module MSPhysics::Replay
     end
 
     # Record all groups.
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     def record_groups(pframe)
       Sketchup.active_model.definitions.each { |d|
         d.instances.each { |i|
@@ -657,7 +657,7 @@ module MSPhysics::Replay
 
     # Record material.
     # @param [Sketchup::Material] material
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     def record_material(material, pframe)
       data = @tmaterials_data[material]
       unless data
@@ -680,7 +680,7 @@ module MSPhysics::Replay
     end
 
     # Record all materials.
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     def record_materials(pframe)
       Sketchup.active_model.materials.each { |m|
         record_material(m, pframe)
@@ -689,7 +689,7 @@ module MSPhysics::Replay
 
     # Record layer.
     # @param [Sketchup::Layer] layer
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     def record_layer(layer, pframe)
       data = @tlayers_data[layer]
       unless data
@@ -703,7 +703,7 @@ module MSPhysics::Replay
     end
 
     # Record all layers.
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     def record_layers(pframe)
       Sketchup.active_model.layers.each { |l|
         record_layer(l, pframe)
@@ -711,7 +711,7 @@ module MSPhysics::Replay
     end
 
     # Record camera.
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     def record_camera(pframe)
       camera = Sketchup.active_model.active_view.camera
       data = {
@@ -736,7 +736,7 @@ module MSPhysics::Replay
     end
 
     # Record rendering options.
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     def record_render(pframe)
       data = {}
       Sketchup.active_model.rendering_options.each { |k, v| data[k] = v }
@@ -745,7 +745,7 @@ module MSPhysics::Replay
     end
 
     # Record shadow info.
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     def record_shadow(pframe)
       data = {}
       Sketchup.active_model.shadow_info.each { |k, v| data[k] = v }
@@ -755,7 +755,7 @@ module MSPhysics::Replay
 
     # Record groups, camera, materials, layers, render, and shadow based on
     # whether their recording is enabled.
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     def record_all(pframe)
       record_groups(pframe)
       record_materials(pframe) if @record_materials
@@ -790,7 +790,7 @@ module MSPhysics::Replay
         gdata[:definition] = data[:definition] if data[:definition]
         gdata[:start_frame] = data[:start_frame]
         gdata[:end_frame] = data[:end_frame]
-        data.keys.grep(Fixnum).sort.each { |pframe|
+        data.keys.grep(Integer).sort.each { |pframe|
           gdata[pframe] = data[pframe]
         }
         @groups_data[group] = gdata
@@ -802,7 +802,7 @@ module MSPhysics::Replay
         gdata[:definition] = data[:definition] if data[:definition]
         gdata[:start_frame] = data[:start_frame]
         gdata[:end_frame] = data[:end_frame]
-        data.keys.grep(Fixnum).sort.each { |pframe|
+        data.keys.grep(Integer).sort.each { |pframe|
           gdata[pframe] = data[pframe]
         }
         @materials_data[material] = gdata
@@ -814,7 +814,7 @@ module MSPhysics::Replay
         gdata[:definition] = data[:definition] if data[:definition]
         gdata[:start_frame] = data[:start_frame]
         gdata[:end_frame] = data[:end_frame]
-        data.keys.grep(Fixnum).sort.each { |pframe|
+        data.keys.grep(Integer).sort.each { |pframe|
           gdata[pframe] = data[pframe]
         }
         @layers_data[layer] = gdata
@@ -822,19 +822,19 @@ module MSPhysics::Replay
       # Save camera data
       @camera_data[:start_frame] = @tcamera_data[:start_frame]
       @camera_data[:end_frame] = @tcamera_data[:end_frame]
-      @tcamera_data.keys.grep(Fixnum).sort.each { |pframe|
+      @tcamera_data.keys.grep(Integer).sort.each { |pframe|
         @camera_data[pframe] = @tcamera_data[pframe]
       }
       # Save render data
       @render_data[:start_frame] = @trender_data[:start_frame]
       @render_data[:end_frame] = @trender_data[:end_frame]
-      @trender_data.keys.grep(Fixnum).sort.each { |pframe|
+      @trender_data.keys.grep(Integer).sort.each { |pframe|
         @render_data[pframe] = @trender_data[pframe]
       }
       # Save shadow data
       @shadow_data[:start_frame] = @tshadow_data[:start_frame]
       @shadow_data[:end_frame] = @tshadow_data[:end_frame]
-      @tshadow_data.keys.grep(Fixnum).sort.each { |pframe|
+      @tshadow_data.keys.grep(Integer).sort.each { |pframe|
         @shadow_data[pframe] = @tshadow_data[pframe]
       }
       # Flatten all data
@@ -964,7 +964,7 @@ module MSPhysics::Replay
     end
 
     # Smoothen the transitioning of active camera data.
-    # @param [Fixnum] interval
+    # @param [Integer] interval
     # @return [Boolean] success
     def smoothen_camera_data(interval)
       return false if @camera_data.empty? || @camera_data[:start_frame].nil?
@@ -1059,7 +1059,7 @@ module MSPhysics::Replay
         gdata[:end_frame] = data[:end_frame] if data[:end_frame]
         last = {}
         data.each { |pframe, fdata|
-          next unless pframe.is_a?(Fixnum)
+          next unless pframe.is_a?(Integer)
           sdata = {}
           fdata.each { |k, v|
             if v.is_a?(Sketchup::Material) || v.is_a?(Sketchup::Layer)
@@ -1085,7 +1085,7 @@ module MSPhysics::Replay
         gdata[:end_frame] = data[:end_frame] if data[:end_frame]
         last = {}
         data.each { |pframe, fdata|
-          next unless pframe.is_a?(Fixnum)
+          next unless pframe.is_a?(Integer)
           sdata = {}
           fdata.each { |k, v|
             v2 = v.is_a?(Sketchup::Color) ? v.to_a : v
@@ -1105,7 +1105,7 @@ module MSPhysics::Replay
         gdata[:end_frame] = data[:end_frame] if data[:end_frame]
         last = {}
         data.each { |pframe, fdata|
-          next unless pframe.is_a?(Fixnum)
+          next unless pframe.is_a?(Integer)
           sdata = {}
           fdata.each { |k, v|
             v2 = v.is_a?(Sketchup::Color) ? v.to_a : v
@@ -1122,7 +1122,7 @@ module MSPhysics::Replay
       fcamera_data[:end_frame] = @camera_data[:end_frame] if @camera_data[:end_frame]
       last = {}
       @camera_data.each { |pframe, fdata|
-        next unless pframe.is_a?(Fixnum)
+        next unless pframe.is_a?(Integer)
         sdata = {}
         fdata.each { |k, v|
           next if last.has_key?(k) && last[k] == v
@@ -1136,7 +1136,7 @@ module MSPhysics::Replay
       frender_data[:end_frame] = @render_data[:end_frame] if @render_data[:end_frame]
       last = {}
       @render_data.each { |pframe, fdata|
-        next unless pframe.is_a?(Fixnum)
+        next unless pframe.is_a?(Integer)
         sdata = {}
         fdata.each { |k, v|
           v2 = v.is_a?(Sketchup::Color) ? v.to_a : v
@@ -1151,7 +1151,7 @@ module MSPhysics::Replay
       fshadow_data[:end_frame] = @shadow_data[:end_frame] if @shadow_data[:end_frame]
       last = {}
       @shadow_data.each { |pframe, fdata|
-        next unless pframe.is_a?(Fixnum)
+        next unless pframe.is_a?(Integer)
         sdata = {}
         fdata.each { |k, v|
           v2 = v.is_a?(Sketchup::Color) ? v.to_a : v
@@ -1178,7 +1178,7 @@ module MSPhysics::Replay
         str << ":start_frame=>#{data[:start_frame]}," if data[:start_frame]
         str << ":end_frame=>#{data[:end_frame]}," if data[:end_frame]
         data.each { |pframe, fdata|
-          next unless pframe.is_a?(Fixnum)
+          next unless pframe.is_a?(Integer)
           str << "#{pframe}=>{"
           fdata.each { |k, v|
             res = nil
@@ -1246,7 +1246,7 @@ module MSPhysics::Replay
         str << ":start_frame=>#{data[:start_frame]}," if data[:start_frame]
         str << ":end_frame=>#{data[:end_frame]}," if data[:end_frame]
         data.each { |pframe, fdata|
-          next unless pframe.is_a?(Fixnum)
+          next unless pframe.is_a?(Integer)
           str << "#{pframe}=>{"
           fdata.each { |k, v|
             res = nil
@@ -1282,7 +1282,7 @@ module MSPhysics::Replay
         str << ":start_frame=>#{data[:start_frame]}," if data[:start_frame]
         str << ":end_frame=>#{data[:end_frame]}," if data[:end_frame]
         data.each { |pframe, fdata|
-          next unless pframe.is_a?(Fixnum)
+          next unless pframe.is_a?(Integer)
           str << "#{pframe}=>{"
           fdata.each { |k, v|
             res = nil
@@ -1311,7 +1311,7 @@ module MSPhysics::Replay
       str << ":start_frame=>#{fcamera_data[:start_frame]}," if fcamera_data[:start_frame]
       str << ":end_frame=>#{fcamera_data[:end_frame]}," if fcamera_data[:end_frame]
       fcamera_data.each { |pframe, fdata|
-        next unless pframe.is_a?(Fixnum)
+        next unless pframe.is_a?(Integer)
         str << "#{pframe}=>{"
         fdata.each { |k, v|
           res = nil
@@ -1340,7 +1340,7 @@ module MSPhysics::Replay
       str << ":start_frame=>#{frender_data[:start_frame]}," if frender_data[:start_frame]
       str << ":end_frame=>#{frender_data[:end_frame]}," if frender_data[:end_frame]
       frender_data.each { |pframe, fdata|
-        next unless pframe.is_a?(Fixnum)
+        next unless pframe.is_a?(Integer)
         str << "#{pframe}=>{"
         fdata.each { |k, v|
           res = nil
@@ -1371,7 +1371,7 @@ module MSPhysics::Replay
       str << ":start_frame=>#{fshadow_data[:start_frame]}," if fshadow_data[:start_frame]
       str << ":end_frame=>#{fshadow_data[:end_frame]}," if fshadow_data[:end_frame]
       fshadow_data.each { |pframe, fdata|
-        next unless pframe.is_a?(Fixnum)
+        next unless pframe.is_a?(Integer)
         str << "#{pframe}=>{"
         fdata.each { |k, v|
           res = nil
@@ -1455,8 +1455,8 @@ module MSPhysics::Replay
         return false
       end
       # Load general info
-      @start_frame = mspr_data[:start_frame].is_a?(Fixnum) ? mspr_data[:start_frame] : nil
-      @end_frame = mspr_data[:end_frame].is_a?(Fixnum) ? mspr_data[:end_frame] : nil
+      @start_frame = mspr_data[:start_frame].is_a?(Integer) ? mspr_data[:start_frame] : nil
+      @end_frame = mspr_data[:end_frame].is_a?(Integer) ? mspr_data[:end_frame] : nil
       # Load IDs
       id_to_grp = {}
       id_to_def = {}
@@ -1465,24 +1465,24 @@ module MSPhysics::Replay
       model.entities.each { |e|
         if e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)
           id = e.get_attribute(dict, 'ID')
-          id_to_grp[id] = e if id.is_a?(Fixnum)
+          id_to_grp[id] = e if id.is_a?(Integer)
         end
       }
       model.definitions.each { |d|
         ids = d.get_attribute(dict, 'IDs')
         if ids.is_a?(Array)
           ids.each { |id|
-            id_to_def[id] = d if id.is_a?(Fixnum)
+            id_to_def[id] = d if id.is_a?(Integer)
           }
         end
       }
       model.materials.each { |mat|
         id = mat.get_attribute(dict, 'ID')
-        id_to_mat[id] = mat if id.is_a?(Fixnum)
+        id_to_mat[id] = mat if id.is_a?(Integer)
       }
       model.layers.each { |lay|
         id = lay.get_attribute(dict, 'ID')
-        id_to_lay[id] = lay if id.is_a?(Fixnum)
+        id_to_lay[id] = lay if id.is_a?(Integer)
       }
       # Load groups
       mspr_data[:groups_data].each { |id, gdata|
@@ -1491,8 +1491,8 @@ module MSPhysics::Replay
         gdata[:id] = id
         gdata[:definition] = d if d
         gdata.each { |pframe, fdata|
-          next unless pframe.is_a?(Fixnum)
-          if fdata[:layer].is_a?(Fixnum)
+          next unless pframe.is_a?(Integer)
+          if fdata[:layer].is_a?(Integer)
             lay = id_to_lay[fdata[:layer]]
             if lay
               fdata[:layer] = lay
@@ -1500,7 +1500,7 @@ module MSPhysics::Replay
               fdata.delete(:layer)
             end
           end
-          if fdata[:material].is_a?(Fixnum)
+          if fdata[:material].is_a?(Integer)
             mat = id_to_mat[fdata[:material]]
             fdata[:material] = mat if mat
           end
@@ -1614,7 +1614,7 @@ module MSPhysics::Replay
 
     # Get data at a particular frame.
     # @param [Hash] data
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     # @return [Hash, nil]
     def get_frame_data(data, pframe)
       pframe = pframe.to_i
@@ -1622,7 +1622,7 @@ module MSPhysics::Replay
       return fdata if fdata
       ld = nil
       data.each { |f, d|
-        next if !f.is_a?(Fixnum)
+        next if !f.is_a?(Integer)
         return d if pframe < f
         return ld if pframe == f
         ld = d
@@ -1632,7 +1632,7 @@ module MSPhysics::Replay
 
     # Get group/component data at a particular frame.
     # @param [Sketchup::Group, Sketchup::ComponentInstance] group
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     # @return [Hash, nil]
     def get_group_data(group, pframe)
       data = @groups_data[group]
@@ -1642,7 +1642,7 @@ module MSPhysics::Replay
 
     # Get material data at a particular frame.
     # @param [Sketchup::Material] material
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     # @return [Hash, nil]
     def get_material_data(material, pframe)
       data = @materials_data[group]
@@ -1652,7 +1652,7 @@ module MSPhysics::Replay
 
     # Get layer data at a particular frame.
     # @param [Sketchup::Layer] layer
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     # @return [Hash, nil]
     def get_layer_data(layer, pframe)
       data = @layers_data[layer]
@@ -1661,21 +1661,21 @@ module MSPhysics::Replay
     end
 
     # Get camera data at a particular frame.
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     # @return [Hash, nil]
     def get_camera_data(pframe)
       get_frame_data(@camera_data, pframe)
     end
 
     # Get render data at a particular frame.
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     # @return [Hash, nil]
     def get_render_data(pframe)
       get_frame_data(@render_data, pframe)
     end
 
     # Get shadow data at a particular frame.
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     # @return [Hash, nil]
     def get_shadow_data(pframe)
       get_frame_data(@shadow_data, pframe)
@@ -1718,7 +1718,7 @@ module MSPhysics::Replay
     end
 
     # Activate frame data.
-    # @param [Fixnum] pframe
+    # @param [Integer] pframe
     # @return [Boolean] success
     def activate_frame(pframe)
       return false unless active_data_valid?

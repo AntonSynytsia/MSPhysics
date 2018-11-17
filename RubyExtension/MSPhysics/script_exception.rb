@@ -4,7 +4,7 @@ class MSPhysics::ScriptException < Exception
   # @param [String] message
   # @param [Array<String>] backtrace
   # @param [Sketchup::Group, Sketchup::ComponentInstance] entity
-  # @param [Fixnum, nil] line
+  # @param [Integer, nil] line
   def initialize(message, backtrace, entity, line)
     AMS.validate_type(entity, Sketchup::Group, Sketchup::ComponentInstance)
     super(message)
@@ -17,7 +17,7 @@ class MSPhysics::ScriptException < Exception
   # @return [Sketchup::Group, Sketchup::ComponentInstance]
 
   # @!attribute [r] line
-  # @return [Fixnum, nil]
+  # @return [Integer, nil]
 
 
   attr_reader :entity, :line
