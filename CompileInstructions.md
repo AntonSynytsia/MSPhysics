@@ -1,27 +1,27 @@
 # Compile Instructions
 
 ## Windows
-Refer to the following instructions to compile msp_lib.so and newton.dll for Windows, on Visual Studio:
+Refer to the following instructions to compile <tt>msp_lib.so</tt> and <tt>newton.dll</tt> for Windows, on Visual Studio:
 
-1. Set build configuration to Release (X.Y).
-2. Set build platform to x86 or x64.
+1. Set build configuration to <tt>Release (X.Y)</tt>.
+2. Set build platform to <tt>x86</tt> or <tt>x64</tt>.
 2. Build Solution.
-3. Copy .../VS/[Win32/x64]/Release (X.Y)/msp_lib/msp_lib.so
+3. Copy <tt>.../VS/[Win32/x64]/Release (X.Y)/msp_lib/msp_lib.so</tt>
    to the following binary folder:
-   /RubyExtension/MSPhysics/libraries/stage/[win32/win64]/[X.Y]/
-4. Copy .../VS/[Win32/x64]/Release (X.Y)/newton/newton.dll
+   <tt>/RubyExtension/MSPhysics/libraries/stage/[win32/win64]/[X.Y]/</tt>
+4. Copy <tt>.../VS/[Win32/x64]/Release (X.Y)/newton/newton.dll</tt>
    to the following binary folder:
-   /RubyExtension/MSPhysics/libraries/stage/[win32/win64]/
+   <tt>/RubyExtension/MSPhysics/libraries/stage/[win32/win64]/</tt>
 
-## Max OS X
-Refer to the following instructions to compile msp_lib.bundle and newton.dylib for Mac OS X, on xCode:
+## Mac OS X
+Refer to the following instructions to compile <tt>msp_lib.bundle</tt> and <tt>newton.dylib</tt> for Mac OS X, on xCode:
 
-1. Set active scheme to "Ruby (X.Y) - [32/64]"
-2. Execute (Menu) Product > Archive
+1. Set active scheme to <tt>Ruby (X.Y) - [32/64]</tt>
+2. Execute <tt>(Menu) Product > Archive</tt>
 3. Export the built archive to your documents.
-4. Locate msp_lib.bundle within the exported archive.
-5. Copy msp_lib.bundle to the following binary folder:
-   /RubyExtension/MSPhysics/libraries/stage/[osx32/osx64]/[X.Y]/
-6. Locate newton.dylib within the exported archive.
-7. Copy newton.dylib to the following binary folder:
-   /RubyExtension/MSPhysics/libraries/stage/[osx32/osx64]/
+4. Locate <tt>msp_lib.bundle</tt> within the exported archive.
+5. Copy <tt>msp_lib.bundle</tt> to the following binary folder:
+   <tt>/RubyExtension/MSPhysics/libraries/stage/[osx32/osx64]/[X.Y]/</tt>
+6. Locate newton.dylib</tt> within the exported archive.
+7. Copy <tt>newton.dylib</tt> to the following binary folder:
+   <tt>/RubyExtension/MSPhysics/libraries/stage/[osx32/osx64]/</tt>
