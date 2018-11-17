@@ -340,8 +340,8 @@
 		3A5C3A62218FD02800A72BE6 /* msp_joint_curvy_piston.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A5C38DD218FCCA700A72BE6 /* msp_joint_curvy_piston.h */; };
 		3A5C3B3B218FD55C00A72BE6 /* newton.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A5C3B39218FD16C00A72BE6 /* newton.dylib */; };
 		3A5C3B3C218FD56500A72BE6 /* newton.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A5C3B39218FD16C00A72BE6 /* newton.dylib */; };
-		3A5C3B3D218FD56B00A72BE6 /* newton.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AF9FF711D29CEBF007FC1E1 /* newton.a */; };
-		3A5C3B3E218FD57100A72BE6 /* newton.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AF9FF711D29CEBF007FC1E1 /* newton.a */; };
+		3A5C3B3D218FD56B00A72BE6 /* newton.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AF9FF711D29CEBF007FC1E1 /* newton.dylib */; };
+		3A5C3B3E218FD57100A72BE6 /* newton.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AF9FF711D29CEBF007FC1E1 /* newton.dylib */; };
 		3A5C3B40218FD64B00A72BE6 /* newton.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A5C3B39218FD16C00A72BE6 /* newton.dylib */; };
 		3A9F699F1D2FB63400F12E60 /* libSDL2-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F699E1D2FB63400F12E60 /* libSDL2-2.0.0.dylib */; };
 		3A9F69A11D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A9F69A01D2FB64100F12E60 /* libSDL2_mixer-2.0.0.dylib */; };
@@ -519,7 +519,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3A5C3B3D218FD56B00A72BE6 /* newton.a in Frameworks */,
+				3A5C3B3D218FD56B00A72BE6 /* newton.dylib in Frameworks */,
 				3A5C3A3E218FD02800A72BE6 /* Ruby.framework in Frameworks */,
 				3A5C3A3F218FD02800A72BE6 /* libSDL2-2.0.0.dylib in Frameworks */,
 				3A5C3A40218FD02800A72BE6 /* libSDL2_mixer-2.0.0.dylib in Frameworks */,
@@ -530,7 +530,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3A5C3B3E218FD57100A72BE6 /* newton.a in Frameworks */,
+				3A5C3B3E218FD57100A72BE6 /* newton.dylib in Frameworks */,
 				3A5C3A18218FD00F00A72BE6 /* Ruby.framework in Frameworks */,
 				3A9F69A21D2FB6D100F12E60 /* libSDL2-2.0.0.dylib in Frameworks */,
 				3A9F69A31D2FB6DA00F12E60 /* libSDL2_mixer-2.0.0.dylib in Frameworks */,
@@ -668,7 +668,7 @@
 		3AF9FF6D1D29CEBE007FC1E1 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				3AF9FF711D29CEBF007FC1E1 /* newton.a */,
+				3AF9FF711D29CEBF007FC1E1 /* newton.dylib */,
 				3A5C3B39218FD16C00A72BE6 /* newton.dylib */,
 			);
 			name = Products;
@@ -1036,10 +1036,10 @@
 			remoteRef = 3A5C3B38218FD16C00A72BE6 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		3AF9FF711D29CEBF007FC1E1 /* newton.a */ = {
+		3AF9FF711D29CEBF007FC1E1 /* newton.dylib */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
-			path = newton.a;
+			path = newton.dylib;
 			remoteRef = 3AF9FF701D29CEBF007FC1E1 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -1057,7 +1057,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/newton.dylib\" \"@loader_path/../newton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";\n";
+			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/newton.dylib\" \"@loader_path/../newton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";\n";
 		};
 		3A5C3732218FC97D00A72BE6 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1070,7 +1070,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/newton.dylib\" \"@loader_path/../newton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";\n";
+			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/newton.dylib\" \"@loader_path/../newton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";\n";
 		};
 		3A5C3A63218FD02800A72BE6 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1083,7 +1083,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/newton.dylib\" \"@loader_path/../newton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";\n";
+			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/newton.dylib\" \"@loader_path/../newton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";\n";
 		};
 		3A9F69A41D2FB7E500F12E60 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1096,7 +1096,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/newton.dylib\" \"@loader_path/../newton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";\n";
+			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/newton.dylib\" \"@loader_path/../newton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";\n";
 		};
 		3AF3DB721D2F610500EA962A /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1109,7 +1109,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"$SRCROOT/$CONFIGURATION/newton.dylib\" \"@loader_path/../newton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";\n";
+			shellScript = "install_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/../libSDL2-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2_mixer-2.0.0.dylib\" \"@loader_path/../libSDL2_mixer-2.0.0.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/newton.dylib\" \"@loader_path/../newton.dylib\" \"$CONFIGURATION_BUILD_DIR/msp_lib.bundle\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x86/libSDL2_mixer-2.0.0.dylib\";\ninstall_name_tool -change \"/usr/local/lib/libSDL2-2.0.0.dylib\" \"@loader_path/libSDL2-2.0.0.dylib\" \"$SRCROOT/../../ThirdParty/SDL2_mixer/lib/x64/libSDL2_mixer-2.0.0.dylib\";\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -1504,7 +1504,7 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				VALID_ARCHS = x86_64;
+				VALID_ARCHS = "$(inherited)";
 			};
 			name = Debug;
 		};
@@ -1536,7 +1536,7 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				VALID_ARCHS = x86_64;
+				VALID_ARCHS = "$(inherited)";
 			};
 			name = Release;
 		};
@@ -1568,7 +1568,7 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				VALID_ARCHS = x86_64;
+				VALID_ARCHS = "$(inherited)";
 			};
 			name = Debug;
 		};
@@ -1600,7 +1600,7 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				VALID_ARCHS = x86_64;
+				VALID_ARCHS = "$(inherited)";
 			};
 			name = Release;
 		};
@@ -1633,7 +1633,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_NAME = msp_lib;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				VALID_ARCHS = x86_64;
+				VALID_ARCHS = "$(inherited)";
 			};
 			name = Debug;
 		};
@@ -1666,7 +1666,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_NAME = msp_lib;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				VALID_ARCHS = x86_64;
+				VALID_ARCHS = "$(inherited)";
 			};
 			name = Release;
 		};
@@ -1699,7 +1699,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRODUCT_NAME = msp_lib;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				VALID_ARCHS = i386;
+				VALID_ARCHS = "$(inherited)";
 			};
 			name = Debug;
 		};
@@ -1732,7 +1732,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRODUCT_NAME = msp_lib;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				VALID_ARCHS = i386;
+				VALID_ARCHS = "$(inherited)";
 			};
 			name = Release;
 		};
@@ -1763,7 +1763,7 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				VALID_ARCHS = i386;
+				VALID_ARCHS = "$(inherited)";
 			};
 			name = Debug;
 		};
@@ -1794,7 +1794,7 @@
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				VALID_ARCHS = i386;
+				VALID_ARCHS = "$(inherited)";
 			};
 			name = Release;
 		};
