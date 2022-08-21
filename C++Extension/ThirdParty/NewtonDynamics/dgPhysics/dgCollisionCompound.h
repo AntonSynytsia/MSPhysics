@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -51,7 +51,7 @@ class dgCollisionCompound: public dgCollision
 		void AddNode (dgNodeBase* const node, dgInt32 index, const dgCollisionInstance* const parent); 
 	};
 
-	DG_MSC_VECTOR_ALIGMENT
+	DG_MSC_VECTOR_ALIGNMENT
 	class dgOOBBTestData
 	{
 		public:
@@ -76,10 +76,10 @@ class dgCollisionCompound: public dgCollision
 		dgVector m_extendsMaxX[3];
 		mutable dgFloat32 m_separatingDistance;
 		static dgVector m_maxDist;
-	} DG_GCC_VECTOR_ALIGMENT;
+	} DG_GCC_VECTOR_ALIGNMENT;
 
 
-	DG_MSC_VECTOR_ALIGMENT
+	DG_MSC_VECTOR_ALIGNMENT
 	class dgNodeBase
 	{
 		public:
@@ -119,7 +119,7 @@ class dgCollisionCompound: public dgCollision
 		dgNodeBase* m_parent;
 		dgCollisionInstance* m_shape;
 		dgTreeArray::dgTreeNode* m_myNode; 
-	} DG_GCC_VECTOR_ALIGMENT;
+	} DG_GCC_VECTOR_ALIGNMENT;
 
 	protected:
 	class dgNodePairs
@@ -234,11 +234,14 @@ class dgCollisionCompound: public dgCollision
 
 DG_INLINE dgFloat32 dgCollisionCompound::dgOOBBTestData::UpdateSeparatingDistance(const dgVector& box0Min, const dgVector& box0Max, const dgVector& box1Min, const dgVector& box1Max) const
 {
-	dgVector minBox(box0Min - box1Max);
-	dgVector maxBox(box0Max - box1Min);
-	dgVector mask((minBox * maxBox) < dgVector::m_zero);
-	dgVector dist((mask & m_maxDist) | ((maxBox.Abs()).GetMin(minBox.Abs())).AndNot(mask));
-//	dgVector dist(((maxBox.Abs()).GetMin(minBox.Abs())).AndNot(mask));
+	const dgVector minBox(box0Min - box1Max);
+	const dgVector maxBox(box0Max - box1Min);
+	const dgVector mask((minBox * maxBox) < dgVector::m_zero);
+	const dgVector boxDist ((maxBox.Abs()).GetMin(minBox.Abs()));
+
+	//dgVector dist((mask & m_maxDist) | boxDist.AndNot(mask));
+	dgVector dist(boxDist.Select(m_maxDist, mask));
+
 	dist = dist.GetMin(dist.ShiftTripleRight());
 	dist = dist.GetMin(dist.ShiftTripleRight());
 	return dist.GetScalar();

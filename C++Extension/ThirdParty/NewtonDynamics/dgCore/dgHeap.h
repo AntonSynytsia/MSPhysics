@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -30,8 +30,8 @@
 #include "dgStdafx.h"
 #include "dgMemory.h"
 
+//#define DG_HEAP_DEBUG_CHECK
 
-//#define DG_HEAP_SANITY_CHECK
 
 template <class OBJECT, class KEY>
 class dgHeapBase
@@ -77,14 +77,11 @@ class dgDownHeap: public dgHeapBase<OBJECT, KEY>
 	dgDownHeap (dgInt32 maxElements, dgMemoryAllocator* const allocator);
 	dgDownHeap (const void * const buffer, dgInt32 sizeInBytes);
 
-	void Pop ();
+	void Pop () {Remove (0);}
 	void Push (OBJECT &obj, KEY key);
 	void Sort ();
 	void Remove (dgInt32 Index);
-
-#ifdef DG_HEAP_SANITY_CHECK
 	bool SanityCheck();
-#endif
 };
 
 template <class OBJECT, class KEY>
@@ -94,17 +91,12 @@ class dgUpHeap: public dgHeapBase<OBJECT, KEY>
 	dgUpHeap (dgInt32 maxElements, dgMemoryAllocator* const allocator);
 	dgUpHeap (const void * const buffer, dgInt32 sizeInBytes);
 
-	void Pop ();
+	void Pop () {Remove (0);}
 	void Push (OBJECT &obj, KEY key);
 	void Sort ();
 	void Remove (dgInt32 Index);
-
-#ifdef DG_HEAP_SANITY_CHECK
 	bool SanityCheck();
-#endif
 };
-
-
 
 template <class OBJECT, class KEY>
 dgHeapBase<OBJECT,KEY>::dgHeapBase (dgInt32 maxElements, dgMemoryAllocator* const allocator)
@@ -146,7 +138,6 @@ dgInt32 dgHeapBase<OBJECT,KEY>::GetCount() const
 	return m_curCount;
 }
 
-
 template <class OBJECT, class KEY>
 void dgHeapBase<OBJECT,KEY>::Flush () 
 {
@@ -157,13 +148,11 @@ void dgHeapBase<OBJECT,KEY>::Flush ()
 	#endif
 }
 
-
 template <class OBJECT, class KEY>
 KEY dgHeapBase<OBJECT,KEY>::MaxValue() const 
 {
 	return m_pool[0].m_key;
 }
-
 
 template <class OBJECT, class KEY>
 dgInt32 dgHeapBase<OBJECT,KEY>::GetMaxCount() const
@@ -235,12 +224,6 @@ dgDownHeap<OBJECT,KEY>::dgDownHeap (const void * const buffer, dgInt32 sizeInByt
 template <class OBJECT, class KEY>
 void dgDownHeap<OBJECT,KEY>::Push (OBJECT &obj, KEY key)
 {
-#ifdef _DEBUG
-	dgInt32 cc = dgHeapBase<OBJECT,KEY>::m_curCount;
-	dgInt32 cm = dgHeapBase<OBJECT,KEY>::m_maxCount;
-	dgAssert (cc < cm);
-#endif
-
 	dgHeapBase<OBJECT,KEY>::m_curCount ++;
 
 	dgInt32 j;
@@ -256,73 +239,42 @@ void dgDownHeap<OBJECT,KEY>::Push (OBJECT &obj, KEY key)
 	dgHeapBase<OBJECT,KEY>::m_pool[i - 1].m_key = key;
 	dgHeapBase<OBJECT,KEY>::m_pool[i - 1].m_obj = obj;
 
-#ifdef DG_HEAP_SANITY_CHECK
 	dgAssert (SanityCheck());
-#endif
 }
-
 
 template <class OBJECT, class KEY>
 void dgDownHeap<OBJECT,KEY>::Remove (dgInt32 index)
 {
-	dgHeapBase<OBJECT,KEY>::m_curCount--;
-	KEY key (dgHeapBase<OBJECT,KEY>::m_pool[dgHeapBase<OBJECT,KEY>::m_curCount].m_key);
-
-	dgInt32 j;
-	dgInt32 i = index + 1;
-	for (; i <= (dgHeapBase<OBJECT,KEY>::m_curCount>>1); i = j) {
-		j = i + i;
-		if ((j < dgHeapBase<OBJECT,KEY>::m_curCount) && 
-			(dgHeapBase<OBJECT,KEY>::m_pool[j - 1].m_key < dgHeapBase<OBJECT,KEY>::m_pool[j].m_key)) {
-				j ++;
-		}
-		if (key >= dgHeapBase<OBJECT,KEY>::m_pool[j - 1].m_key) {
-			break;
-		}
-		dgHeapBase<OBJECT,KEY>::m_pool[i - 1] = dgHeapBase<OBJECT,KEY>::m_pool[j - 1];
+	dgHeapBase<OBJECT, KEY>::m_curCount--;
+	dgHeapBase<OBJECT, KEY>::m_pool[index] = dgHeapBase<OBJECT, KEY>::m_pool[dgHeapBase<OBJECT, KEY>::m_curCount];
+	while (index && dgHeapBase<OBJECT, KEY>::m_pool[(index - 1) >> 1].m_key < dgHeapBase<OBJECT, KEY>::m_pool[index].m_key) {
+		dgSwap(dgHeapBase<OBJECT, KEY>::m_pool[(index - 1) >> 1], dgHeapBase<OBJECT, KEY>::m_pool[index]);
+		index = (index - 1) >> 1;
 	}
-	dgHeapBase<OBJECT,KEY>::m_pool[i - 1].m_key = key;
-	dgHeapBase<OBJECT,KEY>::m_pool[i - 1].m_obj = dgHeapBase<OBJECT,KEY>::m_pool[dgHeapBase<OBJECT,KEY>::m_curCount].m_obj;
 
-#ifdef DG_HEAP_SANITY_CHECK
-	dgAssert (SanityCheck());
-#endif
-
-}
-
-template <class OBJECT, class KEY>
-void dgDownHeap<OBJECT,KEY>::Pop ()
-{
-	dgHeapBase<OBJECT,KEY>::m_curCount--;
-	KEY key (dgHeapBase<OBJECT,KEY>::m_pool[dgHeapBase<OBJECT,KEY>::m_curCount].m_key);
-
-	dgInt32 j;
-	dgInt32 i = 1;
-	for (; i <= (dgHeapBase<OBJECT,KEY>::m_curCount>>1); i = j) {
-		j = i + i;
-		if ((j < dgHeapBase<OBJECT,KEY>::m_curCount) && 
-			(dgHeapBase<OBJECT,KEY>::m_pool[j - 1].m_key < dgHeapBase<OBJECT,KEY>::m_pool[j].m_key)) {
-			j ++;
+	while ((2 * index + 1) < dgHeapBase<OBJECT, KEY>::m_curCount) {
+		dgInt32 i0 = 2 * index + 1;
+		dgInt32 i1 = 2 * index + 2;
+		if (i1 < dgHeapBase<OBJECT, KEY>::m_curCount) {
+			i0 = (dgHeapBase<OBJECT, KEY>::m_pool[i0].m_key > dgHeapBase<OBJECT, KEY>::m_pool[i1].m_key) ? i0 : i1;
+			if (dgHeapBase<OBJECT, KEY>::m_pool[i0].m_key <= dgHeapBase<OBJECT, KEY>::m_pool[index].m_key) {
+				break;
+			}
+			dgSwap(dgHeapBase<OBJECT, KEY>::m_pool[i0], dgHeapBase<OBJECT, KEY>::m_pool[index]);
+			index = i0;
+		} else {
+			if (dgHeapBase<OBJECT, KEY>::m_pool[i0].m_key > dgHeapBase<OBJECT, KEY>::m_pool[index].m_key) {
+				dgSwap(dgHeapBase<OBJECT, KEY>::m_pool[i0], dgHeapBase<OBJECT, KEY>::m_pool[index]);
+			}
+			index = i0;
 		}
-		if (key >= dgHeapBase<OBJECT,KEY>::m_pool[j - 1].m_key) {
-			break;
-		}
-		dgHeapBase<OBJECT,KEY>::m_pool[i - 1] = dgHeapBase<OBJECT,KEY>::m_pool[j - 1];
 	}
-	dgHeapBase<OBJECT,KEY>::m_pool[i - 1].m_key = key;
-	dgHeapBase<OBJECT,KEY>::m_pool[i - 1].m_obj = dgHeapBase<OBJECT,KEY>::m_pool[dgHeapBase<OBJECT,KEY>::m_curCount].m_obj;
-
-#ifdef DG_HEAP_SANITY_CHECK
 	dgAssert (SanityCheck());
-#endif
 }
-
-
 
 template <class OBJECT, class KEY>
 void dgDownHeap<OBJECT,KEY>::Sort ()
 {
-
 	dgInt32 count = dgHeapBase<OBJECT,KEY>::m_curCount;
 	for (dgInt32 i = 1; i < count; i ++) {
 		KEY key (dgHeapBase<OBJECT,KEY>::m_pool[0].m_key);
@@ -345,32 +297,26 @@ void dgDownHeap<OBJECT,KEY>::Sort ()
 		dgHeapBase<OBJECT,KEY>::m_pool[count - i - 1].m_key = key;
 		dgHeapBase<OBJECT,KEY>::m_pool[count - i - 1].m_obj = obj;
 	}
-#ifdef DG_HEAP_SANITY_CHECK
 	dgAssert (SanityCheck());
-#endif
 }
 
-#ifdef DG_HEAP_SANITY_CHECK
 template <class OBJECT, class KEY>
 bool dgDownHeap<OBJECT,KEY>::SanityCheck()
 {
-	for (dgInt32 i = 0; i < dgHeapBase<OBJECT,KEY>::m_curCount / 2; i ++) {
-		if (dgHeapBase<OBJECT,KEY>::m_pool[i].m_key < dgHeapBase<OBJECT,KEY>::m_pool[i * 2 + 1].m_key) {
+#ifdef DG_HEAP_DEBUG_CHECK
+	for (dgInt32 i = 0; i < m_curCount; i++) {
+		dgInt32 i1 = 2 * i + 1;
+		dgInt32 i2 = 2 * i + 2;
+		if ((i1 < m_curCount) && (dgHeapBase<OBJECT, KEY>::m_pool[i].m_key < dgHeapBase<OBJECT, KEY>::m_pool[i1].m_key)) {
 			return false;
 		}
-		if ((i * 2 + 2) < dgHeapBase<OBJECT,KEY>::m_curCount) {
-			if (dgHeapBase<OBJECT,KEY>::m_pool[i].m_key < dgHeapBase<OBJECT,KEY>::m_pool[i * 2 + 2].m_key) {
-				return false;
-			}
+		if ((i2 < m_curCount) && (dgHeapBase<OBJECT, KEY>::m_pool[i].m_key < dgHeapBase<OBJECT, KEY>::m_pool[i2].m_key)) {
+			return false;
 		}
 	}
-
+#endif
 	return true;
 }
-#endif
-
-
-
 
 // **************************************************************************
 //
@@ -389,33 +335,27 @@ dgUpHeap<OBJECT,KEY>::dgUpHeap (const void * const buffer, dgInt32 sizeInBytes)
 {
 }
 
-#ifdef DG_HEAP_SANITY_CHECK
 template <class OBJECT, class KEY>
 bool dgUpHeap<OBJECT,KEY>::SanityCheck()
 {
-	for (dgInt32 i = 0; i < dgHeapBase<OBJECT,KEY>::m_curCount / 2; i ++) {
-		if (dgHeapBase<OBJECT,KEY>::m_pool[i].m_key > dgHeapBase<OBJECT,KEY>::m_pool[i * 2 + 1].m_key) {
+#ifdef DG_HEAP_DEBUG_CHECK
+	for (dgInt32 i = 0; i < m_curCount; i ++) {
+		dgInt32 i1 = 2 * i + 1; 
+		dgInt32 i2 = 2 * i + 2; 
+		if ((i1 < m_curCount) && (dgHeapBase<OBJECT,KEY>::m_pool[i].m_key > dgHeapBase<OBJECT,KEY>::m_pool[i1].m_key)) {
 			return false;
 		}
-		if ((i * 2 + 2) < dgHeapBase<OBJECT,KEY>::m_curCount) {
-			if (dgHeapBase<OBJECT,KEY>::m_pool[i].m_key > dgHeapBase<OBJECT,KEY>::m_pool[i * 2 + 2].m_key) {
-				return false;
-			}
+		if ((i2 < m_curCount) && (dgHeapBase<OBJECT,KEY>::m_pool[i].m_key > dgHeapBase<OBJECT,KEY>::m_pool[i2].m_key)) {
+			return false;
 		}
 	}
-
+#endif
 	return true;
 }
-#endif
 
 template <class OBJECT, class KEY>
 void dgUpHeap<OBJECT,KEY>::Push (OBJECT &obj, KEY key)
 {
-#ifdef _DEBUG
-	dgInt32 cc = dgHeapBase<OBJECT,KEY>::m_curCount;
-	dgInt32 cm = dgHeapBase<OBJECT,KEY>::m_maxCount;
-	dgAssert (cc < cm);
-#endif
 	dgHeapBase<OBJECT,KEY>::m_curCount ++;
 
 	dgInt32 j;
@@ -430,12 +370,8 @@ void dgUpHeap<OBJECT,KEY>::Push (OBJECT &obj, KEY key)
 	dgAssert (i);
 	dgHeapBase<OBJECT,KEY>::m_pool[i - 1].m_key = key;
 	dgHeapBase<OBJECT,KEY>::m_pool[i - 1].m_obj = obj;
-
-#ifdef DG_HEAP_SANITY_CHECK
 	dgAssert (SanityCheck());
-#endif
 }
-
 
 template <class OBJECT, class KEY>
 void dgUpHeap<OBJECT,KEY>::Sort ()
@@ -462,68 +398,38 @@ void dgUpHeap<OBJECT,KEY>::Sort ()
 		dgHeapBase<OBJECT,KEY>::m_pool[count - i - 1].m_key = key;
 		dgHeapBase<OBJECT,KEY>::m_pool[count - i - 1].m_obj = obj;
 	}
-#ifdef DG_HEAP_SANITY_CHECK
 	dgAssert (SanityCheck());
-#endif
 }
-
 
 template <class OBJECT, class KEY>
 void dgUpHeap<OBJECT,KEY>::Remove (dgInt32 index)
 {
-	dgHeapBase<OBJECT,KEY>::m_curCount--;
-
-	dgInt32 j;
-	dgInt32 i = index + 1;
-	KEY key (dgHeapBase<OBJECT,KEY>::m_pool[dgHeapBase<OBJECT,KEY>::m_curCount].m_key);
-	for (; i <= (dgHeapBase<OBJECT,KEY>::m_curCount>>1); i = j) {
-		j = i + i;
-		if ((j < dgHeapBase<OBJECT,KEY>::m_curCount) && 
-			(dgHeapBase<OBJECT,KEY>::m_pool[j - 1].m_key > dgHeapBase<OBJECT,KEY>::m_pool[j].m_key)) {
-				j ++;
-		}
-		if (key <= dgHeapBase<OBJECT,KEY>::m_pool[j - 1].m_key) {
-			break;
-		}
-		dgHeapBase<OBJECT,KEY>::m_pool[i - 1] = dgHeapBase<OBJECT,KEY>::m_pool[j - 1];
+	dgHeapBase<OBJECT, KEY>::m_curCount--;
+	dgHeapBase<OBJECT, KEY>::m_pool[index] = dgHeapBase<OBJECT, KEY>::m_pool[dgHeapBase<OBJECT, KEY>::m_curCount];
+	while (index && dgHeapBase<OBJECT, KEY>::m_pool[(index - 1) >> 1].m_key > dgHeapBase<OBJECT, KEY>::m_pool[index].m_key) {
+		dgSwap(dgHeapBase<OBJECT, KEY>::m_pool[(index - 1) >> 1], dgHeapBase<OBJECT, KEY>::m_pool[index]);
+		index = (index - 1) >> 1;
 	}
-	dgHeapBase<OBJECT,KEY>::m_pool[i - 1].m_key = key;
-	dgHeapBase<OBJECT,KEY>::m_pool[i - 1].m_obj = dgHeapBase<OBJECT,KEY>::m_pool[dgHeapBase<OBJECT,KEY>::m_curCount].m_obj;
 
-#ifdef DG_HEAP_SANITY_CHECK
-	dgAssert (SanityCheck());
-#endif
-}
-
-
-template <class OBJECT, class KEY>
-void dgUpHeap<OBJECT,KEY>::Pop ()
-{
-	dgHeapBase<OBJECT,KEY>::m_curCount--;
-	KEY key (dgHeapBase<OBJECT,KEY>::m_pool[dgHeapBase<OBJECT,KEY>::m_curCount].m_key);
-
-	dgInt32 j;
-	dgInt32 i = 1;
-	for (; i <= (dgHeapBase<OBJECT,KEY>::m_curCount>>1); i = j) {
-		j = i + i;
-		if ((j < dgHeapBase<OBJECT,KEY>::m_curCount) && 
-			(dgHeapBase<OBJECT,KEY>::m_pool[j - 1].m_key > dgHeapBase<OBJECT,KEY>::m_pool[j].m_key)) {
-				j ++;
+	while ((2 * index + 1) < dgHeapBase<OBJECT, KEY>::m_curCount) {
+		dgInt32 i0 = 2 * index + 1;
+		dgInt32 i1 = 2 * index + 2;
+		if (i1 < dgHeapBase<OBJECT, KEY>::m_curCount) {
+			i0 = (dgHeapBase<OBJECT, KEY>::m_pool[i0].m_key < dgHeapBase<OBJECT, KEY>::m_pool[i1].m_key) ? i0 : i1;
+			if (dgHeapBase<OBJECT, KEY>::m_pool[i0].m_key >= dgHeapBase<OBJECT, KEY>::m_pool[index].m_key) {
+				break;
+			}
+			dgSwap(dgHeapBase<OBJECT, KEY>::m_pool[i0], dgHeapBase<OBJECT, KEY>::m_pool[index]);
+			index = i0;
+		} else {
+			if (dgHeapBase<OBJECT, KEY>::m_pool[i0].m_key < dgHeapBase<OBJECT, KEY>::m_pool[index].m_key) {
+				dgSwap(dgHeapBase<OBJECT, KEY>::m_pool[i0], dgHeapBase<OBJECT, KEY>::m_pool[index]);
+			}
+			index = i0;
 		}
-		if (key <= dgHeapBase<OBJECT,KEY>::m_pool[j - 1].m_key) {
-			break;
-		}
-		dgHeapBase<OBJECT,KEY>::m_pool[i - 1] = dgHeapBase<OBJECT,KEY>::m_pool[j - 1];
 	}
-	dgHeapBase<OBJECT,KEY>::m_pool[i - 1].m_key = key;
-	dgHeapBase<OBJECT,KEY>::m_pool[i - 1].m_obj = dgHeapBase<OBJECT,KEY>::m_pool[dgHeapBase<OBJECT,KEY>::m_curCount].m_obj;
-
-#ifdef DG_HEAP_SANITY_CHECK
 	dgAssert (SanityCheck());
-#endif
 }
 
 
 #endif
-
-

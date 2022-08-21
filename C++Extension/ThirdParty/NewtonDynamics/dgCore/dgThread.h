@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -38,6 +38,15 @@ class dgThread
 		void Wait();
 		void Release();
 
+		dgInt32 GetCount() const 
+		{
+			#ifdef DG_USE_THREAD_EMULATION
+				return 0;
+			#else
+				return m_count;
+			#endif
+		}
+
 		private:
 		#ifdef DG_USE_THREAD_EMULATION
 			dgInt32 m_sem;
@@ -55,13 +64,13 @@ class dgThread
 	virtual void Execute (dgInt32 threadId) = 0;
 	
 	bool IsThreadActive() const;
-	void SuspendExecution (dgSemaphore& mutex);
-	void SuspendExecution (dgInt32 count, dgSemaphore* const mutexes);
+	void Wait (dgInt32 count, dgSemaphore* const mutexes);
 
 	protected:
 	void Init ();
 	void Init (const char* const name, dgInt32 id);
 	void Close ();
+	void SetName ();
 	static void* dgThreadSystemCallback(void* threadData);
 
 	#ifndef DG_USE_THREAD_EMULATION

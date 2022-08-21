@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -495,7 +495,7 @@ dgInt32 dgBroadPhaseSegregated::Collide(dgCollisionInstance* const shape, const 
 		dgVector boxP0;
 		dgVector boxP1;
 		dgAssert(matrix.TestOrthogonal());
-		shape->CalcAABB(matrix, boxP0, boxP1);
+		shape->CalcAABB(shape->GetLocalMatrix() * matrix, boxP0, boxP1);
 
 		dgInt32 overlaped[DG_BROADPHASE_MAX_STACK_DEPTH];
 		const dgBroadPhaseNode* stackPool[DG_BROADPHASE_MAX_STACK_DEPTH];
@@ -508,12 +508,12 @@ dgInt32 dgBroadPhaseSegregated::Collide(dgCollisionInstance* const shape, const 
 				overlaped[stack] = dgOverlapTest(root->m_left->m_minBox, root->m_left->m_maxBox, boxP0, boxP1);
 				stack ++;
 			}
-			if (root->m_left) {
+			if (root->m_right) {
 				stackPool[stack] = root->m_right;
 				overlaped[stack] = dgOverlapTest(root->m_right->m_minBox, root->m_right->m_maxBox, boxP0, boxP1);
 				stack++;
 			}
-			totalCount = dgBroadPhase::Collide(stackPool, overlaped, 1, boxP0, boxP1, shape, matrix, prefilter, userData, info, maxContacts, threadIndex);
+			totalCount = dgBroadPhase::Collide(stackPool, overlaped, stack, boxP0, boxP1, shape, matrix, prefilter, userData, info, maxContacts, threadIndex);
 		}
 	}
 
@@ -522,7 +522,7 @@ dgInt32 dgBroadPhaseSegregated::Collide(dgCollisionInstance* const shape, const 
 
 void dgBroadPhaseSegregated::FindCollidingPairs (dgBroadphaseSyncDescriptor* const descriptor, dgList<dgBroadPhaseNode*>::dgListNode* const nodePtr, dgInt32 threadID)
 {
-	DG_TRACKTIME(__FUNCTION__);
+	DG_TRACKTIME();
 	const dgFloat32 timestep = descriptor->m_timestep;
 
 	dgList<dgBroadPhaseNode*>::dgListNode* node = nodePtr;
@@ -532,18 +532,22 @@ void dgBroadPhaseSegregated::FindCollidingPairs (dgBroadphaseSyncDescriptor* con
 		while (node) {
 			dgBroadPhaseNode* const broadPhaseNode = node->GetInfo();
 			dgAssert(broadPhaseNode->IsLeafNode());
-			dgAssert(!broadPhaseNode->GetBody() || (broadPhaseNode->GetBody()->GetBroadPhase() == broadPhaseNode));
 
-			if (broadPhaseNode->IsAggregate()) {
-				((dgBroadPhaseAggregate*)broadPhaseNode)->SubmitSelfPairs(timestep, threadID);
-			}
+			dgBody* const body = broadPhaseNode->GetBody();
+			dgAssert(!body || (body->GetBroadPhase() == broadPhaseNode));
 
-			for (dgBroadPhaseNode* ptr = broadPhaseNode; ptr->m_parent; ptr = ptr->m_parent) {
-				dgBroadPhaseTreeNode* const parent = (dgBroadPhaseTreeNode*)ptr->m_parent;
-				dgAssert(!parent->IsLeafNode());
-				dgBroadPhaseNode* const sibling = parent->m_right;
-				if (sibling && (sibling != ptr)) {
-					SubmitPairs(broadPhaseNode, sibling, timestep, 0, threadID);
+			if (!(body && body->m_isdead)) {
+				if (broadPhaseNode->IsAggregate()) {
+					((dgBroadPhaseAggregate*)broadPhaseNode)->SubmitSelfPairs(timestep, threadID);
+				}
+
+				for (dgBroadPhaseNode* ptr = broadPhaseNode; ptr->m_parent; ptr = ptr->m_parent) {
+					dgBroadPhaseTreeNode* const parent = (dgBroadPhaseTreeNode*)ptr->m_parent;
+					dgAssert(!parent->IsLeafNode());
+					dgBroadPhaseNode* const sibling = parent->m_right;
+					if (sibling && (sibling != ptr)) {
+						SubmitPairs(broadPhaseNode, sibling, timestep, 0, threadID);
+					}
 				}
 			}
 

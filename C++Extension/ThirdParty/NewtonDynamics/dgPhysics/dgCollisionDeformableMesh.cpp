@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -135,17 +135,19 @@ void dgCollisionDeformableMesh::IntegrateForces(dgFloat32 timestep)
 
 	// calculate particles accelerations
 	CalculateAcceleration (timestep);
-
+#ifdef _DEBUG
 	const dgMatrix& matrix = m_body->GetCollision()->GetGlobalMatrix();
 	dgAssert (matrix[0][0] == dgFloat32 (1.0f));
 	dgAssert (matrix[1][1] == dgFloat32 (1.0f));
 	dgAssert (matrix[2][2] == dgFloat32 (1.0f));
+#endif
 	
-	dgVector damp(dgFloat32(1.0f));
-	if (m_body->m_linearDampOn) {
-		const dgFloat32 tau = dgFloat32(1.0f) / (dgFloat32(60.0f) * timestep);
-		damp = dgVector(dgPow(dgFloat32(1.0f) - m_body->m_dampCoef.m_w, tau));
-	}
+dgAssert (0);
+//	dgVector damp(dgFloat32(1.0f));
+//	if (m_body->m_linearDampOn) {
+//		const dgFloat32 tau = dgFloat32(1.0f) / (dgFloat32(60.0f) * timestep);
+//		damp = dgVector(dgPow(dgFloat32(1.0f) - m_body->m_dampCoef.m_w, tau));
+//	}
 
 	// rigid body dynamic state
 	dgVector timeV (timestep);
@@ -153,7 +155,7 @@ void dgCollisionDeformableMesh::IntegrateForces(dgFloat32 timestep)
 
 	dgVector comVeloc(dgFloat32(0.0f));
 	dgVector xMassSum(dgFloat32(0.0f));
-	dgVector origin(m_body->m_localCentreOfMass + matrix.m_posit);
+	//dgVector origin(m_body->m_localCentreOfMass + matrix.m_posit);
 
 	dgVector* const posit = &m_posit[0];
 	dgVector* const veloc = &m_veloc[0];

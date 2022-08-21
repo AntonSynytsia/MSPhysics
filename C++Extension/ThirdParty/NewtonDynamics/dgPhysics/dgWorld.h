@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -47,7 +47,6 @@ class dgCollisionPoint;
 class dgUserConstraint;
 class dgBallConstraint;
 class dgHingeConstraint;
-class dgInverseDynamics;
 class dgUserMeshCreation;
 class dgSlidingConstraint;
 class dgCollisionInstance;
@@ -76,26 +75,19 @@ class dgBodyMaterialList: public dgTree<dgContactMaterial, dgUnsigned32>
 	}
 };
 
-class dgSkeletonList: public dgTree<dgSkeletonContainer*, dgInt32>
+class dgSkeletonList: public dgList<dgSkeletonContainer*>
 {
 	public:
 	dgSkeletonList(dgMemoryAllocator* const allocator)
-		:dgTree<dgSkeletonContainer*, dgInt32>(allocator)
+		:dgList<dgSkeletonContainer*>(allocator)
+		,m_lruMarker(1)
 		,m_skelListIsDirty(true)
 	{
 	}
+
+	dgInt32 m_lruMarker;
 	bool m_skelListIsDirty;
 };
-
-class dgInverseDynamicsList: public dgList<dgInverseDynamics*>
-{
-	public:
-	dgInverseDynamicsList(dgMemoryAllocator* const allocator)
-		:dgList<dgInverseDynamics*>(allocator)
-	{
-	}
-};
-
 
 class dgWorld;
 class dgCollisionInstance;
@@ -126,12 +118,7 @@ class dgWorldThreadPool: public dgThreadHive
 class dgDeadJoints: public dgTree<dgConstraint*, void* >
 {
 	public: 
-	dgDeadJoints(dgMemoryAllocator* const allocator)
-		:dgTree<dgConstraint*, void* >(allocator)
-		,m_lock(0)
-	{
-	}
-	
+	dgDeadJoints(dgMemoryAllocator* const allocator);
 	void DestroyJoints(dgWorld& world);
 	void DestroyJoint(dgConstraint* const joint);
 	private:
@@ -141,11 +128,7 @@ class dgDeadJoints: public dgTree<dgConstraint*, void* >
 class dgDeadBodies: public dgTree<dgBody*, void* >
 {
 	public: 
-	dgDeadBodies(dgMemoryAllocator* const allocator)
-		:dgTree<dgBody*, void*>(allocator)
-		,m_lock(0)
-	{
-	}
+	dgDeadBodies(dgMemoryAllocator* const allocator);
 	void DestroyBody(dgBody* const body);
 	void DestroyBodies(dgWorld& world);
 
@@ -153,25 +136,27 @@ class dgDeadBodies: public dgTree<dgBody*, void* >
 	dgInt32 m_lock;
 };
 
-typedef void (*dgPostUpdateCallback) (const dgWorld* const world, dgFloat32 timestep);
+typedef void (*OnPostUpdateCallback) (const dgWorld* const world, dgFloat32 timestep);
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgWorld
 	:public dgBodyMasterList
 	,public dgBodyMaterialList
 	,public dgBodyCollisionList
 	,public dgSkeletonList
-	,public dgInverseDynamicsList
 	,public dgContactList 
 	,public dgBilateralConstraintList
 	,public dgWorldDynamicUpdate
 	,public dgMutexThread
+	,public dgAsyncThread
 	,public dgWorldThreadPool
 	,public dgDeadBodies
 	,public dgDeadJoints
 	,public dgWorldPluginList
 {
 	public:
+	typedef void (dgApi *OnCreateContact) (const dgWorld* const world, const dgContact* const contact);
+	typedef void (dgApi *OnDestroyContact) (const dgWorld* const world, const dgContact* const contact);
 	typedef dgUnsigned32 (dgApi *OnClusterUpdate) (const dgWorld* const world, void* island, dgInt32 bodyCount);
 	typedef void (dgApi *OnListenerBodyDestroyCallback) (const dgWorld* const world, void* const listener, dgBody* const body);
 	typedef void (dgApi *OnListenerUpdateCallback) (const dgWorld* const world, void* const listener, dgFloat32 timestep);
@@ -197,6 +182,7 @@ class dgWorld
 		dgListener()
 			:m_world(NULL)
 			,m_userData(NULL)
+			,m_onPostStep(NULL)
 			,m_onPreUpdate(NULL)
 			,m_onPostUpdate(NULL)
 			,m_onDebugCallback(NULL)
@@ -215,6 +201,7 @@ class dgWorld
 		char m_name[32];
 		dgWorld* m_world;
 		void* m_userData;
+		OnListenerUpdateCallback m_onPostStep;
 		OnListenerUpdateCallback m_onPreUpdate;
 		OnListenerUpdateCallback m_onPostUpdate;
 		OnListenerDebugCallback m_onDebugCallback;
@@ -246,7 +233,8 @@ class dgWorld
 	dgInt32 GetSolverIterations() const;
 	void SetSolverIterations (dgInt32 mode);
 
-	void SetPostUpdateCallback (const dgWorld* const newtonWorld, dgPostUpdateCallback callback);
+	OnPostUpdateCallback GetPostUpdateCallback() const;
+	void SetPostUpdateCallback (OnPostUpdateCallback callback);
 
 	void EnableParallelSolverOnLargeIsland(dgInt32 mode);
 	dgInt32 GetParallelSolverOnLargeIsland() const;
@@ -288,15 +276,17 @@ class dgWorld
 	void* FindListener (const char* const nameid) const;
 
 	void* AddListener (const char* const nameid, void* const userData);
-	void ListenerSetDestroyCallback (void* const listener, OnListenerDestroyCallback destroyCallback);
-	void ListenerSetPreUpdate (void* const listener, OnListenerUpdateCallback updateCallback);
+	void ListenerSetPostStep (void* const listener, OnListenerUpdateCallback updateCallback);
 	void ListenerSetPostUpdate (void* const listener, OnListenerUpdateCallback updateCallback);
+	void ListenerSetPreUpdate (void* const listener, OnListenerUpdateCallback updateCallback);
+	void ListenerSetDestroyCallback (void* const listener, OnListenerDestroyCallback destroyCallback);
 	
 	void SetListenerBodyDebugCallback (void* const listener, OnListenerDebugCallback callback);
 	void SetListenerBodyDestroyCallback (void* const listener, OnListenerBodyDestroyCallback callback);
 	OnListenerBodyDestroyCallback GetListenerBodyDestroyCallback (void* const listener) const;
 
 	void SetIslandUpdateCallback (OnClusterUpdate callback); 
+	void SetCreateDestroyContactCallback(OnCreateContact createContactCallback, OnDestroyContact destroyContactCallback);
 
 	void InitBody (dgBody* const body, dgCollisionInstance* const collision, const dgMatrix& matrix);
 	dgDynamicBody* CreateDynamicBody (dgCollisionInstance* const collision, const dgMatrix& matrix);
@@ -305,20 +295,13 @@ class dgWorld
 	void DestroyBody(dgBody* const body);
 	void DestroyAllBodies ();
 
-//	void AddToBreakQueue (const dgContact* const contactJoint, dgBody* const body, dgFloat32 maxForce);
-
-    // modify the velocity and angular velocity of a body in such a way 
-	// that the velocity of pointPosit is increase by pointDeltaVeloc 
-	// pointVeloc and pointPosit are in world space
-//	void AddBodyImpulse (dgBody* body, const dgVector& pointDeltaVeloc, const dgVector& pointPosit);
-//	void ApplyImpulseArray (dgBody* body, dgInt32 count, dgInt32 strideInBytes, const dgFloat32* const impulseArray, const dgFloat32* const pointArray);
-
 	// apply the transform matrix to the body and recurse trough all bodies attached to this body with a 
 	// bilateral joint contact joint are ignored.
 	void BodySetMatrix (dgBody* const body, const dgMatrix& matrix);
 	
 	dgInt32 GetBodiesCount() const;
 	dgInt32 GetConstraintsCount() const;
+	dgUnsigned32 GetFrameNumber() const;
 
     dgCollisionInstance* CreateInstance (const dgCollision* const child, dgInt32 shapeID, const dgMatrix& offsetMatrix);
 
@@ -344,9 +327,6 @@ class dgWorld
 
 	dgBroadPhaseAggregate* CreateAggreGate() const; 
 	void DestroyAggregate(dgBroadPhaseAggregate* const aggregate) const; 
-
-	dgInverseDynamics* CreateInverseDynamics();
-	void DestroyInverseDynamics(dgInverseDynamics* const inverseDynamics);
 
 	void SetCollisionInstanceConstructorDestructor (OnCollisionInstanceDuplicate constructor, OnCollisionInstanceDestroy destructor);
 
@@ -415,10 +395,9 @@ class dgWorld
 	dgFloat32 GetContactMergeTolerance() const;
 	void SetContactMergeTolerance(dgFloat32 tolerenace);
 
-	void Sync ();
-
 	void SetSubsteps (dgInt32 subSteps);
 	dgInt32 GetSubsteps () const;
+	void FlushRegisters() const;
 	
 	private:
 	class dgAdressDistPair
@@ -430,8 +409,8 @@ class dgWorld
 
 	void RunStep ();
 	void CalculateContacts (dgBroadPhase::dgPair* const pair, dgInt32 threadIndex, bool ccdMode, bool intersectionTestOnly);
+
 	dgInt32 PruneContacts (dgInt32 count, dgContactPoint* const contact, dgFloat32 distTolerenace, dgInt32 maxCount = (DG_CONSTRAINT_MAX_ROWS / 3)) const;
-	dgInt32 ReduceContacts (dgInt32 count, dgContactPoint* const contact, dgInt32 maxCount, dgFloat32 tol, dgInt32 arrayIsSorted = 0) const;
 	dgInt32 CalculateConvexPolygonToHullContactsDescrete (dgCollisionParamProxy& proxy) const;
 	dgInt32 CalculatePolySoupToHullContactsDescrete (dgCollisionParamProxy& proxy) const;
 	dgInt32 CalculateConvexToNonConvexContactsContinue (dgCollisionParamProxy& proxy) const;
@@ -442,7 +421,6 @@ class dgWorld
 	
 	void PopulateContacts (dgBroadPhase::dgPair* const pair, dgInt32 threadIndex);	
 	void ProcessContacts (dgBroadPhase::dgPair* const pair, dgInt32 threadIndex);
-	void ProcessCachedContacts (dgContact* const contact, dgFloat32 timestep, dgInt32 threadIndex) const;
 
 	void ConvexContacts (dgBroadPhase::dgPair* const pair, dgCollisionParamProxy& proxy) const;
 	void CompoundContacts (dgBroadPhase::dgPair* const pair, dgCollisionParamProxy& proxy) const;
@@ -462,6 +440,14 @@ class dgWorld
 	
 	void AddSentinelBody();
 	void InitConvexCollision ();
+
+	dgInt32 Prune3dContacts(const dgMatrix& matrix, dgInt32 count, dgContactPoint* const contact, int maxCount, dgFloat32 distTol) const;
+	dgInt32 Prune2dContacts(const dgMatrix& matrix, dgInt32 count, dgContactPoint* const contact, int maxCount, dgFloat32 distTol) const;
+	DG_INLINE dgInt32 PruneSupport(dgInt32 count, const dgVector& dir, const dgVector* points) const;
+
+	DG_INLINE dgBody* FindRoot(dgBody* const body) const;
+	DG_INLINE dgBody* FindRootAndSplit(dgBody* const body) const;
+	DG_INLINE void UnionSet(const dgConstraint* const joint) const;
 	
 	virtual void Execute (dgInt32 threadID);
 	virtual void TickCallback (dgInt32 threadID);
@@ -473,6 +459,7 @@ class dgWorld
 	static dgInt32 CompareJointByInvMass (const dgBilateralConstraint* const jointA, const dgBilateralConstraint* const jointB, void* notUsed);
 
 	dgUnsigned32 m_numberOfSubsteps;
+	dgUnsigned32 m_frameNumber;
 	dgUnsigned32 m_dynamicsLru;
 	dgUnsigned32 m_inUpdate;
 	dgUnsigned32 m_solverIterations;
@@ -481,7 +468,6 @@ class dgWorld
 	dgUnsigned32 m_bodiesUniqueID;
 	dgUnsigned32 m_useParallelSolver;
 	dgUnsigned32 m_genericLRUMark;
-	dgInt32 m_delayDelateLock;
 	dgInt32 m_clusterLRU;
 
 	dgFloat32 m_freezeAccel2;
@@ -501,14 +487,15 @@ class dgWorld
 
 	void* m_userData;
 	dgMemoryAllocator* m_allocator;
-
-	dgSemaphore m_mutex;
-	OnClusterUpdate m_clusterUpdate;
+	
+	OnClusterUpdate m_onClusterUpdate;
+	OnCreateContact m_onCreateContact;
+	OnDestroyContact m_onDestroyContact;
 	OnCollisionInstanceDestroy	m_onCollisionInstanceDestruction;
 	OnCollisionInstanceDuplicate m_onCollisionInstanceCopyConstrutor;
-	OnJointSerializationCallback m_serializedJointCallback;	
-	OnJointDeserializationCallback m_deserializedJointCallback;	
-	dgPostUpdateCallback m_postUpdateCallback;
+	OnJointSerializationCallback m_onSerializeJointCallback;	
+	OnJointDeserializationCallback m_onDeserializeJointCallback;	
+	OnPostUpdateCallback m_onPostUpdateCallback;
 
 	dgListenerList m_listeners;
 	dgTree<void*, unsigned> m_perInstanceData;
@@ -518,9 +505,6 @@ class dgWorld
 	dgArray<dgUnsigned8> m_solverJacobiansMemory;  
 	dgArray<dgUnsigned8> m_solverRightHandSideMemory;
 	dgArray<dgUnsigned8> m_solverForceAccumulatorMemory;
-	
-	
-	bool m_concurrentUpdate;
 	
 	friend class dgBody;
 	friend class dgSolver;
@@ -563,7 +547,7 @@ class dgWorld
 	
 	friend class dgBroadPhaseMaterialCallbackWorkerThread;
 	friend class dgBroadPhaseCalculateContactsWorkerThread;
-} DG_GCC_VECTOR_ALIGMENT ;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
 inline dgMemoryAllocator* dgWorld::GetAllocator() const
@@ -591,9 +575,14 @@ inline dgFloat32 dgWorld::GetUpdateTime() const
 	return m_lastExecutionTime;
 }
 
-inline void dgWorld::SetPostUpdateCallback(const dgWorld* const newtonWorld, dgPostUpdateCallback callback)
+inline OnPostUpdateCallback dgWorld::GetPostUpdateCallback() const
 {
-	m_postUpdateCallback = callback;
+	return m_onPostUpdateCallback;
+}
+
+inline void dgWorld::SetPostUpdateCallback(OnPostUpdateCallback callback)
+{
+	m_onPostUpdateCallback = callback;
 }
 
 inline dgUnsigned64 dgWorld::GetTimeInMicrosenconds() const
@@ -609,6 +598,57 @@ inline void dgWorld::SetSolverIterations(dgInt32 mode)
 inline dgInt32 dgWorld::GetSolverIterations() const
 {
 	return m_solverIterations;
+}
+
+DG_INLINE dgBody* dgWorld::FindRoot(dgBody* const body) const
+{
+	dgBody* node = body;
+	for (; node->m_disjointInfo.m_parent != node; node = node->m_disjointInfo.m_parent);
+	return node;
+}
+
+DG_INLINE dgBody* dgWorld::FindRootAndSplit(dgBody* const body) const
+{
+	dgBody* node = body;
+	while (node->m_disjointInfo.m_parent != node) {
+		dgBody* const prev = node;
+		node = node->m_disjointInfo.m_parent;
+		prev->m_disjointInfo.m_parent = node->m_disjointInfo.m_parent;
+	}
+	return node;
+}
+
+DG_INLINE void dgWorld::UnionSet(const dgConstraint* const joint) const
+{
+	dgBody* const body0 = joint->GetBody0();
+	dgBody* const body1 = joint->GetBody1();
+	dgBody* root0 = FindRootAndSplit(body0);
+	dgBody* root1 = FindRootAndSplit(body1);
+	if (root0 != root1) {
+		if (root0->m_disjointInfo.m_rank < root1->m_disjointInfo.m_rank) {
+			dgSwap(root0, root1);
+		}
+		root1->m_disjointInfo.m_parent = root0;
+		if (root0->m_disjointInfo.m_rank == root1->m_disjointInfo.m_rank) {
+			root0->m_disjointInfo.m_rank += 1;
+			dgAssert(root0->m_disjointInfo.m_rank <= 6);
+		}
+		root0->m_disjointInfo.m_rowCount += root1->m_disjointInfo.m_rowCount;
+		root0->m_disjointInfo.m_bodyCount += root1->m_disjointInfo.m_bodyCount;
+		root0->m_disjointInfo.m_jointCount += root1->m_disjointInfo.m_jointCount;
+	}
+	root0->m_disjointInfo.m_jointCount++;
+	root0->m_disjointInfo.m_rowCount += joint->m_maxDOF;
+}
+
+DG_INLINE dgUnsigned32 dgWorld::GetFrameNumber() const
+{
+	return m_frameNumber;
+}
+
+DG_INLINE void dgWorld::FlushRegisters() const
+{
+	dgWorldPluginList::FlushRegisters();
 }
 
 #endif

@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -68,7 +68,7 @@ void dgCollisionChamferCylinder::Init (dgFloat32 radius, dgFloat32 height)
 	m_height = dgMax (dgAbs (height * dgFloat32 (0.5f)), D_MIN_CONVEX_SHAPE_SIZE);
 
 	dgFloat32 sliceAngle = dgFloat32 (0.0f);
-	dgFloat32 sliceStep = dgPI  / DG_CHAMFERCYLINDER_SLICES; 
+	dgFloat32 sliceStep = dgPi  / DG_CHAMFERCYLINDER_SLICES; 
 	dgFloat32 breakStep = dgPI2 / DG_CHAMFERCYLINDER_BRAKES;
 
 	dgMatrix rot (dgPitchMatrix (breakStep));	
@@ -156,7 +156,7 @@ void dgCollisionChamferCylinder::DebugCollision (const dgMatrix& matrix, dgColli
 	dgInt32 slices = 12;
 	dgInt32 brakes = 24;
 	dgFloat32 sliceAngle = dgFloat32 (0.0f);
-	dgFloat32 sliceStep = dgPI  / slices; 
+	dgFloat32 sliceStep = dgPi  / slices; 
 	dgFloat32 breakStep = dgPI2 / brakes;
 
 	dgTriplex pool[24 * (12 + 1)];
@@ -332,7 +332,6 @@ dgFloat32 dgCollisionChamferCylinder::RayCast(const dgVector& q0, const dgVector
 	return dgFloat32(1.2f);
 }
 
-
 dgVector dgCollisionChamferCylinder::SupportVertex (const dgVector& dir, dgInt32* const vertexIndex) const
 {
 	dgAssert (dir.m_w == dgFloat32 (0.0f));
@@ -340,16 +339,13 @@ dgVector dgCollisionChamferCylinder::SupportVertex (const dgVector& dir, dgInt32
 
 	dgFloat32 x = dir.GetScalar();
 	if (dgAbs (x) > dgFloat32 (0.9999f)) {
-		//return dgVector ((x > dgFloat32 (0.0f)) ? m_height : - m_height, dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32 (0.0f)); 
 		return dgVector (dgSign (x) * m_height, m_radius, dgFloat32 (0.0f), dgFloat32 (0.0f)); 
 	}
 
 	dgVector sideDir (m_yzMask & dir);
-	//sideDir = sideDir * sideDir.InvMagSqrt();
 	sideDir = sideDir.Normalize();
 	return sideDir.Scale(m_radius) + dir.Scale (m_height);
 }
-
 
 dgVector dgCollisionChamferCylinder::SupportVertexSpecial (const dgVector& dir, dgFloat32 skinThickness, dgInt32* const vertexIndex) const
 {
@@ -372,7 +368,6 @@ dgVector dgCollisionChamferCylinder::SupportVertexSpecialProjectPoint (const dgV
 	return point + dir.Scale(m_height - DG_PENETRATION_TOL);
 }
 
-
 dgInt32 dgCollisionChamferCylinder::CalculatePlaneIntersection (const dgVector& normal, const dgVector& origin, dgVector* const contactsOut) const
 {
 	dgInt32 count = 0;
@@ -381,25 +376,39 @@ dgInt32 dgCollisionChamferCylinder::CalculatePlaneIntersection (const dgVector& 
 		dgMatrix matrix(normal);
 		dgFloat32 x = dgSqrt (dgMax (m_height * m_height - origin.m_x * origin.m_x, dgFloat32 (0.0f)));
 		matrix.m_posit.m_x = origin.m_x;
-		dgVector scale(m_radius + x);
-		const int n = sizeof (m_unitCircle) / sizeof (m_unitCircle[0]);
-		for (dgInt32 i = 0; i < n; i++) {
-			contactsOut[i] = matrix.TransformVector(m_unitCircle[i] * scale) & dgVector::m_triplexMask;
-		}
-		count = RectifyConvexSlice(n, normal, contactsOut);
+		count = BuildCylinderCapPoly (m_radius + x, matrix, contactsOut);
+		//count = RectifyConvexSlice(n, normal, contactsOut);
 	} else if (normal.m_x > inclination) {
 		dgMatrix matrix(normal);
 		dgFloat32 x = dgSqrt (dgMax (m_height * m_height - origin.m_x * origin.m_x, dgFloat32 (0.0f)));
 		matrix.m_posit.m_x = origin.m_x;
-		dgVector scale(m_radius + x);
-		const int n = sizeof (m_unitCircle) / sizeof (m_unitCircle[0]);
-		for (dgInt32 i = 0; i < n; i++) {
-			contactsOut[i] = matrix.TransformVector(m_unitCircle[i] * scale) & dgVector::m_triplexMask;
-		}
-		count = RectifyConvexSlice(n, normal, contactsOut);
+		count = BuildCylinderCapPoly (m_radius + x, matrix, contactsOut);
+		//count = RectifyConvexSlice(n, normal, contactsOut);
 	} else {
 		count = 1;
 		contactsOut[0] = SupportVertex (normal, NULL);
 	}
 	return count;
+}
+
+void dgCollisionChamferCylinder::CalculateImplicitContacts(dgInt32 count, dgContactPoint* const contactPoints) const
+{
+	for (dgInt32 i = 0; i < count; i ++) {
+		dgVector diskPoint (contactPoints[i].m_point);
+		diskPoint.m_x = dgFloat32 (0.0f);
+		diskPoint.m_w = dgFloat32 (0.0f);
+		dgAssert(diskPoint.DotProduct(diskPoint).GetScalar() > dgFloat32(0.0f));
+		dgFloat32 r2 = diskPoint.DotProduct(diskPoint).GetScalar();
+		if (r2 >= m_radius * m_radius) {
+			diskPoint = diskPoint.Normalize().Scale (m_radius);
+			dgVector normal (contactPoints[i].m_point - diskPoint);
+			normal = normal.Normalize();
+			contactPoints[i].m_point = diskPoint + normal.Scale (m_height);
+			contactPoints[i].m_normal = normal * dgVector::m_negOne;
+		} else {
+			contactPoints[i].m_normal = dgVector::m_zero;
+			contactPoints[i].m_normal.m_x = dgSign(contactPoints[i].m_point.m_x);
+			contactPoints[i].m_point.m_x = dgSign(contactPoints[i].m_normal.m_x) * m_height;
+		}
+	}
 }

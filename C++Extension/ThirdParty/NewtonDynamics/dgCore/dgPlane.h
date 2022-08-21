@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -30,7 +30,7 @@
 	#define dgPlane dgBigPlane
 #else 
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgPlane: public dgVector
 {
 	public:
@@ -42,12 +42,12 @@ class dgPlane: public dgVector
 	dgPlane Scale (dgFloat32 s) const;
 	dgFloat32 Evalue (const dgFloat32* const point) const;
 	dgFloat32 Evalue (const dgVector &point) const;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 #endif
 
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgBigPlane: public dgBigVector
 {
 	public:
@@ -59,7 +59,7 @@ class dgBigPlane: public dgBigVector
 	dgBigPlane Scale (dgFloat64 s) const;
 	dgFloat64 Evalue (const dgFloat64* const point) const;
 	dgFloat64 Evalue (const dgBigVector &point) const;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
 
@@ -100,7 +100,8 @@ DG_INLINE dgPlane dgPlane::Scale (dgFloat32 s)	const
 
 DG_INLINE dgFloat32 dgPlane::Evalue (const dgFloat32* const point) const
 {
-	return DotProduct (dgVector (point) | m_wOne).GetScalar();
+	dgVector p (point);
+	return DotProduct ((p & m_triplexMask) | m_wOne).GetScalar();
 }
 
 DG_INLINE dgFloat32 dgPlane::Evalue (const dgVector& point) const
@@ -134,7 +135,7 @@ DG_INLINE dgBigPlane::dgBigPlane (const dgBigVector &normal, dgFloat64 distance)
 DG_INLINE dgBigPlane::dgBigPlane (const dgBigVector &P0, const dgBigVector &P1, const dgBigVector &P2)
 	:dgBigVector ((P1 - P0).CrossProduct(P2 - P0)) 
 {
-	m_w = - DotProduct3(P0);
+	m_w = - DotProduct(P0 & dgBigVector::m_triplexMask).GetScalar();
 }
 
 DG_INLINE dgBigPlane dgBigPlane::Scale (dgFloat64 s) const

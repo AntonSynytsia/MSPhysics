@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -1324,12 +1324,11 @@ void dgCollisionCompoundFractured::BeginAddRemove ()
 	dgCollisionCompound::BeginAddRemove ();
 }
 
-void dgCollisionCompoundFractured::EndAddRemove ()
+void dgCollisionCompoundFractured::EndAddRemove (bool flushCache)
 {
-	dgCollisionCompound::EndAddRemove ();
+	dgCollisionCompound::EndAddRemove (flushCache);
 	BuildMainMeshSubMehes();
 }
-
 
 void dgCollisionCompoundFractured::RemoveCollision (dgTreeArray::dgTreeNode* const node)
 {
@@ -1399,7 +1398,7 @@ bool dgCollisionCompoundFractured::CanChunk (dgConectivityGraph::dgListNode* con
 //			projection.StoreScalar(&val);
 			dgFloat32 val = projection.GetScalar();
 			dgAssert (val > dgFloat32 (-1.0f));
-			dgFloat32 angle = dgAcos (val) - dgFloat32 (90.0f * dgDEG2RAD) + dgFloat32 (15.0f * dgDEG2RAD);
+			dgFloat32 angle = dgAcos (val) - dgFloat32 (90.0f * dgDegreeToRad) + dgFloat32 (15.0f * dgDegreeToRad);
 			dgVector axis (himespherePlane.CrossProduct(directionsMap[i]));
 			axis = axis.Normalize();
 			dgQuaternion rot (axis, angle);
@@ -1693,7 +1692,7 @@ void dgCollisionCompoundFractured::SpawnSingleChunk (dgBody* const myBody, const
 
 	chunkBody->SetOmega(omega);
 	chunkBody->SetVelocity(chunkVeloc);
-	chunkBody->SetGroupID(chunkCollision->GetUserDataID());
+	chunkBody->SetGroupID(int (chunkCollision->GetUserDataID()));
 
 	m_emitFracturedChunk(chunkBody, chunkNode, myInstance);
 
@@ -1738,7 +1737,7 @@ void dgCollisionCompoundFractured::SpawnComplexChunk (dgBody* const myBody, cons
 	dgVector com (matrix.TransformVector(myBody->GetCentreOfMass()));
 
 	dgCollisionCompoundFractured* const childStructureCollision = new (GetAllocator()) dgCollisionCompoundFractured (*this, islanList);
-	dgCollisionInstance* const childStructureInstance = m_world->CreateInstance (childStructureCollision, parentInstance->GetUserDataID(), parentInstance->GetLocalMatrix()); 
+	dgCollisionInstance* const childStructureInstance = m_world->CreateInstance (childStructureCollision, int (parentInstance->GetUserDataID()), parentInstance->GetLocalMatrix()); 
 	childStructureCollision->m_myInstance = childStructureInstance;
 	childStructureCollision->Release();
 
@@ -1752,7 +1751,7 @@ void dgCollisionCompoundFractured::SpawnComplexChunk (dgBody* const myBody, cons
 
 	chunkBody->SetOmega(omega);
 	chunkBody->SetVelocity(chunkVeloc);
-	chunkBody->SetGroupID(childStructureInstance->GetUserDataID());
+	chunkBody->SetGroupID(int (childStructureInstance->GetUserDataID()));
 
 	m_emitFracturedCompound (chunkBody);
 	childStructureInstance->Release();

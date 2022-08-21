@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -38,8 +38,8 @@ dgUserConstraint::dgUserConstraint(dgWorld* const world, dgBody* const body0, dg
 	m_userData = NULL;
 	m_destructor = NULL;
 	if (world) {
-	world->AttachConstraint(this, body0, body1);
-}
+		world->AttachConstraint(this, body0, body1);
+	}
 }
 
 dgUserConstraint::~dgUserConstraint()

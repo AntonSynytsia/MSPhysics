@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -24,6 +24,10 @@
 #include "dgWorldPlugins.h"
 
 
+#if defined(DG_USE_PLUGINS) && defined(__linux__)
+#include <dlfcn.h>
+#include <dirent.h>
+#endif
 	
 
 dgWorldPluginList::dgWorldPluginList(dgMemoryAllocator* const allocator)
@@ -40,7 +44,7 @@ dgWorldPluginList::~dgWorldPluginList()
 
 void dgWorldPluginList::LoadVisualStudioPlugins(const char* const plugInPath)
 {
-#if _MSC_VER > 1700
+#if defined(DG_USE_PLUGINS) && defined(_MSC_VER)
 	char rootPathInPath[2048];
 	sprintf(rootPathInPath, "%s/*.dll", plugInPath);
 
@@ -48,11 +52,16 @@ void dgWorldPluginList::LoadVisualStudioPlugins(const char* const plugInPath)
 	dgWorld* const world = (dgWorld*) this;
 
 	// scan for all plugins in this folder
-	_finddata_t data;
-	intptr_t handle = _findfirst(rootPathInPath, &data);
-	if (handle != -1) {
+	//_finddata_t data;
+	//intptr_t handle = _findfirst(rootPathInPath, &data);
+
+	WIN32_FIND_DATAA data;
+	HANDLE handle = FindFirstFile(rootPathInPath, &data);
+
+	if (handle != INVALID_HANDLE_VALUE ) {
 		do {
-			sprintf(rootPathInPath, "%s/%s", plugInPath, data.name);
+			//sprintf(rootPathInPath, "%s/%s", plugInPath, data.name);
+			sprintf(rootPathInPath, "%s/%s", plugInPath, data.cFileName);
 			HMODULE module = LoadLibrary(rootPathInPath);
 
 			if (module) {
@@ -64,6 +73,19 @@ void dgWorldPluginList::LoadVisualStudioPlugins(const char* const plugInPath)
 						dgWorldPluginModulePair entry(plugin, module);
 						dgListNode* const node = Append(entry);
 						dgInt32 pluginValue = plugin->GetScore();
+						bool wasMoved = false;
+						for (dgListNode* ptr = GetLast()->GetPrev(); ptr; ptr = ptr->GetPrev()) {
+							dgInt32 value = ptr->GetInfo().m_plugin->GetScore();
+							if (value > pluginValue) {
+								InsertAfter (ptr, node);
+								wasMoved = true;
+								break;
+							}
+						}
+						if (!wasMoved) {
+							InsertBefore (GetFirst(), node);
+						}
+						
 						if (pluginValue > score) {
 							score = pluginValue;
 							m_preferedPlugin = node; 
@@ -76,31 +98,83 @@ void dgWorldPluginList::LoadVisualStudioPlugins(const char* const plugInPath)
 				}
 			}
 
-		} while (_findnext(handle, &data) == 0);
+		//} while (_findnext(handle, &data) == 0);
+		 } while (FindNextFile(handle, &data));
 
-		_findclose(handle);
+		//_findclose(handle);
+		FindClose(handle);
 	}
-#endif	
+#endif
+}
+
+void dgWorldPluginList::LoadLinuxPlugins(const char* const plugInPath)
+{
+#if defined(DG_USE_PLUGINS) && defined(__linux__)
+	char rootPathInPath[2048];
+	DIR* directory;
+	dirent* dirEntry;
+	directory = opendir(plugInPath);
+
+	dgInt32 score = 0;
+	dgWorld* const world = (dgWorld*) this;
+	
+	if(directory != NULL) {
+		while((dirEntry = readdir(directory)) != NULL) {
+			const char* const ext = strrchr(dirEntry->d_name, '.');
+			if(!strcmp(ext, ".so")) {
+				sprintf(rootPathInPath, "%s/%s", plugInPath, dirEntry->d_name);
+				void* module = dlopen(rootPathInPath, RTLD_LAZY);
+				auto err = dlerror();
+ 				if(module) {
+					InitPlugin initModule = (InitPlugin)dlsym(module, "GetPlugin");
+					if(initModule) {
+						dgWorldPlugin* const plugin = initModule(world, GetAllocator ());
+						if (plugin) {
+							dgWorldPluginModulePair entry(plugin, module);
+							dgListNode* const node = Append(entry);
+							dgInt32 pluginValue = plugin->GetScore();
+							if (pluginValue > score) {
+								score = pluginValue;
+								m_preferedPlugin = node; 
+							}
+						} else {
+							dlclose(module);
+						}
+					}
+				}
+			}
+		}
+		closedir(directory);
+	}
+#endif
 }
 
 void dgWorldPluginList::LoadPlugins(const char* const path)
 {
-#ifndef _NEWTON_USE_DOUBLE
+	UnloadPlugins();
 	#ifdef _MSC_VER
-		UnloadPlugins();
 		LoadVisualStudioPlugins(path);
+	#elif __linux__
+		LoadLinuxPlugins(path);
 	#endif
-#endif
 }
 
 void dgWorldPluginList::UnloadPlugins()
 {
-#ifdef _MSC_VER
-	dgWorldPluginList& pluginsList = *this;
-	for (dgWorldPluginList::dgListNode* node = pluginsList.GetFirst(); node; node = node->GetNext()) {
-		HMODULE module = (HMODULE)node->GetInfo().m_module;
-		FreeLibrary(module);
-	}
+#if defined(DG_USE_PLUGINS)
+	#ifdef _MSC_VER
+		dgWorldPluginList& pluginsList = *this;
+		for (dgWorldPluginList::dgListNode* node = pluginsList.GetFirst(); node; node = node->GetNext()) {
+			HMODULE module = (HMODULE)node->GetInfo().m_module;
+			FreeLibrary(module);
+		}
+	#elif __linux__
+		dgWorldPluginList& pluginsList = *this;
+		for (dgWorldPluginList::dgListNode* node = pluginsList.GetFirst(); node; node = node->GetNext()) {
+			void* module = node->GetInfo().m_module;
+			dlclose(module);
+		}
+	#endif
 #endif
 	m_currentPlugin = NULL;
 	m_preferedPlugin = NULL;

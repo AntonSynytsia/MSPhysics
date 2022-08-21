@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -40,8 +40,6 @@ dgBodyMasterListRow::~dgBodyMasterListRow()
 
 DG_INLINE dgBodyMasterListRow::dgListNode* dgBodyMasterListRow::AddContactJoint (dgContact* const joint, dgBody* const body)
 {
-	//no need for lock since this is called from the main thread only
-	//dgScopeSpinLock lock(&m_body->m_criticalSectionLock);
 	dgListNode* const node = Addtop();
 	node->GetInfo().m_joint = joint;
 	node->GetInfo().m_bodyNode = body;
@@ -72,7 +70,6 @@ void dgBodyMasterListRow::RemoveAllJoints ()
 void dgBodyMasterListRow::RemoveContactJoint (dgListNode* const link)
 {
 	dgScopeSpinLock lock(&m_body->m_criticalSectionLock);
-	
 	m_body->m_world->GlobalLock();
 	Remove(link);
 	m_body->m_world->GlobalUnlock();
@@ -81,7 +78,6 @@ void dgBodyMasterListRow::RemoveContactJoint (dgListNode* const link)
 void dgBodyMasterListRow::RemoveBilateralJoint (dgListNode* const link)
 {
 	dgScopeSpinLock lock(&m_body->m_criticalSectionLock);
-	
 	m_body->m_world->GlobalLock();
 	Remove(link);
 	m_body->m_world->GlobalUnlock();
@@ -89,8 +85,6 @@ void dgBodyMasterListRow::RemoveBilateralJoint (dgListNode* const link)
 
 DG_INLINE dgBilateralConstraint* dgBodyMasterListRow::FindBilateralJoint (const dgBody* const otherBody) const
 {
-	//no need for lock since this is called from the main thread only
-	//dgScopeSpinLock lock(&m_body->m_criticalSectionLock);
 	for (dgBodyMasterListRow::dgListNode* link = GetLast(); link && (link->GetInfo().m_joint->GetId() != dgConstraint::m_contactConstraint); link = link->GetPrev()) {
 		if (link->GetInfo().m_bodyNode == otherBody) {
 			dgAssert (link->GetInfo().m_joint->IsBilateral());
@@ -147,7 +141,7 @@ void dgBodyMasterList::AddBody (dgBody* const body)
 	node->GetInfo().SetAllocator (body->GetWorld()->GetAllocator());
 	node->GetInfo().SetBody(body);
 
-	if (GetFirst() != node) {
+	if ((body->m_invMass.m_w == dgFloat32 (0.0f)) && (GetFirst() != node)) {
 		InsertAfter (GetFirst(), node);
 	}
 }
@@ -192,6 +186,13 @@ void dgBodyMasterList::AttachConstraint(dgConstraint* const constraint,	dgBody* 
 		body1 = body0->GetWorld()->GetSentinelBody();
 	}
 	dgAssert (body1);
+
+	#ifdef _DEBUG
+	if (FindBilateralJoint(body0, body1))
+	{
+		dgTrace (("warning!! bilateral joint duplication between bodied: %d and %d\n", body0->m_uniqueID, body1->m_uniqueID));
+	}
+	#endif
 
 	constraint->m_body0 = body0;
 	constraint->m_body1 = body1;
@@ -281,7 +282,7 @@ void dgBodyMasterList::RemoveContact(dgContact* const contact)
 	m_constraintCount --;
 	dgAssert(((dgInt32)m_constraintCount) >= 0);
 	dgAssert(contact->GetId() == dgConstraint::m_contactConstraint);
-	dgAssert(!contact->m_maxDOF);
+	//dgAssert(!contact->m_maxDOF);
 
 	dgBody* const body0 = contact->m_body0;
 	dgBody* const body1 = contact->m_body1;
@@ -293,17 +294,6 @@ void dgBodyMasterList::RemoveContact(dgContact* const contact)
 	dgBodyMasterListRow& row0 = body0->m_masterNode->GetInfo();
 	dgBodyMasterListRow& row1 = body1->m_masterNode->GetInfo();
 
-//	if (body0->IsRTTIType(dgBody::m_dynamicBodyRTTI)) {
-//		dgDynamicBody* const dynBody0 = (dgDynamicBody*)body0;
-//		dynBody0->m_savedExternalForce = dgVector(dgFloat32(0.0f));
-//		dynBody0->m_savedExternalTorque = dgVector(dgFloat32(0.0f));
-//	}
-//	if (body1->IsRTTIType(dgBody::m_dynamicBodyRTTI)) {
-//		dgDynamicBody* const dynBody1 = (dgDynamicBody*)body1;
-//		dynBody1->m_savedExternalForce = dgVector(dgFloat32(0.0f));
-//		dynBody1->m_savedExternalTorque = dgVector(dgFloat32(0.0f));
-//	}
-	
 	row0.Remove(contact->m_link0);
 	row1.Remove(contact->m_link1);
 }
@@ -318,7 +308,6 @@ DG_INLINE dgUnsigned32 dgBodyMasterList::MakeSortMask(const dgBody* const body) 
 void dgBodyMasterList::SortMasterList()
 {
 	GetFirst()->GetInfo().SortList();
-
 	for (dgListNode* node = GetFirst()->GetNext(); node; ) { 
 		node->GetInfo().SortList();
 		dgBody* const body1 = node->GetInfo().GetBody();

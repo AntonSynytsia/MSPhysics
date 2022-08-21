@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -39,7 +39,6 @@
 #include "dgBodyMasterList.h"
 #include "dgUserConstraint.h"
 #include "dgBallConstraint.h"
-#include "dgInverseDynamics.h"
 #include "dgHingeConstraint.h"
 #include "dgSkeletonContainer.h"
 #include "dgCollisionInstance.h"

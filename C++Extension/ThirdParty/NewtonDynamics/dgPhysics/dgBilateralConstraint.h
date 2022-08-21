@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -57,7 +57,8 @@ class dgBilateralConstraint: public dgConstraint
 	virtual dgInt32 GetSolverModel() const;
 	virtual void SetSolverModel(dgInt32 model);
 
-	virtual void ResetInverseDynamics();
+	virtual dgFloat32 GetMassScaleBody0() const;
+	virtual dgFloat32 GetMassScaleBody1() const;
 
 	void CalculateMatrixOffset (const dgVector& pivot, const dgVector& dir, dgMatrix& matrix0, dgMatrix& matrix1) const;
 	void SetPivotAndPinDir(const dgVector &pivot, const dgVector &pinDirection, dgMatrix& matrix0, dgMatrix& matrix1) const;
@@ -66,28 +67,29 @@ class dgBilateralConstraint: public dgConstraint
 
 	virtual void JointAccelerations(dgJointAccelerationDecriptor* const params); 
 
-	dgFloat32 GetInverseDynamicAcceleration (dgInt32 index) const;
 	dgFloat32 GetRowAcceleration (dgInt32 index, dgContraintDescritor& desc) const;
 	dgFloat32 CalculateMotorAcceleration (dgInt32 index, dgContraintDescritor& desc) const;
 	void SetMotorAcceleration (dgInt32 index, dgFloat32 acceleration, dgContraintDescritor& desc);
-	void SetSpringDamperAcceleration (dgInt32 index, dgContraintDescritor& desc, dgFloat32 rowStiffness, dgFloat32 spring, dgFloat32 damper);
+	void SetMassDependentSpringDamperAcceleration(dgInt32 index, dgContraintDescritor& desc, dgFloat32 spring, dgFloat32 damper);
+	void SetMassIndependentSpringDamperAcceleration (dgInt32 index, dgContraintDescritor& desc, dgFloat32 rowStiffness, dgFloat32 spring, dgFloat32 damper);
 	void SetJacobianDerivative (dgInt32 index, dgContraintDescritor& desc, const dgFloat32* const jacobianA, const dgFloat32* const jacobianB, dgForceImpactPair* const jointForce);
 	void CalculatePointDerivative (dgInt32 index, dgContraintDescritor& desc, const dgVector& normalGlobal, const dgPointParam& param, dgForceImpactPair* const jointForce);
 	void CalculateAngularDerivative (dgInt32 index, dgContraintDescritor& desc, const dgVector& normalGlobal, dgFloat32 stiffness, dgFloat32 jointAngle, dgForceImpactPair* const jointForce);
 
 	void AppendToJointList();
 	
+	dgVector m_r0[DG_BILATERAL_CONTRAINT_DOF];
+	dgVector m_r1[DG_BILATERAL_CONTRAINT_DOF];
 	dgForceImpactPair m_jointForce[DG_BILATERAL_CONTRAINT_DOF];
 	dgFloat32 m_motorAcceleration[DG_BILATERAL_CONTRAINT_DOF];
-	dgFloat32 m_inverseDynamicsAcceleration[DG_BILATERAL_CONTRAINT_DOF];
-	dgFloat32 m_stiffness;
+	dgFloat32 m_massScaleBody0;
+	dgFloat32 m_massScaleBody1;
+	dgFloat32 m_defualtDiagonalRegularizer;
 	OnConstraintDestroy m_destructor;
 	dgBilateralConstraintList::dgListNode* m_jointNode;
 	dgInt8	  m_rowIsMotor;
-	dgInt8	  m_rowIsIk;
 
 	friend class dgBodyMasterList;
-	friend class dgInverseDynamics;
 	friend class dgWorldDynamicUpdate;
 };
 

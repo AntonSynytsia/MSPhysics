@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -20,9 +20,10 @@
 */
 
 #include "dgStdafx.h"
-#include "dgStack.h"
+#include "dgSort.h"
 #include "dgTree.h"
 #include "dgHeap.h"
+#include "dgStack.h"
 #include "dgGoogol.h"
 #include "dgConvexHull4d.h"
 #include "dgSmallDeterminant.h"
@@ -55,7 +56,7 @@ dgConvexHull4d::dgNormalMap::dgNormalMap()
 
 	count = 0;
 	for (dgInt32 j = 0; j < 8; j++) {
-		dgFloat64 beta = (j - 4) * dgFloat64 (22.5f * dgDEG2RAD) + dgFloat64 (10.5f * dgDEG2RAD);
+		dgFloat64 beta = (j - 4) * dgFloat64 (22.5f * dgDegreeToRad) + dgFloat64 (10.5f * dgDegreeToRad);
 		dgFloat64 sinBeta = sin(beta);
 		dgFloat64 cosBeta = cos(beta);
 
@@ -75,10 +76,13 @@ dgConvexHull4d::dgNormalMap::dgNormalMap()
 
 void dgConvexHull4d::dgNormalMap::TessellateTriangle(dgInt32 level, const dgVector& p0, const dgVector& p1, const dgVector& p2, dgBigVector* const buffer, dgInt32& count)
 {
+	dgAssert(p0.m_w == dgFloat32(0.0f));
+	dgAssert(p1.m_w == dgFloat32(0.0f));
+	dgAssert(p2.m_w == dgFloat32(0.0f));
 	if (level) {
-		dgAssert(dgAbs(p0.DotProduct3(p0) - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
-		dgAssert(dgAbs(p1.DotProduct3(p1) - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
-		dgAssert(dgAbs(p2.DotProduct3(p2) - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
+		dgAssert(dgAbs(p0.DotProduct(p0).GetScalar() - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
+		dgAssert(dgAbs(p1.DotProduct(p1).GetScalar() - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
+		dgAssert(dgAbs(p2.DotProduct(p2).GetScalar() - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
 		dgVector p01(p0 + p1);
 		dgVector p12(p1 + p2);
 		dgVector p20(p2 + p0);
@@ -86,13 +90,13 @@ void dgConvexHull4d::dgNormalMap::TessellateTriangle(dgInt32 level, const dgVect
 		dgAssert (p01.m_w == dgFloat32 (0.0f));
 		dgAssert (p12.m_w == dgFloat32 (0.0f));
 		dgAssert (p20.m_w == dgFloat32 (0.0f));
-		p01 = p01.Scale(dgRsqrt(p01.DotProduct3(p01)));
-		p12 = p12.Scale(dgRsqrt(p12.DotProduct3(p12)));
-		p20 = p20.Scale(dgRsqrt(p20.DotProduct3(p20)));
+		p01 = p01.Scale(dgRsqrt(p01.DotProduct(p01).GetScalar()));
+		p12 = p12.Scale(dgRsqrt(p12.DotProduct(p12).GetScalar()));
+		p20 = p20.Scale(dgRsqrt(p20.DotProduct(p20).GetScalar()));
 
-		dgAssert(dgAbs(p01.DotProduct3(p01) - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
-		dgAssert(dgAbs(p12.DotProduct3(p12) - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
-		dgAssert(dgAbs(p20.DotProduct3(p20) - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
+		dgAssert(dgAbs(p01.DotProduct(p01).GetScalar() - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
+		dgAssert(dgAbs(p12.DotProduct(p12).GetScalar() - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
+		dgAssert(dgAbs(p20.DotProduct(p20).GetScalar() - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
 
 		TessellateTriangle(level - 1, p0, p01, p20, buffer, count);
 		TessellateTriangle(level - 1, p1, p12, p01, buffer, count);
@@ -100,7 +104,7 @@ void dgConvexHull4d::dgNormalMap::TessellateTriangle(dgInt32 level, const dgVect
 		TessellateTriangle(level - 1, p01, p12, p20, buffer, count);
 	} else {
 		dgBigPlane n(p0, p1, p2);
-		n = n.Scale(dgFloat64(1.0f) / sqrt(n.DotProduct3(n)));
+		n = n.Scale(dgFloat64(1.0f) / sqrt(n.DotProduct(n).GetScalar()));
 		n.m_w = dgFloat64(0.0f);
 		dgInt32 index = dgBitReversal(count, 128);
 		buffer[index] = n;

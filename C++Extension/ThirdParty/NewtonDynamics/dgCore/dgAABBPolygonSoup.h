@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -105,6 +105,8 @@ class dgAABBPolygonSoup: public dgPolygonSoupDatabase
 		{
 			dgVector minBox (&vertexArray[m_indexBox0].m_x);
 			dgVector maxBox (&vertexArray[m_indexBox1].m_x);
+			minBox = minBox & dgVector::m_triplexMask;
+			maxBox = maxBox & dgVector::m_triplexMask;
 			return ray.BoxIntersect(minBox, maxBox);
 		}
 
@@ -112,6 +114,8 @@ class dgAABBPolygonSoup: public dgPolygonSoupDatabase
 		{
 			dgVector p0 (&vertexArray[m_indexBox0].m_x);
 			dgVector p1 (&vertexArray[m_indexBox1].m_x);
+			p0 = p0 & dgVector::m_triplexMask;
+			p1 = p1 & dgVector::m_triplexMask;
 			dgVector minBox (p0 - obb.m_p1);
 			dgVector maxBox (p1 - obb.m_p0);
 			dgAssert(maxBox.m_x >= minBox.m_x);
@@ -153,6 +157,9 @@ class dgAABBPolygonSoup: public dgPolygonSoupDatabase
 		{
 			dgVector p0 (&vertexArray[m_indexBox0].m_x);
 			dgVector p1 (&vertexArray[m_indexBox1].m_x);
+			p0 = p0 & dgVector::m_triplexMask;
+			p1 = p1 & dgVector::m_triplexMask;
+
 			dgVector minBox (p0 - obb.m_p1);
 			dgVector maxBox (p1 - obb.m_p0);
 			dgFloat32 dist = ray.BoxIntersect(minBox, maxBox);
@@ -190,7 +197,7 @@ class dgAABBPolygonSoup: public dgPolygonSoupDatabase
 	dgAABBPolygonSoup ();
 	virtual ~dgAABBPolygonSoup ();
 
-	void Create (const dgPolygonSoupDatabaseBuilder& builder, bool optimizedBuild);
+	void Create (const dgPolygonSoupDatabaseBuilder& builder);
 	void CalculateAdjacendy ();
 	virtual void ForAllSectorsRayHit (const dgFastRayTest& ray, dgFloat32 maxT, dgRayIntersectCallback callback, void* const context) const;
 	virtual void ForAllSectors (const dgFastAABBInfo& obbAabb, const dgVector& boxDistanceTravel, dgFloat32 m_maxT, dgAABBIntersectCallback callback, void* const context) const;
@@ -218,10 +225,11 @@ class dgAABBPolygonSoup: public dgPolygonSoupDatabase
 		const dgNode* const node = (dgNode*)root;
 		p0 = dgVector (&((dgTriplex*)m_localVertex)[node->m_indexBox0].m_x);
 		p1 = dgVector (&((dgTriplex*)m_localVertex)[node->m_indexBox1].m_x);
+		p0 = p0 & dgVector::m_triplexMask;
+		p1 = p1 & dgVector::m_triplexMask;
 	}
-	virtual dgVector ForAllSectorsSupportVectex (const dgVector& dir) const;
 
-	
+	virtual dgVector ForAllSectorsSupportVectex (const dgVector& dir) const;
 
 	private:
 	dgNodeBuilder* BuildTopDown (dgNodeBuilder* const leafArray, dgInt32 firstBox, dgInt32 lastBox, dgNodeBuilder** const allocator) const;

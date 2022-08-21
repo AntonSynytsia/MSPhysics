@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -64,9 +64,9 @@ dgFloat32 dgCollisionScene::GetBoxMaxRadius () const
 
 void dgCollisionScene::MassProperties ()
 {
-	m_inertia = dgVector (dgFloat32 (0.0f));
-	m_centerOfMass = dgVector (dgFloat32 (0.0f));
-	m_crossInertia = dgVector (dgFloat32 (0.0f));
+	m_inertia = dgVector::m_zero;
+	m_centerOfMass = dgVector::m_zero;
+	m_crossInertia = dgVector::m_zero;
 }
 
 void dgCollisionScene::CollidePair (dgBroadPhase::dgPair* const pair, dgCollisionParamProxy& proxy) const
@@ -145,8 +145,8 @@ void dgCollisionScene::CollidePair (dgBroadPhase::dgPair* const pair, dgCollisio
 						proxy.m_timestep = maxParam;
 						m_world->SceneChildContacts (pair, proxy);
 						// remember to update separating distance
-						dgAssert (0);
 						//data.m_separatingDistance = dgMin(proxy.m_contactJoint->m_separationDistance, data.m_separatingDistance);
+						separatingDist = dgMin(proxy.m_contactJoint->m_separationDistance, separatingDist);
 						dgFloat32 param = proxy.m_timestep;
 						dgAssert(param >= dgFloat32(0.0f));
 						if (param < maxParam) {
@@ -277,9 +277,14 @@ void dgCollisionScene::CollideCompoundPair (dgBroadPhase::dgPair* const pair, dg
 	dgFloat32 timestep = pair->m_timestep;
 	dgFloat32 closestDist = dgFloat32 (1.0e10f);
 	dgFloat32 separatingDist = dgFloat32 (1.0e10f);
-	if (proxy.m_continueCollision && (baseLinearSpeed > dgFloat32 (1.0e-6f))) {
-		dgAssert (0);
-	} else {
+//	if (proxy.m_continueCollision && (baseLinearSpeed > dgFloat32 (1.0e-6f))) {
+//		dgAssert (0);
+//	} else {
+if (proxy.m_continueCollision && (baseLinearSpeed > dgFloat32 (1.0e-6f))) {
+dgTrace (("Warning scene continue collision not implemented, using descrete collision instead\n"));
+}
+
+
 		while (stack) {
 			stack --;
 			const dgNodeBase* const me = stackPool[stack][0];
@@ -382,7 +387,7 @@ void dgCollisionScene::CollideCompoundPair (dgBroadPhase::dgPair* const pair, dg
 			}
 		}
 		separatingDist = dgMin (separatingDist, data.m_separatingDistance);
-	}
+//	}
 	contactJoint->m_closestDistance = closestDist;
 	contactJoint->m_separationDistance = separatingDist;
 }

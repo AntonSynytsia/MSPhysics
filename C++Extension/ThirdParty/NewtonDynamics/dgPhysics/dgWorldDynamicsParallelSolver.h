@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -22,18 +22,16 @@
 #ifndef _DG_PARALLEL_SOLVER_H_
 #define _DG_PARALLEL_SOLVER_H_
 
-
 #include "dgPhysicsStdafx.h"
 
 class dgBodyInfo;
 class dgJointInfo;
 class dgBodyCluster;
+class dgSkeletonContainer;
 
+#define DG_WORK_GROUP_SIZE	8 
 
-#define DG_WORK_GROUP_SIZE		8 
-
-
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgWorkGroupFloat
 {
 	public:
@@ -53,38 +51,21 @@ class dgWorkGroupFloat
 	{
 	}
 
-
 	DG_INLINE dgWorkGroupFloat(const dgVector& low, const dgVector& high)
 		:m_low(low)
 		,m_high(high)
 	{
 	}
 
-	DG_INLINE dgInt32 GetInt(dgInt32 i) const
+	DG_INLINE dgWorkGroupFloat(const dgWorkGroupFloat* const baseAddr, const dgWorkGroupFloat& index)
 	{
-		dgAssert (i >= 0);
-		dgAssert(i < DG_WORK_GROUP_SIZE);
-		#ifdef _NEWTON_USE_DOUBLE
-		const dgInt64* const ptr = &m_low.m_i[0];
-		#else
-		const dgInt32* const ptr = &m_low.m_i[0];
-		#endif
-		return dgInt32 (ptr[i]);
+		const dgInt32* const indirectIndex = (dgInt32*) &index[0];
+		const dgFloat32* const src = &(*baseAddr)[0];
+		dgFloat32* const dst = &(*this)[0];
+		for (dgInt32 i = 0; i < DG_WORK_GROUP_SIZE; i++) {
+			dst[i] = src[indirectIndex[i]];
+		}
 	}
-
-	DG_INLINE void SetInt(dgInt32 i, dgInt32 value)
-	{
-		dgAssert(i >= 0);
-		dgAssert(i < DG_WORK_GROUP_SIZE);
-
-		#ifdef _NEWTON_USE_DOUBLE
-		dgInt64* const ptr = &m_low.m_i[0];
-		#else
-		dgInt32* const ptr = &m_low.m_i[0];
-		#endif
-		ptr[i] = value;
-	}
-
 
 	DG_INLINE dgFloat32& operator[] (dgInt32 i)
 	{
@@ -142,9 +123,9 @@ class dgWorkGroupFloat
 		return dgWorkGroupFloat(m_low | A.m_low, m_high | A.m_high);
 	}
 
-	DG_INLINE dgWorkGroupFloat AndNot (const dgWorkGroupFloat& A) const
+	DG_INLINE dgWorkGroupFloat operator& (const dgWorkGroupFloat& A) const
 	{
-		return dgWorkGroupFloat(m_low.AndNot(A.m_low), m_high.AndNot(A.m_high));
+		return dgWorkGroupFloat(m_low & A.m_low, m_high & A.m_high);
 	}
 
 	DG_INLINE dgWorkGroupFloat GetMin(const dgWorkGroupFloat& A) const
@@ -169,38 +150,35 @@ class dgWorkGroupFloat
 
 	dgVector m_low;
 	dgVector m_high;
-	static dgWorkGroupFloat m_one;
-	static dgWorkGroupFloat m_zero;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgWorkGroupVector3
 {
 	public:
 	dgWorkGroupFloat m_x;
 	dgWorkGroupFloat m_y;
 	dgWorkGroupFloat m_z;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgWorkGroupVector6
 {
 	public:
 	dgWorkGroupVector3 m_linear;
 	dgWorkGroupVector3 m_angular;
-} DG_GCC_AVX_ALIGMENT;
+} DG_GCC_AVX_ALIGNMENT;
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgSolverSoaJacobianPair
 {
 	public:
 	dgWorkGroupVector6 m_jacobianM0;
 	dgWorkGroupVector6 m_jacobianM1;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
-
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgSolverSoaElement
 {
 	public:
@@ -214,28 +192,17 @@ class dgSolverSoaElement
 	dgWorkGroupFloat m_normalForceIndex;
 	dgWorkGroupFloat m_lowerBoundFrictionCoefficent;
 	dgWorkGroupFloat m_upperBoundFrictionCoefficent;
-} DG_GCC_VECTOR_ALIGMENT;
-
+} DG_GCC_VECTOR_ALIGNMENT;
 
 class dgParallelBodySolver
 {
 	public:
-	class dgBodyJacobianPair
-	{
-		public:
-		dgInt32 m_bodyIndex;
-		dgInt32 m_rowCount;
-		dgInt32 m_rowStart;
-		dgInt32 m_righHandStart;
-		dgFloat32 m_preconditioner;
-	};
-
 	class dgBodyProxy
 	{
 		public:
 		dgFloat32 m_weight;
-		dgFloat32 m_invWeight;
-		dgInt32 m_jointStart;
+		//dgFloat32 m_invWeight;
+		dgInt32 m_lock;
 	};
 
 	~dgParallelBodySolver() {}
@@ -246,20 +213,21 @@ class dgParallelBodySolver
 	private:
 	void InitWeights();
 	void InitBodyArray();
+	void InitSkeletons();
 	void CalculateForces();
+	void UpdateSkeletons();
 	void InitJacobianMatrix();
-	void CalculateBodyForce();
 	void UpdateForceFeedback();
 	void CalculateJointsForce();
+	void CalculateJointsAccel();
 	void IntegrateBodiesVelocity();
 	void UpdateKinematicFeedback();
-	void CalculateJointsAcceleration();
 	void CalculateBodiesAcceleration();
 	
 	void InitBodyArray(dgInt32 threadID);
+	void InitSkeletons(dgInt32 threadID);
+	void UpdateSkeletons(dgInt32 threadID);
 	void InitJacobianMatrix(dgInt32 threadID);
-	void InitInternalForces(dgInt32 threadID);
-	void CalculateBodyForce(dgInt32 threadID);
 	void UpdateForceFeedback(dgInt32 threadID);
 	void TransposeMassMatrix(dgInt32 threadID);
 	void CalculateJointsForce(dgInt32 threadID);
@@ -268,11 +236,11 @@ class dgParallelBodySolver
 	void UpdateKinematicFeedback(dgInt32 threadID);
 	void CalculateJointsAcceleration(dgInt32 threadID);
 	void CalculateBodiesAcceleration(dgInt32 threadID);
-
+	
+	static void InitSkeletonsKernel(void* const context, void* const, dgInt32 threadID);
 	static void InitBodyArrayKernel(void* const context, void* const, dgInt32 threadID);
+	static void UpdateSkeletonsKernel(void* const context, void* const, dgInt32 threadID);
 	static void InitJacobianMatrixKernel(void* const context, void* const, dgInt32 threadID);
-	static void CalculateBodyForceKernel(void* const context, void* const, dgInt32 threadID);
-	static void InitInternalForcesKernel(void* const context, void* const, dgInt32 threadID);
 	static void UpdateForceFeedbackKernel(void* const context, void* const, dgInt32 threadID);
 	static void TransposeMassMatrixKernel(void* const context, void* const, dgInt32 threadID);
 	static void CalculateJointsForceKernel(void* const context, void* const, dgInt32 threadID);
@@ -283,12 +251,11 @@ class dgParallelBodySolver
 	static void CalculateJointsAccelerationKernel(void* const context, void* const, dgInt32 threadID);
 
 	static dgInt32 CompareJointInfos(const dgJointInfo* const infoA, const dgJointInfo* const infoB, void* notUsed);
-	static dgInt32 CompareBodyJointsPairs(const dgBodyJacobianPair* const pairA, const dgBodyJacobianPair* const pairB, void* notUsed);
 
+	dgFloat32 CalculateJointForce(const dgJointInfo* const jointInfo, dgSolverSoaElement* const massMatrix, const dgJacobian* const internalForces) const;
 	DG_INLINE void SortWorkGroup (dgInt32 base) const; 
 	DG_INLINE void TransposeRow (dgSolverSoaElement* const row, const dgJointInfo* const jointInfoArray, dgInt32 index);
-	DG_INLINE void BuildJacobianMatrix(dgJointInfo* const jointInfo, dgLeftHandSide* const leftHandSide, dgRightHandSide* const righHandSide);
-	DG_INLINE dgFloat32 CalculateJointForce(const dgJointInfo* const jointInfo, dgSolverSoaElement* const massMatrix, const dgJacobian* const internalForces) const;
+	DG_INLINE void BuildJacobianMatrix(dgJointInfo* const jointInfo, dgLeftHandSide* const leftHandSide, dgRightHandSide* const righHandSide, dgJacobian* const internalForces);
 
 	protected:
 	dgWorld* m_world;
@@ -296,7 +263,6 @@ class dgParallelBodySolver
 	dgBodyInfo* m_bodyArray;
 	dgJointInfo* m_jointArray;
 	dgBodyProxy* m_bodyProxyArray;
-	dgBodyJacobianPair* m_bodyJacobiansPairs;
 	dgFloat32 m_timestep;
 	dgFloat32 m_invTimestep;
 	dgFloat32 m_invStepRK;
@@ -305,16 +271,21 @@ class dgParallelBodySolver
 	dgFloat32 m_firstPassCoef;
 	dgFloat32 m_accelNorm[DG_MAX_THREADS_HIVE_COUNT];
 	dgInt32 m_hasJointFeeback[DG_MAX_THREADS_HIVE_COUNT];
+	dgArray<dgSkeletonContainer*> m_skeletonArray; 
 
 	dgInt32 m_jointCount;
-	dgInt32 m_jacobianMatrixRowAtomicIndex;
 	dgInt32 m_solverPasses;
 	dgInt32 m_threadCounts;
 	dgInt32 m_soaRowsCount;
+	dgInt32 m_skeletonCount;
+	dgInt32 m_jacobianMatrixRowAtomicIndex;
 	dgInt32* m_soaRowStart;
 	dgInt32* m_bodyRowStart;
 
 	private:
+	dgWorkGroupFloat m_one;
+	dgWorkGroupFloat m_zero;
+
 	dgArray<dgSolverSoaElement> m_massMatrix;
 	friend class dgWorldDynamicUpdate;
 };
@@ -331,17 +302,21 @@ DG_INLINE dgParallelBodySolver::dgParallelBodySolver(dgMemoryAllocator* const al
 	,m_timestepRK(dgFloat32(0.0f))
 	,m_invTimestepRK(dgFloat32(0.0f))
 	,m_firstPassCoef(dgFloat32(0.0f))
+	,m_skeletonArray(allocator)
 	,m_jointCount(0)
-	,m_jacobianMatrixRowAtomicIndex(0)
 	,m_solverPasses(0)
 	,m_threadCounts(0)
 	,m_soaRowsCount(0)
+	,m_skeletonCount(0)
+	,m_jacobianMatrixRowAtomicIndex(0)
 	,m_soaRowStart(NULL)
 	,m_bodyRowStart(NULL)
 	,m_massMatrix(allocator)
+	,m_one(dgFloat32 (1.0f))
+	,m_zero(dgFloat32 (0.0f))
 {
+	m_skeletonArray[32] = NULL;
 }
-
 
 #endif
 

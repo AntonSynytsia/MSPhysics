@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -23,18 +23,36 @@
 #define __dgDebug__
 
 #include "dgStdafx.h"
+
+
+	inline void dgApi dgExpandTraceMessage(const char *fmt, ...)
+	{
+		va_list v_args;
+		char text[4096];
+
+		text[0] = 0;
+		va_start(v_args, fmt);
+		vsprintf(text, fmt, v_args);
+		va_end(v_args);
+
+	#if defined (_WIN_32_VER) || defined (_WIN_64_VER)
+		OutputDebugStringA(text);
+	#else 
+		printf("%s\n", text);
+	#endif
+	}
+
 #ifdef _MSC_VER 
 	#ifdef _DEBUG 
 		#define DG_TRACE
 	#endif
 #endif
 
-void dgApi dgExpandTraceMessage (const char *fmt, ...);
 
 #ifdef DG_TRACE
 	#define dgTrace(x)	dgExpandTraceMessage x;
 #else
-	#define dgTrace(x)
+	#define dgTrace(x);
 #endif
 
 

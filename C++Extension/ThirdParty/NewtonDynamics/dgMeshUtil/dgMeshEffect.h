@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -36,8 +36,6 @@ class dgCollisionInstance;
 #define DG_MESH_EFFECT_POINT_SPLITED		512
 #define DG_MESH_EFFECT_BVH_STACK_DEPTH		256
 
-#define DG_MESH_WEIGHT_COUNT				4
-
 class dgMeshEffect: public dgPolyhedra, public dgRefCounter
 {
 	public:
@@ -51,7 +49,6 @@ class dgMeshEffect: public dgPolyhedra, public dgRefCounter
 		m_color,
 		m_material,
 		m_layer,
-		m_weight,
 		m_point,
 	};
 
@@ -188,19 +185,6 @@ class dgMeshEffect: public dgPolyhedra, public dgRefCounter
 	class dgPointFormat: public dgFormat
 	{
 		public:
-		class dgWeightPair
-		{
-			public:
-			dgFloat32 m_weight;
-			dgInt32 m_controlIndex;
-		};
-
-		class dgWeightSet
-		{
-			public:
-			dgWeightPair m_weightPair[DG_MESH_WEIGHT_COUNT];
-		};
-
 		dgPointFormat(dgMemoryAllocator* const allocator);
 		dgPointFormat(const dgPointFormat& source);
 		~dgPointFormat();
@@ -211,7 +195,6 @@ class dgMeshEffect: public dgPolyhedra, public dgRefCounter
 
 		dgChannel<dgInt32, m_layer> m_layers;
 		dgChannel <dgBigVector, m_point> m_vertex;
-		dgChannel<dgWeightSet, m_weight> m_weights;
 	};
 
 	class dgAttibutFormat: public dgFormat
@@ -232,7 +215,6 @@ class dgMeshEffect: public dgPolyhedra, public dgRefCounter
 		void SetCount (dgInt32 count);
 		void CopyFrom (const dgAttibutFormat& source);
 		void CopyEntryFrom (dgInt32 index, const dgAttibutFormat& source, dgInt32 sourceIndex);
-		//void CompressData (const dgChannel<dgBigVector, m_point>& points, dgInt32* const indexList);
 		void CompressData (const dgPointFormat& points, dgInt32* const indexList);
 
 		dgChannel<dgInt32, m_vertex> m_pointChannel;
@@ -334,16 +316,16 @@ class dgMeshEffect: public dgPolyhedra, public dgRefCounter
 	void Init();
 
 	void Trace () const;
-	void SaveOFF (const char* const fileName) const;
 
 	void ApplyTransform (const dgMatrix& matrix);
 	dgMatrix CalculateOOBB (dgBigVector& size) const;
 	void CalculateAABB (dgBigVector& min, dgBigVector& max) const;
 
+	void FlipWinding(); 
+	void UniformBoxMapping (dgInt32 material, const dgMatrix& textureMatrix);
 	void CalculateNormals (dgFloat64 angleInRadians);
 	void SphericalMapping (dgInt32 material, const dgMatrix& uvAligment);
-	void BoxMapping (dgInt32 front, dgInt32 side, dgInt32 top);
-	void UniformBoxMapping (dgInt32 material, const dgMatrix& textruMatrix);
+	void BoxMapping (dgInt32 front, dgInt32 side, dgInt32 top, const dgMatrix& uvAligment);
 	void CylindricalMapping (dgInt32 cylinderMaterial, dgInt32 capMaterial, const dgMatrix& uvAligment);
 	void AngleBaseFlatteningMapping (dgInt32 cylinderMaterial, dgReportProgress progressReportCallback, void* const userData);
 
@@ -369,7 +351,6 @@ class dgMeshEffect: public dgPolyhedra, public dgRefCounter
 		void BeginBuildFace ();
 			void AddPoint (dgFloat64 x, dgFloat64 y, dgFloat64 z);
 			void AddLayer (dgInt32 layer);
-			void AddWeights (const dgPointFormat::dgWeightSet& weight);
 			void AddMaterial (dgInt32 materialIndex);
 			void AddNormal (dgFloat32 x, dgFloat32 y, dgFloat32 z);
 			void AddBinormal (dgFloat32 x, dgFloat32 y, dgFloat32 z);
@@ -382,6 +363,9 @@ class dgMeshEffect: public dgPolyhedra, public dgRefCounter
 	dgInt32 GetVertexCount() const;
 	dgInt32 GetVertexStrideInByte() const;
 	const dgFloat64* GetVertexPool () const;
+
+	dgInt32 GetVertexBaseCount() const;
+	void SetVertexBaseCount(dgInt32 count);
 	
 	dgEdge* SpliteFace (dgInt32 v0, dgInt32 v1);
 
@@ -402,8 +386,8 @@ class dgMeshEffect: public dgPolyhedra, public dgRefCounter
 
 	dgInt32 GetPropertiesCount() const;
 	const dgInt32* GetIndexToVertexMap() const;
-	dgInt32 GetVertexWeights(dgInt32 vectexIndex, dgInt32* const weightIndices, dgFloat32* const weightFactors) const;
 
+	bool HasLayersChannel() const;
 	bool HasNormalChannel() const;
 	bool HasBinormalChannel() const;
 	bool HasUV0Channel() const;
@@ -417,6 +401,8 @@ class dgMeshEffect: public dgPolyhedra, public dgRefCounter
 	void GetUV0Channel(dgInt32 strideInByte, dgFloat32* const bufferOut) const;
 	void GetUV1Channel(dgInt32 strideInByte, dgFloat32* const bufferOut) const;
 	void GetVertexColorChannel(dgInt32 strideInByte, dgFloat32* const bufferOut) const;
+//	void GetWeightBlendChannel(dgInt32 strideInByte, dgFloat32* const bufferOut) const;
+//	void GetWeightIndexChannel(dgInt32 strideInByte, dgInt32* const bufferOut) const;
 
 	dgIndexArray* MaterialGeometryBegin();
 	void MaterialGeomteryEnd(dgIndexArray* const handle);
@@ -443,9 +429,9 @@ class dgMeshEffect: public dgPolyhedra, public dgRefCounter
 	void LoadTetraMesh (const char* const filename);
 	void Serialize (dgSerialize callback, void* const userData) const;
 
-	bool HasLayers() const;
 	dgBigVector GetVertex (dgInt32 index) const;
 	dgInt32 GetVertexLayer (dgInt32 index) const;
+
 	void TransformMesh (const dgMatrix& matrix);
 
 	void* GetFirstVertex () const;
@@ -505,6 +491,7 @@ class dgMeshEffect: public dgPolyhedra, public dgRefCounter
 
 	dgPointFormat m_points;
 	dgAttibutFormat m_attrib;
+	dgInt32 m_vertexBaseCount;
 	dgInt32 m_constructionIndex;
 	
 	friend class dgConvexHull3d;
@@ -520,6 +507,17 @@ DG_INLINE dgInt32 dgMeshEffect::GetVertexCount() const
 {
 	return m_points.m_vertex.m_count;
 }
+
+DG_INLINE dgInt32 dgMeshEffect::GetVertexBaseCount() const
+{
+	return m_vertexBaseCount;
+}
+
+DG_INLINE void dgMeshEffect::SetVertexBaseCount(dgInt32 count)
+{
+	m_vertexBaseCount = count;
+}
+
 
 DG_INLINE dgInt32 dgMeshEffect::GetPropertiesCount() const
 {
@@ -548,7 +546,7 @@ DG_INLINE dgBigVector dgMeshEffect::GetVertex (dgInt32 index) const
 	return m_points.m_vertex[index];
 }
 
-DG_INLINE bool dgMeshEffect::HasLayers() const
+DG_INLINE bool dgMeshEffect::HasLayersChannel() const
 {
 	return m_points.m_layers.m_count != 0;
 }

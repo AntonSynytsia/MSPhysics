@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -19,6 +19,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#ifdef _MSC_VER
+  #include <malloc.h>
+#endif
 
 #ifdef _MSC_VER
 	#include <windows.h>
@@ -31,7 +34,7 @@
 
 			text[0] = 0;
 			va_start (v_args, fmt);     
-			vsprintf(text, fmt, v_args);
+			vsprintf_s(text, fmt, v_args);
 			va_end (v_args);            
 
 			OutputDebugStringA (text);
@@ -48,7 +51,7 @@
 	#define dTrace(x)
 #endif
 
-#if ( defined (_MSC_VER) || defined (_MINGW_32_VER) || defined (_MINGW_64_VER) )
+#if ( defined (_MSC_VER) || defined (__MINGW32__) || defined (__MINGW64__) )
 	#include <crtdbg.h>
 	#define dAssert(x) _ASSERTE(x)
 #else 
@@ -70,16 +73,15 @@
 #endif 
 
 // some constants
-#define	dPi			  3.141592f
-#define	dRadToDegree (180.0f / dPi)
-#define	dDegreeToRad (1.0f / dRadToDegree)
+#define	dPi			  dFloat (3.141592f)
+#define	dRadToDegree (dFloat (180.0f) / dPi)
+#define	dDegreeToRad (dFloat (1.0f) / dRadToDegree)
 
 // transcendental functions
 #define	dSqrt(x)	dFloat (sqrt (dFloat(x))) 
 #define	dCiel(x)	dFloat (ceil (dFloat(x))) 
 #define	dFloor(x)	dFloat (floor (dFloat(x))) 
 #define	dLog(x)		dFloat (log (dFloat(x))) 
-#define	dMod(x,y)	dFloat (fmod (dFloat(x), dFloat(y))) 
 #define	dPow(x,y)	dFloat (pow (dFloat(x), dFloat(y))) 
 
 #define dSin(x)		dFloat (sin (dFloat(x)))
@@ -91,7 +93,19 @@
 #define	dAtan2(x,y) dFloat (atan2 (dFloat(x), dFloat(y)))
 
 
-#define	D_MSC_VECTOR_ALIGMENT
+
+#ifdef D_PROFILER
+	#include <dProfiler.h>
+
+	#define D_TRACKTIME() dProfilerZoneScoped(__FUNCTION__)
+	#define D_SET_TRACK_NAME(trackName) dProfilerSetTrackName(trackName)
+#else
+	#define D_TRACKTIME() 
+	#define D_SET_TRACK_NAME(trackName)
+#endif
+
+
+#define	D_MSC_VECTOR_ALIGNMENT
 
 enum dEulerAngleOrder
 {
@@ -106,22 +120,6 @@ enum dEulerAngleOrder
 };
 
 #define dAlloca(type,size) (type*) alloca ((size) * sizeof (type))
-
-template <class T> T dAbs(T A);
-template <class T> T dSign(T A);
-template <class T> void dSwap(T& A, T& B);
-template <class T> T dMin(T A, T B);
-template <class T> T dMax(T A, T B);
-template <class T> T dClamp(T val, T min, T max);
-template<class T> T dDotProduct(int size, const T* const A, const T* const B);
-template<class T> bool dCholeskyFactorization(int size, T* const matrix);
-template<class T> void dCholeskySolve(int size, int n, const T* const choleskyMatrix, T* const x);
-template<class T> void dMatrixTimeVector(int size, const T* const matrix, const T* const v, T* const out);
-template <class T> bool dSolveDantzigLCP(int size, T* const matrix, T* const x, T* const b, T* const low, T* const high);
-template <class T> void dSort(T* const array, int elements, int(*compare) (const T* const  A, const T* const B, void* const context), void* const context = NULL);
-template <class T> void dGaussSeidelLcpSor(const int size, const T* const matrix, T* const x, const T* const b, const int* const normalIndex, const T* const low, const T* const high, T tol2, int maxIterCount, T sor);
-
-
 
 template <class T>
 T dAbs(T A)
@@ -162,8 +160,14 @@ T dClamp(T val, T min, T max)
 	return dMax (min, dMin (max, val));
 }
 
+template <class T>
+T dMod(T val, T mod)
+{
+	return T (fmod (T(val), T(mod)));
+}
+
 template <class T> 
-void dSort (T* const array, int elements, int (*compare) (const T* const  A, const T* const B, void* const context), void* const context)
+void dSort (T* const array, int elements, int (*compare) (const T* const  A, const T* const B, void* const context), void* const context = NULL)
 {
 	int stride = 8;
 	int stack[1024][2];
@@ -231,7 +235,6 @@ void dSort (T* const array, int elements, int (*compare) (const T* const  A, con
 #endif
 }
 
-
 // return dot product
 template<class T>
 T dDotProduct(int size, const T* const A, const T* const B)
@@ -242,7 +245,6 @@ T dDotProduct(int size, const T* const A, const T* const B)
 	}
 	return val;
 }
-
 
 template<class T>
 void dMatrixTimeVector(int size, const T* const matrix, const T* const v, T* const out)
@@ -255,64 +257,124 @@ void dMatrixTimeVector(int size, const T* const matrix, const T* const v, T* con
 }
 
 template<class T>
-void dCholeskySolve(int size, int n, const T* const choleskyMatrix, T* const x)
+bool dSolveGaussian(int size, T* const matrix, T* const b)
 {
-	int stride = 0;
-	for (int i = 0; i < n; i++) {
+	for (int i = 0; i < size - 1; i++) {
+		const T* const rowI = &matrix[i * size];
+		int m = i;
+		T maxVal(dAbs(rowI[i]));
+		for (int j = i + 1; j < size - 1; j++) {
+			T val(dAbs(matrix[size * j + i]));
+			if (val > maxVal) {
+				m = j;
+				maxVal = val;
+			}
+		}
+
+		if (maxVal < T(1.0e-12f)) {
+			return false;
+		}
+
+		if (m != i) {
+			T* const rowK = &matrix[m * size];
+			T* const rowJ = &matrix[i * size];
+			for (int j = 0; j < size; j++) {
+				dSwap(rowK[j], rowJ[j]);
+			}
+			dSwap(b[i], b[m]);
+		}
+
+		T den = T(1.0f) / rowI[i];
+		for (int k = i + 1; k < size; k++) {
+			T* const rowK = &matrix[size * k];
+			T factor(-rowK[i] * den);
+			for (int j = i + 1; j < size; j++) {
+				rowK[j] += rowI[j] * factor;
+			}
+			rowK[i] = T(0.0f);
+			b[k] += b[i] * factor;
+		}
+	}
+
+	for (int i = size - 1; i >= 0; i--) {
+		T acc(0);
+		T* const rowI = &matrix[i * size];
+		for (int j = i + 1; j < size; j++) {
+			acc = acc + rowI[j] * b[j];
+		}
+		b[i] = (b[i] - acc) / rowI[i];
+	}
+	return true;
+}
+
+
+template<class T>
+void dCholeskySolve(int size, int stride, const T* const choleskyMatrix, T* const x)
+{
+	int rowStart = 0;
+	for (int i = 0; i < size; i++) {
 		T acc(0.0f);
-		const T* const row = &choleskyMatrix[stride];
+		const T* const row = &choleskyMatrix[rowStart];
 		for (int j = 0; j < i; j++) {
 			acc = acc + row[j] * x[j];
 		}
 		x[i] = (x[i] - acc) / row[i];
-		stride += size;
+		rowStart += stride;
 	}
 
-	for (int i = n - 1; i >= 0; i--) {
+	for (int i = size - 1; i >= 0; i--) {
 		T acc = 0.0f;
-		for (int j = i + 1; j < n; j++) {
-			acc = acc + choleskyMatrix[size * j + i] * x[j];
+		for (int j = i + 1; j < size; j++) {
+			acc = acc + choleskyMatrix[stride * j + i] * x[j];
 		}
-		x[i] = (x[i] - acc) / choleskyMatrix[size * i + i];
+		x[i] = (x[i] - acc) / choleskyMatrix[stride * i + i];
 	}
 }
 
 template<class T>
-bool dCholeskyFactorization(int size, T* const matrix)
+bool dCholeskyFactorization(int size, int stride, T* const matrix)
 {
+	T* const invDiagonal = dAlloca(T, size);
 	for (int i = 0; i < size; i++) {
-		T* const rowN = &matrix[size * i];
+		T* const rowN = &matrix[stride * i];
 
-		int stride = 0;
+		int rowStart = 0;
 		for (int j = 0; j <= i; j++) {
 			T s(0.0f);
-			T* const rowJ = &matrix[stride];
+			T* const rowJ = &matrix[rowStart];
 			for (int k = 0; k < j; k++) {
 				s += rowN[k] * rowJ[k];
 			}
 
 			if (i == j) {
 				T diag = rowN[i] - s;
-				if (diag < T(dFloat(0.0f))) {
-					// hack to prevent explosions when round error make the diagonal a small negative value
-					if (diag < T(dFloat(-1.0e3f))) {
-						dAssert(0);
-						return false;
-					}
-					diag = dFloat(1.0e-12f);
+				if (diag < T(1.0e-8f)) {
+					return false;
 				}
-
 				rowN[i] = T(sqrt(diag));
+				invDiagonal[i] = T (1.0f) / rowN[i];
 			} else {
-				rowN[j] = ((T(1.0f) / rowJ[j]) * (rowN[j] - s));
+				//rowN[j] = ((T(1.0f) / rowJ[j]) * (rowN[j] - s));
+				rowN[j] = invDiagonal[j] * (rowN[j] - s);
 			}
-
-			stride += size;
+			rowStart += stride;
 		}
 	}
 	return true;
 }
 
+template<class T>
+bool dTestPSDmatrix(int size, int stride, const T* const matrix)
+{
+	T* const copy = dAlloca(T, size * size);
+	int row = 0;
+	for (int i = 0; i < size; i ++)
+	{
+		memcpy (&copy[i * size], &matrix[row], size * sizeof (T));
+		row += stride;
+	}
+	return dCholeskyFactorization(size, size, copy);
+}
 
 template<class T>
 void dPermuteRows(int size, int i, int j, T* const matrix, T* const choleskyMatrix, T* const x, T* const r, T* const low, T* const high, int* const permute)
@@ -437,7 +499,7 @@ void dCalculateDelta_r(int size, int n, const T* const matrix, const T* const de
 // high(i) = infinity.
 // this the same as enforcing the constrain: x(i) * r(i) = 0
 template <class T>
-bool dSolveDantzigLCP(int size, T* const matrix, T* const x, T* const b, T* const low, T* const high)
+bool dSolveDantzigLCP(int size, T* const matrix, T* const x, T* const b, T* const low, T* const high, T regularizer = T(1.e-4f))
 {
 	T* const choleskyMatrix = dAlloca(T, size * size);
 	T* const x0 = dAlloca(T, size);
@@ -449,11 +511,21 @@ bool dSolveDantzigLCP(int size, T* const matrix, T* const x, T* const b, T* cons
 	int* const permute = dAlloca(int, size);
 
 	memcpy(choleskyMatrix, matrix, sizeof(T) * size * size);
-	dCholeskyFactorization(size, choleskyMatrix);
+	bool pass = dCholeskyFactorization(size, choleskyMatrix);
+	while (!pass) {
+		int stride = 0;
+		for (int i = 0; i < size; i ++) {
+			matrix[stride] += matrix[stride] * regularizer;
+			stride += size + 1;
+		}
+		memcpy(choleskyMatrix, matrix, sizeof(T) * size * size);
+		pass = dCholeskyFactorization(size, choleskyMatrix);
+	}
+
 	for (int i = 0; i < size; i++) {
 		T* const row = &choleskyMatrix[i * size];
 		for (int j = i + 1; j < size; j++) {
-			row[j] = T(dFloat(0.0));
+			row[j] = T(0.0f);
 		}
 	}
 
@@ -646,6 +718,110 @@ bool dSolveDantzigLCP(int size, T* const matrix, T* const x, T* const b, T* cons
 }
 
 
+template <class T>
+bool dCholeskyWithRegularizer(int size, int block, T* const matrix, T regularizer)
+{
+	T* const copy = dAlloca(T, size * size);
+	memcpy(copy, matrix, size * size * sizeof (T));
+	bool pass = dCholeskyFactorization(size, block, matrix);
+
+	int count = 0;
+	while (!pass && (count < 10)) {
+		int stride = 0;
+		for (int i = 0; i < block; i++) {
+			copy[stride] += copy[stride] * regularizer;
+			stride += size + 1;
+		}
+		memcpy(matrix, copy, sizeof(T)* size * size);
+		pass = dCholeskyFactorization(size, block, matrix);
+	}
+	return pass;
+}
+
+
+// solve a general Linear complementary program (LCP)
+// A * x = b + r
+// subjected to constraints
+// x(i) = low(i),  if r(i) >= 0  
+// x(i) = high(i), if r(i) <= 0  
+// low(i) <= x(i) <= high(i),  if r(i) == 0  
+//
+// return true is the system has a solution.
+// in return 
+// x is the solution,
+// b is zero
+// note: although the system is called LCP, the solver is far more general than a strict LCP
+// to solve a strict LCP, set the following
+// low(i) = 0
+// high(i) = infinity.
+// this is the same as enforcing the constraint: x(i) * r(i) = 0
+template <class T>
+bool dSolvePartitionDantzigLCP(int size, T* const symmetricMatrixPSD, T* const x, T* const b, T* const low, T* const high, int unboundedSize, T regularizer = T(1.e-4f))
+{
+	bool ret = false;
+	if (unboundedSize > 0) {
+
+		ret = dCholeskyWithRegularizer(size, unboundedSize, symmetricMatrixPSD, regularizer);
+		if (ret) {
+			memcpy (x, b, unboundedSize * sizeof (T));
+			dCholeskySolve(size, unboundedSize, symmetricMatrixPSD, x);
+			int base = unboundedSize * size;
+			for (int i = unboundedSize; i < size; i++) {
+				b[i] -= dDotProduct(unboundedSize, &symmetricMatrixPSD[base], x);
+				base += size;
+			}
+
+			const int boundedSize = size - unboundedSize;
+			T* const l = dAlloca(T, boundedSize);
+			T* const h = dAlloca(T, boundedSize);
+			T* const c = dAlloca(T, boundedSize);
+			T* const u = dAlloca(T, boundedSize);
+			T* const a11 = dAlloca(T, boundedSize * boundedSize);
+			T* const a10 = dAlloca(T, boundedSize * unboundedSize);
+
+			for (int i = 0; i < boundedSize; i++) {
+				T* const g = &a10[i * unboundedSize];
+				const T* const row = &symmetricMatrixPSD[(unboundedSize + i) * size];
+				for (int j = 0; j < unboundedSize; j++) {
+					g[j] = -row[j];
+				}
+				dCholeskySolve(size, unboundedSize, symmetricMatrixPSD, g);
+
+				T* const arow = &a11[i * boundedSize];
+				const T* const row2 = &symmetricMatrixPSD[(unboundedSize + i) * size];
+				arow[i] = row2[unboundedSize + i] + dDotProduct(unboundedSize, g, row2);
+				for (int j = i + 1; j < boundedSize; j++) {
+					const T* const row1 = &symmetricMatrixPSD[(unboundedSize + j) * size];
+					T elem = row1[unboundedSize + i] + dDotProduct(unboundedSize, g, row1);
+					arow[j] = elem;
+					a11[j * boundedSize + i] = elem;
+				}
+				u[i] = T(0.0f);
+				c[i] = b[i + unboundedSize];
+				l[i] = low[i + unboundedSize];
+				h[i] = high[i + unboundedSize];
+			}
+
+			if (dSolveDantzigLCP(boundedSize, a11, u, c, l, h, regularizer)) {
+				for (int i = 0; i < boundedSize; i++) {
+					const T s = u[i];
+					x[unboundedSize + i] = s;
+					const T* const g = &a10[i * unboundedSize];
+					for (int j = 0; j < unboundedSize; j++) {
+						x[j] += g[j] * s;
+					}
+				}
+				ret = true;
+			}
+		}
+	} else {
+		ret = dSolveDantzigLCP(size, symmetricMatrixPSD, x, b, low, high, regularizer);
+	}
+
+	return ret;
+}
+
+
 // solve a general Linear complementary program (LCP)
 // A * x = b + r
 // subjected to constraints
@@ -663,24 +839,55 @@ bool dSolveDantzigLCP(int size, T* const matrix, T* const x, T* const b, T* cons
 // high(i) = infinity.
 // this the same as enforcing the constraint: x(i) * r(i) = 0
 template <class T>
-void dGaussSeidelLcpSor(const int size, const T* const matrix, T* const x, const T* const b, const int* const normalIndex, const T* const low, const T* const high, T tol2, int maxIterCount, T sor)
+void dGaussSeidelLcpSor(const int size, const int stride, const T* const matrix, T* const x, const T* const b, const int* const normalIndex, const T* const low, const T* const high, T tol2, int maxIterCount, T sor)
 {
 	const T* const me = matrix;
 	T* const invDiag1 = dAlloca(T, size);
+	T* const u = dAlloca(T, size + 1);
+	int* const index = dAlloca(int, size);
 
-	int stride = 0;
+	u[size] = T(1.0f);
+	int rowStart = 0;
 	for (int j = 0; j < size; j++) {
-		const int index = normalIndex[j];
-		const T val = index ? x[j + index] : 1.0f;
+		u[j] = x[j];
+		index[j] = normalIndex[j] ? j + normalIndex[j] : size;
+	}
+
+	for (int j = 0; j < size; j++) {
+		const T val = u[index[j]];
 		const T l = low[j] * val;
 		const T h = high[j] * val;
-		x[j] = dClamp(x[j], l, h);
-		invDiag1[j] = T(1.0f) / me[stride + j];
-		stride += size;
+		u[j] = dClamp(u[j], l, h);
+		invDiag1[j] = T(1.0f) / me[rowStart + j];
+		rowStart += stride;
 	}
 
 	T tolerance(tol2 * 2.0f);
 	const T* const invDiag = invDiag1;
+	const int maxCount = dMax (8, size);
+	for (int i = 0; (i < maxCount) && (tolerance > tol2); i++) {
+		int base = 0;
+		tolerance = T(0.0f);
+		for (int j = 0; j < size; j++) {
+			const T* const row = &me[base];
+			T r(b[j] - dDotProduct(size, row, u));
+			T f((r + row[j] * u[j]) * invDiag[j]);
+
+			const T val = u[index[j]];
+			const T l = low[j] * val;
+			const T h = high[j] * val;
+			if (f > h) {
+				u[j] = h;
+			} else if (f < l) {
+				u[j] = l;
+			} else {
+				tolerance += r * r;
+				u[j] = f;
+			}
+			base += stride;
+		}
+	}
+
 #ifdef _DEBUG 
 	int passes = 0;
 #endif
@@ -692,25 +899,27 @@ void dGaussSeidelLcpSor(const int size, const T* const matrix, T* const x, const
 #endif
 		for (int j = 0; j < size; j++) {
 			const T* const row = &me[base];
-			T r(b[j] - dDotProduct(size, row, x));
-			T f((r + row[j] * x[j]) * invDiag[j]);
-			f = x[j] + (f - x[j]) * sor;
+			T r(b[j] - dDotProduct(size, row, u));
+			T f((r + row[j] * u[j]) * invDiag[j]);
+			f = u[j] + (f - u[j]) * sor;
 
-			const int index = normalIndex[j];
-			const T val = index ? x[j + index] : 1.0f;
+			const T val = u[index[j]];
 			const T l = low[j] * val;
 			const T h = high[j] * val;
 			if (f > h) {
-				x[j] = h;
+				u[j] = h;
 			} else if (f < l) {
-				x[j] = l;
+				u[j] = l;
 			} else {
 				tolerance += r * r;
-				//x[j] = x[j] + (f - x[j]) * sor;
-				x[j] = f;
+				u[j] = f;
 			}
-			base += size;
+			base += stride;
 		}
+	}
+
+	for (int j = 0; j < size; j++) {
+		x[j] = u[j];
 	}
 }
 

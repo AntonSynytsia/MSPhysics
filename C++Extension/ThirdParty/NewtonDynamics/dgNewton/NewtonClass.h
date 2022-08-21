@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -62,17 +62,20 @@ class NewtonUserJoint: public dgUserConstraint
 	void GetJacobianAt (dgInt32 index, dgFloat32* const jacobian0, dgFloat32* const jacobian1) const;
 
 	dgFloat32 GetRowForce (dgInt32 row) const;
+	void GetJacobian(dgJacobian& jacobian0, dgJacobian& jacobian1) const;
+
 	void SetHighFriction (dgFloat32 friction);
 	void SetLowerFriction (dgFloat32 friction);
 	void SetRowStiffness (dgFloat32 stiffness);
 	void SetAcceleration (dgFloat32 acceleration);
-	void SetAsInverseDynamicsRow();
 	dgFloat32 GetAcceleration () const;
-//	dgFloat32 GetInverseDynamicsAcceleration() const;
 	dgFloat32 CalculateZeroMotorAcceleration() const;
 	
-	void SetSpringDamperAcceleration (dgFloat32 rowStiffness, dgFloat32 springK, dgFloat32 springD);
+	void SetMassDependentSpringDamperAcceleration(dgFloat32 spring, dgFloat32 damper);
+	void SetMassIndependentSpringDamperAcceleration (dgFloat32 rowStiffness, dgFloat32 springK, dgFloat32 springD);
 	void SetUpdateFeedbackFunction (NewtonUserBilateralCallback getFeedback);
+
+	void SetMassScale (dgFloat32 scale0, dgFloat32 scale1);
 
 	protected:
 	NewtonUserJoint(NewtonUserBilateralCallback callback, dgBody* const body);
@@ -83,17 +86,6 @@ class NewtonUserJoint: public dgUserConstraint
 	dgForceImpactPair* m_forceArray;
 	dgContraintDescritor* m_param;
 	dgInt32 m_rows;
-};
-
-
-class NewtonUserJointInverseDynamicsEffector : public NewtonUserJoint
-{
-	public:
-	NewtonUserJointInverseDynamicsEffector (dgInverseDynamics* const invDynSolver, dgInverseDynamics::dgNode* const invDynNode, NewtonUserBilateralCallback callback);
-	~NewtonUserJointInverseDynamicsEffector();
-
-	private:
-	dgInverseDynamics* m_invDynSolver;
 };
 
 #endif

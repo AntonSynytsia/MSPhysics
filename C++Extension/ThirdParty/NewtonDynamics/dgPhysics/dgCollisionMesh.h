@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -37,7 +37,7 @@ typedef void (*dgCollisionMeshCollisionCallback) (const dgBody* const bodyWithTr
 												  dgInt32 vertexCount, const dgFloat32* const vertex, dgInt32 vertexStrideInBytes); 
 
 
-DG_MSC_VECTOR_ALIGMENT 
+DG_MSC_VECTOR_ALIGNMENT 
 class dgPolygonMeshDesc: public dgFastAABBInfo
 {
 	public:
@@ -64,8 +64,10 @@ class dgPolygonMeshDesc: public dgFastAABBInfo
 	{
 		const dgMatrix& soupMatrix = m_polySoupInstance->GetGlobalMatrix();
 		m_boxDistanceTravelInMeshSpace = m_polySoupInstance->GetInvScale() * soupMatrix.UnrotateVector(distanceInGlobalSpace * m_convexInstance->GetInvScale());
+		if (m_boxDistanceTravelInMeshSpace.DotProduct(m_boxDistanceTravelInMeshSpace).GetScalar() < dgFloat32 (1.0e-2f)) {
+			m_doContinuesCollisionTest = false;
+		}
 	}
-
 
 	DG_INLINE dgInt32 GetFaceIndexCount(dgInt32 indexCount) const
 	{
@@ -96,7 +98,7 @@ class dgPolygonMeshDesc: public dgFastAABBInfo
 
 	DG_INLINE dgFloat32 GetSeparetionDistance() const
 	{
-		return m_separationDistance * m_polySoupInstance->GetScale().GetScalar();
+		return m_separationDistance[0] * m_polySoupInstance->GetScale().GetScalar();
 	}
 
 
@@ -125,9 +127,9 @@ class dgPolygonMeshDesc: public dgFastAABBInfo
 	bool m_doContinuesCollisionTest;
 	dgInt32 m_globalFaceVertexIndex[DG_MAX_COLLIDING_INDICES];
 	dgMesh m_meshData;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
-DG_MSC_VECTOR_ALIGMENT 
+DG_MSC_VECTOR_ALIGNMENT 
 class dgCollisionMeshRayHitDesc
 {
 	public:
@@ -143,7 +145,7 @@ class dgCollisionMeshRayHitDesc
 	void*  m_userData;
 	void*  m_altenateUserData;
 	dgMatrix m_matrix;
-}DG_GCC_VECTOR_ALIGMENT;
+}DG_GCC_VECTOR_ALIGNMENT;
 
 
 
@@ -151,7 +153,7 @@ class dgCollisionMesh: public dgCollision
 {
 	public:
 
-	DG_MSC_VECTOR_ALIGMENT 
+	DG_MSC_VECTOR_ALIGNMENT 
 	class dgMeshVertexListIndexList
 	{
 		public:
@@ -162,7 +164,7 @@ class dgCollisionMesh: public dgCollision
 		dgInt32 m_maxIndexCount;
 		dgInt32 m_vertexCount;
 		dgInt32 m_vertexStrideInBytes;
-	}DG_GCC_VECTOR_ALIGMENT;
+	}DG_GCC_VECTOR_ALIGNMENT;
 
 
 	dgCollisionMesh (dgWorld* const world, dgCollisionID type);

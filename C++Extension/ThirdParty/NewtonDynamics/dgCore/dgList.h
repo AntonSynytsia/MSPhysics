@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -199,7 +199,6 @@ class dgList
 	public:
 	DG_CLASS_ALLOCATOR(allocator)
 
-//	dgList ();
 	dgList (dgMemoryAllocator* const allocator);
 	virtual ~dgList ();
 
@@ -208,14 +207,14 @@ class dgList
 
 	operator dgInt32() const;
 	dgInt32 GetCount() const;
-	dgListNode *GetLast() const;
-	dgListNode *GetFirst() const;
-	dgListNode *Append ();
-	dgListNode *Append (dgListNode* const node);
-	dgListNode *Append (const T &element);
-	dgListNode *Addtop ();
-	dgListNode *Addtop (dgListNode* const node);
-	dgListNode *Addtop (const T &element);
+	dgListNode* GetLast() const;
+	dgListNode* GetFirst() const;
+	dgListNode* Append ();
+	dgListNode* Append (dgListNode* const node);
+	dgListNode* Append (const T &element);
+	dgListNode* Addtop ();
+	dgListNode* Addtop (dgListNode* const node);
+	dgListNode* Addtop (const T &element);
 	
 	void RotateToEnd (dgListNode* const node);
 	void RotateToBegin (dgListNode* const node);
@@ -223,8 +222,8 @@ class dgList
 	void InsertBefore (dgListNode* const root, dgListNode* const node);
 
 
-	dgListNode *Find (const T &element) const;
-	dgListNode *GetNodeFromInfo (T &m_info) const;
+	dgListNode* Find (const T &element) const;
+	dgListNode* GetNodeFromInfo (T &m_info) const;
 	void Remove (dgListNode* const node);
 	void Remove (const T &element);
 	void RemoveAll ();
@@ -233,14 +232,17 @@ class dgList
 	void Unlink (dgListNode* const node);
 	bool SanityCheck () const;
 
+	protected:
+//	dgListNode* SafeAddtop(const T &element);
+
 
 	// ***********************************************************
 	// member variables
 	// ***********************************************************
 	private:
 	dgInt32 m_count;
-	dgListNode *m_first;
-	dgListNode *m_last;
+	dgListNode* m_first;
+	dgListNode* m_last;
 	dgMemoryAllocator* m_allocator;
 
 //	static dgInt32 m_size;
@@ -366,6 +368,7 @@ typename dgList<T>::dgListNode *dgList<T>::Append (const T &element)
 	return m_last;
 }
 
+
 template<class T>
 typename dgList<T>::dgListNode *dgList<T>::Addtop (dgListNode* const node)
 {
@@ -419,75 +422,94 @@ typename dgList<T>::dgListNode *dgList<T>::Addtop (const T &element)
 	return m_first;
 }
 
+/*
+template<class T>
+typename dgList<T>::dgListNode *dgList<T>::SafeAddtop(const T& element)
+{
+	dgAssert (m_last);
+	m_count++;
+
+	dgListNode* const node = new (m_allocator) dgListNode(element, NULL, NULL);
+	dgListNode* const first = (dgListNode*) dgInterlockedExchange ((void**) &m_first, (void*) node);
+
+	node->m_next = first;
+	first->m_prev = node;
+	dgAssert (m_last);
+
+#ifdef __ENABLE_DG_CONTAINERS_SANITY_CHECK 
+	dgAssert(SanityCheck());
+#endif
+	return node;
+}
+*/
+
 template<class T>
 void dgList<T>::InsertAfter (dgListNode* const root, dgListNode* const node)
 {
 	dgAssert (root);
-	dgAssert (node != root);
-	
-	if (root->m_next != node) {
-		if (node == m_first) {
-			m_first = node->m_next;
-		}
-		if (node == m_last) {
-			m_last = node->m_prev;
-		}
-		node->Unlink ();
+	if (node != root) {
+		if (root->m_next != node) {
+			if (node == m_first) {
+				m_first = node->m_next;
+			}
+			if (node == m_last) {
+				m_last = node->m_prev;
+			}
+			node->Unlink ();
 		
-		node->m_prev = root;
-		node->m_next = root->m_next;
-		if (root->m_next) {
-			root->m_next->m_prev = node;
-		} 
-		root->m_next = node;
+			node->m_prev = root;
+			node->m_next = root->m_next;
+			if (root->m_next) {
+				root->m_next->m_prev = node;
+			} 
+			root->m_next = node;
 
-		if (node->m_next == NULL) {
-			m_last = node;
+			if (node->m_next == NULL) {
+				m_last = node;
+			}
+
+			dgAssert (m_last);
+			dgAssert (!m_last->m_next);
+			dgAssert (m_first);
+			dgAssert (!m_first->m_prev);
+			dgAssert (SanityCheck ());
 		}
-
-		dgAssert (m_last);
-		dgAssert (!m_last->m_next);
-		dgAssert (m_first);
-		dgAssert (!m_first->m_prev);
-		dgAssert (SanityCheck ());
 	}
 }
-
 
 template<class T>
 void dgList<T>::InsertBefore (dgListNode* const root, dgListNode* const node)
 {
 	dgAssert (root);
-	dgAssert (node != root);
-	
-	if (root->m_prev != node) {
-		if (node == m_last) {
-			m_last = node->m_prev;
-		}
-		if (node == m_first) {
-			m_first = node->m_next;
-		}
-		node->Unlink ();
+	if (node != root) {
+		if (root->m_prev != node) {
+			if (node == m_last) {
+				m_last = node->m_prev;
+			}
+			if (node == m_first) {
+				m_first = node->m_next;
+			}
+			node->Unlink ();
 		
-		node->m_next = root;
-		node->m_prev = root->m_prev;
-		if (root->m_prev) {
-			root->m_prev->m_next = node;
-		} 
-		root->m_prev = node;
+			node->m_next = root;
+			node->m_prev = root->m_prev;
+			if (root->m_prev) {
+				root->m_prev->m_next = node;
+			} 
+			root->m_prev = node;
 
-		if (node->m_prev == NULL) {
-			m_first = node;
+			if (node->m_prev == NULL) {
+				m_first = node;
+			}
+
+			dgAssert (m_first);
+			dgAssert (!m_first->m_prev);
+			dgAssert (m_last);
+			dgAssert (!m_last->m_next);
+			dgAssert (SanityCheck ());
 		}
-
-		dgAssert (m_first);
-		dgAssert (!m_first->m_prev);
-		dgAssert (m_last);
-		dgAssert (!m_last->m_next);
-		dgAssert (SanityCheck ());
 	}
 }
-
 
 template<class T>
 void dgList<T>::RotateToEnd (dgListNode* const node)

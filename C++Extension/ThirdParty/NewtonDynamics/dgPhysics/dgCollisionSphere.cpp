@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -260,7 +260,6 @@ dgFloat32 dgCollisionPoint::GetVolume () const
 	return dgFloat32 (0.0f); 
 }
 
-
 dgVector dgCollisionPoint::SupportVertex (const dgVector& dir, dgInt32* const vertexIndex) const
 {
 	return dgVector (dgFloat32 (0.0f)); 
@@ -286,16 +285,13 @@ dgFloat32 dgCollisionSphere::RayCast (const dgVector& p0, const dgVector& p1, dg
 
 void dgCollisionSphere::MassProperties () 
 {
-	m_centerOfMass = dgVector (dgFloat32 (0.0f));
-	m_crossInertia = dgVector (dgFloat32 (0.0f));
-	dgFloat32 volume = dgFloat32 (4.0f * dgPI / 3.0f) * m_radius *  m_radius * m_radius;
+	m_centerOfMass = dgVector::m_zero;
+	m_crossInertia = dgVector::m_zero;
+	dgFloat32 volume = dgFloat32 (4.0f * dgPi / 3.0f) * m_radius *  m_radius * m_radius;
 	dgFloat32 II = dgFloat32 (2.0f / 5.0f) * m_radius *  m_radius;
-
-//dgCollisionConvex::MassProperties ();
 	m_inertia = dgVector  (II, II, II, dgFloat32 (0.0f));
 	m_centerOfMass.m_w = volume;
 }
-
 
 void dgCollisionSphere::GetCollisionInfo(dgCollisionInfo* const info) const
 {
@@ -309,7 +305,6 @@ void dgCollisionSphere::Serialize(dgSerialize callback, void* const userData) co
 	callback (userData, &m_radius, sizeof (m_radius));
 }
 
-
 dgVector dgCollisionSphere::SupportVertexSpecial (const dgVector& dir, dgFloat32 skinThickness, dgInt32* const vertexIndex) const 
 {
 	return dgVector (dgFloat32 (0.0f));
@@ -320,3 +315,13 @@ dgVector dgCollisionSphere::SupportVertexSpecialProjectPoint (const dgVector& po
 	return dir.Scale (m_radius - DG_PENETRATION_TOL);
 }
 
+void dgCollisionSphere::CalculateImplicitContacts(dgInt32 count, dgContactPoint* const contactPoints) const
+{
+	for (dgInt32 i = 0; i < count; i++) {
+		dgVector normal(contactPoints[i].m_point & dgVector::m_triplexMask);
+		dgAssert(normal.DotProduct(normal).GetScalar() > dgFloat32(0.0f));
+		normal = normal.Normalize();
+		contactPoints[i].m_normal = normal * dgVector::m_negOne;
+		contactPoints[i].m_point = normal.Scale(m_radius);
+	}
+}

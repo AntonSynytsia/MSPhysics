@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -58,7 +58,6 @@ void Newton::UpdatePhysicsAsync (dgFloat32 timestep)
 	UpdateAsync (timestep);
 }
 
-
 NewtonUserJoint::NewtonUserJoint(NewtonUserBilateralCallback callback, dgBody* const body)
 	:dgUserConstraint(NULL, body, NULL, 1)
 	,m_forceArray(m_jointForce)
@@ -93,6 +92,15 @@ NewtonUserJoint::~NewtonUserJoint ()
 	}
 }
 
+void NewtonUserJoint::SetMassScale (dgFloat32 scale0, dgFloat32 scale1)
+{
+	m_massScaleBody0 = scale0;
+	m_massScaleBody1 = scale1;
+
+	dgWorld* const world = m_body0->GetWorld();
+	dgSkeletonList& skelManager = *world;
+	skelManager.m_skelListIsDirty = true;
+}
 
 dgUnsigned32 NewtonUserJoint::JacobianDerivative (dgContraintDescritor& params)
 {
@@ -117,7 +125,7 @@ void NewtonUserJoint::Serialize (dgSerialize serializeCallback, void* const user
 void NewtonUserJoint::AddLinearRowJacobian (const dgVector& pivot0, const dgVector& pivot1, const dgVector& dir)
 {
 	dgPointParam pointData;
-    InitPointParam (pointData, m_stiffness, pivot0, pivot1);
+	InitPointParam (pointData, m_defualtDiagonalRegularizer, pivot0, pivot1);
 
 	CalculatePointDerivative (m_rows, *m_param, dir, pointData, &m_forceArray[m_rows]); 
 	m_rows ++;
@@ -126,7 +134,7 @@ void NewtonUserJoint::AddLinearRowJacobian (const dgVector& pivot0, const dgVect
 
 void NewtonUserJoint::AddAngularRowJacobian (const dgVector& dir, dgFloat32 relAngle)
 {
-	CalculateAngularDerivative (m_rows, *m_param, dir, m_stiffness, relAngle, &m_forceArray[m_rows]); 
+	CalculateAngularDerivative (m_rows, *m_param, dir, m_defualtDiagonalRegularizer, relAngle, &m_forceArray[m_rows]); 
 	m_rows ++;
 	dgAssert (m_rows <= dgInt32 (m_maxDOF));
 }
@@ -152,9 +160,20 @@ void NewtonUserJoint::GetJacobianAt(dgInt32 index, dgFloat32* const jacobian0, d
 			jacobian0[i + 3] = m_param->m_jacobian[index].m_jacobianM0.m_angular[i];
 			jacobian1[i + 3] = m_param->m_jacobian[index].m_jacobianM1.m_angular[i];
 		}
-	
 	}
 }
+
+void NewtonUserJoint::GetJacobian(dgJacobian& jacobian0, dgJacobian& jacobian1) const
+{
+	dgInt32 index = m_rows - 1;
+	if ((index >= 0) && (index < dgInt32(m_maxDOF))) {
+		jacobian0.m_linear = m_param->m_jacobian[index].m_jacobianM0.m_linear;
+		jacobian0.m_angular = m_param->m_jacobian[index].m_jacobianM0.m_angular;
+		jacobian1.m_linear = m_param->m_jacobian[index].m_jacobianM1.m_linear;
+		jacobian1.m_angular = m_param->m_jacobian[index].m_jacobianM1.m_angular;
+	}
+}
+
 
 dFloat NewtonUserJoint::GetAcceleration () const
 {
@@ -174,35 +193,6 @@ void NewtonUserJoint::SetAcceleration (dgFloat32 acceleration)
 	}
 }
 
-/*
-dgFloat32 NewtonUserJoint::GetInverseDynamicsAcceleration() const
-{
-	dgInt32 index = m_rows - 1;
-	dgFloat32 accel = dgFloat32(0.0f);
-	if ((index >= 0) && (index < dgInt32(m_maxDOF))) {
-		m_param->m_forceBounds[index].m_isIkRow = 1;
-		accel = GetInverseDynamicAcceleration(index);
-	}
-	return accel;
-}
-*/
-
-void NewtonUserJoint::SetAsInverseDynamicsRow()
-{
-	dgInt32 index = m_rows - 1;
-	if ((index >= 0) && (index < dgInt32(m_maxDOF))) {
-
-		dgFloat32 accel;
-		if (m_rowIsIk & (1 << index)) {
-			accel = GetInverseDynamicAcceleration(index);
-		} else {
-			accel = GetAcceleration();
-		}
-		SetMotorAcceleration(index, accel, *m_param);
-		m_rowIsIk |= (1 << index);
-	}
-}
-
 dgFloat32 NewtonUserJoint::CalculateZeroMotorAcceleration() const
 {
 	dgInt32 index = m_rows - 1;
@@ -213,15 +203,21 @@ dgFloat32 NewtonUserJoint::CalculateZeroMotorAcceleration() const
 	return accel;
 }
 
-
-void NewtonUserJoint::SetSpringDamperAcceleration (dgFloat32 rowStiffness, dFloat spring, dFloat damper)
+void NewtonUserJoint::SetMassIndependentSpringDamperAcceleration (dgFloat32 rowStiffness, dFloat spring, dFloat damper)
 {
 	dgInt32 index = m_rows - 1;
 	if ((index >= 0) &&  (index < dgInt32 (m_maxDOF))) {
-		dgBilateralConstraint::SetSpringDamperAcceleration (index, *m_param, rowStiffness, spring, damper);
+		dgBilateralConstraint::SetMassIndependentSpringDamperAcceleration (index, *m_param, rowStiffness, spring, damper);
 	}
 }
 
+void NewtonUserJoint::SetMassDependentSpringDamperAcceleration(dgFloat32 spring, dgFloat32 damper)
+{
+	dgInt32 index = m_rows - 1;
+	if ((index >= 0) && (index < dgInt32(m_maxDOF))) {
+		dgBilateralConstraint::SetMassDependentSpringDamperAcceleration(index, *m_param, spring, damper);
+	}
+}
 
 void NewtonUserJoint::SetHighFriction (dgFloat32 friction)
 {
@@ -263,17 +259,14 @@ void NewtonUserJoint::SetLowerFriction (dgFloat32 friction)
 	}
 }
 
-
 void NewtonUserJoint::SetRowStiffness (dgFloat32 stiffness)
 {
 	dgInt32 index = m_rows - 1;
 	if ((index >= 0) &&  (index < dgInt32 (m_maxDOF))) {
 		stiffness = dgClamp (stiffness, dgFloat32(0.0f), dgFloat32(1.0f));
-		m_param->m_jointStiffness[index] = stiffness;
+		m_param->m_diagonalRegularizer[index] = stiffness;
 	}
 }
-
-
 
 dgFloat32 NewtonUserJoint::GetRowForce (dgInt32 row) const
 {
@@ -287,17 +280,4 @@ dgFloat32 NewtonUserJoint::GetRowForce (dgInt32 row) const
 void NewtonUserJoint::SetUpdateFeedbackFunction (NewtonUserBilateralCallback getFeedback)
 {
 	dgUserConstraint::SetUpdateFeedbackFunction ((ConstraintsForceFeeback) getFeedback);
-}
-
-
-NewtonUserJointInverseDynamicsEffector::NewtonUserJointInverseDynamicsEffector(dgInverseDynamics* const invDynSolver, dgInverseDynamics::dgNode* const invDynNode, NewtonUserBilateralCallback callback)
-	:NewtonUserJoint(callback, invDynSolver->GetBody(invDynNode))
-	,m_invDynSolver(invDynSolver)
-{
-	m_invDynSolver->AddEffector (this);
-}
-
-NewtonUserJointInverseDynamicsEffector::~NewtonUserJointInverseDynamicsEffector()
-{
-	m_invDynSolver->RemoveLoopJoint (this);
 }

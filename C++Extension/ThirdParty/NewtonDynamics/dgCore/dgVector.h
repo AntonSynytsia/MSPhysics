@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -30,9 +30,11 @@
 #define dgCheckVector(x) (dgCheckFloat(x[0]) && dgCheckFloat(x[1]) && dgCheckFloat(x[2]) && dgCheckFloat(x[3]))
 
 #ifdef DG_SCALAR_VECTOR_CLASS
-#include "dgVectorScalar.h"
+	#include "dgVectorScalar.h"
+#elif defined(__ANDROID__) || defined (_ARM_VER) 
+	#include "dgVectorArmNeon.h"
 #else
-#include "dgVectorSimd.h"
+	#include "dgVectorSimd.h"
 #endif
 
 template<class T>
@@ -46,9 +48,9 @@ class dgTemplateVector
 	}
 	
 	DG_INLINE dgTemplateVector (const T* const ptr)
-		:m_x(ptr[0]), m_y(ptr[1]), m_z(ptr[2]), m_w (T(0.0f))
+		:m_x(ptr[0]), m_y(ptr[1]), m_z(ptr[2]), m_w (ptr[3])
 	{
-		//	dgAssert (dgCheckVector ((*this)));
+		//dgAssert (dgCheckVector ((*this)));
 	}
 
 	DG_INLINE dgTemplateVector (const dgTemplateVector<T>& copy)
@@ -183,7 +185,6 @@ class dgTemplateVector
 
 		return normal;
 	}
-
 
 	// return dot 4d dot product
 	DG_INLINE dgTemplateVector<T> DotProduct (const dgTemplateVector &A) const

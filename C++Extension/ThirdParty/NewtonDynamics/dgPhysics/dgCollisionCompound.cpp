@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -249,7 +249,8 @@ bool dgCollisionCompound::dgNodeBase::BoxTest (const dgOOBBTestData& data) const
 {
 	dgFloat32 separatingDistance = data.UpdateSeparatingDistance (data.m_aabbP0, data.m_aabbP1, m_p0, m_p1);
 	if (dgOverlapTest (data.m_aabbP0, data.m_aabbP1, m_p0, m_p1)) {
-		dgAssert (separatingDistance > dgFloat32 (1000.0f));
+		// this assert is in fact a bug
+		//dgAssert (separatingDistance > dgFloat32 (1000.0f));
 		dgVector origin (data.m_matrix.UntransformVector(m_origin));
 		dgVector size (data.m_absMatrix.UnrotateVector(m_size));
 		dgVector p0 (origin - size);
@@ -722,8 +723,6 @@ dgFloat32 dgCollisionCompound::RayCast (const dgVector& localP0, const dgVector&
 	return maxT;
 }
 
-
-
 dgFloat32 dgCollisionCompound::GetVolume () const
 {
 	dgFloat32 volume = dgFloat32 (0.0f);
@@ -749,7 +748,7 @@ dgFloat32 dgCollisionCompound::GetBoxMaxRadius () const
 
 dgVector dgCollisionCompound::CalculateVolumeIntegral (const dgMatrix& globalMatrix, const dgVector& plane, const dgCollisionInstance& parentScale) const
 {
-	dgVector totalVolume (dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32 (0.0f));
+	dgVector totalVolume (dgVector::m_zero);
 	dgTreeArray::Iterator iter (m_array);
 	for (iter.Begin(); iter; iter ++) {
 		const dgCollisionInstance* const childInstance = iter.GetNode()->GetInfo()->GetShape();
@@ -1829,7 +1828,7 @@ dgInt32 dgCollisionCompound::CalculateContactsToCompound (dgBroadPhase::dgPair* 
 							}
 							contactCount += count;
 							if (contactCount > (DG_MAX_CONTATCS - 2 * (DG_CONSTRAINT_MAX_ROWS / 3))) {
-								contactCount = m_world->ReduceContacts (contactCount, contacts, DG_CONSTRAINT_MAX_ROWS / 3, proxy.m_contactJoint->GetPruningTolerance());
+								contactCount = m_world->PruneContacts(contactCount, contacts, proxy.m_contactJoint->GetPruningTolerance(), 16);
 							}
 						} else if (count == -1) {
 							contactCount = -1;
@@ -1984,7 +1983,7 @@ dgInt32 dgCollisionCompound::CalculateContactsToHeightField (dgBroadPhase::dgPai
 							contactCount += count;
 
 							if (contactCount > (DG_MAX_CONTATCS - 2 * (DG_CONSTRAINT_MAX_ROWS / 3))) {
-								contactCount = m_world->ReduceContacts (contactCount, contacts, DG_CONSTRAINT_MAX_ROWS / 3, proxy.m_contactJoint->GetPruningTolerance());
+								contactCount = m_world->PruneContacts(contactCount, contacts, proxy.m_contactJoint->GetPruningTolerance(), 16);
 							}
 						} else if (count == -1) {
 							contactCount = -1;
@@ -2086,7 +2085,7 @@ dgInt32 dgCollisionCompound::CalculateContactsUserDefinedCollision (dgBroadPhase
 							contactCount += count;
 
 							if (contactCount > (DG_MAX_CONTATCS - 2 * (DG_CONSTRAINT_MAX_ROWS / 3))) {
-								contactCount = m_world->ReduceContacts (contactCount, contacts, DG_CONSTRAINT_MAX_ROWS / 3, proxy.m_contactJoint->GetPruningTolerance());
+								contactCount = m_world->PruneContacts(contactCount, contacts, proxy.m_contactJoint->GetPruningTolerance(), 16);
 							}
 						} else if (count == -1) {
 							contactCount = -1;
@@ -2182,7 +2181,7 @@ dgInt32 dgCollisionCompound::CalculateContactsToSingle (dgBroadPhase::dgPair* co
 							}
 							contactCount += count;
 							if (contactCount > (DG_MAX_CONTATCS - 2 * (DG_CONSTRAINT_MAX_ROWS / 3))) {
-								contactCount = m_world->ReduceContacts (contactCount, contacts, DG_CONSTRAINT_MAX_ROWS / 3, proxy.m_contactJoint->GetPruningTolerance());
+								contactCount = m_world->PruneContacts(contactCount, contacts, proxy.m_contactJoint->GetPruningTolerance(), 16);
 							}
 						} else if (count == -1) {
 							contactCount = -1;
@@ -2303,7 +2302,7 @@ dgInt32 dgCollisionCompound::CalculateContactsToCollisionTree (dgBroadPhase::dgP
 							}
 							contactCount += count;
 							if (contactCount > (DG_MAX_CONTATCS - 2 * (DG_CONSTRAINT_MAX_ROWS / 3))) {
-								contactCount = m_world->ReduceContacts (contactCount, contacts, DG_CONSTRAINT_MAX_ROWS / 3, proxy.m_contactJoint->GetPruningTolerance());
+								contactCount = m_world->PruneContacts(contactCount, contacts, proxy.m_contactJoint->GetPruningTolerance(), 16);
 							}
 						} else if (count == -1) {
 							contactCount = -1;
@@ -2552,7 +2551,7 @@ dgInt32 dgCollisionCompound::CalculateContactsToSingleContinue(dgBroadPhase::dgP
 								contactCount += count;
 
 								if (contactCount > (DG_MAX_CONTATCS - 2 * (DG_CONSTRAINT_MAX_ROWS / 3))) {
-									contactCount = m_world->ReduceContacts (contactCount, contacts, DG_CONSTRAINT_MAX_ROWS / 3, proxy.m_contactJoint->GetPruningTolerance());
+									contactCount = m_world->PruneContacts(contactCount, contacts, proxy.m_contactJoint->GetPruningTolerance(), 16);
 								}
 
 								if (maxParam == dgFloat32 (0.0f)) {
@@ -2705,7 +2704,7 @@ dgInt32 dgCollisionCompound::CalculateContactsToCompoundContinue(dgBroadPhase::d
 								contactCount += count;
 
 								if (contactCount > (DG_MAX_CONTATCS - 2 * (DG_CONSTRAINT_MAX_ROWS / 3))) {
-									contactCount = m_world->ReduceContacts (contactCount, contacts, DG_CONSTRAINT_MAX_ROWS / 3, proxy.m_contactJoint->GetPruningTolerance());
+									contactCount = m_world->PruneContacts(contactCount, contacts, proxy.m_contactJoint->GetPruningTolerance(), 16);
 								}
 
 								if (maxParam == dgFloat32 (0.0f)) {
@@ -2916,7 +2915,7 @@ dgInt32 dgCollisionCompound::CalculateContactsToCollisionTreeContinue (dgBroadPh
 								contactCount += count;
 
 								if (contactCount > (DG_MAX_CONTATCS - 2 * (DG_CONSTRAINT_MAX_ROWS / 3))) {
-									contactCount = m_world->ReduceContacts (contactCount, contacts, DG_CONSTRAINT_MAX_ROWS / 3, proxy.m_contactJoint->GetPruningTolerance());
+									contactCount = m_world->PruneContacts(contactCount, contacts, proxy.m_contactJoint->GetPruningTolerance(), 16);
 								}
 
 								if (maxParam == dgFloat32 (0.0f)) {

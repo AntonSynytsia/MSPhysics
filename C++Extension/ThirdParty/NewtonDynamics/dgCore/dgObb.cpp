@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -118,19 +118,22 @@ namespace InternalSphere
 		for (dgInt32 i = 0; i < indexCount; i += 3) {
 			dgInt32 index = faceIndex[i] * stride;
 			dgVector p0 (&ptr[index]);
+			p0 = p0 & dgVector::m_triplexMask;
 			p0 = p0 * scaleVector;
 
 			index = faceIndex[i + 1] * stride;;
 			dgVector p1 (&ptr[index]);
+			p1 = p1 & dgVector::m_triplexMask;
 			p1 = p1 * scaleVector;
 
 			index = faceIndex[i + 2] * stride;;
 			dgVector p2 (&ptr[index]);
+			p2 = p2 & dgVector::m_triplexMask;
 			p2 = p2 * scaleVector;
 
 			dgVector normal ((p1 - p0).CrossProduct(p2 - p0));
-
-			dgFloat64 area = dgFloat32 (0.5f) * sqrt (normal.DotProduct3(normal));
+			dgAssert(normal.m_w == dgFloat32(0.0f));
+			dgFloat64 area = dgFloat32 (0.5f) * sqrt (normal.DotProduct(normal).GetScalar());
 
 			centre = p0 + p1 + p2;
 			centre = centre.Scale (dgFloat32  (1.0f / 3.0f));
@@ -144,7 +147,7 @@ namespace InternalSphere
 			dgFloat64 Iyz = p0.m_y * p0.m_z + p1.m_y * p1.m_z + p2.m_y * p2.m_z;	
 			dgFloat64 Ixz = p0.m_x * p0.m_z + p1.m_x * p1.m_z + p2.m_x * p2.m_z;	
 
-			if (area > dgEPSILON * 10.0) {
+			if (area > dgEpsilon * 10.0) {
 				dgFloat64 K = area / dgFloat64 (12.0);
 				//Coriolis theorem for Inertia of a triangle in an arbitrary orientation
 				Ixx = K * (Ixx + 9.0 * centre.m_x * centre.m_x);
@@ -163,7 +166,7 @@ namespace InternalSphere
 			cov += dgVector ((dgFloat32)Ixy, (dgFloat32)Ixz, (dgFloat32)Iyz, dgFloat32 (0.0f));
 		}
 
-		if (totalArea > dgEPSILON * 10.0) {
+		if (totalArea > dgEpsilon * 10.0) {
 			dgFloat64 K = dgFloat64 (1.0) / totalArea; 
 			var = var.Scale ((dgFloat32)K);
 			cov = cov.Scale ((dgFloat32)K);
@@ -181,7 +184,7 @@ namespace InternalSphere
 		sphere.m_front = dgVector ((dgFloat32)Ixx, (dgFloat32)Ixy, (dgFloat32)Ixz, dgFloat32 (0.0f));
 		sphere.m_up    = dgVector ((dgFloat32)Ixy, (dgFloat32)Iyy, (dgFloat32)Iyz, dgFloat32 (0.0f));
 		sphere.m_right = dgVector ((dgFloat32)Ixz, (dgFloat32)Iyz, (dgFloat32)Izz, dgFloat32 (0.0f));
-		sphere.EigenVectors(eigenValues);
+		eigenValues = sphere.EigenVectors();
 	}
 
 	
@@ -218,7 +221,7 @@ namespace InternalSphere
 		sphere.m_front = dgVector (dgFloat32(Ixx), dgFloat32(Ixy), dgFloat32(Ixz), dgFloat32 (0.0f));
 		sphere.m_up    = dgVector (dgFloat32(Ixy), dgFloat32(Iyy), dgFloat32(Iyz), dgFloat32 (0.0f));
 		sphere.m_right = dgVector (dgFloat32(Ixz), dgFloat32(Iyz), dgFloat32(Izz), dgFloat32 (0.0f));
- 		sphere.EigenVectors (eigenValues);
+		eigenValues = sphere.EigenVectors ();
 	}
 
 /*

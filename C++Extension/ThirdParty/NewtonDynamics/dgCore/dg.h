@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -32,6 +32,7 @@
 #include "dgTree.h"
 #include "dgNode.h"
 #include "dgHeap.h"
+#include "dgSort.h"
 #include "dgArray.h"
 #include "dgStack.h"
 #include "dgDebug.h"

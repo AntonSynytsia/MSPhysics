@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 *
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -980,7 +980,7 @@ class dgHACDClusterGraph
 
 	dgFloat64 CalculateConcavityMetric (dgFloat64 convexConcavity, dgFloat64 area, dgFloat64 perimeter, dgInt32 faceCountA, dgInt32 faceCountB) const 
 	{
-		dgFloat64 edgeCost = perimeter * perimeter / (dgFloat64(4.0f * dgPI) * area);
+		dgFloat64 edgeCost = perimeter * perimeter / (dgFloat64(4.0f * dgPi) * area);
 		return convexConcavity * DG_CONCAVITY_SCALE + edgeCost + ConcavityByFaceMedian (faceCountA, faceCountB);
 	}
 

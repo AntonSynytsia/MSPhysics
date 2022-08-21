@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -26,7 +26,7 @@
 	#include <crtdbg.h>
 #endif
 
-#if ( defined (_MINGW_32_VER) || defined (_MINGW_64_VER) )
+#if ( defined (__MINGW32__) || defined (__MINGW64__) )
 	#include <crtdbg.h>
 #endif
 

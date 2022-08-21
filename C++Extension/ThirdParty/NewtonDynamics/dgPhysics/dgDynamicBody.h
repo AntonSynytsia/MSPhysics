@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -26,8 +26,8 @@
 #include "dgBody.h"
 
 #define DG_MAX_SPEED_ATT	dgFloat32(0.02f)
-
-#define DG_FREEZE_ACCEL		dgFloat32(0.1f)
+//#define DG_FREEZE_ACCEL	dgFloat32(0.1f)
+#define DG_FREEZE_ACCEL		dgFloat32(1.0f)
 #define DG_FREEZE_SPEED		dgFloat32(0.032f)
 
 #define DG_FREEZE_ACCEL2	(DG_FREEZE_ACCEL * DG_FREEZE_ACCEL)
@@ -41,7 +41,7 @@
 
 class dgSkeletonContainer;
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgDynamicBody : public dgBody 
 {
 	public:
@@ -82,10 +82,10 @@ class dgDynamicBody : public dgBody
 	void SetSkeleton(dgSkeletonContainer* const skeleton);
 
 	void IntegrateImplicit(dgFloat32 timeStep);
-	void IntegrateExplicit(dgFloat32 timeStep, dgInt32 method);
-
 	virtual void IntegrateOpenLoopExternalForce(dgFloat32 timeStep);
 	const dgVector& GetDampCoeffcient (dgFloat32 timestep);
+
+	virtual dgJacobian IntegrateForceAndToque(const dgVector& force, const dgVector& torque, const dgVector& timestep);
 
 	private:
 	virtual void AddDampingAcceleration(dgFloat32 timestep);
@@ -106,25 +106,22 @@ class dgDynamicBody : public dgBody
 	dgUnsigned32 m_isInDestructionArrayLRU;
 	dgSkeletonContainer* m_skeleton;
 	OnApplyExtForceAndTorque m_applyExtForces;
-	bool m_linearDampOn;
-	bool m_angularDampOn;
 	static dgVector m_equilibriumError2;
 
 	friend class dgWorld;
 	friend class dgSolver;
 	friend class dgBroadPhase;
 	friend class dgBodyMasterList;
-	friend class dgInverseDynamics;
 	friend class dgSkeletonContainer;
 	friend class dgWorldDynamicUpdate;
 	friend class dgParallelBodySolver;
 	friend class dgCollisionDeformableMesh;
 	friend class dgCollisionDeformableSolidMesh;
 	friend class dgCollisionMassSpringDamperSystem;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgDynamicBodyAsymetric: public dgDynamicBody
 {
 	public:
@@ -137,10 +134,10 @@ class dgDynamicBodyAsymetric: public dgDynamicBody
 	virtual dgMatrix CalculateLocalInertiaMatrix() const;
 	virtual dgMatrix CalculateInvInertiaMatrix() const;
 	virtual void SetMassMatrix(dgFloat32 mass, const dgMatrix& inertia);
-	virtual void IntegrateOpenLoopExternalForce(dgFloat32 timestep);
+	
 
 	dgMatrix m_principalAxis;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
 
@@ -171,8 +168,6 @@ DG_INLINE void dgDynamicBody::SetLinearDamping (dgFloat32 linearDamp)
 {
 	linearDamp = dgClamp (linearDamp, dgFloat32(0.0f), dgFloat32(1.0f));
 	m_dampCoef.m_w = DG_MAX_SPEED_ATT * linearDamp;
-
-	m_linearDampOn = m_dampCoef.m_w > dgFloat32 (1.0e-7f);
 	m_cachedTimeStep = dgFloat32(0.0f);
 }
 
@@ -187,7 +182,6 @@ DG_INLINE void dgDynamicBody::SetAngularDamping (const dgVector& angularDamp)
 	tmp = dgClamp (angularDamp.m_z, dgFloat32(0.0f), dgFloat32(1.0f));
 	m_dampCoef.m_z = DG_MAX_SPEED_ATT * tmp;
 
-	m_angularDampOn = m_dampCoef.DotProduct(m_dampCoef & dgVector::m_triplexMask).GetScalar() > dgFloat32 (1.0e-12f);
 	m_cachedTimeStep = dgFloat32(0.0f);
 }
 
@@ -245,12 +239,11 @@ DG_INLINE void dgDynamicBody::SetSkeleton(dgSkeletonContainer* const skeleton)
 	m_skeleton = skeleton;
 }
 
-
 DG_INLINE const dgVector& dgDynamicBody::GetDampCoeffcient (dgFloat32 timestep)
 {
 	if (dgAbs(m_cachedTimeStep - timestep) > dgFloat32(1.0e-6f)) {
 		m_cachedTimeStep = timestep;
-		const dgFloat32 tau = dgFloat32(1.0f) / (dgFloat32(60.0f) * timestep);
+		const dgFloat32 tau = dgFloat32(60.0f) * timestep;
 		m_cachedDampCoef.m_x = dgPow(dgFloat32(1.0f) - m_dampCoef.m_x, tau);
 		m_cachedDampCoef.m_y = dgPow(dgFloat32(1.0f) - m_dampCoef.m_y, tau);
 		m_cachedDampCoef.m_z = dgPow(dgFloat32(1.0f) - m_dampCoef.m_z, tau);

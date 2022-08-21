@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -24,25 +24,24 @@
 #include "dgMatrix.h"
 #include "dgQuaternion.h"
 
+enum QUAT_INDEX
+{
+	X_INDEX = 0,
+	Y_INDEX = 1,
+	Z_INDEX = 2
+};
+static QUAT_INDEX QIndex[] = { Y_INDEX, Z_INDEX, X_INDEX };
 
 dgQuaternion::dgQuaternion (const dgMatrix& matrix)
 {
-	enum QUAT_INDEX
-	{
-		X_INDEX=0,
-		Y_INDEX=1,
-		Z_INDEX=2
-	};
-	static QUAT_INDEX QIndex [] = {Y_INDEX, Z_INDEX, X_INDEX};
-
 	dgFloat32 trace = matrix[0][0] + matrix[1][1] + matrix[2][2];
 	if (trace > dgFloat32(0.0f)) {
 		trace = dgSqrt (trace + dgFloat32(1.0f));
-		m_q0 = dgFloat32 (0.5f) * trace;
+		m_w = dgFloat32 (0.5f) * trace;
 		trace = dgFloat32 (0.5f) / trace;
-		m_q1 = (matrix[1][2] - matrix[2][1]) * trace;
-		m_q2 = (matrix[2][0] - matrix[0][2]) * trace;
-		m_q3 = (matrix[0][1] - matrix[1][0]) * trace;
+		m_x = (matrix[1][2] - matrix[2][1]) * trace;
+		m_y = (matrix[2][0] - matrix[0][2]) * trace;
+		m_z = (matrix[0][1] - matrix[1][0]) * trace;
 
 	} else {
 		QUAT_INDEX i = X_INDEX;
@@ -58,10 +57,10 @@ dgQuaternion::dgQuaternion (const dgMatrix& matrix)
 		trace = dgFloat32(1.0f) + matrix[i][i] - matrix[j][j] - matrix[k][k];
 		trace = dgSqrt (trace);
 
-		dgFloat32* const ptr = &m_q1;
+		dgFloat32* const ptr = &m_x;
 		ptr[i] = dgFloat32 (0.5f) * trace;
 		trace  = dgFloat32 (0.5f) / trace;
-		m_q0   = (matrix[j][k] - matrix[k][j]) * trace;
+		m_w   = (matrix[j][k] - matrix[k][j]) * trace;
 		ptr[j] = (matrix[i][j] + matrix[j][i]) * trace;
 		ptr[k] = (matrix[i][k] + matrix[k][i]) * trace;
 	}
@@ -75,28 +74,26 @@ dgQuaternion::dgQuaternion (const dgMatrix& matrix)
 	}
 
 	dgFloat32 err = dgAbs (DotProduct(*this) - dgFloat32(1.0f));
-	dgAssert (err < dgFloat32(dgEPSILON * 100.0f));
+	dgAssert (err < dgFloat32(dgEpsilon * 100.0f));
 #endif
 }
-
 
 dgQuaternion::dgQuaternion (const dgVector &unitAxis, dgFloat32 angle)
 {
 	angle *= dgFloat32 (0.5f);
-	m_q0 = dgCos (angle);
+	m_w = dgCos (angle);
 	dgFloat32 sinAng = dgSin (angle);
 
 #ifdef _DEBUG
-	if (dgAbs (angle) > dgFloat32(dgEPSILON / 10.0f)) {
-		dgAssert (dgAbs (dgFloat32(1.0f) - unitAxis.DotProduct3(unitAxis)) < dgFloat32(dgEPSILON * 10.0f));
+	if (dgAbs (angle) > dgFloat32(dgEpsilon / 10.0f)) {
+		dgAssert (dgAbs (dgFloat32(1.0f) - unitAxis.DotProduct(unitAxis & dgVector::m_triplexMask).GetScalar()) < dgFloat32(dgEpsilon * 10.0f));
 	} 
 #endif
-	m_q1 = unitAxis.m_x * sinAng;
-	m_q2 = unitAxis.m_y * sinAng;
-	m_q3 = unitAxis.m_z * sinAng;
+	m_x = unitAxis.m_x * sinAng;
+	m_y = unitAxis.m_y * sinAng;
+	m_z = unitAxis.m_z * sinAng;
 
 }
-
 
 dgVector dgQuaternion::CalcAverageOmega (const dgQuaternion &q1, dgFloat32 invdt) const
 {
@@ -105,9 +102,9 @@ dgVector dgQuaternion::CalcAverageOmega (const dgQuaternion &q1, dgFloat32 invdt
 		q0.Scale(-1.0f);
 	}
 	dgQuaternion dq (q0.Inverse() * q1);
-	dgVector omegaDir (dq.m_q1, dq.m_q2, dq.m_q3, dgFloat32 (0.0f));
+	dgVector omegaDir (dq.m_x, dq.m_y, dq.m_z, dgFloat32 (0.0f));
 
-	dgFloat32 dirMag2 = omegaDir.DotProduct3(omegaDir);
+	dgFloat32 dirMag2 = omegaDir.DotProduct(omegaDir).GetScalar();
 	if (dirMag2	< dgFloat32(dgFloat32 (1.0e-5f) * dgFloat32 (1.0e-5f))) {
 		return dgVector (dgFloat32(0.0f), dgFloat32(0.0f), dgFloat32(0.0f), dgFloat32(0.0f));
 	}
@@ -115,68 +112,61 @@ dgVector dgQuaternion::CalcAverageOmega (const dgQuaternion &q1, dgFloat32 invdt
 	dgFloat32 dirMagInv = dgRsqrt (dirMag2);
 	dgFloat32 dirMag = dirMag2 * dirMagInv;
 
-	dgFloat32 omegaMag = dgFloat32(2.0f) * dgAtan2 (dirMag, dq.m_q0) * invdt;
+	dgFloat32 omegaMag = dgFloat32(2.0f) * dgAtan2 (dirMag, dq.m_w) * invdt;
 	return omegaDir.Scale (dirMagInv * omegaMag);
 }
 
-
-dgQuaternion dgQuaternion::Slerp (const dgQuaternion &QB, dgFloat32 t) const 
+dgQuaternion dgQuaternion::Slerp (const dgQuaternion &q1, dgFloat32 t) const 
 {
-	dgFloat32 dot;
-	dgFloat32 ang;
-	dgFloat32 Sclp;
-	dgFloat32 Sclq;
-	dgFloat32 den;
-	dgFloat32 sinAng;
-	dgQuaternion Q;
+	dgQuaternion q0;
 
-	dot = DotProduct (QB);
+	dgFloat32 dot = DotProduct (q1);
+	if ((dot + dgFloat32(1.0f)) > dgEpsilon) {
+		dgFloat32 Sclp;
+		dgFloat32 Sclq;
+		if (dot < (dgFloat32(1.0f) - dgEpsilon) ) {
+			dgFloat32 ang = dgAcos (dot);
 
-	if ((dot + dgFloat32(1.0f)) > dgEPSILON) {
-		if (dot < (dgFloat32(1.0f) - dgEPSILON) ) {
-			ang = dgAcos (dot);
-
-			sinAng = dgSin (ang);
-			den = dgFloat32(1.0f) / sinAng;
+			dgFloat32 sinAng = dgSin (ang);
+			dgFloat32 den = dgFloat32(1.0f) / sinAng;
 
 			Sclp = dgSin ((dgFloat32(1.0f) - t ) * ang) * den;
 			Sclq = dgSin (t * ang) * den;
-
 		} else  {
 			Sclp = dgFloat32(1.0f) - t;
 			Sclq = t;
 		}
 
-		Q.m_q0 = m_q0 * Sclp + QB.m_q0 * Sclq;
-		Q.m_q1 = m_q1 * Sclp + QB.m_q1 * Sclq;
-		Q.m_q2 = m_q2 * Sclp + QB.m_q2 * Sclq;
-		Q.m_q3 = m_q3 * Sclp + QB.m_q3 * Sclq;
+		q0.m_w = m_w * Sclp + q1.m_w * Sclq;
+		q0.m_x = m_x * Sclp + q1.m_x * Sclq;
+		q0.m_y = m_y * Sclp + q1.m_y * Sclq;
+		q0.m_z = m_z * Sclp + q1.m_z * Sclq;
 
 	} else {
-		Q.m_q0 =  m_q3;
-		Q.m_q1 = -m_q2;
-		Q.m_q2 =  m_q1;
-		Q.m_q3 =  m_q0;
+		q0.m_w =  m_z;
+		q0.m_x = -m_y;
+		q0.m_y =  m_x;
+		q0.m_z =  m_w;
 
-		Sclp = dgSin ((dgFloat32(1.0f) - t) * dgPI * dgFloat32 (0.5f));
-		Sclq = dgSin (t * dgPI * dgFloat32 (0.5f));
+		dgFloat32 Sclp = dgSin ((dgFloat32(1.0f) - t) * dgPi * dgFloat32 (0.5f));
+		dgFloat32 Sclq = dgSin (t * dgPi * dgFloat32 (0.5f));
 
-		Q.m_q0 = m_q0 * Sclp + Q.m_q0 * Sclq;
-		Q.m_q1 = m_q1 * Sclp + Q.m_q1 * Sclq;
-		Q.m_q2 = m_q2 * Sclp + Q.m_q2 * Sclq;
-		Q.m_q3 = m_q3 * Sclp + Q.m_q3 * Sclq;
+		q0.m_w = m_w * Sclp + q0.m_w * Sclq;
+		q0.m_x = m_x * Sclp + q0.m_x * Sclq;
+		q0.m_y = m_y * Sclp + q0.m_y * Sclq;
+		q0.m_z = m_z * Sclp + q0.m_z * Sclq;
 	}
 
-	dot = Q.DotProduct (Q);
-	if ((dot) < dgFloat32(1.0f - dgEPSILON * 10.0f) ) {
+	dot = q0.DotProduct (q0);
+	if ((dot) < dgFloat32(1.0f - dgEpsilon * 10.0f) ) {
 		//dot = dgFloat32(1.0f) / dgSqrt (dot);
 		dot = dgRsqrt (dot);
-		Q.m_q0 *= dot;
-		Q.m_q1 *= dot;
-		Q.m_q2 *= dot;
-		Q.m_q3 *= dot;
+		q0.m_w *= dot;
+		q0.m_x *= dot;
+		q0.m_y *= dot;
+		q0.m_z *= dot;
 	}
-	return Q;
+	return q0;
 }
 
 

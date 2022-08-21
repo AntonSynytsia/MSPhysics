@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -29,7 +29,7 @@
 #define D_MIN_CONVEX_SHAPE_SIZE			dgFloat32 (1.0f/128.0f)
 
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgCollisionConvex: public dgCollision
 {
 	public:
@@ -66,8 +66,6 @@ class dgCollisionConvex: public dgCollision
 	virtual dgFloat32 GetBoxMaxRadius () const;
 
 	dgInt32 RayCastClosestFace (dgVector* tetrahedrum, const dgVector& origin, dgFloat32& pointDist) const;
-	dgInt32 SimplifyClipPolygon (dgInt32 count, const dgVector& normal, dgVector* const polygon) const;
-
 	dgVector CalculateVolumeIntegral (const dgPlane& plane) const; 
 	
 	void SetVolumeAndCG ();
@@ -85,6 +83,8 @@ class dgCollisionConvex: public dgCollision
 	virtual dgVector SupportVertexSpecial (const dgVector& dir, dgFloat32 skinThickness, dgInt32* const vertexIndex) const;
 	virtual dgVector SupportVertexSpecialProjectPoint (const dgVector& point, const dgVector& dir) const;
 	virtual const dgConvexSimplexEdge** GetVertexToEdgeMapping() const {return NULL;}
+
+	dgInt32 BuildCylinderCapPoly (dgFloat32 radius, const dgMatrix& transform, dgVector* const vertexOut) const;
 	
 	dgVector* m_vertex;
 	dgConvexSimplexEdge* m_simplex;
@@ -96,15 +96,12 @@ class dgCollisionConvex: public dgCollision
 	dgUnsigned16 m_edgeCount;
 	dgUnsigned16 m_vertexCount;
 	
-	public:	
-	static dgVector m_unitCircle[6];	
-
 	friend class dgWorld;
 	friend class dgBroadPhase;
 	friend class dgMinkowskiConv;
 	friend class dgCollisionCompound;
 	friend class dgCollisionConvexModifier;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
 

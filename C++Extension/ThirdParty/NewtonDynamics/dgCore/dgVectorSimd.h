@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -34,7 +34,7 @@ class dgBigVector;
 // 4 x 1 single precision SSE vector class declaration
 //
 // *****************************************************************************************
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgVector
 {
 	#define PERMUTE_MASK(w, z, y, x)		_MM_SHUFFLE (w, z, y, x)
@@ -61,12 +61,11 @@ class dgVector
 	DG_INLINE dgVector (const dgFloat32* const ptr)
 		:m_type(_mm_loadu_ps (ptr))
 	{
-		m_type = _mm_and_ps (m_type, m_triplexMask.m_type);
 	}
 
 #ifndef	_NEWTON_USE_DOUBLE
 	DG_INLINE dgVector(const dgFloat64* const ptr)
-		:m_type(_mm_set_ps(dgFloat32(0.0f), dgFloat32(ptr[2]), dgFloat32(ptr[1]), dgFloat32(ptr[0])))
+		:m_type(_mm_set_ps(dgFloat32(ptr[3]), dgFloat32(ptr[2]), dgFloat32(ptr[1]), dgFloat32(ptr[0])))
 	{
 	}
 #endif
@@ -172,14 +171,6 @@ class dgVector
 		return (*this = _mm_mul_ps(m_type, A.m_type));
 	}
 
-	// return dot product
-	DG_INLINE dgFloat32 DotProduct3 (const dgVector& A) const
-	{
-		dgVector tmp (A & m_triplexMask);
-		dgAssert ((m_w * tmp.m_w) == dgFloat32 (0.0f));
-		return (*this * tmp).AddHorizontal().GetScalar();
-	}
-
 	// return cross product
 	DG_INLINE dgVector CrossProduct (const dgVector& B) const
 	{
@@ -258,8 +249,8 @@ class dgVector
 
 	dgFloat32 GetMax () const
 	{
-		__m128 tmp (_mm_max_ps (m_type, _mm_shuffle_ps (m_type, m_type, PERMUTE_MASK(1, 0, 3, 2))));
-		return dgVector (_mm_max_ps (tmp, _mm_shuffle_ps (tmp, tmp, PERMUTE_MASK(2, 3, 0, 1)))).GetScalar();
+		__m128 tmp (_mm_max_ps (m_type, _mm_shuffle_ps (m_type, m_type, PERMUTE_MASK(3, 2, 3, 2))));
+		return _mm_cvtss_f32(_mm_max_ss (tmp, _mm_shuffle_ps(tmp, tmp, PERMUTE_MASK(3, 2, 0, 1))));
 	}
 
 	dgVector GetMax (const dgVector& data) const
@@ -296,7 +287,7 @@ class dgVector
 
 	DG_INLINE dgVector Sqrt () const
 	{
-		return dgVector (_mm_sqrt_ps(m_type));
+		return _mm_sqrt_ps(m_type);
 	}
 
 	DG_INLINE dgVector InvSqrt () const
@@ -360,15 +351,27 @@ class dgVector
 		return _mm_xor_ps (m_type, data.m_type);	
 	}
 
-	DG_INLINE dgVector AndNot (const dgVector& data) const
+	DG_INLINE dgVector AndNot(const dgVector& data) const
 	{
-		return _mm_andnot_ps (data.m_type, m_type);	
+		return _mm_andnot_ps(data.m_type, m_type);
+	}
+
+	DG_INLINE dgVector Select(const dgVector& data, const dgVector& mask) const
+	{
+		// (((b ^ a) & mask)^a)
+		//return  _mm_or_ps (_mm_and_ps (mask.m_type, data.m_type), _mm_andnot_ps(mask.m_type, m_type));
+		return  _mm_xor_ps(m_type, _mm_and_ps (mask.m_type, _mm_xor_ps(m_type, data.m_type)));
 	}
 
 	DG_INLINE dgInt32 GetSignMask() const
 	{
 		return _mm_movemask_ps(m_type);
 	} 
+
+	DG_INLINE dgVector ShiftRight() const
+	{
+		return _mm_shuffle_ps(m_type, m_type, PERMUTE_MASK(2, 1, 0, 3));
+	}
 
 	DG_INLINE dgVector ShiftTripleRight () const
 	{
@@ -439,9 +442,10 @@ class dgVector
 	static dgVector m_yMask;
 	static dgVector m_zMask;
 	static dgVector m_wMask;
+	static dgVector m_epsilon;
 	static dgVector m_signMask;
 	static dgVector m_triplexMask;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 #endif
 
 
@@ -450,7 +454,7 @@ class dgVector
 // 4 x 1 double precision SSE2 vector class declaration
 //
 // *****************************************************************************************
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgBigVector
 {
 	#define PERMUT_MASK_DOUBLE(y, x)	_MM_SHUFFLE2 (y, x)
@@ -487,9 +491,8 @@ class dgBigVector
 #ifdef _NEWTON_USE_DOUBLE
 	DG_INLINE dgBigVector (const dgFloat32* const ptr)
 		:m_typeLow(_mm_loadu_pd(ptr))
-		,m_typeHigh(_mm_set_pd(dgFloat64(0.0f), ptr[2]))
+		,m_typeHigh(_mm_loadu_pd(&ptr[2]))
 	{
-		dgAssert (dgCheckVector ((*this)));
 	}
 #else
 
@@ -502,7 +505,7 @@ class dgBigVector
 
 	DG_INLINE dgBigVector(const dgFloat64* const ptr)
 		:m_typeLow(_mm_loadu_pd(ptr))
-		,m_typeHigh(_mm_set_pd(dgFloat64(0.0f), ptr[2]))
+		,m_typeHigh(_mm_loadu_pd(&ptr[2]))
 	{
 	}
 #endif
@@ -518,6 +521,12 @@ class dgBigVector
 		:m_ix(dgInt64(ix)), m_iy(dgInt64(iy)), m_iz(dgInt64(iz)), m_iw(dgInt64(iw))
 	{
 	}
+
+	DG_INLINE dgBigVector(dgInt64 ix, dgInt64 iy, dgInt64 iz, dgInt64 iw)
+		:m_ix(ix), m_iy(iy), m_iz(iz), m_iw(iw)
+	{
+	}
+
 
 	DG_INLINE dgFloat64& operator[] (dgInt32 i)
 	{
@@ -535,7 +544,8 @@ class dgBigVector
 
 	DG_INLINE dgFloat64 GetScalar() const
 	{
-		return m_x;
+		//return m_x;
+		return _mm_cvtsd_f64(m_typeLow);
 	}
 
 	DG_INLINE dgBigVector operator+ (const dgBigVector& A) const
@@ -584,27 +594,9 @@ class dgBigVector
 		return *this - A * B;
 	}
 
-	DG_INLINE dgFloat64 DotProduct3(const dgBigVector& A) const
-	{
-		//dgFloat64 ret;
-		//__m128d tmp0(_mm_mul_pd(m_typeLow, A.m_typeLow));
-		//__m128d tmp1(_mm_and_pd(m_typeHigh, dgBigVector::m_triplexMask.m_typeHigh));
-		//__m128d tmp2(_mm_mul_pd(tmp1, A.m_typeHigh));
-		//__m128d tmp3(_mm_add_pd(tmp0, tmp2));
-		//__m128d dot(_mm_hadd_pd(tmp3, tmp3));
-		//_mm_store_sd(&ret, dot);
-		//return ret;
-		return m_x * A.m_x + m_y * A.m_y + m_z * A.m_z;
-	}
-
 	// return cross product
 	DG_INLINE dgBigVector CrossProduct(const dgBigVector& B) const
 	{
-		//dgBigVector tmp0(ShiftTripleLeft());
-		//dgBigVector tmp1(B.ShiftTripleRight());
-		//dgBigVector tmp2(ShiftTripleRight());
-		//dgBigVector tmp3(B.ShiftTripleLeft());
-		//return tmp0 * tmp1 - tmp2 * tmp3;
 		return dgBigVector(m_y * B.m_z - m_z * B.m_y, m_z * B.m_x - m_x * B.m_z, m_x * B.m_y - m_y * B.m_x, m_w);
 	}
 
@@ -741,6 +733,19 @@ class dgBigVector
 		return dgBigVector(_mm_andnot_pd(data.m_typeLow, m_typeLow), _mm_andnot_pd(data.m_typeHigh, m_typeHigh));
 	}
 
+	DG_INLINE dgBigVector Select(const dgBigVector& data, const dgBigVector& mask) const
+	{
+		// (((b ^ a) & mask)^a)
+		return  dgBigVector(_mm_xor_pd(m_typeLow, _mm_and_pd(mask.m_typeLow, _mm_xor_pd(m_typeLow, data.m_typeLow))),
+							_mm_xor_pd(m_typeHigh, _mm_and_pd(mask.m_typeHigh, _mm_xor_pd(m_typeHigh, data.m_typeHigh))));
+	}
+
+	DG_INLINE dgBigVector ShiftRight() const
+	{
+		//return dgBigVector (m_w, m_x, m_y, m_z); 
+		return dgBigVector(_mm_shuffle_pd(m_typeHigh, m_typeLow, PERMUT_MASK_DOUBLE(0, 1)), _mm_shuffle_pd(m_typeLow, m_typeHigh, PERMUT_MASK_DOUBLE(0, 1)));
+	}
+
 	DG_INLINE dgBigVector ShiftTripleRight() const
 	{
 		return dgBigVector(_mm_shuffle_pd(m_typeHigh, m_typeLow, PERMUT_MASK_DOUBLE(0, 0)), _mm_shuffle_pd(m_typeLow, m_typeHigh, PERMUT_MASK_DOUBLE(1, 1)));
@@ -786,11 +791,15 @@ class dgBigVector
 		dst3 = dgBigVector(tmp0.m_w, tmp1.m_w, tmp2.m_w, tmp3.m_w);
 	}
 
+	DG_INLINE dgFloat64 DotProduct3(const dgBigVector& A) const
+	{
+		return m_x * A.m_x + m_y * A.m_y + m_z * A.m_z;
+	}
+
 	// return dot 4d dot product
 	DG_INLINE dgBigVector DotProduct(const dgBigVector &A) const
 	{
-		dgFloat64 val(m_x * A.m_x + m_y * A.m_y + m_z * A.m_z + m_w * A.m_w);
-		return dgBigVector(val, val, val, val);
+		return (*this * A).AddHorizontal();
 	}
 
 	DG_INLINE dgBigVector CrossProduct(const dgBigVector& A, const dgBigVector& B) const
@@ -874,12 +883,13 @@ class dgBigVector
 	static dgBigVector m_yMask;
 	static dgBigVector m_zMask;
 	static dgBigVector m_wMask;
+	static dgBigVector m_epsilon;
 	static dgBigVector m_signMask;
 	static dgBigVector m_triplexMask;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgSpatialVector
 {
 	public:
@@ -953,10 +963,7 @@ class dgSpatialVector
 	{
 		dgSpatialVector tmp(*this * v);
 		__m128d tmp2(_mm_add_pd(tmp.m_d0, _mm_add_pd(tmp.m_d1, tmp.m_d2)));
-		__m128d dot(_mm_hadd_pd(tmp2, tmp2));
-		dgFloat64 ret;
-		_mm_store_sd(&ret, dot);
-		return ret;
+		return _mm_cvtsd_f64(_mm_hadd_pd(tmp2, tmp2));
 	}
 
 	DG_INLINE dgSpatialVector Scale(dgFloat64 s) const
@@ -969,7 +976,7 @@ class dgSpatialVector
 	__m128d m_d1;
 	__m128d m_d2;
 	static dgSpatialVector m_zero;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 #endif
 #endif

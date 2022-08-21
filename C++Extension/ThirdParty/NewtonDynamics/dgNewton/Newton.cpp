@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 *
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -25,7 +25,7 @@
 
 
 #ifdef _NEWTON_BUILD_DLL
-	#if (defined (_MINGW_32_VER) || defined (_MINGW_64_VER))
+	#if (defined (__MINGW32__) || defined (__MINGW64__))
 		int main(int argc, char* argv[])
 		{
 			return 0;
@@ -43,7 +43,7 @@
 					#ifdef _DEBUG
 						// Track all memory leaks at the operating system level.
 						// make sure no Newton tool or utility leaves leaks behind.
-						_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF|_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF));
+						_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CRTDBG_REPORT_FLAG);
 					#endif
 
 				case DLL_THREAD_DETACH:
@@ -189,9 +189,15 @@ void NewtonSetPostUpdateCallback(const NewtonWorld* const newtonWorld, NewtonPos
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	Newton* const world = (Newton *) newtonWorld;
-	world->SetPostUpdateCallback(world, (dgPostUpdateCallback) callback);
+	world->SetPostUpdateCallback((OnPostUpdateCallback) callback);
 }
 
+NewtonPostUpdateCallback NewtonGetPostUpdateCallback(const NewtonWorld* const newtonWorld)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	Newton* const world = (Newton *)newtonWorld;
+	return (NewtonPostUpdateCallback)world->GetPostUpdateCallback();
+}
 
 int NewtonGetBroadphaseAlgorithm (const NewtonWorld* const newtonWorld)
 {
@@ -637,7 +643,6 @@ void NewtonUpdate(const NewtonWorld* const newtonWorld, dFloat timestep)
 	world->UpdatePhysics (timestep);
 }
 
-
 void NewtonUpdateAsync (const NewtonWorld* const newtonWorld, dFloat timestep)
 {
 	TRACE_FUNCTION(__FUNCTION__);
@@ -645,7 +650,6 @@ void NewtonUpdateAsync (const NewtonWorld* const newtonWorld, dFloat timestep)
 
 	world->UpdatePhysicsAsync(timestep);
 }
-
 
 void NewtonWaitForUpdateToFinish (const NewtonWorld* const newtonWorld)
 {
@@ -737,6 +741,7 @@ void NewtonSetIslandUpdateEvent(const NewtonWorld* const newtonWorld, NewtonIsla
 	Newton* const world = (Newton *) newtonWorld;
 	world->SetIslandUpdateCallback((dgWorld::OnClusterUpdate) islandUpdate); 
 }
+
 
 
 
@@ -975,6 +980,12 @@ NewtonWorldDestructorCallback NewtonWorldGetDestructorCallback(const NewtonWorld
 	return world->m_destructor;
 }
 
+void NewtonWorldSetCreateDestroyContactCallback(const NewtonWorld* const newtonWorld, NewtonCreateContactCallback createContact, NewtonDestroyContactCallback destroyContact)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	Newton* const world = (Newton *)newtonWorld;
+	world->SetCreateDestroyContactCallback((dgWorld::OnCreateContact) createContact, (dgWorld::OnDestroyContact) destroyContact);
+}
 
 void NewtonWorldSetCollisionConstructorDestructorCallback (const NewtonWorld* const newtonWorld, NewtonCollisionCopyConstructionCallback constructor, NewtonCollisionDestructorCallback destructor)
 {
@@ -983,6 +994,19 @@ void NewtonWorldSetCollisionConstructorDestructorCallback (const NewtonWorld* co
 	world->SetCollisionInstanceConstructorDestructor((dgWorld::OnCollisionInstanceDuplicate) constructor, (dgWorld::OnCollisionInstanceDestroy)destructor);
 }
 
+void* NewtonWorldAddListener(const NewtonWorld* const newtonWorld, const char* const nameId, void* const listenerUserData)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	Newton* const world = (Newton *)newtonWorld;
+	return world->AddListener(nameId, listenerUserData);
+}
+
+void* NewtonWorldGetListener(const NewtonWorld* const newtonWorld, const char* const nameId)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	Newton* const world = (Newton *)newtonWorld;
+	return world->FindListener(nameId);
+}
 
 void* NewtonWorldGetListenerUserData (const NewtonWorld* const newtonWorld, void* const listener)
 {
@@ -998,56 +1022,46 @@ NewtonWorldListenerBodyDestroyCallback NewtonWorldListenerGetBodyDestroyCallback
 	return (NewtonWorldListenerBodyDestroyCallback) world->GetListenerBodyDestroyCallback (listener);
 }
 
-void NewtonWorldListenerSetBodyDestroyCallback (const NewtonWorld* const newtonWorld, void* const listener, NewtonWorldListenerBodyDestroyCallback bodyDestroyCallback)
+void NewtonWorldListenerSetBodyDestroyCallback (const NewtonWorld* const newtonWorld, void* const listener, NewtonWorldListenerBodyDestroyCallback callback)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	Newton* const world = (Newton *) newtonWorld;
-	world->SetListenerBodyDestroyCallback (listener, (dgWorld::OnListenerBodyDestroyCallback) bodyDestroyCallback);
+	world->SetListenerBodyDestroyCallback (listener, (dgWorld::OnListenerBodyDestroyCallback) callback);
 }
 
-
-void* NewtonWorldAddListener (const NewtonWorld* const newtonWorld, const char* const nameId, void* const listenerUserData)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	Newton* const world = (Newton *) newtonWorld;
-	return world->AddListener (nameId, listenerUserData);
-}
-
-void NewtonWorldListenerSetDestructorCallback(const NewtonWorld* const newtonWorld, void* const listener, NewtonWorldDestroyListenerCallback destroy)
+void NewtonWorldListenerSetDestructorCallback(const NewtonWorld* const newtonWorld, void* const listener, NewtonWorldDestroyListenerCallback callback)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	Newton* const world = (Newton *)newtonWorld;
-	return world->ListenerSetDestroyCallback(listener, (dgWorld::OnListenerDestroyCallback) destroy);
+	return world->ListenerSetDestroyCallback(listener, (dgWorld::OnListenerDestroyCallback) callback);
 }
 
-void NewtonWorldListenerSetPreUpdateCallback(const NewtonWorld* const newtonWorld, void* const listener, NewtonWorldUpdateListenerCallback update)
+void NewtonWorldListenerSetPreUpdateCallback(const NewtonWorld* const newtonWorld, void* const listener, NewtonWorldUpdateListenerCallback callback)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	Newton* const world = (Newton *)newtonWorld;
-	return world->ListenerSetPreUpdate(listener, (dgWorld::OnListenerUpdateCallback) update);
+	return world->ListenerSetPreUpdate(listener, (dgWorld::OnListenerUpdateCallback) callback);
 }
 
-void NewtonWorldListenerSetPostUpdateCallback(const NewtonWorld* const newtonWorld, void* const listener, NewtonWorldUpdateListenerCallback update)
+void NewtonWorldListenerSetPostUpdateCallback(const NewtonWorld* const newtonWorld, void* const listener, NewtonWorldUpdateListenerCallback callback)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	Newton* const world = (Newton *)newtonWorld;
-	return world->ListenerSetPostUpdate(listener, (dgWorld::OnListenerUpdateCallback) update);
+	return world->ListenerSetPostUpdate(listener, (dgWorld::OnListenerUpdateCallback) callback);
 }
 
-
-void* NewtonWorldGetListener (const NewtonWorld* const newtonWorld, const char* const nameId)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	Newton* const world = (Newton *) newtonWorld;
-	return world->FindListener (nameId);
-}
-
-
-void NewtonWorldListenerSetDebugCallback (const NewtonWorld* const newtonWorld, void* const listener, NewtonWorldListenerDebugCallback debugCallback)
+void NewtonWorldListenerSetPostStepCallback (const NewtonWorld* const newtonWorld, void* const listener, NewtonWorldUpdateListenerCallback callback)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	Newton* const world = (Newton *)newtonWorld;
-	return world->SetListenerBodyDebugCallback (listener, (dgWorld::OnListenerDebugCallback) debugCallback);
+	return world->ListenerSetPostStep(listener, (dgWorld::OnListenerUpdateCallback) callback);
+}
+
+void NewtonWorldListenerSetDebugCallback (const NewtonWorld* const newtonWorld, void* const listener, NewtonWorldListenerDebugCallback callback)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	Newton* const world = (Newton *)newtonWorld;
+	return world->SetListenerBodyDebugCallback (listener, (dgWorld::OnListenerDebugCallback) callback);
 }
 
 void NewtonWorldListenerDebug(const NewtonWorld* const newtonWorld, void* const context)
@@ -1204,6 +1218,16 @@ int NewtonWorldCollide (const NewtonWorld* const newtonWorld, const dFloat* cons
 	return world->GetBroadPhase()->Collide((dgCollisionInstance*)shape, dgMatrix(matrix), (OnRayPrecastAction)prefilter, userData, (dgConvexCastReturnInfo*)info, maxContactsCount, threadIndex);
 }
 
+NewtonJoint* NewtonWorldFindJoint(const NewtonBody* const body0, const NewtonBody* const body1)
+{
+	for (NewtonJoint* joint = NewtonBodyGetFirstJoint(body0); joint; joint = NewtonBodyGetNextJoint(body0, joint)) {
+		if (((body0 == NewtonJointGetBody0(joint)) && (body1 == NewtonJointGetBody1(joint))) ||
+			((body1 == NewtonJointGetBody0(joint)) && (body0 == NewtonJointGetBody1(joint)))) {
+			return joint;
+		}
+	}
+	return NULL;
+}
 
 /*!
   Retrieve body by index from island.
@@ -1338,14 +1362,12 @@ void NewtonMaterialSetDefaultCollidable(const NewtonWorld* const newtonWorld, in
 	TRACE_FUNCTION(__FUNCTION__);
 	Newton* const world = (Newton *)newtonWorld;
 	dgContactMaterial* const material = world->GetMaterial (dgUnsigned32 (id0), dgUnsigned32 (id1));
-//	material->m_collisionEnable = state ? true : false;
 	if (state) {
 		material->m_flags |= dgContactMaterial::m_collisionEnable;
 	} else {
 		material->m_flags &= ~dgContactMaterial::m_collisionEnable;
 	}
 }
-
 
 /*!
   Set an imaginary thickness between the collision geometry of two colliding bodies whose physics
@@ -1373,8 +1395,6 @@ void NewtonMaterialSetSurfaceThickness(const NewtonWorld* const newtonWorld, int
 	TRACE_FUNCTION(__FUNCTION__);
 	Newton* const world = (Newton *)newtonWorld;
 	dgContactMaterial* const material = world->GetMaterial (dgUnsigned32 (id0), dgUnsigned32 (id1));
-
-	//material->m_skinThickness = dgMin (dgMax (thickness, dgFloat32 (0.0)), DG_MAX_COLLISION_AABB_PADDING * dgFloat32 (0.5f));
 	material->m_skinThickness = dgClamp (thickness, dgFloat32 (0.0f), DG_MAX_COLLISION_AABB_PADDING * dgFloat32 (0.5f));
 }
 
@@ -1405,17 +1425,16 @@ void NewtonMaterialSetDefaultFriction(const NewtonWorld* const newtonWorld, int 
 
 	if (material) {
 		if (staticFriction >= dgFloat32 (1.0e-2f)) {
-			dFloat stat = dgClamp (staticFriction, dFloat(0.01f), dFloat(2.0f));
-			dFloat kine = dgClamp (kineticFriction, dFloat(0.01f), dFloat(2.0f));
-			stat = dgMax (stat, kine);
+			dFloat stat0 = dgClamp (staticFriction, dFloat(0.01f), dFloat(2.0f));
+			dFloat kine0 = dgClamp (kineticFriction, dFloat(0.01f), dFloat(2.0f));
+			dFloat stat = dgMax (stat0, kine0);
+			dFloat kine = dgMin (stat0, kine0);
 			material->m_staticFriction0 = stat;
 			material->m_staticFriction1 = stat;
 			material->m_dynamicFriction0 = kine;
 			material->m_dynamicFriction1 = kine;
+			material->m_flags |= (dgContactMaterial::m_friction0Enable | dgContactMaterial::m_friction1Enable);
 		} else {
-
-			//material->m_friction0Enable = false;
-			//material->m_friction1Enable = false;
 			material->m_flags &= ~(dgContactMaterial::m_friction0Enable | dgContactMaterial::m_friction1Enable);
 		}
 	}
@@ -1441,9 +1460,8 @@ void NewtonMaterialSetDefaultElasticity(const NewtonWorld* const newtonWorld, in
 	Newton* const world = (Newton *)newtonWorld;
 	dgContactMaterial* const material = world->GetMaterial (dgUnsigned32 (id0), dgUnsigned32 (id1));
 
-	material->m_restitution = dgClamp (elasticCoef, dFloat(0.01f), dFloat(2.0f));
+	material->m_restitution = dgClamp (elasticCoef, dFloat(0.0f), dFloat(2.0f));
 }
-
 
 
 /*!
@@ -1471,12 +1489,28 @@ void NewtonMaterialSetDefaultSoftness(const NewtonWorld* const newtonWorld, int 
 
 void NewtonMaterialSetCallbackUserData (const NewtonWorld* const newtonWorld, int id0, int id1, void* const userData)
 {
-	Newton* const world = (Newton *)newtonWorld;
-
 	TRACE_FUNCTION(__FUNCTION__);
+	Newton* const world = (Newton *)newtonWorld;
 	dgContactMaterial* const material = world->GetMaterial(dgUnsigned32(id0), dgUnsigned32(id1));
 	material->SetUserData(userData);
 }
+
+void NewtonMaterialJointResetIntraJointCollision(const NewtonWorld* const newtonWorld, int id0, int id1)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	Newton* const world = (Newton *)newtonWorld;
+	dgContactMaterial* const material = world->GetMaterial(dgUnsigned32(id0), dgUnsigned32(id1));
+	material->m_flags |= dgContactMaterial::m_resetSkeletonIntraCollision;
+}
+
+void NewtonMaterialJointResetSelftJointCollision(const NewtonWorld* const newtonWorld, int id0, int id1)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	Newton* const world = (Newton *)newtonWorld;
+	dgContactMaterial* const material = world->GetMaterial(dgUnsigned32(id0), dgUnsigned32(id1));
+	material->m_flags |= dgContactMaterial::m_resetSkeletonSelfCollision;
+}
+
 
 /*!
   Set userData and the functions event handlers for the material interaction between two physics materials .
@@ -1658,10 +1692,8 @@ void* NewtonMaterialGetMaterialPairUserData(const NewtonMaterial* const material
 unsigned NewtonMaterialGetContactFaceAttribute(const NewtonMaterial* const materialHandle)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-//	dgContactMaterial* const material = (dgContactMaterial*) materialHandle;
-dgAssert (0);
-//	return (unsigned) ((dgContactMaterial*) materialHandle->m_userId);
-return 0;
+	dgContactMaterial* const material = (dgContactMaterial*) materialHandle;
+	return (unsigned) (material->m_shapeId1);
 }
 
 
@@ -1695,7 +1727,8 @@ dFloat NewtonMaterialGetContactNormalSpeed(const NewtonMaterial* const materialH
 
 	dgVector dv (v1 - v0);
 
-	dFloat speed = dv.DotProduct3(material->m_normal);
+	dgAssert (material->m_normal.m_w == dgFloat32 (0.0f));
+	dFloat speed = dv.DotProduct(material->m_normal).GetScalar();
 	return speed;
 }
 
@@ -1727,7 +1760,8 @@ dFloat NewtonMaterialGetContactTangentSpeed(const NewtonMaterial* const material
 
 	dgVector dv (v1 - v0);
 	dgVector dir (index ? material->m_dir1 : material->m_dir0);
-	dFloat speed = dv.DotProduct3(dir);
+	dgAssert (dir.m_w == dgFloat32 (0.0f));
+	dFloat speed = dv.DotProduct(dir).GetScalar();
 	return - speed;
 }
 
@@ -1954,7 +1988,7 @@ void NewtonMaterialSetContactElasticity(const NewtonMaterial* const materialHand
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgContactMaterial* const material = (dgContactMaterial*) materialHandle;
-	material->m_restitution = dgClamp (restitution, dFloat(0.01f), dFloat(2.0f));
+	material->m_restitution = dgClamp (restitution, dFloat(0.0f), dFloat(2.0f));
 }
 
 
@@ -2049,9 +2083,15 @@ void NewtonMaterialSetContactNormalAcceleration(const NewtonMaterial* const mate
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgContactMaterial* const material = (dgContactMaterial*) materialHandle;
-	dgAssert(0);
 	material->m_normal_Force.m_force = accel;
 	material->m_flags |= dgContactMaterial::m_overrideNormalAccel;
+}
+
+void NewtonMaterialSetAsSoftContact (const NewtonMaterial* const materialHandle, dFloat relaxation)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	dgContactMaterial* const material = (dgContactMaterial*) materialHandle;
+	material->SetAsSoftContact (relaxation);
 }
 
 /*!
@@ -2127,8 +2167,8 @@ void NewtonMaterialSetContactNormalDirection(const NewtonMaterial* const materia
 	dgContactMaterial* const material = (dgContactMaterial*) materialHandle;
 	dgVector normal (direction[0], direction[1], direction[2], dgFloat32 (0.0f));
 
-	dgAssert (normal.DotProduct3(material->m_normal) > dgFloat32 (0.01f));
-	if (normal.DotProduct3(material->m_normal) < dgFloat32 (0.0f)) {
+	//dgAssert (normal.DotProduct3(material->m_normal) > dgFloat32 (0.01f));
+	if (normal.DotProduct(material->m_normal).GetScalar() < dgFloat32 (0.0f)) {
 		normal = normal * dgVector::m_negOne;
 	}
 	material->m_normal = normal;
@@ -2658,7 +2698,7 @@ NewtonCollision* NewtonFracturedCompoundPlaneClip (const NewtonCollision* const 
 		dgWorld* const world = (dgWorld*)collision->GetWorld();
 		dgCollisionCompoundFractured* const newCompound = compound->PlaneClip(dgVector (plane[0], plane[1], plane[2], plane[3]));
 		if (newCompound) {
-			dgCollisionInstance* const newCollision = world->CreateInstance (newCompound, collision->GetUserDataID(), dgGetIdentityMatrix());
+			dgCollisionInstance* const newCollision = world->CreateInstance (newCompound, int (collision->GetUserDataID()), dgGetIdentityMatrix());
 			newCompound->Release();
 			return (NewtonCollision*)newCollision;
 		}
@@ -2988,13 +3028,8 @@ void NewtonConvexCollisionCalculateInertialMatrix(const NewtonCollision* convexC
 
   @param convexCollision fixme
   @param matrix fixme
-  @param shapeOrigin fixme
-  @param *gravityVector pointer to an array of floats containing the gravity vector.
   @param fluidPlane fixme
-  @param fluidDensity fluid density.
-  @param fluidViscosity fluid linear viscosity (resistance to linear translation).
-  @param accel fixme
-  @param alpha fixme
+  @param centerOfBuoyancy fixme
 
   @return Nothing.
 
@@ -3009,30 +3044,19 @@ void NewtonConvexCollisionCalculateInertialMatrix(const NewtonCollision* convexC
 
   See also: ::NewtonConvexCollisionCalculateVolume
 */
-void NewtonConvexCollisionCalculateBuoyancyAcceleration (const NewtonCollision* const convexCollision, const dFloat* const matrix, const dFloat* const shapeOrigin, const dFloat* const gravityVector, const dFloat* const fluidPlane, dFloat fluidDensity, dFloat fluidViscosity, dFloat* const accel, dFloat* const alpha)
+//void NewtonConvexCollisionCalculateBuoyancyAcceleration (const NewtonCollision* const convexCollision, const dFloat* const matrix, const dFloat* const shapeOrigin, const dFloat* const gravityVector, const dFloat* const fluidPlane, dFloat fluidDensity, dFloat* const accel, dFloat* const alpha)
+dFloat NewtonConvexCollisionCalculateBuoyancyVolume (const NewtonCollision* const convexCollision, const dFloat* const matrix, const dFloat* const fluidPlane, dFloat* const centerOfBuoyancy)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-
 	dgCollisionInstance* const instance = (dgCollisionInstance*)convexCollision;
-	
-	dgVector origin (shapeOrigin);
-	dgVector gravity (gravityVector);
 	dgVector plane (fluidPlane[0], fluidPlane[1], fluidPlane[2], fluidPlane[3]);
 
-	dgVector force;
-	dgVector torque;
-	instance->CalculateBuoyancyAcceleration (dgMatrix (matrix), origin, gravity, plane, fluidDensity, fluidViscosity, force, torque);
-
-	accel[0] = force.m_x;
-	accel[1] = force.m_y;
-	accel[2] = force.m_z;
-
-	alpha[0] = torque.m_x;
-	alpha[1] = torque.m_y;
-	alpha[2] = torque.m_z;
+	dgVector com (instance->CalculateBuoyancyVolume (dgMatrix (matrix), plane));
+	centerOfBuoyancy[0] = com[0];
+	centerOfBuoyancy[1] = com[1];
+	centerOfBuoyancy[2] = com[2];
+	return com.m_w;
 }
-
-
 
 const void* NewtonCollisionDataPointer (const NewtonCollision* const convexCollision)
 {
@@ -3123,6 +3147,11 @@ int NewtonUserMeshCollisionContinuousOverlapTest (const NewtonUserMeshCollisionC
 
 	dgVector q0 (collideDescData->m_boxP0);
 	dgVector q1 (collideDescData->m_boxP1);
+
+	p0 = p0 & dgVector::m_triplexMask;
+	p1 = p1 & dgVector::m_triplexMask;
+	q0 = q0 & dgVector::m_triplexMask;
+	q1 = q1 & dgVector::m_triplexMask;
 
 	dgVector box0 (p0 - q1);
 	dgVector box1 (p1 - q0);
@@ -3237,15 +3266,6 @@ void NewtonHeightFieldSetUserRayCastCallback (const NewtonCollision* const heigh
 	if (collision->IsType (dgCollision::dgCollisionHeightField_RTTI)) {
 		dgCollisionHeightField* const shape = (dgCollisionHeightField*) collision->GetChildShape();
 		shape->SetCollisionRayCastCallback ((dgCollisionHeightFieldRayCastCallback) rayHitCallback);
-	}
-}
-
-void NewtonHeightFieldSetHorizontalDisplacement (const NewtonCollision* const heightField, const unsigned short* const horizontalMap, dFloat scale)
-{
-	dgCollisionInstance* const collision = (dgCollisionInstance*)heightField;
-	if (collision->IsType(dgCollision::dgCollisionHeightField_RTTI)) {
-		dgCollisionHeightField* const shape = (dgCollisionHeightField*)collision->GetChildShape();
-		shape->SetHorizontalDisplacement (horizontalMap, dgFloat32 (scale));
 	}
 }
 
@@ -3832,8 +3852,11 @@ dFloat NewtonCollisionRayCast(const NewtonCollision* const collisionPtr, const d
 	dgVector q0 (matrix.UntransformVector (dgVector (p0[0], p0[1], p0[2], dgFloat32 (0.0f)))); 
 	dgVector q1 (matrix.UntransformVector (dgVector (p1[0], p1[1], p1[2], dgFloat32 (0.0f)))); 
 	dgContactPoint contact;
+	dgKinematicBody dommyBody;
+	dommyBody.SetCollision (collision);
+	dFloat t = collision->RayCast (q0, q1, dgFloat32 (1.0f), contact, NULL, &dommyBody, NULL);
+	dommyBody.SetCollision (NULL);
 
-	dFloat t = collision->RayCast (q0, q1, dgFloat32 (1.0f), contact, NULL, NULL, NULL);
 	if (t >= dFloat (0.0f) && t <= dFloat (dgFloat32(1.0f))) {
 		attribute[0] = (dLong) contact.m_shapeId0;
 
@@ -3905,7 +3928,6 @@ void NewtonCollisionForEachPolygonDo(const NewtonCollision* const collisionPtr, 
 	collision->DebugCollision (dgMatrix (matrixPtr), (dgCollision::OnDebugCollisionMeshCallback) callback, userDataPtr);
 }
 
-
 int NewtonCollisionGetType(const NewtonCollision* const collision)
 {
 	TRACE_FUNCTION(__FUNCTION__);
@@ -3939,7 +3961,7 @@ int NewtonCollisionIsStaticShape (const NewtonCollision* const collision)
 
   See also: ::NewtonCollisionGetUserID, ::NewtonCreateBox, ::NewtonCreateSphere
 */
-void NewtonCollisionSetUserID(const NewtonCollision* const collision, unsigned id)
+void NewtonCollisionSetUserID(const NewtonCollision* const collision, dLong id)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgCollisionInstance* const instance = (dgCollisionInstance*) collision;
@@ -3957,7 +3979,7 @@ void NewtonCollisionSetUserID(const NewtonCollision* const collision, unsigned i
 
   See also: ::NewtonCreateBox, ::NewtonCreateSphere
 */
-unsigned NewtonCollisionGetUserID(const NewtonCollision* const collision)
+dLong NewtonCollisionGetUserID(const NewtonCollision* const collision)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgCollisionInstance* const instance = (dgCollisionInstance*) collision;
@@ -3983,12 +4005,9 @@ void NewtonCollisionSetMaterial (const NewtonCollision* const collision, const N
 	TRACE_FUNCTION(__FUNCTION__);
 	dgCollisionInstance* const instance = (dgCollisionInstance*) collision;
 	dgCollisionInfo::dgInstanceMaterial& data = instance->m_material;
-	data.m_userData = userData->m_userData;
+	data.m_alignPad = userData->m_userData.m_int;
 	data.m_userId = userData->m_userId;
-	data.m_userFlags = userData->m_userFlags;
-	for (dgInt32 i = 0; i < 4; i++) {
-		data.m_userParam[i] = userData->m_userParam[i];
-	}
+	memcpy (data.m_userParam, userData->m_userParam, sizeof (data.m_userParam));
 	instance->SetMaterial (data);
 }
 
@@ -3996,13 +4015,10 @@ void NewtonCollisionGetMaterial (const NewtonCollision* const collision, NewtonC
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgCollisionInstance* const instance = (dgCollisionInstance*) collision;
-	const dgCollisionInfo::dgInstanceMaterial data(instance->GetMaterial());
-	userData->m_userData = data.m_userData;
+	const dgCollisionInfo::dgInstanceMaterial& data = instance->GetMaterial();
 	userData->m_userId = data.m_userId;
-	userData->m_userFlags = data.m_userFlags;
-	for (dgInt32 i = 0; i < 4; i ++) {
-		userData->m_userParam[i] = data.m_userParam[i];
-	}
+	userData->m_userData.m_int = data.m_alignPad;
+	memcpy (userData->m_userParam, data.m_userParam, sizeof (data.m_userParam));
 }
 
 void* NewtonCollisionGetSubCollisionHandle (const NewtonCollision* const collision)
@@ -4264,18 +4280,16 @@ void NewtonSetEulerAngle(const dFloat* const angles, dFloat* const matrix)
   the acceleration calculated by this function represent the mass, spring system of the form
   a = -ks * x - kd * v.
 */
-dFloat NewtonCalculateSpringDamperAcceleration(dFloat dt, dFloat ks, dFloat x, dFloat kd, dFloat s)
+dFloat NewtonCalculateSpringDamperAcceleration(dFloat dt, dFloat ks, dFloat x, dFloat kd, dFloat v)
 {
-//	accel = - (ks * x + kd * s);
-
 	TRACE_FUNCTION(__FUNCTION__);
+	//at = - (ks * x + kd * v);
 	//at =  [- ks (x2 - x1) - kd * (v2 - v1) - dt * ks * (v2 - v1)] / [1 + dt * kd + dt * dt * ks] 
 	dgFloat32 ksd = dt * ks;
-	dgFloat32 num = ks * x + kd * s + ksd * s;
+	dgFloat32 num = ks * x + kd * v + ksd * v;
 	dgFloat32 den = dgFloat32 (1.0f) + dt * kd + dt * ksd;
 	dgAssert (den > 0.0f);
 	dFloat accel = - num / den;
-//	dgCheckFloat (accel);
 	return accel;
 }
 
@@ -4722,7 +4736,6 @@ void NewtonBodySetMassMatrix(const NewtonBody* const bodyPtr, dFloat mass, dFloa
 	NewtonBodySetFullMassMatrix(bodyPtr, mass, &inertia[0][0]);
 }
 
-
 void  NewtonBodySetMassProperties (const NewtonBody* const bodyPtr, dFloat mass, const NewtonCollision* const collisionPtr)
 {
 	TRACE_FUNCTION(__FUNCTION__);
@@ -4730,8 +4743,6 @@ void  NewtonBodySetMassProperties (const NewtonBody* const bodyPtr, dFloat mass,
 	dgCollisionInstance* const collision = (dgCollisionInstance*) collisionPtr;
 	body->SetMassProperties (mass, collision);
 }
-
-
 
 /*!
   Get the mass matrix of a rigid body.
@@ -4918,7 +4929,7 @@ void NewtonBodyGetPosition(const NewtonBody* const bodyPtr, dFloat* const posPtr
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgBody* const body = (dgBody *)bodyPtr;
-	const dgVector & rot = body->GetPosition();
+	const dgVector& rot = body->GetPosition();
 	posPtr[0] = rot.m_x;
 	posPtr[1] = rot.m_y;
 	posPtr[2] = rot.m_z;
@@ -4947,11 +4958,11 @@ void NewtonBodyGetRotation(const NewtonBody* const bodyPtr, dFloat* const rotPtr
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgBody* const body = (dgBody *)bodyPtr;
-	dgQuaternion rot = body->GetRotation();
-	rotPtr[0] = rot.m_q0;
-	rotPtr[1] = rot.m_q1;
-	rotPtr[2] = rot.m_q2;
-	rotPtr[3] = rot.m_q3;
+	const dgQuaternion& rot = body->GetRotation();
+	rotPtr[0] = rot.m_x;
+	rotPtr[1] = rot.m_y;
+	rotPtr[2] = rot.m_z;
+	rotPtr[3] = rot.m_w;
 }
 
 
@@ -4996,9 +5007,6 @@ void  NewtonBodyAddForce(const NewtonBody* const bodyPtr, const dFloat* const ve
 	body->AddForce (vector);
 }
 
-
-
-
 /*!
   Get the net force applied to a rigid body after the last NewtonUpdate.
 
@@ -5017,38 +5025,6 @@ void NewtonBodyGetForce(const NewtonBody* const bodyPtr, dFloat* const vectorPtr
 	vectorPtr[0] = vector.m_x;
 	vectorPtr[1] = vector.m_y;
 	vectorPtr[2] = vector.m_z;
-}
-
-
-/*!
-  Calculate the next force that net to be applied to the body to archive the desired velocity in the current time step.
-
-  @param *bodyPtr pointer to the body.
-  @param timestep time step that the force will be applyed.
-  @param *desiredVeloc pointer to an array of 3 floats containing the desired velocity.
-  @param *forceOut pointer to an array of 3 floats to hold the calculated net force.
-
-  this function can be useful when creating object for game play.
-
-  this treat the body as a point mass and is uses the solver to calculates the net force that need to be applied to the body
-  such that is reach the desired velocity in the net time step.
-  In general the force should be calculated by the expression f = M * (dsiredVeloc - bodyVeloc) / timestep
-  however due to algorithmic optimization and limitations if such equation is used then the solver will generate a different desired velocity.
-
-  @return Nothing.
-
-  See also: ::NewtonBodySetForce, ::NewtonBodyAddForce, ::NewtonBodyGetForce
-*/
-void NewtonBodyCalculateInverseDynamicsForce(const NewtonBody* const bodyPtr, dFloat timestep, const dFloat* const desiredVeloc, dFloat* const forceOut)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	dgBody* const body = (dgBody *)bodyPtr;
-	dgVector veloc (desiredVeloc[0], desiredVeloc[1], desiredVeloc[2], dgFloat32 (0.0f));
-	dgVector force (body->CalculateInverseDynamicForce (veloc, timestep));
-	forceOut[0] = force[0];
-	forceOut[1] = force[1];
-	forceOut[2] = force[2];
-
 }
 
 /*!
@@ -5135,20 +5111,20 @@ void NewtonBodyGetTorque(const NewtonBody* const bodyPtr, dFloat* const vectorPt
   Matrix matrix;
   Vector center;
 
-  NewtonGatMetrix(body, matrix)
+  NewtonGetMatrix(body, matrix)
   NewtonGetCentreOfMass(body, center);
 
-  for global space torque.
+  //for global space torque.
   Vector localForce (fx, fy, fz);
   Vector localPosition (x, y, z);
-  Vector localTroque (crossproduct ((localPosition - center). localForce);
-  Vector globalTroque (matrix.RotateVector (localTroque));
+  Vector localTorque (crossproduct ((localPosition - center). localForce);
+  Vector globalTorque (matrix.RotateVector (localTorque));
 
-  for global space torque.
+  //for global space torque.
   Vector globalCentre (matrix.TranformVector (center));
   Vector globalPosition (x, y, z);
   Vector globalForce (fx, fy, fz);
-  Vector globalTroque (crossproduct ((globalPosition - globalCentre). globalForce);
+  Vector globalTorque (crossproduct ((globalPosition - globalCentre). globalForce);
 
   See also: ::NewtonConvexCollisionCalculateInertialMatrix, ::NewtonBodyGetCentreOfMass
 */
@@ -5289,97 +5265,6 @@ int NewtonJointIsActive(const NewtonJoint* const jointPtr)
 	return joint->IsActive() ? 1 : 0;
 }
 
-
-NewtonInverseDynamics* NewtonCreateInverseDynamics(const NewtonWorld* const newtonWorld)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	Newton* const world = (Newton *)newtonWorld;
-	return (NewtonInverseDynamics*)world->CreateInverseDynamics();
-}
-
-void NewtonInverseDynamicsDestroy(NewtonInverseDynamics* const inverseDynamics)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	dgInverseDynamics* const ik = (dgInverseDynamics*) inverseDynamics;
-	Newton* const world = (Newton*)ik->GetWorld();
-	world->DestroyInverseDynamics(ik);
-}
-
-NewtonJoint* NewtonInverseDynamicsCreateEffector(NewtonInverseDynamics* const inverseDynamics, void* const ikNode, NewtonUserBilateralCallback callback)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	dgInverseDynamics* const ik = (dgInverseDynamics*)inverseDynamics;
-
-	Newton* const world = (Newton *)ik->GetWorld();
-	dgInverseDynamics::dgNode* const node = (dgInverseDynamics::dgNode*) ikNode;
-	return (NewtonJoint*) new (world->dgWorld::GetAllocator()) NewtonUserJointInverseDynamicsEffector(ik, node, callback);
-}
-
-void NewtonInverseDynamicsDestroyEffector(NewtonJoint* const effector)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	dgAssert(0);
-}
-
-
-void NewtonInverseDynamicsEndBuild (NewtonInverseDynamics* const inverseDynamics)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	dgInverseDynamics* const ik = (dgInverseDynamics*)inverseDynamics;
-	ik->Finalize();
-}
-
-void NewtonInverseDynamicsUpdate (NewtonInverseDynamics* const inverseDynamics, dFloat timestep, int threadIndex)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	dgInverseDynamics* const ik = (dgInverseDynamics*)inverseDynamics;
-	ik->Update(timestep, threadIndex);
-}
-
-void* NewtonInverseDynamicsGetRoot(NewtonInverseDynamics* const inverseDynamics)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	dgInverseDynamics* const ik = (dgInverseDynamics*)inverseDynamics;
-	return ik->GetRoot();
-}
-
-
-NewtonBody* NewtonInverseDynamicsGetBody(NewtonInverseDynamics* const inverseDynamics, void* const node)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	dgInverseDynamics* const ik = (dgInverseDynamics*)inverseDynamics;
-	return (NewtonBody*) ik->GetBody((dgInverseDynamics::dgNode*) node);
-}
-
-NewtonJoint* NewtonInverseDynamicsGetJoint(NewtonInverseDynamics* const inverseDynamics, void* const node)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	dgInverseDynamics* const ik = (dgInverseDynamics*)inverseDynamics;
-	return (NewtonJoint*) ik->GetJoint((dgInverseDynamics::dgNode*) node);
-}
-
-void* NewtonInverseDynamicsAddRoot(NewtonInverseDynamics* const inverseDynamics, NewtonBody* const root)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	dgInverseDynamics* const ik = (dgInverseDynamics*) inverseDynamics;
-	return ik->AddRoot((dgDynamicBody*)root);
-}
-
-void* NewtonInverseDynamicsAddChildNode(NewtonInverseDynamics* const inverseDynamics, void* const parentNode, NewtonJoint* const joint)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	dgInverseDynamics* const ik = (dgInverseDynamics*) inverseDynamics;
-	return ik->AddChild((dgBilateralConstraint*)joint, (dgInverseDynamics::dgNode*) parentNode);
-}
-
-
-bool NewtonInverseDynamicsAddLoopJoint(NewtonInverseDynamics* const inverseDynamics, NewtonJoint* const joint)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	dgInverseDynamics* const ik = (dgInverseDynamics*)inverseDynamics;
-	return ik->AddLoopJoint((dgBilateralConstraint*)joint);
-}
-
 /*!
   Return to number of contact in this contact joint.
 
@@ -5466,8 +5351,6 @@ void NewtonContactJointRemoveContact(const NewtonJoint* const contactJoint, void
 
 		dgAssert (joint->GetBody0());
 		dgAssert (joint->GetBody1());
-		//dgBody* const body = joint->GetBody0() ? joint->GetBody0() : joint->GetBody1();
-		//dgWorld* const world = body->GetWorld();
 		dgWorld* const world = joint->GetBody0()->GetWorld();
 		world->GlobalLock();
 		joint->Remove(node);
@@ -5484,11 +5367,18 @@ dFloat NewtonContactJointGetClosestDistance(const NewtonJoint* const contactJoin
 	return joint->GetClosestDistance();
 }
 
-void NewtonContactJointResetSelfJointsCollision(const NewtonJoint* const contactJoint)
+void NewtonContactJointResetSelftJointCollision(const NewtonJoint* const contactJoint)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgContact* const joint = (dgContact *)contactJoint;
-	joint->ResetSkeleton();
+	joint->ResetSkeletonSelftCollision();
+}
+
+void NewtonContactJointResetIntraJointCollision(const NewtonJoint* const contactJoint)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	dgContact* const joint = (dgContact *)contactJoint;
+	joint->ResetSkeletonIntraCollision();
 }
 
 /*!
@@ -5569,6 +5459,7 @@ void NewtonBodySetCollision(const NewtonBody* const bodyPtr, const NewtonCollisi
 	dgBody* const body = (dgBody *)bodyPtr;
 	dgCollisionInstance* const collision = (dgCollisionInstance*) collisionPtr;
 	body->AttachCollision (collision);
+	body->UpdateCollisionMatrix(dgFloat32(0.0f), 0);
 }
 
 void NewtonBodySetCollisionScale (const NewtonBody* const bodyPtr, dFloat scaleX, dFloat scaleY, dFloat scaleZ)
@@ -5803,6 +5694,20 @@ void NewtonBodySetFreezeState(const NewtonBody* const bodyPtr, int state)
 	body->SetFreeze(state ? true : false);
 }
 
+int NewtonBodyGetGyroscopicTorque(const NewtonBody* const bodyPtr)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	dgBody* const body = (dgBody *)bodyPtr;
+	return body->GetGyroMode() ? 1 : 0;
+}
+
+void NewtonBodySetGyroscopicTorque(const NewtonBody* const bodyPtr, int state)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	dgBody* const body = (dgBody *)bodyPtr;
+	body->SetGyroMode(state ? true : false);
+}
+
 /*!
   Set the auto-activation mode for this body.
 
@@ -5851,7 +5756,7 @@ int NewtonBodyGetAutoSleep(const NewtonBody* const bodyPtr)
 
   @param *bodyPtr is the pointer to the body.
 
-  @return Sleep state: 1 = active. 0 = sleeping.
+  @return Sleep state: 0 = active. 1 = sleeping.
 
   See also: ::NewtonBodySetAutoSleep
 */
@@ -5962,8 +5867,6 @@ void NewtonBodySetOmega(const NewtonBody* const bodyPtr, const dFloat* const ome
 	body->SetOmega (vector);
 }
 
-
-
 void NewtonBodySetOmegaNoSleep(const NewtonBody* const bodyPtr, const dFloat* const omega)
 {
 	TRACE_FUNCTION(__FUNCTION__);
@@ -5972,7 +5875,6 @@ void NewtonBodySetOmegaNoSleep(const NewtonBody* const bodyPtr, const dFloat* co
 	dgVector vector(omega[0], omega[1], omega[2], dgFloat32(0.0f));
 	body->SetOmegaNoSleep(vector);
 }
-
 
 /*!
   Get the global angular velocity of the body.
@@ -6221,7 +6123,7 @@ void NewtonBodyIntegrateVelocity (const NewtonBody* const bodyPtr, dFloat timest
 	TRACE_FUNCTION(__FUNCTION__);
 	dgBody* const body = (dgBody *)bodyPtr;
 
-	if (body->GetInvMass().m_w > dgFloat32 (0.0f)) {
+	if (body->IsRTTIType(dgBody::m_kinematicBody) || (body->GetInvMass().m_w > dgFloat32 (0.0f))) {
 		body->IntegrateVelocity(timestep);
 	}
 }
@@ -6279,27 +6181,27 @@ void NewtonBallSetConeLimits(const NewtonJoint* const ball, const dFloat* pin, d
 
 	dgVector coneAxis (pin[0], pin[1], pin[2], dgFloat32 (0.0f)); 
 
-	if (coneAxis.DotProduct3(coneAxis) < 1.0e-3f) {
+	if (coneAxis.DotProduct(coneAxis).GetScalar() < 1.0e-3f) {
 		coneAxis.m_x = dgFloat32(1.0f);
 	}
 	dgVector tmp (dgFloat32 (1.0f), dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32 (0.0f)); 
-	if (dgAbs (tmp.DotProduct3(coneAxis)) > dgFloat32 (0.999f)) {
+	if (dgAbs (tmp.DotProduct(coneAxis).GetScalar()) > dgFloat32 (0.999f)) {
 		tmp = dgVector (dgFloat32 (0.0f), dgFloat32(1.0f), dgFloat32 (0.0f), dgFloat32 (0.0f)); 
-		if (dgAbs (tmp.DotProduct3(coneAxis)) > dgFloat32 (0.999f)) {
+		if (dgAbs (tmp.DotProduct(coneAxis).GetScalar()) > dgFloat32 (0.999f)) {
 			tmp = dgVector (dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32(1.0f), dgFloat32 (0.0f)); 
-			dgAssert (dgAbs (tmp.DotProduct3(coneAxis)) < dgFloat32 (0.999f));
+			dgAssert (dgAbs (tmp.DotProduct(coneAxis).GetScalar()) < dgFloat32 (0.999f));
 		}
 	}
 	dgVector lateral (tmp.CrossProduct(coneAxis)); 
-	dgAssert(lateral.m_w = dgFloat32(0.0f));
-	dgAssert(coneAxis.m_w = dgFloat32(0.0f));
+	dgAssert(lateral.m_w == dgFloat32(0.0f));
+	dgAssert(coneAxis.m_w == dgFloat32(0.0f));
 	lateral = lateral.Normalize();
 	coneAxis = coneAxis.Normalize();
 
 	maxConeAngle = dgAbs (maxConeAngle);
 	maxTwistAngle = dgAbs (maxTwistAngle);
-	joint->SetConeLimitState ((maxConeAngle > dgDEG2RAD) ? true : false); 
-	joint->SetTwistLimitState ((maxTwistAngle > dgDEG2RAD) ? true : false);
+	joint->SetConeLimitState ((maxConeAngle > dgDegreeToRad) ? true : false); 
+	joint->SetTwistLimitState ((maxTwistAngle > dgDegreeToRad) ? true : false);
 	joint->SetLatealLimitState (false); 
 	joint->SetLimits (coneAxis, -maxConeAngle, maxConeAngle, maxTwistAngle, lateral, 0.0f, 0.0f);
 }
@@ -7157,7 +7059,7 @@ void NewtonUserJointSetSolverModel(const NewtonJoint* const joint, int model)
 }
 
 /*!
-Get the solver algorthm use to calculation the constraint forces.
+Get the solver algorithm use to calculation the constraint forces.
 @param *joint pointer to the joint.
 
 See also: NewtonUserJointGetSolverModel
@@ -7169,7 +7071,12 @@ int NewtonUserJointGetSolverModel(const NewtonJoint* const joint)
 	return contraint->GetSolverModel();
 }
 
-
+void NewtonUserJointMassScale(const NewtonJoint* const joint, dFloat scaleBody0, dFloat scaleBody1)
+{
+	NewtonUserJoint* const contraint = (NewtonUserJoint*)joint;
+	dgAssert (contraint->IsBilateral());
+	contraint->SetMassScale(scaleBody0, scaleBody1);
+}
 
 /*!
   Add a linear restricted degree of freedom.
@@ -7198,7 +7105,7 @@ void NewtonUserJointAddLinearRow(const NewtonJoint* const joint, const dFloat* c
 	TRACE_FUNCTION(__FUNCTION__);
 	dgVector direction (dir[0], dir[1], dir[2], dgFloat32 (0.0f)); 
 	direction = direction.Normalize();
-	dgAssert (dgAbs (direction.DotProduct3(direction) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-4f));
+	dgAssert (dgAbs (direction.DotProduct(direction).GetScalar() - dgFloat32 (1.0f)) < dgFloat32 (1.0e-4f));
 	dgVector pivotPoint0 (pivot0[0], pivot0[1], pivot0[2], dgFloat32 (0.0f)); 
 	dgVector pivotPoint1 (pivot1[0], pivot1[1], pivot1[2], dgFloat32 (0.0f)); 
 	
@@ -7233,7 +7140,7 @@ void NewtonUserJointAddAngularRow(const NewtonJoint* const joint, dFloat relativ
 	NewtonUserJoint* const userJoint = (NewtonUserJoint*) joint;
 	dgVector direction (pin[0], pin[1], pin[2], dgFloat32 (0.0f));
 	direction = direction.Normalize();
-	dgAssert (dgAbs (direction.DotProduct3(direction) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-3f));
+	dgAssert (dgAbs (direction.DotProduct(direction).GetScalar() - dgFloat32 (1.0f)) < dgFloat32 (1.0e-3f));
 
 	userJoint->AddAngularRowJacobian (direction, relativeAngleError);
 }
@@ -7340,23 +7247,22 @@ dFloat NewtonUserJointGetRowAcceleration (const NewtonJoint* const joint)
 	return userJoint->GetAcceleration();
 }
 
-/*
-dFloat NewtonUserJointGetRowInverseDynamicsAcceleration (const NewtonJoint* const joint)
+void NewtonUserJointGetRowJacobian(const NewtonJoint* const joint, dFloat* const linear0, dFloat* const angular0, dFloat* const linear1, dFloat* const angular1)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	NewtonUserJoint* const userJoint = (NewtonUserJoint*)joint;
-	return userJoint->GetInverseDynamicsAcceleration();
+	dgJacobian jacobian0;
+	dgJacobian jacobian1;
+	userJoint->GetJacobian(jacobian0, jacobian1);
+	for (dgInt32 i = 0; i < 3; i++) {
+		linear0[i] = jacobian0.m_linear[i];
+		angular0[i] = jacobian0.m_angular[i];
+		linear1[i] = jacobian1.m_linear[i];
+		angular1[i] = jacobian1.m_angular[i];
+	}
 }
-*/
 
-void NewtonUserJointSetRowAsInverseDynamics (const NewtonJoint* const joint)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	NewtonUserJoint* const userJoint = (NewtonUserJoint*)joint;
-	userJoint->SetAsInverseDynamicsRow();
-}
-
-dFloat NewtonUserJointCalculateRowZeroAccelaration (const NewtonJoint* const joint)
+dFloat NewtonUserJointCalculateRowZeroAcceleration (const NewtonJoint* const joint)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	NewtonUserJoint* const userJoint = (NewtonUserJoint*)joint;
@@ -7382,13 +7288,19 @@ dFloat NewtonUserJointCalculateRowZeroAccelaration (const NewtonJoint* const joi
 
   See also: ::NewtonUserJointSetRowAcceleration, ::NewtonUserJointSetRowStiffness
 */
-void NewtonUserJointSetRowSpringDamperAcceleration(const NewtonJoint* const joint, dFloat rowStiffness, dFloat spring, dFloat damper)
+void NewtonUserJointSetRowMassIndependentSpringDamperAcceleration(const NewtonJoint* const joint, dFloat rowStiffness, dFloat spring, dFloat damper)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	NewtonUserJoint* const userJoint = (NewtonUserJoint*) joint;
-	userJoint->SetSpringDamperAcceleration (rowStiffness, spring, damper);
+	userJoint->SetMassIndependentSpringDamperAcceleration (rowStiffness, spring, damper);
 }
 
+void NewtonUserJointSetRowMassDependentSpringDamperAcceleration(const NewtonJoint* const joint, dFloat spring, dFloat damper)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	NewtonUserJoint* const userJoint = (NewtonUserJoint*)joint;
+	userJoint->SetMassDependentSpringDamperAcceleration(spring, damper);
+}
 
 /*!
   Set the maximum percentage of the constraint force that will be applied to the constraint row.
@@ -7400,13 +7312,13 @@ void NewtonUserJointSetRowSpringDamperAcceleration(const NewtonJoint* const join
   the row stiffness is the percentage of the constraint force that will be applied to the rigid bodies. Ideally the value should be
   1.0 (100% stiff) but dues to numerical integration error this could be the joint a little unstable, and lower values are preferred.
 
-  See also: ::NewtonUserJointAddLinearRow, ::NewtonUserJointAddAngularRow, ::NewtonUserJointSetRowSpringDamperAcceleration
+  See also: ::NewtonUserJointAddLinearRow, ::NewtonUserJointAddAngularRow, ::NewtonUserJointSetMassIndependentRowSpringDamperAcceleration
 */
 void NewtonUserJointSetRowStiffness(const NewtonJoint* const joint, dFloat stiffness)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	NewtonUserJoint* const userJoint = (NewtonUserJoint*) joint;
-	userJoint->SetRowStiffness (stiffness);
+	userJoint->SetRowStiffness (dgFloat32 (1.0f) - stiffness);
 }
 
 /*!
@@ -7614,7 +7526,7 @@ void NewtonJointSetStiffness(const NewtonJoint* const joint, dFloat stiffness)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgConstraint* const contraint = (dgConstraint*) joint;
-	contraint->SetStiffness(stiffness);
+	contraint->SetStiffness(dgFloat32 (1.0f) - stiffness);
 }
 
 /*!
@@ -7642,7 +7554,7 @@ dFloat NewtonJointGetStiffness(const NewtonJoint* const joint)
 {
 	TRACE_FUNCTION(__FUNCTION__);
 	dgConstraint* const contraint = (dgConstraint*) joint;
-	return contraint->GetStiffness();
+	return dgFloat32 (1.0f) - contraint->GetStiffness();
 }
 
 /*!
@@ -7746,6 +7658,7 @@ NewtonMesh* NewtonMeshCreateTetrahedraIsoSurface(const NewtonMesh* const closeMa
 
 void NewtonCreateTetrahedraLinearBlendSkinWeightsChannel(const NewtonMesh* const tetrahedraMesh, NewtonMesh* const skinMesh)
 {
+	dgAssert(0);
 	TRACE_FUNCTION(__FUNCTION__);
 	dgMeshEffect* const meshEffect = (dgMeshEffect*)skinMesh;
 	meshEffect->CreateTetrahedraLinearBlendSkinWeightsChannel((const dgMeshEffect*)tetrahedraMesh);
@@ -7782,19 +7695,21 @@ void NewtonMeshSerialize (const NewtonMesh* const mesh, NewtonSerializeCallback 
 void NewtonMeshSaveOFF(const NewtonMesh* const mesh, const char* const filename)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-	dgMeshEffect* const meshEffect = (dgMeshEffect*) mesh;
-	meshEffect->SaveOFF(filename);
+	dgAssert(0);
+	//dgMeshEffect* const meshEffect = (dgMeshEffect*) mesh;
+	//meshEffect->SaveOFF(filename);
 }
-
 
 NewtonMesh* NewtonMeshLoadOFF(const NewtonWorld* const newtonWorld, const char* const filename)
 {
 	TRACE_FUNCTION(__FUNCTION__);
-	Newton* const world = (Newton *) newtonWorld;
-	dgMemoryAllocator* const allocator = world->dgWorld::GetAllocator();
-	dgMeshEffect* const mesh = new (allocator) dgMeshEffect (allocator);
-	mesh->LoadOffMesh(filename);
-	return (NewtonMesh*) mesh;
+	//Newton* const world = (Newton *) newtonWorld;
+	//dgMemoryAllocator* const allocator = world->dgWorld::GetAllocator();
+	//dgMeshEffect* const mesh = new (allocator) dgMeshEffect (allocator);
+	//mesh->LoadOffMesh(filename);
+	//return (NewtonMesh*) mesh;
+	dgAssert(0);
+	return NULL;
 }
 
 NewtonMesh* NewtonMeshLoadTetrahedraMesh(const NewtonWorld* const newtonWorld, const char* const filename)
@@ -7813,6 +7728,13 @@ void NewtonMeshApplyTransform (const NewtonMesh* const mesh, const dFloat* const
 	dgMeshEffect* const meshEffect = (dgMeshEffect*) mesh;
 
 	meshEffect->ApplyTransform(dgMatrix (matrix));
+}
+
+void NewtonMeshFlipWinding(const NewtonMesh* const mesh)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	dgMeshEffect* const meshEffect = (dgMeshEffect*)mesh;
+	meshEffect->FlipWinding();
 }
 
 void NewtonMeshCalculateOOBB(const NewtonMesh* const mesh, dFloat* const matrix, dFloat* const x, dFloat* const y, dFloat* const z)
@@ -7858,7 +7780,7 @@ void NewtonMeshApplyBoxMapping(const NewtonMesh* const mesh, int front, int side
 	TRACE_FUNCTION(__FUNCTION__);
 	dgMatrix matrix(aligmentMatrix);
 	dgMeshEffect* const meshEffect = (dgMeshEffect*) mesh;
-	meshEffect->BoxMapping (front, side, top);
+	meshEffect->BoxMapping (front, side, top, matrix);
 }
 
 void NewtonMeshApplyCylindricalMapping(const NewtonMesh* const mesh, int cylinderMaterial, int capMaterial, const dFloat* const aligmentMatrix)
@@ -8030,20 +7952,6 @@ void NewtonMeshAddVertexColor(const NewtonMesh* const mesh, dFloat32 r, dFloat32
 	meshEffect->AddVertexColor(r, g, b, a);
 }
 
-void NewtonMeshAddVertexWeight(const NewtonMesh* const mesh, int matrixIndex[4], dFloat32 weights[4])
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	dgMeshEffect* const meshEffect = (dgMeshEffect*)mesh;
-
-	dgMeshEffect::dgPointFormat::dgWeightSet weightSet;
-	for (int i = 0; i < 4; i ++) {
-		weightSet.m_weightPair[i].m_weight = weights[i];
-		weightSet.m_weightPair[i].m_controlIndex = matrixIndex[i];
-	}
-
-	meshEffect->AddWeights (weightSet);
-}
-
 void NewtonMeshEndBuild(const NewtonMesh* const mesh)
 {
 	TRACE_FUNCTION(__FUNCTION__);
@@ -8087,14 +7995,25 @@ void NewtonMeshOptimize(const NewtonMesh* const mesh)
 	NewtonMeshOptimizeVertex(mesh);
 }
 
-
 int NewtonMeshGetVertexCount(const NewtonMesh* const mesh)
 {
 	TRACE_FUNCTION(__FUNCTION__);	
 	dgMeshEffect* const meshEffect = (dgMeshEffect*) mesh;
-
-//	return meshEffect->GetPropertiesCount();
 	return meshEffect->GetVertexCount();
+}
+
+int NewtonMeshGetVertexBaseCount(const NewtonMesh* const mesh)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	dgMeshEffect* const meshEffect = (dgMeshEffect*)mesh;
+	return meshEffect->GetVertexBaseCount();
+}
+
+void NewtonMeshSetVertexBaseCount(const NewtonMesh* const mesh, int baseCount)
+{
+	TRACE_FUNCTION(__FUNCTION__);
+	dgMeshEffect* const meshEffect = (dgMeshEffect*)mesh;
+	meshEffect->SetVertexBaseCount(baseCount);
 }
 
 int NewtonMeshGetVertexStrideInByte(const NewtonMesh* const mesh)
@@ -8113,7 +8032,6 @@ const dFloat64* NewtonMeshGetVertexArray (const NewtonMesh* const mesh)
 	return meshEffect->GetVertexPool (); 
 }
 
-
 int NewtonMeshGetPointCount (const NewtonMesh* const mesh)
 {
 	TRACE_FUNCTION(__FUNCTION__);
@@ -8126,13 +8044,6 @@ const int* NewtonMeshGetIndexToVertexMap(const NewtonMesh* const mesh)
 	TRACE_FUNCTION(__FUNCTION__);
 	dgMeshEffect* const meshEffect = (dgMeshEffect*)mesh;
 	return meshEffect->GetIndexToVertexMap();
-}
-
-int NewtonMeshGetVertexWeights(const NewtonMesh* const mesh, int vertexIndex, int* const weightIndices, dFloat* const weightFactors)
-{
-	TRACE_FUNCTION(__FUNCTION__);
-	dgMeshEffect* const meshEffect = (dgMeshEffect*)mesh;
-	return meshEffect->GetVertexWeights (vertexIndex, weightIndices, weightFactors);
 }
 
 int NewtonMeshHasNormalChannel(const NewtonMesh* const mesh)
@@ -8169,7 +8080,6 @@ int NewtonMeshHasVertexColorChannel(const NewtonMesh* const mesh)
 	dgMeshEffect* const meshEffect = (dgMeshEffect*)mesh;
 	return meshEffect->HasVertexColorChannel() ? 1 : 0;
 }
-
 
 void NewtonMeshGetVertexDoubleChannel (const NewtonMesh* const mesh, int vertexStrideInByte, dFloat64* const outBuffer)
 {
@@ -8297,7 +8207,7 @@ NewtonMesh* NewtonMeshCreateFirstSingleSegment (const NewtonMesh* const mesh)
 	effectMesh->BeginConectedSurface();
 	if (effectMesh->GetConectedSurface (segment)) {
 		dgMeshEffect* const solid = new (effectMesh->GetAllocator()) dgMeshEffect(segment, *((dgMeshEffect*)mesh));
-	return (NewtonMesh*)solid;
+		return (NewtonMesh*)solid;
 	} else {
 		return NULL;
 	}

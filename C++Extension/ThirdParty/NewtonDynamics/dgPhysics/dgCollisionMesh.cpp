@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -315,10 +315,12 @@ dgInt32 dgCollisionMesh::CalculatePlaneIntersection (const dgFloat32* const vert
 	dgInt32 count = 0;
 	dgInt32 j = index[indexCount - 1] * stride;
 	dgVector p0 (&vertex[j]);
+	p0 = p0 & dgVector::m_triplexMask;
 	dgFloat32 side0 = localPlane.Evalue (p0);
 	for (dgInt32 i = 0; i < indexCount; i ++) {
 		j = index[i] * stride;
 		dgVector p1 (&vertex[j]);
+		p1 = p1 & dgVector::m_triplexMask;
 		dgFloat32 side1 = localPlane.Evalue (p1);
 
 		if (side0 < dgFloat32 (0.0f)) {

@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -63,6 +63,7 @@ dgCollisionInstance::dgCollisionInstance()
 	,m_collisionMode(1)
 	,m_refCount(1)
 	,m_scaleType(m_unit)
+	,m_isExternal(true)
 {
 }
 
@@ -82,6 +83,7 @@ dgCollisionInstance::dgCollisionInstance(const dgWorld* const world, const dgCol
 	,m_collisionMode(1)
 	,m_refCount(1)
 	,m_scaleType(m_unit)
+	,m_isExternal(true)
 {
 	m_material.m_userId = shapeID;
 	m_childShape->AddRef();
@@ -103,6 +105,7 @@ dgCollisionInstance::dgCollisionInstance(const dgCollisionInstance& instance)
 	,m_collisionMode(instance.m_collisionMode)
 	,m_refCount(1)
 	,m_scaleType(instance.m_scaleType)
+	,m_isExternal(true)
 {
 	if (m_childShape->IsType (dgCollision::dgCollisionCompound_RTTI)) {
 		if (m_childShape->IsType (dgCollision::dgCollisionCompoundBreakable_RTTI)) {
@@ -146,6 +149,7 @@ dgCollisionInstance::dgCollisionInstance(const dgWorld* const constWorld, dgDese
 	,m_collisionMode(1)
 	,m_refCount(1)
 	,m_scaleType(m_unit)
+	,m_isExternal(true)
 {
 	dgInt32 saved;
 	dgInt32 signature;
@@ -296,7 +300,7 @@ dgCollisionInstance::dgCollisionInstance(const dgWorld* const constWorld, dgDese
 
 dgCollisionInstance::~dgCollisionInstance()
 {
-	if (m_world->m_onCollisionInstanceDestruction) {
+	if (m_world->m_onCollisionInstanceDestruction && m_isExternal) {
 		m_world->m_onCollisionInstanceDestruction (m_world, this);
 	}
 	dgWorld* const world = (dgWorld*)m_world;
@@ -542,7 +546,6 @@ void dgCollisionInstance::CalcAABB (const dgMatrix& matrix, dgVector& p0, dgVect
 	dgAssert (p1.m_w == dgFloat32 (0.0f));
 }
 
-
 dgFloat32 dgCollisionInstance::RayCast (const dgVector& localP0, const dgVector& localP1, dgFloat32 maxT, dgContactPoint& contactOut, OnRayPrecastAction preFilter, const dgBody* const body, void* const userData) const
 {
 	if (!preFilter || preFilter(body, this, userData)) {
@@ -627,21 +630,60 @@ dgFloat32 dgCollisionInstance::RayCast (const dgVector& localP0, const dgVector&
 	return dgFloat32 (1.2f);
 }
 
-
-void dgCollisionInstance::CalculateBuoyancyAcceleration (const dgMatrix& matrix, const dgVector& origin, const dgVector& gravity, const dgVector& fluidPlane, dgFloat32 fluidDensity, dgFloat32 fluidViscosity, dgVector& unitForce, dgVector& unitTorque)
+void dgCollisionInstance::CalculateImplicitContacts(dgInt32 count, dgContactPoint* const contactPoints) const
 {
-	dgMatrix globalMatrix (m_localMatrix * matrix);
+	switch (m_scaleType)
+	{
+		case m_unit:
+		{
+		   for (dgInt32 i = 0; i < count; i++) {
+				contactPoints[i].m_point = m_globalMatrix.UntransformVector(contactPoints[i].m_point);
+			}
+			m_childShape->CalculateImplicitContacts(count, contactPoints);
+			for (dgInt32 i = 0; i < count; i++) {
+				contactPoints[i].m_point = m_globalMatrix.TransformVector(contactPoints[i].m_point);
+				contactPoints[i].m_normal = m_globalMatrix.RotateVector(contactPoints[i].m_normal);
+			}
+			break;
+		}
 
-	unitForce = dgVector (dgFloat32 (0.0f));
-	unitTorque = dgVector (dgFloat32 (0.0f));
-	dgVector volumeIntegral (m_childShape->CalculateVolumeIntegral (globalMatrix, fluidPlane, *this));
-	if (volumeIntegral.m_w > dgFloat32 (0.0f)) {
-		dgVector buoyanceCenter (volumeIntegral - origin);
+		case m_uniform:
+		{
+			for (dgInt32 i = 0; i < count; i++) {
+				contactPoints[i].m_point = m_invScale * m_globalMatrix.UntransformVector(contactPoints[i].m_point);
+			}
+			m_childShape->CalculateImplicitContacts(count, contactPoints);
+			for (dgInt32 i = 0; i < count; i++) {
+				contactPoints[i].m_point = m_globalMatrix.TransformVector(contactPoints[i].m_point * m_scale);
+				contactPoints[i].m_normal = m_globalMatrix.RotateVector(contactPoints[i].m_normal);
+			}
+			break;
+		}
 
-		dgVector force (gravity.Scale (-fluidDensity * volumeIntegral.m_w));
-		dgVector torque (buoyanceCenter.CrossProduct(force));
+		case m_nonUniform:
+		{
+			for (dgInt32 i = 0; i < count; i++) {
+				contactPoints[i].m_point = m_invScale * m_globalMatrix.UntransformVector(contactPoints[i].m_point);
+			}
+			m_childShape->CalculateImplicitContacts(count, contactPoints);
+			for (dgInt32 i = 0; i < count; i++) {
+				contactPoints[i].m_point = m_globalMatrix.TransformVector(contactPoints[i].m_point * m_scale);
+				contactPoints[i].m_normal = m_globalMatrix.RotateVector(contactPoints[i].m_normal * m_invScale).Normalize();
+			}
+			break;
+		}
 
-		unitForce += force;
-		unitTorque += torque;
+		case m_global:
+		default:
+		{
+			for (dgInt32 i = 0; i < count; i++) {
+				contactPoints[i].m_point = m_invScale * m_globalMatrix.UntransformVector(m_aligmentMatrix.UntransformVector(contactPoints[i].m_point));
+			}
+			m_childShape->CalculateImplicitContacts(count, contactPoints);
+			for (dgInt32 i = 0; i < count; i++) {
+				contactPoints[i].m_point = m_globalMatrix.TransformVector(m_aligmentMatrix.TransformVector(contactPoints[i].m_point) * m_scale);
+				contactPoints[i].m_normal = m_globalMatrix.RotateVector(m_aligmentMatrix.RotateVector(contactPoints[i].m_normal) * m_invScale).Normalize();
+			}
+		}
 	}
 }

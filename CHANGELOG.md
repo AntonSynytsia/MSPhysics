@@ -1,9 +1,9 @@
-## 1.1.0 - 
+## 1.1.0 -
 - Updated to latest revision of NewtonDynamics 3.14.
 - Removed world scale option.
 - Made dialog and control panel non-modal on Mac OS X.
 - Use UI::HtmlDialog for SU2017 and later.
-- Added Ruby 2.5 binaries.
+- Added Ruby 2.5/2.7 binaries.
 
 ## 1.0.3 - October 16, 2017
 - Improved joint connection tool. Now closest joints are determined by closest

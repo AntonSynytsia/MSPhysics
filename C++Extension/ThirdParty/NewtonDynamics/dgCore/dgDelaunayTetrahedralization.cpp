@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -20,12 +20,11 @@
 */
 
 #include "dgStdafx.h"
+#include "dgSort.h"
 #include "dgStack.h"
 #include "dgGoogol.h"
 #include "dgSmallDeterminant.h"
 #include "dgDelaunayTetrahedralization.h"
-
-
 
 dgDelaunayTetrahedralization::dgDelaunayTetrahedralization(dgMemoryAllocator* const allocator, const dgFloat64* const vertexCloud, dgInt32 count, dgInt32 strideInByte, dgFloat64 distTol)
 	:dgConvexHull4d(allocator)
@@ -100,20 +99,17 @@ dgDelaunayTetrahedralization::~dgDelaunayTetrahedralization()
 {
 }
 
-
-
 dgInt32 dgDelaunayTetrahedralization::AddVertex (const dgBigVector& vertex)
 {
 	dgSetPrecisionDouble precision;
 
 	dgBigVector p (vertex);
-	p.m_w = p.DotProduct3(p);
+	dgAssert(p.m_w == dgFloat32(0.0f));
+	p.m_w = p.DotProduct(p).GetScalar();
 	dgInt32 index = dgConvexHull4d::AddVertex(p);
 
 	return index;
 }
-
-
 
 dgInt32 dgDelaunayTetrahedralization::CompareVertexByIndex(const dgConvexHull4dVector* const  A, const dgConvexHull4dVector* const B, void* const context)
 {
@@ -124,7 +120,6 @@ dgInt32 dgDelaunayTetrahedralization::CompareVertexByIndex(const dgConvexHull4dV
 	}
 	return 0;
 }
-
 
 void dgDelaunayTetrahedralization::SortVertexArray ()
 {
@@ -143,8 +138,6 @@ void dgDelaunayTetrahedralization::SortVertexArray ()
 	dgSort(points, m_count, CompareVertexByIndex);
 }
 
-
-
 void dgDelaunayTetrahedralization::RemoveUpperHull ()
 {
 	dgSetPrecisionDouble precision;
@@ -161,7 +154,6 @@ void dgDelaunayTetrahedralization::RemoveUpperHull ()
 		}
 	}
 }
-
 
 void dgDelaunayTetrahedralization::DeleteFace (dgListNode* const node)
 {

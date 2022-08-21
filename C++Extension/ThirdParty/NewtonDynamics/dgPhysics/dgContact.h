@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -38,22 +38,35 @@ class dgCollisionInstance;
 #define DG_RESTING_CONTACT_PENETRATION	(DG_PENETRATION_TOL + dgFloat32 (1.0f / 1024.0f))
 #define DG_DIAGONAL_PRECONDITIONER		dgFloat32 (25.0f)
 
-class dgContactList: public dgList<dgContact*>
+class dgContactList: public dgArray<dgContact*>
 {
 	public:
 	dgContactList(dgMemoryAllocator* const allocator)
-		:dgList<dgContact*>(allocator)
-		,m_deadContactsCount(0)
-		,m_activeContactsCount(0)
+		:dgArray<dgContact*>(allocator)
+		,m_contactCount(0)
+		,m_contactCountReset(0)
+		,m_activeContactCount(0)
+	{
+		Resize (1024 * 32);
+	}
+
+	~dgContactList()
 	{
 	}
 
-	dgInt32 m_deadContactsCount;
-	dgInt32 m_activeContactsCount;
-	dgContactList::dgListNode* m_deadContacts[128];
+	void Push (dgContact* const contact)
+	{
+		dgInt32 index = dgAtomicExchangeAndAdd(&m_contactCount, 1);
+		dgAssert (index < GetElementsCapacity());
+		(*this)[index] = contact;
+	}
+
+	dgInt32 m_contactCount;
+	dgInt32 m_contactCountReset;
+	dgInt32 m_activeContactCount;
 };
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgCollisionParamProxy
 {	
 	public:
@@ -87,11 +100,10 @@ class dgCollisionParamProxy
 	dgInt32 m_maxContacts;
 	bool m_continueCollision;
 	bool m_intersectionTestOnly;
+} DG_GCC_VECTOR_ALIGNMENT;
 
-}DG_GCC_VECTOR_ALIGMENT;
 
-
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgContactPoint
 {
 	public:
@@ -104,25 +116,29 @@ class dgContactPoint
 	dgInt64 m_shapeId0;
 	dgInt64 m_shapeId1;
 	dgFloat32 m_penetration;
-}DG_GCC_VECTOR_ALIGMENT;
+}DG_GCC_VECTOR_ALIGNMENT;
 
 
-DG_MSC_VECTOR_ALIGMENT 
+DG_MSC_VECTOR_ALIGNMENT 
 class dgContactMaterial: public dgContactPoint
 {
 	public:
 	enum {
-		m_collisionEnable = 1<<0,
-		m_friction0Enable = 1<<1,
-		m_friction1Enable = 1<<2,
-		m_override0Accel  = 1<<3,
-		m_override1Accel  = 1<<4,
-		m_override0Friction = 1<<5,
-		m_override1Friction = 1<<6,
-		m_overrideNormalAccel = 1<<7,
+		m_none			  = 0,
+		m_isSoftContact	  = 1<<0,
+		m_collisionEnable = 1<<1,
+		m_friction0Enable = 1<<2,
+		m_friction1Enable = 1<<3,
+		m_override0Accel  = 1<<4,
+		m_override1Accel  = 1<<5,
+		m_override0Friction = 1<<6,
+		m_override1Friction = 1<<7,
+		m_overrideNormalAccel = 1<<8,
+		m_resetSkeletonSelfCollision = 1<<9,
+		m_resetSkeletonIntraCollision = 1<<10,
 	};
 
-	DG_MSC_VECTOR_ALIGMENT 
+	DG_MSC_VECTOR_ALIGNMENT 
 	class dgUserContactPoint
 	{
 		public:
@@ -132,19 +148,17 @@ class dgContactMaterial: public dgContactPoint
 		dgUnsigned64 m_shapeId1;
 		dgFloat32 m_penetration;
 		dgUnsigned32 m_unused[3];
-	} DG_GCC_VECTOR_ALIGMENT;
-
+	} DG_GCC_VECTOR_ALIGNMENT;
 
 	typedef bool (dgApi *OnAABBOverlap) (dgContact& contactJoint, dgFloat32 timestep, dgInt32 threadIndex);
 	typedef void (dgApi *OnContactCallback) (dgContact& contactJoint, dgFloat32 timestep, dgInt32 threadIndex);
 	typedef bool (dgApi *OnCompoundCollisionPrefilter) (dgContact& contactJoint, dgFloat32 timestep, const dgBody* bodyA, const void* collisionNodeA, const dgBody* bodyB, const void* collisionNodeB, dgInt32 threadIndex);
-//	typedef bool (dgApi *OnAABBOverlap) (const dgContactMaterial& material, const dgBody& body0, const dgBody& body1, dgInt32 threadIndex);
-//	typedef bool (dgApi *OnCompoundCollisionPrefilter) (const dgContactMaterial& material, const dgBody* bodyA, const void* collisionNodeA, const dgBody* bodyB, const void* collisionNodeB, dgInt32 threadIndex);
 	typedef bool (dgApi *OnContactGeneration) (const dgContactMaterial& material, const dgBody& body0, const dgCollisionInstance* collisionIntance0, const dgBody& body1, const dgCollisionInstance* collisionIntance1, dgUserContactPoint* const contacts, dgInt32 maxCount, dgInt32 threadIndex);
 
 	dgContactMaterial();
 	void* GetUserData () const; 
 	void SetUserData (void* const userData); 
+	void SetAsSoftContact (dgFloat32 regularizer);
 	void SetCollisionGenerationCallback (OnContactGeneration contactGeneration); 
 	void SetCollisionCallback (OnAABBOverlap abbOvelap, OnContactCallback callback); 
 	void SetCompoundCollisionCallback (OnCompoundCollisionPrefilter abbCompounndOvelap); 
@@ -154,12 +168,12 @@ class dgContactMaterial: public dgContactPoint
 	dgForceImpactPair m_normal_Force;
 	dgForceImpactPair m_dir0_Force;
 	dgForceImpactPair m_dir1_Force;
-	dgFloat32 m_softness;
 	dgFloat32 m_restitution;
 	dgFloat32 m_staticFriction0;
 	dgFloat32 m_staticFriction1;
 	dgFloat32 m_dynamicFriction0;
 	dgFloat32 m_dynamicFriction1;
+	dgFloat32 m_softness;
 	dgFloat32 m_skinThickness;
 	dgInt32 m_flags;
 
@@ -179,14 +193,15 @@ class dgContactMaterial: public dgContactPoint
 	friend class dgCollidingPairCollector;
 	friend class dgBroadPhaseMaterialCallbackWorkerThread;
 	
-}DG_GCC_VECTOR_ALIGMENT;
+}DG_GCC_VECTOR_ALIGNMENT;
 
 
-DG_MSC_VECTOR_ALIGMENT 
+DG_MSC_VECTOR_ALIGNMENT 
 class dgContact: public dgConstraint, public dgList<dgContactMaterial>
 {
 	public:
-	void ResetSkeleton();
+	void ResetSkeletonSelftCollision();
+	void ResetSkeletonIntraCollision();
 	dgFloat32 GetTimeOfImpact() const;
 	dgFloat32 GetClosestDistance() const;
 	void SetTimeOfImpact(dgFloat32 timetoImpact);
@@ -197,41 +212,47 @@ class dgContact: public dgConstraint, public dgList<dgContactMaterial>
 
 	protected:
 	dgContact(dgContact* const clone);
-	dgContact(dgWorld* const world, const dgContactMaterial* const material);
+	dgContact(dgWorld* const world, const dgContactMaterial* const material, dgBody* const body0, dgBody* const body1);
 	virtual ~dgContact();
 
 	DG_CLASS_ALLOCATOR(allocator)
 
 	virtual void ResetMaxDOF();
-	virtual void ResetInverseDynamics();
+	virtual dgFloat32 GetImpulseContactSpeed() const;
+	virtual void SetImpulseContactSpeed(dgFloat32 speed);
 	virtual void GetInfo (dgConstraintInfo* const info) const;
 	virtual dgUnsigned32 JacobianDerivative (dgContraintDescritor& params); 
 	virtual void JointAccelerations (dgJointAccelerationDecriptor* const params); 
 	virtual bool IsDeformable() const ;
-	virtual bool IsSkeleton() const;
 	virtual void SetDestructorCallback (OnConstraintDestroy destructor);
+
+	bool IsSkeletonIntraCollision() const;
+	bool IsSkeletonSelftCollision() const;
 
 	void JacobianContactDerivative (dgContraintDescritor& params, const dgContactMaterial& contact, dgInt32 normalIndex, dgInt32& frictionIndex); 
 	void CalculatePointDerivative (dgInt32 index, dgContraintDescritor& desc, const dgVector& dir, const dgPointParam& param) const;
 
-	void AppendToContactList();
 	void SwapBodies();
+	bool EstimateCCD (dgFloat32 timestep) const;
 
 	dgVector m_positAcc;
 	dgQuaternion m_rotationAcc;
 	dgVector m_separtingVector;
+	const dgContactMaterial* m_material;
 	dgFloat32 m_closestDistance;
 	dgFloat32 m_separationDistance;
 	dgFloat32 m_timeOfImpact;
-	const dgContactMaterial* m_material;
-	dgContactList::dgListNode* m_contactNode;
+	dgFloat32 m_impulseSpeed;
 	dgFloat32 m_contactPruningTolereance;
 	dgUnsigned32 m_broadphaseLru;
+	dgUnsigned32 m_killContact				: 1;
 	dgUnsigned32 m_isNewContact				: 1;
-	dgUnsigned32 m_skeletonSelfCollision	: 1;
+	dgUnsigned32 m_skeletonIntraCollision	: 1;
+	dgUnsigned32 m_skeletonSelftCollision	: 1;
 
     friend class dgBody;
 	friend class dgWorld;
+	friend class dgDeadBodies;
 	friend class dgBroadPhase;
 	friend class dgContactList;
 	friend class dgContactSolver;
@@ -244,7 +265,7 @@ class dgContact: public dgConstraint, public dgList<dgContactMaterial>
 	friend class dgCollisionConvexPolygon;
 	friend class dgCollidingPairCollector;
 	
-}DG_GCC_VECTOR_ALIGMENT;
+}DG_GCC_VECTOR_ALIGNMENT;
 
 DG_INLINE void dgContactMaterial::SetCollisionCallback (OnAABBOverlap aabbOverlap, OnContactCallback contact) 
 {
@@ -272,6 +293,20 @@ DG_INLINE void dgContactMaterial::SetUserData (void* const userData)
 	m_userData = userData;
 }
 
+DG_INLINE void dgContactMaterial::SetAsSoftContact(dgFloat32 regularizer)
+{
+	dgAssert(regularizer >= dgFloat32 (0.0f));
+	dgAssert(regularizer <= dgFloat32 (1.0f));
+	// re purpose some of the variable to store parameter for soft contact
+	m_flags |= m_isSoftContact;
+	m_skinThickness = regularizer;
+}
+
+DG_INLINE const dgContactMaterial* dgContact::GetMaterial() const
+{
+	return m_material;
+}
+
 DG_INLINE bool dgContact::IsDeformable() const 
 {
 	return false;
@@ -279,11 +314,6 @@ DG_INLINE bool dgContact::IsDeformable() const
 
 DG_INLINE void dgContact::SetDestructorCallback (OnConstraintDestroy destructor)
 {
-}
-
-DG_INLINE const dgContactMaterial* dgContact::GetMaterial() const
-{
-	return m_material;
 }
 
 DG_INLINE void dgContact::SetTimeOfImpact(dgFloat32 timetoImpact)
@@ -306,10 +336,6 @@ DG_INLINE void dgContact::ResetMaxDOF()
 	m_maxDOF = 0;
 }
 
-DG_INLINE void dgContact::ResetInverseDynamics()
-{
-}
-
 DG_INLINE dgFloat32 dgContact::GetPruningTolerance() const
 {
 	return m_contactPruningTolereance;
@@ -320,16 +346,36 @@ DG_INLINE void dgContact::SetPruningTolerance(dgFloat32 tolerance)
 	m_contactPruningTolereance = dgAbs (tolerance);
 }
 
-
-DG_INLINE void dgContact::ResetSkeleton()
+DG_INLINE void dgContact::ResetSkeletonIntraCollision()
 {
-	m_skeletonSelfCollision = 0;
+	m_skeletonIntraCollision = 0;
 }
 
-DG_INLINE bool dgContact::IsSkeleton() const
+DG_INLINE bool dgContact::IsSkeletonIntraCollision() const
 {
-	return m_skeletonSelfCollision;
+	return m_skeletonIntraCollision;
 }
+
+DG_INLINE void dgContact::ResetSkeletonSelftCollision()
+{
+	m_skeletonSelftCollision = 0;
+}
+
+DG_INLINE bool dgContact::IsSkeletonSelftCollision() const
+{
+	return m_skeletonSelftCollision;
+}
+
+DG_INLINE dgFloat32 dgContact::GetImpulseContactSpeed() const
+{
+	return m_impulseSpeed;
+}
+
+DG_INLINE void dgContact::SetImpulseContactSpeed(dgFloat32 speed)
+{
+	m_impulseSpeed = speed;
+}
+
 
 #endif 
 

@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -36,7 +36,7 @@ const dgMatrix& dgGetZeroMatrix ();
 const dgMatrix& dgGetIdentityMatrix();
 
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgMatrix
 {
 	public:
@@ -60,13 +60,13 @@ class dgMatrix
 	dgMatrix Inverse4x4 () const;
 	dgMatrix Transpose () const;
 	dgMatrix Transpose4X4 () const;
-	dgMatrix Symetric3by3Inverse () const;
 	dgVector RotateVector (const dgVector &v) const;
 	dgVector UnrotateVector (const dgVector &v) const;
 	dgVector TransformVector (const dgVector &v) const;
 	dgVector UntransformVector (const dgVector &v) const;
 	dgPlane TransformPlane (const dgPlane &localPlane) const;
 	dgPlane UntransformPlane (const dgPlane &globalPlane) const;
+	dgVector SolveByGaussianElimination(const dgVector &v) const;
 	void TransformBBox (const dgVector& p0local, const dgVector& p1local, dgVector& p0, dgVector& p1) const; 
 
 	void CalcPitchYawRoll (dgVector& euler0, dgVector& euler1) const;
@@ -89,9 +89,9 @@ class dgMatrix
 	dgMatrix operator* (const dgMatrix &B) const;
 
 	// these function can only be called when dgMatrix is a PDS matrix
-	void EigenVectors (const dgMatrix* initialGuess = NULL);
-	void EigenVectors (dgVector &eigenValues, const dgMatrix* const initialGuess = NULL);
-	void PolarDecomposition (dgMatrix& transformMatrix, dgVector& scale, dgMatrix& stretchAxis, const dgMatrix* initialStretchAxis = NULL) const;
+	//void EigenVectors ();
+	dgVector EigenVectors ();
+	void PolarDecomposition (dgMatrix& transformMatrix, dgVector& scale, dgMatrix& stretchAxis) const;
 
 	// constructor for polar composition
 	dgMatrix (const dgMatrix& transformMatrix, const dgVector& scale, const dgMatrix& stretchAxis);
@@ -103,7 +103,7 @@ class dgMatrix
 
 	static dgMatrix m_zeroMatrix;
 	static dgMatrix m_identityMatrix;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
 
@@ -169,30 +169,16 @@ DG_INLINE const dgVector& dgMatrix::operator[] (dgInt32  i) const
 
 DG_INLINE dgMatrix dgMatrix::Transpose () const
 {
-#if 1
 	dgMatrix inv;
 	dgVector::Transpose4x4(inv[0], inv[1], inv[2], inv[3], m_front, m_up, m_right, dgVector::m_wOne);
 	return inv;
-#else
-	return dgMatrix (dgVector (m_front.m_x, m_up.m_x, m_right.m_x, dgFloat32(0.0f)),
-					 dgVector (m_front.m_y, m_up.m_y, m_right.m_y, dgFloat32(0.0f)),
-					 dgVector (m_front.m_z, m_up.m_z, m_right.m_z, dgFloat32(0.0f)),
-					 dgVector::m_wOne);
-#endif
 }
 
 DG_INLINE dgMatrix dgMatrix::Transpose4X4 () const
 {
-#if 1
 	dgMatrix inv;
 	dgVector::Transpose4x4(inv[0], inv[1], inv[2], inv[3], m_front, m_up, m_right, m_posit);
 	return inv;
-#else
-	return dgMatrix (dgVector (m_front.m_x, m_up.m_x, m_right.m_x, m_posit.m_x),
-					 dgVector (m_front.m_y, m_up.m_y, m_right.m_y, m_posit.m_y),
-					 dgVector (m_front.m_z, m_up.m_z, m_right.m_z, m_posit.m_z),
-					 dgVector (m_front.m_w, m_up.m_w, m_right.m_w, m_posit.m_w));
-#endif
 }
 
 DG_INLINE dgVector dgMatrix::RotateVector (const dgVector &v) const
@@ -202,11 +188,7 @@ DG_INLINE dgVector dgMatrix::RotateVector (const dgVector &v) const
 
 DG_INLINE dgVector dgMatrix::UnrotateVector (const dgVector &v) const
 {
-#if 1
-	return Transpose().RotateVector(v);
-#else
-	return (v.DotProduct(m_front) & dgVector::m_xMask) + (v.DotProduct(m_up) & dgVector::m_yMask) + (v.DotProduct(m_right) & dgVector::m_zMask);
-#endif
+	return dgVector ((m_front * v).AddHorizontal().GetScalar(), (m_up * v).AddHorizontal().GetScalar(), (m_right * v).AddHorizontal().GetScalar(), dgFloat32 (0.0f));
 }
 
 DG_INLINE dgVector dgMatrix::TransformVector (const dgVector &v) const
@@ -229,26 +211,21 @@ DG_INLINE dgPlane dgMatrix::UntransformPlane (const dgPlane &globalPlane) const
 	return dgPlane (UnrotateVector (globalPlane), globalPlane.Evalue(m_posit));
 }
 
-DG_INLINE void dgMatrix::EigenVectors (const dgMatrix* const initialGuess)
+/*
+DG_INLINE void dgMatrix::EigenVectors ()
 {
 	dgVector eigenValues;
-	EigenVectors (eigenValues, initialGuess);
+	EigenVectors (eigenValues);
 }
+*/
 
 DG_INLINE dgMatrix dgMatrix::Inverse () const
 {
-#if 1
 	// much faster inverse
 	dgMatrix inv;
 	dgVector::Transpose4x4 (inv[0], inv[1], inv[2], inv[3], m_front, m_up, m_right, dgVector::m_wOne);
 	inv.m_posit -= inv[0] * m_posit.BroadcastX() + inv[1] * m_posit.BroadcastY() + inv[2] * m_posit.BroadcastZ();
 	return inv;
-#else
-	return dgMatrix (dgVector (m_front.m_x, m_up.m_x, m_right.m_x, dgFloat32(0.0f)),
-					 dgVector (m_front.m_y, m_up.m_y, m_right.m_y, dgFloat32(0.0f)),
-					 dgVector (m_front.m_z, m_up.m_z, m_right.m_z, dgFloat32(0.0f)),
-					 dgVector (- m_posit.DotProduct(m_front).GetScalar(), - m_posit.DotProduct(m_up).GetScalar(), - m_posit.DotProduct(m_right).GetScalar(), dgFloat32(1.0f)));
-#endif
 }
 
 DG_INLINE bool dgMatrix::TestIdentity() const
@@ -312,7 +289,6 @@ DG_INLINE bool dgMatrix::TestSymetric3x3() const
 		   (me[3][3] == dgFloat32 (1.0f));
 }
 
-
 DG_INLINE dgMatrix dgPitchMatrix(dgFloat32 ang)
 {
 	dgFloat32 sinAng = dgSin (ang);
@@ -346,7 +322,7 @@ DG_INLINE dgMatrix dgRollMatrix(dgFloat32 ang)
 
 
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgSpatialMatrix
 {
 	public:
@@ -376,6 +352,8 @@ class dgSpatialMatrix
 		return m_rows[i];
 	}
 
+	dgSpatialMatrix Inverse(dgInt32 rows) const;
+
 	DG_INLINE dgSpatialVector VectorTimeMatrix(const dgSpatialVector& jacobian) const
 	{
 		dgSpatialVector tmp(m_rows[0].Scale (jacobian[0]));
@@ -394,40 +372,8 @@ class dgSpatialMatrix
 		return tmp;
 	}
 
-	DG_INLINE dgSpatialMatrix Inverse(dgInt32 rows) const
-	{
-		dgSpatialMatrix copy(*this);
-		dgSpatialMatrix inverse(dgFloat64(0.0f));
-		for (dgInt32 i = 0; i < rows; i++) {
-			inverse[i][i] = dgFloat32(1.0f);
-		}
-
-		for (dgInt32 i = 0; i < rows; i++) {
-			dgFloat64 val = copy[i][i];
-			dgAssert(fabs(val) > dgFloat32(1.0e-12f));
-			dgFloat64 den = dgFloat32(1.0f) / val;
-
-			copy[i] = copy[i].Scale(den);
-			copy[i][i] = dgFloat32(1.0f);
-			inverse[i] = inverse[i].Scale(den);
-
-			for (dgInt32 j = 0; j < i; j++) {
-				dgFloat64 pivot = -copy[j][i];
-				copy[j] = copy[j] + copy[i].Scale(pivot);
-				inverse[j] = inverse[j] + inverse[i].Scale(pivot);
-			}
-
-			for (dgInt32 j = i + 1; j < rows; j++) {
-				dgFloat64 pivot = -copy[j][i];
-				copy[j] = copy[j] + copy[i].Scale(pivot);
-				inverse[j] = inverse[j] + inverse[i].Scale(pivot);
-			}
-		}
-		return inverse;
-	}
-
 	dgSpatialVector m_rows[6];
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
 #endif

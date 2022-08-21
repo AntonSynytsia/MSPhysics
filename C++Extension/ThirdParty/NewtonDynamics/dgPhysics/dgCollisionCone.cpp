@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -262,17 +262,15 @@ void dgCollisionCone::MassProperties ()
 	m_centerOfMass = dgVector (-dgFloat32 (1.0f/2.0f) * m_height, dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32 (0.0f));
 	m_crossInertia = dgVector (dgFloat32 (0.0f));
 
-	dgFloat32 volume = dgFloat32 (dgPI * 2.0f / 3.0f) * m_radius * m_radius * m_height;
+	dgFloat32 volume = dgFloat32 (dgPi * 2.0f / 3.0f) * m_radius * m_radius * m_height;
 	dgFloat32 inertiaxx = dgFloat32 (3.0f / 10.0f) * m_radius * m_radius;
 	dgFloat32 inertiayyzz = (dgFloat32 (3.0f / 20.0f) * m_radius * m_radius + dgFloat32 (3.0f / 20.0f) * m_height * m_height);
 
-//	dgCollisionConvex::MassProperties ();
 	m_inertia[0] = inertiaxx;
 	m_inertia[1] = inertiayyzz;
 	m_inertia[2] = inertiayyzz;
 	m_centerOfMass.m_w = volume;
 }
-
 
 dgInt32 dgCollisionCone::CalculatePlaneIntersection (const dgVector& normal, const dgVector& origin, dgVector* const contactsOut) const
 {
@@ -285,12 +283,8 @@ dgInt32 dgCollisionCone::CalculatePlaneIntersection (const dgVector& normal, con
 		if (normal.m_x < -inclination) {
 			dgMatrix matrix(normal);
 			matrix.m_posit.m_x = origin.m_x;
-			dgVector scale(m_radius);
-			const int n = sizeof (m_unitCircle) / sizeof (m_unitCircle[0]);
-			for (dgInt32 i = 0; i < n; i++) {
-				contactsOut[i] = matrix.TransformVector(m_unitCircle[i] * scale) & dgVector::m_triplexMask;
-			}
-			count = RectifyConvexSlice(n, normal, contactsOut);
+			count = BuildCylinderCapPoly (m_radius, matrix, contactsOut);
+			//count = RectifyConvexSlice(n, normal, contactsOut);
 		} else {
 			dgFloat32 magInv = dgRsqrt(normal.m_y * normal.m_y + normal.m_z * normal.m_z);
 			dgFloat32 cosAng = normal.m_y * magInv;

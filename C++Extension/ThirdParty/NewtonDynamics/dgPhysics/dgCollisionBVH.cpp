@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -88,7 +88,6 @@ void dgCollisionBVH::SetCollisionRayCastCallback (dgCollisionBVHUserRayCastCallb
 	m_userRayCastCallback = rayCastCallback;
 }
 
-
 void dgCollisionBVH::EndBuild(dgInt32 optimize)
 {
 	dgVector p0;
@@ -96,8 +95,16 @@ void dgCollisionBVH::EndBuild(dgInt32 optimize)
 
 	bool state = optimize ? true : false;
 
+#ifdef _DEBUG
+	if (state && (optimize >> 1)) {
+		char debugMesh[256];
+		sprintf (debugMesh, "debugMesh_%d.ply", optimize-1);
+		m_builder->SavePLY(debugMesh);
+	}
+#endif
+
 	m_builder->End(state);
-	Create (*m_builder, state);
+	Create (*m_builder);
 	CalculateAdjacendy();
 	
 	GetAABB (p0, p1);
@@ -201,38 +208,23 @@ dgFloat32 dgCollisionBVH::RayHit (void* const context, const dgFloat32* const po
 {
 	dgBVHRay& me = *((dgBVHRay*) context);
 	dgVector normal (&polygon[indexArray[indexCount + 1] * (strideInBytes / sizeof (dgFloat32))]);
+	normal = normal & dgVector::m_triplexMask;
 	dgFloat32 t = me.PolygonIntersect (normal, me.m_t, polygon, strideInBytes, indexArray, indexCount);
 	if (t <= (me.m_t * dgFloat32 (1.0001f))) {
-//		if ((t * dgFloat32 (1.0001f)) >= me.m_t) {
-//			dgFloat32 dist0;
-//			dgFloat32 dist1;
-//			dist0 = me.m_diff % normal;
-//			dist1 = me.m_diff % me.m_normal;
-//			if (dist0 < dist1) {
-//				me.m_t = t;
-//				me.m_normal = normal;
-//				me.m_id = me.m_me->GetTagId(indexArray, indexCount);
-//			} else {
-//				t = me.m_t;
-//			}
-//		} else {
-			me.m_t = t;
-			me.m_normal = normal;
-			me.m_id = me.m_me->GetTagId(indexArray, indexCount);
-//		}
+		me.m_t = t;
+		me.m_normal = normal;
+		me.m_id = me.m_me->GetTagId(indexArray, indexCount);
 	}
 	return t;
 }
 
-
-
 dgFloat32 dgCollisionBVH::RayHitUser (void* const context, const dgFloat32* const polygon, dgInt32 strideInBytes, const dgInt32* const indexArray, dgInt32 indexCount)
 {
-	dgAssert (0);
 	dgFloat32 t = dgFloat32 (1.2f);
 	dgBVHRay& me = *((dgBVHRay*) context);
 	dgVector normal (&polygon[indexArray[indexCount + 1] * (strideInBytes / sizeof (dgFloat32))]);
-dgAssert (0);
+	normal = normal & dgVector::m_triplexMask;
+
 	t = me.PolygonIntersect (normal, me.m_t, polygon, strideInBytes, indexArray, indexCount);
 	if (t < dgFloat32 (1.0f)) {
 		if (t < me.m_t) {
@@ -305,7 +297,7 @@ dgIntersectStatus dgCollisionBVH::GetPolygon (void* const context, const dgFloat
 		const dgVector scale = data.m_polySoupInstance->GetScale();
 		dgMatrix matrix (data.m_polySoupInstance->GetLocalMatrix() * data.m_polySoupBody->GetMatrix());
 		for (dgInt32 i = 0; i < indexCount; i ++ ) {
-			dgVector p (matrix.TransformVector(scale * dgVector(&polygon[indexArray[i] * stride]))); 
+			dgVector p (matrix.TransformVector(scale * (dgVector(&polygon[indexArray[i] * stride]) & dgVector::m_triplexMask))); 
 			triplex[i].m_x = p.m_x;
 			triplex[i].m_y = p.m_y;
 			triplex[i].m_z = p.m_z;
@@ -335,8 +327,6 @@ dgIntersectStatus dgCollisionBVH::GetPolygon (void* const context, const dgFloat
 	
 	return t_ContinueSearh;
 }
-
-
 
 void dgCollisionBVH::GetCollidingFaces (dgPolygonMeshDesc* const data) const
 {
@@ -377,7 +367,6 @@ void dgCollisionBVH::GetLocalAABB (const dgVector& p0, const dgVector& p1, dgVec
 	dgAssert (0);
 }
 
-
 struct dgCollisionBVHShowPolyContext
 {
 	dgMatrix m_matrix;
@@ -393,17 +382,17 @@ dgIntersectStatus dgCollisionBVH::ShowDebugPolygon (void* const context, const d
 	dgCollisionBVHShowPolyContext& data = *(dgCollisionBVHShowPolyContext*) context;
 	for (dgInt32 i = 0; i < indexCount; i ++ ) {
 		dgVector p (&polygon[indexArray[i] * stride]);
+		p = p & dgVector::m_triplexMask;
 		p = data.m_matrix.TransformVector(p);
 		triplex[i].m_x = p.m_x;
 		triplex[i].m_y = p.m_y;
 		triplex[i].m_z = p.m_z;
 	}
-	data.m_callback (data.m_userData, indexCount, &triplex[0].m_x, indexArray[-1]);
+//	data.m_callback (data.m_userData, indexCount, &triplex[0].m_x, indexArray[-1]);
+	data.m_callback (data.m_userData, indexCount, &triplex[0].m_x, indexArray[indexCount]);
 
 	return t_ContinueSearh;
 }
-
-
 
 void dgCollisionBVH::DebugCollision (const dgMatrix& matrixPtr, dgCollision::OnDebugCollisionMeshCallback callback, void* const userData) const
 {

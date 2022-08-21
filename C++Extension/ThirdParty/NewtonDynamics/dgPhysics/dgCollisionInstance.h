@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -64,8 +64,8 @@ class dgCollisionInstance
 	void SetLocalMatrix (const dgMatrix& matrix);
 	void SetGlobalMatrix (const dgMatrix& matrix);
 
-	dgUnsigned32 GetUserDataID () const;
-	void SetUserDataID (dgUnsigned32 userData);
+	dgUnsigned64 GetUserDataID () const;
+	void SetUserDataID (dgUnsigned64 userData);
 
 	void* GetUserData () const;
 	void SetUserData (void* const userData);
@@ -90,7 +90,7 @@ class dgCollisionInstance
 	dgFloat32 GetVolume () const;
 	void GetCollisionInfo(dgCollisionInfo* const info) const;
 
-	dgInt32 IsType (dgCollision::dgRTTI type) const ;
+	dgInt32 IsType (dgCollision::dgRTTI type) const;
 	dgMemoryAllocator* GetAllocator() const;
 
 	bool GetCollisionMode() const;
@@ -122,13 +122,15 @@ class dgCollisionInstance
 	dgInt32 GetConvexVertexCount() const; 
 
 	void Serialize(dgSerialize callback, void* const userData, bool saveShape = true) const;
-	void CalculateBuoyancyAcceleration (const dgMatrix& matrix, const dgVector& origin, const dgVector& gravity, const dgVector& fluidPlane, dgFloat32 fluidDensity, dgFloat32 fluidViscosity, dgVector& accel, dgVector& alpha);
+	dgVector CalculateBuoyancyVolume (const dgMatrix& matrix, const dgVector& fluidPlane) const;
 	
 	dgVector SupportVertexSpecial (const dgVector& dir, dgInt32* const vertexIndex) const;
 	dgVector SupportVertexSpecialProjectPoint (const dgVector& point, const dgVector& dir) const;
 
 	dgFloat32 GetSkinThickness() const;
 	void SetSkinThickness(dgFloat32 thickness);
+
+	void CalculateImplicitContacts(dgInt32 count, dgContactPoint* const contactPoints) const;
 
 	dgMatrix m_globalMatrix;
 	dgMatrix m_localMatrix;
@@ -145,6 +147,7 @@ class dgCollisionInstance
 	dgInt32 m_collisionMode;
 	dgInt32 m_refCount;
 	dgScaleType m_scaleType;
+	bool m_isExternal;
 
 	static dgVector m_padding;
 };
@@ -165,6 +168,7 @@ DG_INLINE dgCollisionInstance::dgCollisionInstance(const dgCollisionInstance& me
 	,m_collisionMode(meshInstance.m_collisionMode)
 	,m_refCount(1)
 	,m_scaleType(meshInstance.m_scaleType)
+	,m_isExternal(false)
 {
 	if (m_childShape) {
 		m_childShape->AddRef();
@@ -187,7 +191,6 @@ DG_INLINE dgInt32 dgCollisionInstance::Release ()
 	return 0;
 }
 
-
 DG_INLINE dgInt32 dgCollisionInstance::IsType (dgCollision::dgRTTI type) const 
 {
 	return m_childShape->IsType (type);
@@ -202,7 +205,6 @@ DG_INLINE const dgCollision* dgCollisionInstance::GetChildShape() const
 {
 	return m_childShape;
 }
-
 
 DG_INLINE void dgCollisionInstance::SetWorld (dgWorld* const world)
 {
@@ -219,14 +221,12 @@ DG_INLINE void dgCollisionInstance::SetChildShape (dgCollision* const shape)
 	m_childShape = shape;
 }
 
-
 DG_INLINE void dgCollisionInstance::GetCollisionInfo(dgCollisionInfo* const info) const
 {
 	info->m_offsetMatrix = m_localMatrix;
 	info->m_collisionMaterial = m_material;
 	m_childShape->GetCollisionInfo(info);
 }
-
 
 DG_INLINE const dgVector& dgCollisionInstance::GetScale () const
 {
@@ -237,7 +237,6 @@ DG_INLINE const dgVector& dgCollisionInstance::GetInvScale () const
 {
 	return m_invScale;
 }
-
 
 DG_INLINE const dgMatrix& dgCollisionInstance::GetLocalMatrix () const
 {
@@ -259,7 +258,6 @@ DG_INLINE void dgCollisionInstance::SetGlobalMatrix (const dgMatrix& matrix)
 	m_globalMatrix = matrix;
 }
 
-
 DG_INLINE dgMemoryAllocator* dgCollisionInstance::GetAllocator() const
 {
 	return m_childShape->GetAllocator();
@@ -269,7 +267,6 @@ DG_INLINE dgFloat32 dgCollisionInstance::GetVolume () const
 {
 	return m_childShape->GetVolume() * m_scale.m_x * m_scale.m_y * m_scale.m_z;
 }
-
 
 DG_INLINE bool dgCollisionInstance::GetCollisionMode() const
 {
@@ -304,12 +301,12 @@ DG_INLINE const dgCollisionInstance* dgCollisionInstance::GetParent () const
 	return m_parent;
 }
 
-DG_INLINE dgUnsigned32 dgCollisionInstance::GetUserDataID () const
+DG_INLINE dgUnsigned64 dgCollisionInstance::GetUserDataID () const
 {
 	return m_material.m_userId;
 }
 
-DG_INLINE void dgCollisionInstance::SetUserDataID (dgUnsigned32 userDataId)
+DG_INLINE void dgCollisionInstance::SetUserDataID (dgUnsigned64 userDataId)
 {
 	m_material.m_userId = userDataId;
 }
@@ -354,7 +351,6 @@ DG_INLINE dgFloat32 dgCollisionInstance::GetBoxMaxRadius () const
 	return m_childShape->GetBoxMaxRadius() * m_maxScale.m_x;
 } 
 
-
 DG_INLINE dgVector dgCollisionInstance::SupportVertex(const dgVector& dir) const
 {
 	dgAssert (dir.m_w == dgFloat32 (0.0f));
@@ -373,18 +369,14 @@ DG_INLINE dgVector dgCollisionInstance::SupportVertex(const dgVector& dir) const
 		case m_nonUniform:
 		{
 			// support((p * S), n) = S * support (p, n * transp(S)) 
-			dgVector dir1 (m_scale * dir);
-			//dir1 = dir1 * dir1.InvMagSqrt();
-			dir1 = dir1.Normalize();
+			dgVector dir1 ((m_scale * dir).Normalize());
 			return m_scale * m_childShape->SupportVertex (dir1, NULL);
 		}
 
 		case m_global:
 		default:	
 		{
-			dgVector dir1 (m_aligmentMatrix.UnrotateVector(m_scale * dir));
-			//dir1 = dir1 * dir1.InvMagSqrt();
-			dir1 = dir1.Normalize();
+			dgVector dir1 (m_aligmentMatrix.UnrotateVector((m_scale * dir).Normalize()));
 			return m_scale * m_aligmentMatrix.TransformVector (m_childShape->SupportVertex (dir1, NULL));
 		}
 	}
@@ -408,20 +400,18 @@ DG_INLINE dgVector dgCollisionInstance::SupportVertexSpecial (const dgVector& di
 
 		default:
 			return SupportVertex(dir);
+
 /*
 		case m_nonUniform:
 		{
-			// support((p * S), n) = S * support (p, n * transp(S)) 
-			dgVector dir1(m_scale * dir);
-			dir1 = dir1 * (dir1.InvMagSqrt());
-			return m_scale * m_childShape->SupportVertexSpecial(dir1, vertexIndex);
+			// support((p * S), n) = S * support (p, n * transp(S))
+			dgVector dir1((m_scale * dir).Normalize());
+			return m_scale * m_childShape->SupportVertexSpecial(dir1, m_skinThickness, vertexIndex);
 		}
 
-		case m_global:
 		default:
 		{
-			dgVector dir1(m_aligmentMatrix.UnrotateVector(m_scale * dir));
-			dir1 = dir1 * (dir1.InvMagSqrt());
+			dgVector dir1(m_aligmentMatrix.UnrotateVector((m_scale * dir).Normalize()));
 			return m_scale * m_aligmentMatrix.TransformVector(m_childShape->SupportVertexSpecial(dir1, vertexIndex));
 		}
 */
@@ -445,20 +435,19 @@ DG_INLINE dgVector dgCollisionInstance::SupportVertexSpecialProjectPoint (const 
 
 		default:
 			return point;
+
 /*
 		case m_nonUniform:
 		{
 			// support((p * S), n) = S * support (p/S, n * transp(S)) 
-			dgVector dir1(m_scale * dir);
-			dir1 = dir1 * (dir1.InvMagSqrt());
+			dgVector dir1((m_scale * dir).Normalize());
 			return m_scale * m_childShape->SupportVertexSpecialProjectPoint(point * m_invScale, dir1);
 		}
 
 		case m_global:
 		default:
 		{
-			dgVector dir1(m_aligmentMatrix.UnrotateVector(m_scale * dir));
-			dir1 = dir1 * (dir1.InvMagSqrt());
+			dgVector dir1(m_aligmentMatrix.UnrotateVector((m_scale * dir).Normalize()));
 			return m_scale * m_aligmentMatrix.TransformVector(m_childShape->SupportVertexSpecialProjectPoint(m_aligmentMatrix.UntransformVector(point * m_invScale), dir1));
 		}
 */
@@ -591,6 +580,10 @@ DG_INLINE void dgCollisionInstance::SetSkinThickness(dgFloat32 thickness)
 	m_skinThickness = dgAbs (thickness);
 }
 
+DG_INLINE dgVector dgCollisionInstance::CalculateBuoyancyVolume(const dgMatrix& matrix, const dgVector& fluidPlane) const
+{
+	return m_childShape->CalculateVolumeIntegral(m_localMatrix * matrix, fluidPlane, *this);
+}
 
 #endif 
 

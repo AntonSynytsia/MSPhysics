@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -31,12 +31,21 @@ class dgBodyCluster;
 class dgWorldPlugin
 {
 	public:
-	dgWorldPlugin(dgWorld* const world, dgMemoryAllocator* const allocator);
-	virtual ~dgWorldPlugin();
+	dgWorldPlugin(dgWorld* const world, dgMemoryAllocator* const allocator)
+		:m_world(world)
+		,m_allocator(allocator)
+	{
+	}
+
+	virtual ~dgWorldPlugin()
+	{
+	}
 
 	virtual const char* GetId() const = 0;
 	virtual dgInt32 GetScore() const = 0;
+	virtual void FlushRegisters() const = 0;
 	virtual void CalculateJointForces(const dgBodyCluster& cluster, dgBodyInfo* const bodyArray, dgJointInfo* const jointArray, dgFloat32 timestep) = 0;
+	virtual void SolveDenseLcp(dgInt32 stride, dgInt32 size, const dgFloat32* const matrix, const dgFloat32* const x0, dgFloat32* const x, const dgFloat32* const b, const dgFloat32* const low, const dgFloat32* const high, const dgInt32* const normalIndex) const = 0;
 
 	protected:
 	dgWorld* m_world;
@@ -80,23 +89,23 @@ class dgWorldPluginList: public dgList<dgWorldPluginModulePair>
 	const char* GetPluginId(dgListNode* const plugin);
 	void SelectPlugin(dgListNode* const plugin);
 
+	void FlushRegisters() const
+	{
+		if (m_currentPlugin) {
+			dgWorldPlugin* const plugin = m_currentPlugin->GetInfo().m_plugin;
+			plugin->FlushRegisters();
+		}
+	}
+
 	private:
 	void LoadVisualStudioPlugins(const char* const path);
+	void LoadLinuxPlugins(const char* const path);
 
 	dgListNode* m_currentPlugin;
 	dgListNode* m_preferedPlugin;
 };
 
 
-inline dgWorldPlugin::dgWorldPlugin(dgWorld* const world, dgMemoryAllocator* const allocator)
-	:m_world(world)
-	,m_allocator(allocator)
-{
-}
-
-inline dgWorldPlugin::~dgWorldPlugin()
-{
-}
 
 
 #endif

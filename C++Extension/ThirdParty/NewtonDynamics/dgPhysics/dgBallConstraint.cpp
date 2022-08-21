@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -31,17 +31,11 @@
 dgBallConstraint::dgBallConstraint ()
 	:dgBilateralConstraint() 
 {
-	
-//	dgBallConstraint* constraint;
-
-//	dgBallConstraintArray& array = * world;
-//	constraint = array.GetElement();
 	dgAssert ((((dgUnsigned64) &m_localMatrix0) & 15) == 0);
 	
 	m_localMatrix0 = dgGetIdentityMatrix();
 	m_localMatrix1 = dgGetIdentityMatrix();
 
-	//constraint->SetStiffness (dgFloat32 (0.5f));
 	m_maxDOF = 6;
 	m_jointUserCallback = NULL;
 	m_constId = m_ballConstraint;
@@ -53,41 +47,10 @@ dgBallConstraint::~dgBallConstraint ()
 {
 }
 
-/*
-dgBallConstraint* dgBallConstraint::Create(dgWorld* world)
-{
-	dgBallConstraint* constraint;
-
-
-	dgBallConstraintArray& array = * world;
-	constraint = array.GetElement();
-	dgAssert ((((dgUnsigned64) &constraint->m_localMatrix0) & 15) == 0);
-
-	constraint->Init();
-
-//	constraint->SetStiffness (dgFloat32 (0.5f));
-	constraint->m_maxDOF = 6;
-	constraint->m_jointUserCallback = NULL;
-	constraint->m_constId = dgBallConstraintId;
-	constraint->m_ballLimits = 0;
-	constraint->m_angles = dgVector (dgFloat32 (0.0f));
-	return constraint;
-}
-
-
-void dgBallConstraint::Remove(dgWorld* world)
-{
-	dgBallConstraintArray& array = *world;
-	dgBilateralConstraint::Remove (world);
-	array.RemoveElement (this);
-}
-*/
-
 void dgBallConstraint::SetJointParameterCallback (dgBallJointFriction callback)
 {
 	m_jointUserCallback = callback;
 }
-
 
 dgVector dgBallConstraint::GetJointAngle ()const
 {
@@ -161,7 +124,7 @@ void dgBallConstraint::SetPivotPoint(const dgVector &pivot)
 	dgAssert (m_body1);
 	const dgMatrix& matrix = m_body0->GetMatrix();
 
-	dgVector pin (pivot - matrix.m_posit); 
+	dgVector pin (dgVector::m_triplexMask & (pivot - matrix.m_posit)); 
 	dgAssert (pin.m_w == dgFloat32 (0.0f));
 	if (pin.DotProduct(pin).GetScalar() < dgFloat32 (1.0e-3f)) {
 		pin = matrix.m_front;
@@ -172,7 +135,7 @@ void dgBallConstraint::SetPivotPoint(const dgVector &pivot)
 	dgMatrix matrix0;
 	dgMatrix matrix1;
 	CalculateGlobalMatrixAndAngle (m_localMatrix0, m_localMatrix1, matrix0, matrix1);
-	SetLimits (matrix0.m_front, -dgPI * dgFloat32 (0.5f), dgPI * dgFloat32 (0.5f), dgPI * dgFloat32 (0.5f), matrix0.m_right, dgFloat32 (0.0f), dgFloat32 (0.0f));
+	SetLimits (matrix0.m_front, -dgPi * dgFloat32 (0.5f), dgPi * dgFloat32 (0.5f), dgPi * dgFloat32 (0.5f), matrix0.m_right, dgFloat32 (0.0f), dgFloat32 (0.0f));
 }
 
 void dgBallConstraint::SetLimits (
@@ -214,8 +177,8 @@ void dgBallConstraint::SetLimits (
 
 	const dgMatrix& body1_Matrix = m_body1->GetMatrix();
 
-	m_twistAngle = dgClamp (maxTwistAngle, dgFloat32 (5.0f) * dgDEG2RAD, dgFloat32 (90.0f) * dgDEG2RAD);
-	m_coneAngle = dgClamp ((maxConeAngle - minConeAngle) * dgFloat32 (0.5f), dgFloat32 (5.0f) * dgDEG2RAD, 175.0f * dgDEG2RAD);
+	m_twistAngle = dgClamp (maxTwistAngle, dgFloat32 (5.0f) * dgDegreeToRad, dgFloat32 (90.0f) * dgDegreeToRad);
+	m_coneAngle = dgClamp ((maxConeAngle - minConeAngle) * dgFloat32 (0.5f), dgFloat32 (5.0f) * dgDegreeToRad, 175.0f * dgDegreeToRad);
 	m_coneAngleCos = dgCos (m_coneAngle);
 
 	dgMatrix coneMatrix (dgPitchMatrix((maxConeAngle + minConeAngle) * dgFloat32 (0.5f)));
@@ -225,9 +188,6 @@ void dgBallConstraint::SetLimits (
 	m_localMatrix1 = m_localMatrix0 * body0_Matrix * body1_Matrix.Inverse();
 
 }
-
-
-
 
 dgUnsigned32 dgBallConstraint::JacobianDerivative (dgContraintDescritor& params)
 {
@@ -249,20 +209,20 @@ dgUnsigned32 dgBallConstraint::JacobianDerivative (dgContraintDescritor& params)
 
 
 	dgPointParam pointData;
-    InitPointParam (pointData, m_stiffness, p0, p1);
+    InitPointParam (pointData, m_defualtDiagonalRegularizer, p0, p1);
 	CalculatePointDerivative (0, params, dir0, pointData, &m_jointForce[0]); 
 	CalculatePointDerivative (1, params, dir1, pointData, &m_jointForce[1]); 
 	CalculatePointDerivative (2, params, dir2, pointData, &m_jointForce[2]); 
 	dgInt32 ret = 3;
 
-	dgAssert (0);
+//	dgAssert (0);
 /*
 	dgFloat32 relVelocErr;
 	dgFloat32 penetrationErr;
 	if (m_twistLimit) {
 		if (angle.m_x > m_twistAngle) {
 			dgVector q0 (matrix0.m_posit + matrix0.m_up.Scale(MIN_JOINT_PIN_LENGTH));
-			InitPointParam (pointData, m_stiffness, q0, q0);
+			InitPointParam (pointData, m_defualtDiagonalRegularizer, q0, q0);
 
 			const dgVector& dir = matrix0.m_right;
 			CalculatePointDerivative (ret, params, dir, pointData, &m_jointForce[ret]); 
@@ -283,7 +243,7 @@ dgUnsigned32 dgBallConstraint::JacobianDerivative (dgContraintDescritor& params)
 			ret ++;
 		} else if (angle.m_x < - m_twistAngle) {
 			dgVector q0 (matrix0.m_posit + matrix0.m_up.Scale(MIN_JOINT_PIN_LENGTH));
-			InitPointParam (pointData, m_stiffness, q0, q0);
+			InitPointParam (pointData, m_defualtDiagonalRegularizer, q0, q0);
 			//dgVector dir (matrix0.m_right.Scale (-dgFloat32 (1.0f)));
 			dgVector dir (matrix0.m_right * dgVector::m_negOne);
 			CalculatePointDerivative (ret, params, dir, pointData, &m_jointForce[ret]); 
@@ -311,7 +271,7 @@ dgUnsigned32 dgBallConstraint::JacobianDerivative (dgContraintDescritor& params)
 		coneCos = matrix0.m_front.DotProduct(matrix1.m_front).GetScalar();
 		if (coneCos < m_coneAngleCos) {
 			dgVector q0 (matrix0.m_posit + matrix0.m_front.Scale(MIN_JOINT_PIN_LENGTH));
-			InitPointParam (pointData, m_stiffness, q0, q0);
+			InitPointParam (pointData, m_defualtDiagonalRegularizer, q0, q0);
 
 			dgVector tangentDir (matrix0.m_front.CrossProduct(matrix1.m_front));
 			tangentDir = tangentDir.Normalize());

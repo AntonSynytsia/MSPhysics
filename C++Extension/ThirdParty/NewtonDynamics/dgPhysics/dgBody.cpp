@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -37,22 +37,23 @@
 
 dgBody::dgBody()
 	:m_matrix (dgGetIdentityMatrix())
-	,m_rotation(dgFloat32 (1.0f), dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32 (0.0f))
+	,m_rotation()
 	,m_invWorldInertiaMatrix(dgGetZeroMatrix())
 	,m_mass(dgFloat32 (DG_INFINITE_MASS * 2.0f), dgFloat32 (DG_INFINITE_MASS * 2.0f), dgFloat32 (DG_INFINITE_MASS * 2.0f), dgFloat32 (DG_INFINITE_MASS * 2.0f))
-	,m_invMass(dgFloat32 (0.0f))
-	,m_veloc(dgFloat32 (0.0f))
-	,m_omega(dgFloat32 (0.0f))
-	,m_accel(dgFloat32 (0.0f))
-	,m_alpha(dgFloat32 (0.0f))
-	,m_minAABB(dgFloat32 (0.0f))
-	,m_maxAABB(dgFloat32 (0.0f))
-	,m_localCentreOfMass(dgFloat32 (0.0f))	
-	,m_globalCentreOfMass(dgFloat32 (0.0f))	
-	,m_impulseForce(dgFloat32 (0.0f))		
-	,m_impulseTorque(dgFloat32 (0.0f))	
-	,m_gyroTorque(dgFloat32 (0.0f))
-	,m_gyroRotation(dgFloat32 (1.0f), dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32 (0.0f))
+	,m_invMass(dgVector::m_zero)
+	,m_veloc(dgVector::m_zero)
+	,m_omega(dgVector::m_zero)
+	,m_accel(dgVector::m_zero)
+	,m_alpha(dgVector::m_zero)
+	,m_minAABB(dgVector::m_zero)
+	,m_maxAABB(dgVector::m_zero)
+	,m_localCentreOfMass(dgVector::m_zero)
+	,m_globalCentreOfMass(dgVector::m_zero)
+	,m_impulseForce(dgVector::m_zero)
+	,m_impulseTorque(dgVector::m_zero)
+	,m_gyroAlpha(dgVector::m_zero)
+	,m_gyroTorque(dgVector::m_zero)
+	,m_gyroRotation()
 	,m_criticalSectionLock(0)
 	,m_flags(0)
 	,m_userData(NULL)
@@ -74,31 +75,32 @@ dgBody::dgBody()
 {
 	m_autoSleep = true;
 	m_collidable = true;
+//	m_gyroTorqueOn = true;
 	m_transformIsDirty = true;
 	m_collideWithLinkedBodies = true;
 	m_invWorldInertiaMatrix[3][3] = dgFloat32 (1.0f);
-
 	InitJointSet();
 }
 
 dgBody::dgBody (dgWorld* const world, const dgTree<const dgCollision*, dgInt32>* const collisionCashe, dgDeserialize serializeCallback, void* const userData, dgInt32 revisionNumber)
 	:m_matrix (dgGetIdentityMatrix())
-	,m_rotation(dgFloat32 (1.0f), dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32 (0.0f))
+	,m_rotation()
 	,m_invWorldInertiaMatrix(dgGetZeroMatrix())
 	,m_mass(dgFloat32 (DG_INFINITE_MASS * 2.0f), dgFloat32 (DG_INFINITE_MASS * 2.0f), dgFloat32 (DG_INFINITE_MASS * 2.0f), dgFloat32 (DG_INFINITE_MASS * 2.0f))
-	,m_invMass(dgFloat32 (0.0f))
-	,m_veloc(dgFloat32 (0.0f))
-	,m_omega(dgFloat32 (0.0f))
-	,m_accel(dgFloat32 (0.0f))
-	,m_alpha(dgFloat32 (0.0f))
-	,m_minAABB(dgFloat32 (0.0f))
-	,m_maxAABB(dgFloat32 (0.0f))
-	,m_localCentreOfMass(dgFloat32 (0.0f))	
-	,m_globalCentreOfMass(dgFloat32 (0.0f))	
-	,m_impulseForce(dgFloat32 (0.0f))		
-	,m_impulseTorque(dgFloat32 (0.0f))		
-	,m_gyroTorque(dgFloat32 (0.0f))
-	,m_gyroRotation(dgFloat32 (1.0f), dgFloat32 (0.0f), dgFloat32 (0.0f), dgFloat32 (0.0f))
+	,m_invMass(dgVector::m_zero)
+	,m_veloc(dgVector::m_zero)
+	,m_omega(dgVector::m_zero)
+	,m_accel(dgVector::m_zero)
+	,m_alpha(dgVector::m_zero)
+	,m_minAABB(dgVector::m_zero)
+	,m_maxAABB(dgVector::m_zero)
+	,m_localCentreOfMass(dgVector::m_zero)
+	,m_globalCentreOfMass(dgVector::m_zero)
+	,m_impulseForce(dgVector::m_zero)
+	,m_impulseTorque(dgVector::m_zero)
+	,m_gyroAlpha(dgVector::m_zero)
+	,m_gyroTorque(dgVector::m_zero)
+	,m_gyroRotation()
 	,m_criticalSectionLock(0)
 	,m_flags(0)
 	,m_userData(NULL)
@@ -230,7 +232,8 @@ void dgBody::SetMatrixNoSleep(const dgMatrix& matrix)
 
 void dgBody::SetMatrixResetSleep(const dgMatrix& matrix)
 {
-	m_sleeping = false;
+	m_sleeping = 0;
+	m_equilibrium = 0;
 	SetMatrix(matrix);
 }
 
@@ -238,8 +241,6 @@ void dgBody::UpdateWorlCollisionMatrix() const
 {
 	m_collision->SetGlobalMatrix (m_collision->GetLocalMatrix() * m_matrix);
 }
-
-
 
 void dgBody::UpdateCollisionMatrix (dgFloat32 timestep, dgInt32 threadIndex)
 {
@@ -301,21 +302,27 @@ dgFloat32 dgBody::RayCast (const dgLineBox& line, OnRayCastAction filter, OnRayP
 
 void dgBody::IntegrateVelocity (dgFloat32 timestep)
 {
+//if (m_uniqueID == 3)
+//dgTrace(("%d v(%f %f %f)\n", m_uniqueID, m_veloc.m_x, m_veloc.m_y, m_veloc.m_z));
+
 	dgAssert (m_veloc.m_w == dgFloat32 (0.0f));
 	dgAssert (m_omega.m_w == dgFloat32 (0.0f));
 	m_globalCentreOfMass += m_veloc.Scale (timestep); 
 	dgFloat32 omegaMag2 = m_omega.DotProduct(m_omega).GetScalar();
-#ifdef _DEBUG
-	const dgFloat32 err = dgFloat32(90.0f * dgDEG2RAD);
+#if 0
+	const dgFloat32 err = dgFloat32(90.0f * dgDegreeToRad);
 	const dgFloat32 err2 = err * err;
 	const dgFloat32 step2 = omegaMag2 * timestep * timestep;
-	if (step2 > err2) {
-		dgTrace (("warning bodies %d w(%f %f %f) with very high angular velocity, may be unstable\n", m_uniqueID, m_omega.m_x, m_omega.m_y, m_omega.m_z));
+	const dgFloat32 speed2 = m_veloc.DotProduct(m_veloc).GetScalar() * timestep * timestep;;
+	if ((step2 > err2) || (speed2 > 100.0f)) {
+		dgTrace (("warning bodies %d w(%f %f %f) v(%f %f %f) with very high velocity or angular velocity, may be unstable\n", m_uniqueID, 
+				   m_omega.m_x, m_omega.m_y, m_omega.m_z, m_veloc.m_x, m_veloc.m_y, m_veloc.m_z));
+		//dgAssert(0);
 	}
 #endif
 
 	// this is correct
-	if (omegaMag2 > ((dgFloat32 (0.0125f) * dgDEG2RAD) * (dgFloat32 (0.0125f) * dgDEG2RAD))) {
+	if (omegaMag2 > ((dgFloat32 (0.0125f) * dgDegreeToRad) * (dgFloat32 (0.0125f) * dgDegreeToRad))) {
 		dgFloat32 invOmegaMag = dgRsqrt (omegaMag2);
 		dgVector omegaAxis (m_omega.Scale (invOmegaMag));
 		dgFloat32 omegaAngle = invOmegaMag * omegaMag2 * timestep;
@@ -328,22 +335,6 @@ void dgBody::IntegrateVelocity (dgFloat32 timestep)
 	m_matrix.m_posit = m_globalCentreOfMass - m_matrix.RotateVector(m_localCentreOfMass);
 	dgAssert (m_matrix.TestOrthogonal());
 }
-
-dgVector dgBody::CalculateInverseDynamicForce (const dgVector& desiredVeloc, dgFloat32 timestep) const
-{
-	dgAssert (0);
-	return dgVector();
-/*
-	dgFloat32 massAccel = m_mass.m_w / timestep;
-	if (m_world->m_solverMode){
-		if (m_masterNode->GetInfo().GetCount() >= 2){
-			massAccel *= (dgFloat32 (2.0f) * dgFloat32 (LINEAR_SOLVER_SUB_STEPS) / dgFloat32 (LINEAR_SOLVER_SUB_STEPS + 1));
-		} 
-	}
-	return (desiredVeloc - m_veloc).Scale (massAccel);
-*/
-}
-
 
 dgConstraint* dgBody::GetFirstJoint() const
 {
@@ -383,9 +374,12 @@ dgConstraint* dgBody::GetFirstContact() const
 	if (m_masterNode) {
 		for (dgBodyMasterListRow::dgListNode* node = m_masterNode->GetInfo().GetFirst(); node; node = node->GetNext()) {
 			dgConstraint* const joint = node->GetInfo().m_joint;
-			//if ((joint->GetId() == dgConstraint::m_contactConstraint) && (joint->GetMaxDOF() != 0)) {
-			if (joint->GetId() == dgConstraint::m_contactConstraint) {
-				return joint;
+			dgAssert (joint);
+			if (joint && (joint->GetId() == dgConstraint::m_contactConstraint)) {
+				dgContact* const contactJoint = (dgContact*) joint;
+				if (contactJoint->m_isActive) {
+					return joint;
+				}
 			}
 		}
 	}
@@ -402,18 +396,18 @@ dgConstraint* dgBody::GetNextContact(dgConstraint* const joint) const
 	if (node->GetInfo().m_joint == joint) {
 		for (node = node->GetNext(); node; node = node->GetNext()) {
 			dgConstraint* const joint1 = node->GetInfo().m_joint;
-			//if ((joint->GetId() == dgConstraint::m_contactConstraint) && (joint->GetMaxDOF() != 0)) {
-			if (joint1->GetId() == dgConstraint::m_contactConstraint) {
-				return joint1;
+			dgAssert (joint1);
+			if (joint1 && (joint1->GetId() == dgConstraint::m_contactConstraint)) {
+				dgContact* const contactJoint = (dgContact*) joint1;
+				if (contactJoint->m_isActive) {
+					return joint1;
+				}
 			}
 		}
 	}
 
 	return NULL;
 }
-
-
-
 
 void dgBody::SetFreeze (bool state)
 {
@@ -441,8 +435,6 @@ void dgBody::Freeze ()
 void dgBody::Unfreeze ()
 {
 	if (GetInvMass().m_w > dgFloat32 (0.0f)) {
-// note this is in observation (to prevent bodies from not going to sleep  inside triggers	               
-//		m_equilibrium = false;			
 		if (m_freeze) {
 			m_freeze = false;
 			for (dgBodyMasterListRow::dgListNode* node = m_masterNode->GetInfo().GetFirst(); node; node = node->GetNext()) {
@@ -491,10 +483,7 @@ void dgBody::SetMassMatrix(dgFloat32 mass, const dgMatrix& inertia)
 		m_mass.m_y = DG_INFINITE_MASS;
 		m_mass.m_z = DG_INFINITE_MASS;
 		m_mass.m_w = DG_INFINITE_MASS;
-		m_invMass.m_x = dgFloat32(0.0f);
-		m_invMass.m_y = dgFloat32(0.0f);
-		m_invMass.m_z = dgFloat32(0.0f);
-		m_invMass.m_w = dgFloat32(0.0f);
+		m_invMass = dgVector::m_zero;
 
 	} else {
 		Ixx = dgAbs (Ixx);
@@ -544,9 +533,8 @@ void dgBody::SetMassMatrix(dgFloat32 mass, const dgMatrix& inertia)
 		}
 	}
 #endif
-	UpdateLumpedMatrix();
+//	UpdateLumpedMatrix();
 }
-
 
 void dgBody::SetMassProperties (dgFloat32 mass, const dgCollisionInstance* const collision)
 {
@@ -554,13 +542,14 @@ void dgBody::SetMassProperties (dgFloat32 mass, const dgCollisionInstance* const
 	dgMatrix inertia (collision->CalculateInertia());
 
 	dgVector origin (inertia.m_posit);
-		for (dgInt32 i = 0; i < 3; i ++) {
-		inertia[i][i] = (inertia[i][i] + origin[i] * origin[i]) * mass;
-		for (dgInt32 j = i + 1; j < 3; j ++) {
-			dgFloat32 crossIJ = origin[i] * origin[j];
-			inertia[i][j] = (inertia[i][j] + crossIJ) * mass;
-			inertia[j][i] = (inertia[j][i] + crossIJ) * mass;
-		}
+	for (dgInt32 i = 0; i < 3; i ++) {
+		inertia[i] = inertia[i].Scale (mass);
+		//inertia[i][i] = (inertia[i][i] + origin[i] * origin[i]) * mass;
+		//for (dgInt32 j = i + 1; j < 3; j ++) {
+		//	dgFloat32 crossIJ = origin[i] * origin[j];
+		//	inertia[i][j] = (inertia[i][j] + crossIJ) * mass;
+		//	inertia[j][i] = (inertia[j][i] + crossIJ) * mass;
+		//}
 	}
 
 	// although the engine fully supports asymmetric inertia, I will ignore cross inertia for now
@@ -568,7 +557,6 @@ void dgBody::SetMassProperties (dgFloat32 mass, const dgCollisionInstance* const
 	SetCentreOfMass(origin);
 	SetMassMatrix(mass, inertia);
 }
-
 
 dgMatrix dgBody::CalculateLocalInertiaMatrix () const
 {
@@ -581,19 +569,11 @@ dgMatrix dgBody::CalculateLocalInertiaMatrix () const
 
 dgMatrix dgBody::CalculateInertiaMatrix () const
 {
-#if 0
-	dgMatrix tmp (m_matrix.Transpose4X4());
-	dgVector mass (m_mass & dgVector::m_triplexMask);
-	tmp[0] = tmp[0] * mass;
-	tmp[1] = tmp[1] * mass;
-	tmp[2] = tmp[2] * mass;
-	return dgMatrix (m_matrix.RotateVector(tmp[0]), m_matrix.RotateVector(tmp[1]), m_matrix.RotateVector(tmp[2]), dgVector::m_wOne);
-#else
 	const dgVector Ixx(m_mass[0]);
 	const dgVector Iyy(m_mass[1]);
 	const dgVector Izz(m_mass[2]);
 	return dgMatrix (m_matrix.m_front.Scale(m_matrix.m_front[0]) * Ixx +
-					 m_matrix.m_up.Scale(m_matrix.m_up[0])		  * Iyy +
+					 m_matrix.m_up.Scale(m_matrix.m_up[0])		 * Iyy +
 					 m_matrix.m_right.Scale(m_matrix.m_right[0]) * Izz,
 
 					 m_matrix.m_front.Scale(m_matrix.m_front[1]) * Ixx +
@@ -604,36 +584,26 @@ dgMatrix dgBody::CalculateInertiaMatrix () const
 					 m_matrix.m_up.Scale(m_matrix.m_up[2])       * Iyy +
 					 m_matrix.m_right.Scale(m_matrix.m_right[2]) * Izz,
 					 dgVector::m_wOne);
-#endif
 }
 
 dgMatrix dgBody::CalculateInvInertiaMatrix () const
 {
-#if 0
-	dgMatrix tmp (m_matrix.Transpose4X4());
-	tmp[0] = tmp[0] * m_invMass;
-	tmp[1] = tmp[1] * m_invMass;
-	tmp[2] = tmp[2] * m_invMass;
-	return dgMatrix (m_matrix.RotateVector(tmp[0]), m_matrix.RotateVector(tmp[1]), m_matrix.RotateVector(tmp[2]), dgVector::m_wOne);
-#else
 	const dgVector invIxx(m_invMass[0]);
 	const dgVector invIyy(m_invMass[1]);
 	const dgVector invIzz(m_invMass[2]);
 	return dgMatrix(m_matrix.m_front.Scale(m_matrix.m_front[0]) * invIxx +
-					m_matrix.m_up.Scale(m_matrix.m_up[0])		 * invIyy +
+					m_matrix.m_up.Scale(m_matrix.m_up[0])		* invIyy +
 					m_matrix.m_right.Scale(m_matrix.m_right[0]) * invIzz,
 
 					m_matrix.m_front.Scale(m_matrix.m_front[1]) * invIxx +
-					m_matrix.m_up.Scale(m_matrix.m_up[1])		 * invIyy +
+					m_matrix.m_up.Scale(m_matrix.m_up[1])		* invIyy +
 					m_matrix.m_right.Scale(m_matrix.m_right[1]) * invIzz,
 
 					m_matrix.m_front.Scale(m_matrix.m_front[2]) * invIxx +
-					m_matrix.m_up.Scale(m_matrix.m_up[2])		 * invIyy +
+					m_matrix.m_up.Scale(m_matrix.m_up[2])		* invIyy +
 					m_matrix.m_right.Scale(m_matrix.m_right[2]) * invIzz,
 					dgVector::m_wOne);
-#endif
 }
-
 
 void dgBody::InvalidateCache ()
 {
@@ -643,7 +613,6 @@ void dgBody::InvalidateCache ()
 	dgMatrix matrix (m_matrix);
 	SetMatrixOriginAndRotation(matrix);
 }
-
 
 void dgBody::AddImpulse (const dgVector& pointDeltaVeloc, const dgVector& pointPosit, dgFloat32 timestep)
 {
@@ -683,37 +652,43 @@ void dgBody::AddImpulse (const dgVector& pointDeltaVeloc, const dgVector& pointP
 	contactMatrix[1][1] += m_invMass.m_w;	
 	contactMatrix[2][2] += m_invMass.m_w;	
 
-	contactMatrix = contactMatrix.Symetric3by3Inverse ();
+	contactMatrix = contactMatrix.Inverse4x4 ();
 
 	// change of momentum
 	dgVector changeOfMomentum (contactMatrix.RotateVector (pointDeltaVeloc));
 
-	m_impulseForce += changeOfMomentum.Scale(1.0f / timestep);
-	m_impulseTorque += globalContact.CrossProduct(m_impulseForce);
+	if (changeOfMomentum.DotProduct(changeOfMomentum).GetScalar() > dgFloat32(1.0e-6f)) {
+		m_impulseForce += changeOfMomentum.Scale(1.0f / timestep);
+		m_impulseTorque += globalContact.CrossProduct(m_impulseForce);
 
-	m_sleeping	= false;
-	m_equilibrium = false;
-	Unfreeze ();
+		m_sleeping = false;
+		m_equilibrium = false;
+		Unfreeze();
+	}
 }
 
 void dgBody::ApplyImpulsePair (const dgVector& linearImpulseIn, const dgVector& angularImpulseIn, dgFloat32 timestep)
 {
-	m_impulseForce += linearImpulseIn.Scale(1.0f / timestep);
-	m_impulseTorque += angularImpulseIn.Scale(1.0f / timestep);
+	dgAssert(linearImpulseIn.m_w == dgFloat32(0.0f));
+	dgAssert(angularImpulseIn.m_w == dgFloat32(0.0f));
+	if ((linearImpulseIn.DotProduct(linearImpulseIn).GetScalar() > dgFloat32(1.0e-6f)) ||
+		(angularImpulseIn.DotProduct(angularImpulseIn).GetScalar() > dgFloat32(1.0e-6f))) {
 
-	m_sleeping	= false;
-	m_equilibrium = false;
-	Unfreeze ();
+		m_impulseForce += linearImpulseIn.Scale(1.0f / timestep);
+		m_impulseTorque += angularImpulseIn.Scale(1.0f / timestep);
+
+		m_sleeping = false;
+		m_equilibrium = false;
+		Unfreeze();
+	}
 }
 
 void dgBody::ApplyImpulsesAtPoint (dgInt32 count, dgInt32 strideInBytes, const dgFloat32* const impulseArray, const dgFloat32* const pointArray, dgFloat32 timestep)
 {
 	dgInt32 stride = strideInBytes / sizeof (dgFloat32);
 
-	dgMatrix inertia (CalculateInertiaMatrix());
-
-	dgVector impulse (dgFloat32 (0.0f));
-	dgVector angularImpulse (dgFloat32 (0.0f));
+	dgVector impulse (dgVector::m_zero);
+	dgVector angularImpulse (dgVector::m_zero);
 
 	dgVector com (m_globalCentreOfMass);
 	for (dgInt32 i = 0; i < count; i ++) {
@@ -726,11 +701,27 @@ void dgBody::ApplyImpulsesAtPoint (dgInt32 count, dgInt32 strideInBytes, const d
 		angularImpulse += Q;
 	}
 
-	m_impulseForce += impulse.Scale(1.0f / timestep);
-	m_impulseTorque += angularImpulse.Scale(1.0f / timestep);
+	if ((impulse.DotProduct(impulse).GetScalar() > dgFloat32(1.0e-6f)) ||
+		(angularImpulse.DotProduct(angularImpulse).GetScalar() > dgFloat32(1.0e-6f))) {
+		m_impulseForce += impulse.Scale(1.0f / timestep);
+		m_impulseTorque += angularImpulse.Scale(1.0f / timestep);
 
-	m_sleeping	= false;
-	m_equilibrium = false;
-	Unfreeze ();
+		m_sleeping = false;
+		m_equilibrium = false;
+		Unfreeze();
+	}
 }
 
+void dgBody::SetSleepState(bool state)
+{
+	m_sleeping = state;
+	m_equilibrium = state;
+	if ((m_invMass.m_w > dgFloat32 (0.0f)) && (m_veloc.DotProduct(m_veloc).GetScalar() < dgFloat32(1.0e-10f)) && (m_omega.DotProduct(m_omega).GetScalar() < dgFloat32(1.0e-10f))) {
+		m_equilibrium = state;
+		for (dgConstraint* contact = GetFirstContact(); contact; contact = GetNextContact(contact)) {
+			dgAssert(contact->GetId() == dgConstraint::m_contactConstraint);
+			dgContact* const contactJoint = (dgContact*)contact;
+			contactJoint->m_positAcc = dgVector(dgFloat32(10.0f));
+		}
+	}
+}

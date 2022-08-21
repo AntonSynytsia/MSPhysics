@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -27,7 +27,7 @@
 
 #define DG_CONVEX_POLYGON_MAX_VERTEX_COUNT	64
 
-DG_MSC_VECTOR_ALIGMENT 
+DG_MSC_VECTOR_ALIGNMENT 
 class dgCollisionConvexPolygon: public dgCollisionConvex	
 {
 	public:
@@ -57,8 +57,7 @@ class dgCollisionConvexPolygon: public dgCollisionConvex
 	virtual dgFloat32 GetBoxMinRadius () const; 
 	virtual dgFloat32 GetBoxMaxRadius () const;
 	
-	void BeamClipping (const dgVector& origin, dgFloat32 size);
-
+	bool BeamClipping (const dgVector& origin, dgFloat32 size, const dgCollisionInstance* const parentMesh);
 	dgVector CalculateGlobalNormal (const dgCollisionInstance* const parentMesh, const dgVector& localNormal) const;
 	dgInt32 CalculateContactToConvexHullDescrete(const dgWorld* const world, const dgCollisionInstance* const parentMesh, dgCollisionParamProxy& proxy);
 	dgInt32 CalculateContactToConvexHullContinue (const dgWorld* const world, const dgCollisionInstance* const parentMesh, dgCollisionParamProxy& proxy);
@@ -75,6 +74,6 @@ class dgCollisionConvexPolygon: public dgCollisionConvex
 	const dgFloat32* m_vertex;
 	const dgInt32* m_vertexIndex;
 	const dgInt32* m_adjacentFaceEdgeNormalIndex;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 #endif

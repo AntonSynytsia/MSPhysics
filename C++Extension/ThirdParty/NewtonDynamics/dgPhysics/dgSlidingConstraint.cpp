@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -130,7 +130,7 @@ dgVector dgSlidingConstraint::GetJointForce () const
 
 	CalculateGlobalMatrixAndAngle (m_localMatrix0, m_localMatrix1, matrix0, matrix1);
 	return dgVector (matrix0.m_up.Scale (m_jointForce[0].m_force) + 
-		             matrix0.m_right.Scale (m_jointForce[1].m_force) + 
+		             matrix0.m_right.Scale (m_jointForce[1].m_force) +
 					 matrix0.m_up.Scale (m_jointForce[2].m_force) +
 					 matrix0.m_right.Scale (m_jointForce[3].m_force) +
 					 matrix0.m_right.Scale (m_jointForce[4].m_force));
@@ -166,9 +166,9 @@ dgUnsigned32 dgSlidingConstraint::JacobianDerivative (dgContraintDescritor& para
 	dgPointParam pointDataP;
 	dgPointParam pointDataQ;
 	dgPointParam pointDataR;
-	InitPointParam (pointDataP, m_stiffness, p0, p1);
-	InitPointParam (pointDataQ, m_stiffness, q0, q1);
-	InitPointParam (pointDataR, m_stiffness, r0, r1);
+	InitPointParam (pointDataP, m_defualtDiagonalRegularizer, p0, p1);
+	InitPointParam (pointDataQ, m_defualtDiagonalRegularizer, q0, q1);
+	InitPointParam (pointDataR, m_defualtDiagonalRegularizer, r0, r1);
 
 	CalculatePointDerivative (0, params, dir1, pointDataP, &m_jointForce[0]); 
 	CalculatePointDerivative (1, params, dir2, pointDataP, &m_jointForce[1]); 

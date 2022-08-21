@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -23,29 +23,28 @@
 #define __DGTYPES_H__
 
 #ifdef _MSC_VER 
-	#ifdef _M_X64
+    #if defined (_M_ARM) || defined (_M_ARM64)
+		#ifndef _ARM_VER
+			#define _ARM_VER
+		#endif
+	#elif defined (_M_X64)
 		#ifndef _WIN_64_VER
 			#define _WIN_64_VER
 		#endif
-	#else 		
+	#elif defined (_M_IX86)
 		#ifndef _WIN_32_VER
 			#define _WIN_32_VER
 		#endif
+	#else 
+		#error target platform not defined
 	#endif
 
-#if _MSC_VER >= 1400
-	#define HAVE_STRUCT_TIMESPEC
-#endif
-#endif
-
-
-#ifdef _MSC_VER 
-	#if !(defined (_WIN_32_VER) || defined (_WIN_64_VER))
-		#error "most define _WIN_32_VER or _WIN_64_VER for a correct CPU target"
+	#if _MSC_VER >= 1400
+		#define HAVE_STRUCT_TIMESPEC
 	#endif
 #endif
 
-#if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
+#if (defined (_WIN_32_VER) || defined (_WIN_64_VER) || (defined (_MSC_VER ) && defined (_ARM_VER)) )
 	#pragma warning (disable: 4100) //unreferenced formal parameter
 	#pragma warning (disable: 4201) //nonstandard extension used : nameless struct/union
 	#pragma warning (disable: 4324) //structure was padded due to __declspec(align())
@@ -72,9 +71,9 @@
 	#pragma warning (push, 3) 
 		#include <windows.h>
 		#include <crtdbg.h>
-		#ifndef _DURANGO
-			#include <tlhelp32.h>
-		#endif
+		//#ifndef _DURANGO
+		//	#include <tlhelp32.h>
+		//#endif
 	#pragma warning (pop) 
 #endif
 
@@ -87,9 +86,8 @@
 #include <math.h>
 #include <float.h>
 #include <ctype.h>
-//#include <atomic>
 
-#if (defined (_MINGW_32_VER) || defined (_MINGW_64_VER))
+#if (defined (__MINGW32__) || defined (__MINGW64__))
 	#include <io.h> 
 	#include <direct.h> 
 	#include <malloc.h>
@@ -104,7 +102,7 @@
 	#include <pmmintrin.h>
 #endif
 
-#if (defined (_POSIX_VER) || defined (_POSIX_VER_64) || defined (_MINGW_32_VER) || defined (_MINGW_64_VER))
+#if (defined (_POSIX_VER) || defined (_POSIX_VER_64) || defined (__MINGW32__) || defined (__MINGW64__))
   /* CMake defines NDEBUG for _not_ debug builds. Therefore, set
      Newton's _DEBUG flag only when NDEBUG is not defined.
   */
@@ -114,7 +112,7 @@
 
 	#include <unistd.h>
 	#include <assert.h>
-	#ifndef __ARMCC_VERSION
+	#if (!defined(__arm__) && !defined(__aarch64__)) // it was __ARMCC_VERSION before, it should be __ARM__ or aarch64, otherwise cross compiling in gcc fails.
 		extern "C" 
 		{ 
 			// for SSE3 and up
@@ -137,8 +135,17 @@
     #endif
 #endif
 
+// uncomment out D_PROFILER to enable profiler frame capture profiler traces
+// alternatively the end application can use a command line option to enable this define
+//#define D_PROFILER
+
+// uncomment this for Scalar floating point 
+// alternatively the end application can use a command line option to enable this define
 //#define DG_SCALAR_VECTOR_CLASS
 
+// uncomment this for Scalar floating point 
+// alternatively the end application can use a command line option to enable this define
+//#define __ANDROID__
 
 // by default newton run on a separate thread and 
 // optionally concurrent with the calling thread,
@@ -162,18 +169,16 @@
 	#include <condition_variable>
 #endif
 
-#if defined (_DG_USE_PROFILER) && (defined (_WIN_32_VER) || defined (_WIN_64_VER))
-	#include <dTimeTracker.h>
-#endif
-
 
 //************************************************************
 #ifdef DG_DISABLE_ASSERT
 	#define dgAssert(x)
 #else 
-	#if defined (_WIN_32_VER) || defined (_WIN_64_VER)
+	#if defined (_WIN_32_VER) || defined (_WIN_64_VER) 
 		#define dgAssert(x) _ASSERTE(x)
-	#else 
+	#elif defined (_MSC_VER ) && defined (_ARM_VER) 
+		#define dgAssert(x) _ASSERTE(x)
+	#else
 		#ifdef _DEBUG
 			#define dgAssert(x) assert(x)
 		#else 
@@ -196,9 +201,9 @@
 
 #ifdef _DEBUG
 	#define DG_INLINE inline
-#else 
-	#if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
-		#define DG_INLINE __forceinline 
+#else
+	#if defined(_MSC_VER)
+			#define DG_INLINE __forceinline 
 	#else 
 		#define DG_INLINE	inline
 		//#define DG_INLINE	 __attribute__((always_inline))
@@ -209,22 +214,31 @@
 #define DG_VECTOR_SIMD_SIZE		16
 #define DG_VECTOR_AVX2_SIZE		32
 
-#if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
-	#define	DG_GCC_VECTOR_ALIGMENT	
-	#define	DG_MSC_VECTOR_ALIGMENT			__declspec(align(DG_VECTOR_SIMD_SIZE))
+#if defined(_MSC_VER)
+	#define	DG_GCC_VECTOR_ALIGNMENT
+	#define	DG_MSC_VECTOR_ALIGNMENT    __declspec(align(DG_VECTOR_SIMD_SIZE))
 #else
-	#define	DG_GCC_VECTOR_ALIGMENT			__attribute__ ((aligned (DG_VECTOR_SIMD_SIZE)))
-	#define	DG_MSC_VECTOR_ALIGMENT			
+	#define	DG_GCC_VECTOR_ALIGNMENT    __attribute__ ((aligned (DG_VECTOR_SIMD_SIZE)))
+	#define	DG_MSC_VECTOR_ALIGNMENT
 #endif
 
-#if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
-	#define	DG_GCC_AVX_ALIGMENT	
-	#define	DG_MSC_AVX_ALIGMENT			__declspec(align(DG_VECTOR_AVX2_SIZE))
+#if defined(_MSC_VER)
+	#define	DG_GCC_AVX_ALIGNMENT
+	#define	DG_MSC_AVX_ALIGNMENT       __declspec(align(DG_VECTOR_AVX2_SIZE))
 #else
-	#define	DG_GCC_AVX_ALIGMENT			__attribute__ ((aligned (DG_VECTOR_AVX2_SIZE)))
-	#define	DG_MSC_AVX_ALIGMENT			
+	#define	DG_GCC_AVX_ALIGNMENT       __attribute__ ((aligned (DG_VECTOR_AVX2_SIZE)))
+	#define	DG_MSC_AVX_ALIGNMENT
 #endif
 
+#if defined(_MSC_VER)
+	#define DG_LIBRARY_EXPORT __declspec(dllexport)
+	#define DG_LIBRARY_IMPORT __declspec(dllimport)
+	#define DG_LIBRARY_STATIC
+#else
+	#define DG_LIBRARY_EXPORT __attribute__((visibility("default")))
+	#define DG_LIBRARY_IMPORT __attribute__((visibility("default")))
+	#define DG_LIBRARY_STATIC
+#endif
 
 
 #if ((defined (_WIN_32_VER) || defined (_WIN_64_VER)) && (_MSC_VER  >= 1600))
@@ -274,16 +288,12 @@ class dgTriplex
 	dgFloat32 m_z;
 };
 
-
-#define dgPI			 	dgFloat32 (3.141592f)
-#define dgPI2			 	dgFloat32 (dgPI * 2.0f)
-#define dgEXP			 	dgFloat32 (2.71828f)
-#define dgEPSILON	  	 	dgFloat32 (1.0e-5f)
-#define dgGRAVITY	  	 	dgFloat32 (9.8f)
-#define dgDEG2RAD	  	 	dgFloat32 (dgPI / 180.0f)
-#define dgRAD2DEG	  	 	dgFloat32 (180.0f / dgPI)
-#define dgKMH2MPSEC		 	dgFloat32 (0.278f)
-
+#define dgPi		 	dgFloat32 (3.141592f)
+#define dgPI2		 	dgFloat32 (dgPi * 2.0f)
+#define dgEXP		 	dgFloat32 (2.71828f)
+#define dgEpsilon	  	dgFloat32 (1.0e-5f)
+#define dgDegreeToRad  	dgFloat32 (dgPi / 180.0f)
+#define dgRadToDegree  	dgFloat32 (180.0f / dgPi)
 
 class dgBigVector;
 #ifndef _NEWTON_USE_DOUBLE
@@ -309,18 +319,12 @@ class dgVector;
 //		#define dgCheckFloat(x) 1
 #endif
 
-// adding frame capture profiler macros
-#include "dgProfiler.h"
-
 typedef void (dgApi *dgDeserialize) (void* const userData, void* buffer, dgInt32 size);
 typedef void (dgApi *dgSerialize) (void* const userData, const void* const buffer, dgInt32 size);
 typedef bool (dgApi *dgReportProgress) (dgFloat32 progressNormalzedPercent, void* const userData);
 
 // assume this function returns memory aligned to 16 bytes
 #define dgAlloca(type, count) (type*) alloca (sizeof (type) * (count))
-
-//#define dgCheckAligment(x) dgAssert (!(dgUnsigned64 (x) & 0xf))
-#define dgCheckAligment(x) 
 
 DG_INLINE dgInt32 dgExp2 (dgInt32 x)
 {
@@ -424,290 +428,6 @@ DG_INLINE bool dgAreEqual(T A, T B, T tol)
 	return dgAbs(A - B) < tol;
 }
 
-template <class T> 
-dgInt32 dgBinarySearch (T const* array, dgInt32 elements, const T& entry, dgInt32 (*compare) (const T* const  A, const T* const B, void* const context), void* const context = NULL)
-{
-	dgInt32 index0 = 0;
-	dgInt32 index2 = elements - 1;
-
-	while ((index2 - index0) > 4) {
-		dgInt32 index1 = (index0 + index2) >> 1;
-		dgInt32 test = compare (&array[index1], &entry, context);
-		if (test < 0) {
-			index0 = index1;
-		} else {
-			index2 = index1;
-		}
-	}
-	
-	index0 = (index0 > 0) ? index0 - 1 : 0;
-	index2 = ((index2 + 1) < elements) ? index2 + 1 : elements;
-	dgInt32 index = index0 - 1;
-	for (dgInt32 i = index0; i < index2; i ++) {
-		dgInt32 test = compare (&array[i], &entry, context);
-		if (!test) {
-			return i;
-		} else if (test > 0) {
-			break;
-		}
-		index = i;
-	}
-	return index;
-}
-
-
-template <class T>
-dgInt32 dgBinarySearchIndirect(T** const array, dgInt32 elements, const T& entry, dgInt32(*compare) (const T* const  A, const T* const B, void* const context), void* const context = NULL)
-{
-	dgInt32 index0 = 0;
-	dgInt32 index2 = elements - 1;
-
-	while ((index2 - index0) > 4) {
-		dgInt32 index1 = (index0 + index2) >> 1;
-		dgInt32 test = compare(array[index1], &entry, context);
-		if (test < 0) {
-			index0 = index1;
-		} else {
-			index2 = index1;
-		}
-	}
-
-	index0 = (index0 > 0) ? index0 - 1 : 0;
-	index2 = ((index2 + 1) < elements) ? index2 + 1 : elements;
-	dgInt32 index = index0 - 1;
-	for (dgInt32 i = index0; i < index2; i++) {
-		dgInt32 test = compare(array[i], &entry, context);
-		if (!test) {
-			return i;
-		} else if (test > 0) {
-			break;
-		}
-		index = i;
-	}
-	return index;
-}
-
-
-template <class T> 
-void dgRadixSort (T* const array, T* const tmpArray, dgInt32 elements, dgInt32 radixPass,  dgInt32 (*getRadixKey) (const T* const  A, void* const context), void* const context = NULL)
-{
-	dgInt32 scanCount[256]; 
-	dgInt32 histogram[256][4];
-
-	dgAssert (radixPass >= 1);
-	dgAssert (radixPass <= 4);
-	
-	memset (histogram, 0, sizeof (histogram));
-	for (dgInt32 i = 0; i < elements; i ++) {
-		dgInt32 key = getRadixKey (&array[i], context);
-		for (dgInt32 j = 0; j < radixPass; j ++) {
-			dgInt32 radix = (key >> (j << 3)) & 0xff;
-			histogram[radix][j] = histogram[radix][j] + 1;
-		}
-	}
-
-	for (dgInt32 radix = 0; radix < radixPass; radix += 2) {
-		scanCount[0] = 0;
-		for (dgInt32 i = 1; i < 256; i ++) {
-			scanCount[i] = scanCount[i - 1] + histogram[i - 1][radix];
-		}
-		dgInt32 radixShift = radix << 3;
-		for (dgInt32 i = 0; i < elements; i ++) {
-			dgInt32 key = (getRadixKey (&array[i], context) >> radixShift) & 0xff;
-			dgInt32 index = scanCount[key];
-			tmpArray[index] = array[i];
-			scanCount[key] = index + 1;
-		}
-
-		if ((radix + 1) < radixPass) { 
-			scanCount[0] = 0;
-			for (dgInt32 i = 1; i < 256; i ++) {
-				scanCount[i] = scanCount[i - 1] + histogram[i - 1][radix + 1];
-			}
-			
-			dgInt32 radixShift = (radix + 1) << 3;
-			for (dgInt32 i = 0; i < elements; i ++) {
-				dgInt32 key = (getRadixKey (&array[i], context) >> radixShift) & 0xff;
-				dgInt32 index = scanCount[key];
-				array[index] = tmpArray[i];
-				scanCount[key] = index + 1;
-			}
-		} else {
-			memcpy (array, tmpArray, elements * sizeof (T)); 
-		}
-	}
-
-#ifdef _DEBUG
-	for (dgInt32 i = 0; i < (elements - 1); i ++) {
-		dgAssert (getRadixKey (&array[i], context) <= getRadixKey (&array[i + 1], context));
-	}
-#endif
-}
-
-template <class T> 
-void dgSort (T* const array, dgInt32 elements, dgInt32 (*compare) (const T* const  A, const T* const B, void* const context), void* const context = NULL)
-{
-//	DG_TRACKTIME_NAMED("dgSort");
-	DG_TRACKTIME(__FUNCTION__);
-	const dgInt32 batchSize = 8;
-	dgInt32 stack[1024][2];
-
-	stack[0][0] = 0;
-	stack[0][1] = elements - 1;
-	dgInt32 stackIndex = 1;
-	while (stackIndex) {
-		stackIndex --;
-		dgInt32 lo = stack[stackIndex][0];
-		dgInt32 hi = stack[stackIndex][1];
-		if ((hi - lo) > batchSize) {
-			dgInt32 mid = (lo + hi) >> 1;
-			if (compare(&array[lo], &array[mid], context) > 0) {
-				dgSwap(array[lo], array[mid]);
-			}
-			if (compare(&array[mid], &array[hi], context) > 0) {
-				dgSwap(array[mid], array[hi]);
-			}
-			if (compare(&array[lo], &array[mid], context) > 0) {
-				dgSwap(array[lo], array[mid]);
-			}
-			dgInt32 i = lo + 1;
-			dgInt32 j = hi - 1;
-			T val (array[mid]);
-			do {    
-				while (compare (&array[i], &val, context) < 0) i ++;
-				while (compare (&array[j], &val, context) > 0) j --;
-
-				if (i <= j)	{
-					dgSwap(array[i], array[j]);
-					i++; 
-					j--;
-				}
-			} while (i <= j);
-
-			if (i < hi) {
-				stack[stackIndex][0] = i;
-				stack[stackIndex][1] = hi;
-				stackIndex ++;
-			}
-			if (lo < j) {
-				stack[stackIndex][0] = lo;
-				stack[stackIndex][1] = j;
-				stackIndex ++;
-			}
-			dgAssert (stackIndex < dgInt32 (sizeof (stack) / (2 * sizeof (stack[0][0]))));
-		}
-	}
-
-	dgInt32 stride = batchSize + 1;
-	if (elements < stride) {
-		stride = elements;
-	}
-	for (dgInt32 i = 1; i < stride; i ++) {
-		if (compare (&array[0], &array[i], context) > 0) {
-			dgSwap(array[0], array[i]);
-		}
-	}
-
-	for (dgInt32 i = 1; i < elements; i ++) {
-		dgInt32 j = i;
-		T tmp (array[i]);
-		for (; compare (&array[j - 1], &tmp, context) > 0; j --) {
-			dgAssert (j > 0);
-			array[j] = array[j - 1];
-		}
-		array[j] = tmp;
-	}
-
-#ifdef _DEBUG
-	for (dgInt32 i = 0; i < (elements - 1); i ++) {
-		dgAssert (compare (&array[i], &array[i + 1], context) <= 0);
-	}
-#endif
-}
-
-
-template <class T> 
-void dgSortIndirect (T** const array, dgInt32 elements, dgInt32 (*compare) (const T* const  A, const T* const B, void* const context), void* const context = NULL)
-{
-	DG_TRACKTIME(__FUNCTION__);
-	const dgInt32 batchSize = 8;
-	dgInt32 stack[1024][2];
-
-	stack[0][0] = 0;
-	stack[0][1] = elements - 1;
-	dgInt32 stackIndex = 1;
-	while (stackIndex) {
-		stackIndex --;
-		dgInt32 lo = stack[stackIndex][0];
-		dgInt32 hi = stack[stackIndex][1];
-		if ((hi - lo) > batchSize) {
-			dgInt32 mid = (lo + hi) >> 1;
-			if (compare(array[lo], array[mid], context) > 0) {
-				dgSwap(array[lo], array[mid]);
-			}
-			if (compare(array[mid], array[hi], context) > 0) {
-				dgSwap(array[mid], array[hi]);
-			}
-			if (compare(array[lo], array[mid], context) > 0) {
-				dgSwap(array[lo], array[mid]);
-			}
-			dgInt32 i = lo + 1;
-			dgInt32 j = hi - 1;
-			T* val (array[mid]);
-			do {    
-				while (compare (array[i], val, context) < 0) i ++;
-				while (compare (array[j], val, context) > 0) j --;
-
-				if (i <= j)	{
-					dgSwap(array[i], array[j]);
-					i++; 
-					j--;
-				}
-			} while (i <= j);
-
-			if (i < hi) {
-				stack[stackIndex][0] = i;
-				stack[stackIndex][1] = hi;
-				stackIndex ++;
-			}
-			if (lo < j) {
-				stack[stackIndex][0] = lo;
-				stack[stackIndex][1] = j;
-				stackIndex ++;
-			}
-			dgAssert (stackIndex < dgInt32 (sizeof (stack) / (2 * sizeof (stack[0][0]))));
-		}
-	}
-
-
-	dgInt32 stride = batchSize + 1;
-	if (elements < stride) {
-		stride = elements;
-	}
-	for (dgInt32 i = 1; i < stride; i ++) {
-		if (compare (array[0], array[i], context) > 0) {
-			dgSwap(array[0], array[i]);
-		}
-	}
-
-	for (dgInt32 i = 1; i < elements; i ++) {
-		dgInt32 j = i;
-		T* tmp (array[i]);
-		for (; compare (array[j - 1], tmp, context) > 0; j --) {
-			dgAssert (j > 0);
-			array[j] = array[j - 1];
-		}
-		array[j] = tmp;
-	}
-
-#ifdef _DEBUG
-	for (dgInt32 i = 0; i < (elements - 1); i ++) {
-		dgAssert (compare (array[i], array[i + 1], context) <= 0);
-	}
-#endif
-}
-
-
 #ifdef _NEWTON_USE_DOUBLE
 	union dgFloatSign
 	{
@@ -740,8 +460,8 @@ union dgDoubleInt
 
 
 void dgGetMinMax (dgBigVector &Min, dgBigVector &Max, const dgFloat64* const vArray, dgInt32 vCount, dgInt32 strideInBytes);
-dgInt32 dgVertexListToIndexList (dgFloat64* const vertexList, dgInt32 strideInBytes, dgInt32 compareCount,     dgInt32 vertexCount,         dgInt32* const indexListOut, dgFloat64 tolerance = dgEPSILON);
-dgInt32 dgVertexListToIndexList (dgFloat32* const vertexList, dgInt32 strideInBytes, dgInt32 floatSizeInBytes, dgInt32 unsignedSizeInBytes, dgInt32 vertexCount, dgInt32* const indexListOut, dgFloat32 tolerance = dgEPSILON);
+dgInt32 dgVertexListToIndexList (dgFloat64* const vertexList, dgInt32 strideInBytes, dgInt32 compareCount,     dgInt32 vertexCount,         dgInt32* const indexListOut, dgFloat64 tolerance = dgEpsilon);
+dgInt32 dgVertexListToIndexList (dgFloat32* const vertexList, dgInt32 strideInBytes, dgInt32 floatSizeInBytes, dgInt32 unsignedSizeInBytes, dgInt32 vertexCount, dgInt32* const indexListOut, dgFloat32 tolerance = dgEpsilon);
 
 #define PointerToInt(x) ((size_t)x)
 #define IntToPointer(x) ((void*)(size_t(x)))
@@ -791,37 +511,28 @@ class dgFloatExceptions
 	~dgFloatExceptions();
 
 	private:
+	#if (defined (_MSC_VER) && defined (_WIN_32_VER))
 	dgUnsigned32 m_mask;
+#endif
 };
-
 
 class dgSetPrecisionDouble 
 {
 	public:
 	dgSetPrecisionDouble();
 	~dgSetPrecisionDouble();
+	#if (defined (_MSC_VER) && defined (_WIN_32_VER))
 	dgInt32 m_mask; 
+	#endif
 };
 
 DG_INLINE dgInt32 dgAtomicExchangeAndAdd (dgInt32* const addend, dgInt32 amount)
 {
-/*
-	#if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
-		return _InterlockedExchangeAdd((long*) addend, long (amount));
-	#endif
-
-	#if (defined (_MINGW_32_VER) || defined (_MINGW_64_VER))
-		return InterlockedExchangeAdd((long*) addend, long (amount));
-	#endif
-
-	#if (defined (_POSIX_VER) || defined (_POSIX_VER_64) ||defined (_MACOSX_VER))
-		return __sync_fetch_and_add ((int32_t*)addend, amount );
-	#endif
-*/
-
 	#if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
 		return _InterlockedExchangeAdd((long*)addend, long(amount));
-	#elif (defined (_MINGW_32_VER) || defined (_MINGW_64_VER))
+	#elif defined (_MSC_VER ) && defined (_ARM_VER) 
+		return _InterlockedExchangeAdd((long*)addend, long(amount));
+	#elif (defined (__MINGW32__) || defined (__MINGW64__))
 		return InterlockedExchangeAdd((long*)addend, long(amount));
 	#elif (defined (_POSIX_VER) || defined (_POSIX_VER_64) ||defined (_MACOSX_VER)|| defined ANDROID)
 		return __sync_fetch_and_add((int32_t*)addend, amount);
@@ -834,51 +545,56 @@ DG_INLINE dgInt32 dgInterlockedExchange(dgInt32* const ptr, dgInt32 value)
 {
 	#if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
 		return _InterlockedExchange((long*) ptr, value);
-	#elif (defined (_MINGW_32_VER) || defined (_MINGW_64_VER))
+	#elif defined (_MSC_VER ) && defined (_ARM_VER) 
+		return _InterlockedExchange((long*)ptr, value);
+	#elif (defined (__MINGW32__) || defined (__MINGW64__))
 		return InterlockedExchange((long*) ptr, value);
 	#elif (defined (_POSIX_VER) || defined (_POSIX_VER_64) ||defined (_MACOSX_VER))
-		//__sync_synchronize();
 		return __sync_lock_test_and_set((int32_t*)ptr, value);
 	#else
 		#error "dgInterlockedExchange implementation required"
 	#endif
 }
 
+/*
+DG_INLINE void* dgInterlockedExchange(void** const ptr, void* value)
+{
+	#if defined(_WIN32)
+		#ifdef _M_X64 
+			return (void*)_InterlockedExchange64((dgInt64*)ptr, dgInt64 (value));
+		#else
+			return (void*)_InterlockedExchange((long*) ptr, dgInt32(value));
+		#endif
+	#elif defined(__linux__) || defined(_MACOSX_VER)
+		#if defined(__ANDROID__)
+			return __sync_lock_test_and_set(ptr, value);
+		#else
+			#ifdef __x86_64__
+				return (void*)__sync_lock_test_and_set((dgInt64*) ptr, (dgInt64)value);
+			#else
+				return (void*)__sync_lock_test_and_set((dgInt32*) ptr, (dgInt32) value);
+			#endif
+		#endif
+	#else
+		#error "dgInterlockedExchange implementation required"
+	#endif
+}
+*/
+
 DG_INLINE dgInt32 dgInterlockedTest(dgInt32* const ptr, dgInt32 value)
 {
 	#if (defined (_WIN_32_VER) || defined (_WIN_64_VER))
 		return _InterlockedCompareExchange((long*)ptr, value, value);
-	#elif (defined (_MINGW_32_VER) || defined (_MINGW_64_VER))
+	#elif defined (_MSC_VER ) && defined (_ARM_VER) 
+		return _InterlockedCompareExchange((long*)ptr, value, value);
+	#elif (defined (__MINGW32__) || defined (__MINGW64__))
 		return InterlockedCompareExchange((long*)ptr, value, value);
 	#elif (defined (_POSIX_VER) || defined (_POSIX_VER_64) ||defined (_MACOSX_VER))
-		//__sync_synchronize();
 		return __sync_lock_test_and_set((int32_t*)ptr, value);
 	#else
 		#error "dgInterlockedTest implementation required"
 	#endif
 }
-
-/*
-class dgAtomic: protected std::atomic<dgInt32>
-{
-	public:
-	dgAtomic()
-		:std::atomic<dgInt32>()
-	{
-	}
-
-	DG_INLINE operator dgInt32() const 
-	{
-		const std::atomic<dgInt32>& me = *this;
-		return me;
-	}
-
-	DG_INLINE dgInt32 Exchange(dgInt32 value)
-	{
-		return exchange(value);
-	}
-};
-*/
 
 DG_INLINE void dgThreadYield()
 {
@@ -890,8 +606,11 @@ DG_INLINE void dgThreadYield()
 DG_INLINE void dgThreadPause()
 {
 #ifndef DG_USE_THREAD_EMULATION
-	#if defined (_WIN_32_VER) || defined (_WIN_64_VER) || defined (WIN32) || defined (i386_) || defined (x86_64_)
+	//#if defined (_WIN_32_VER) || defined (_WIN_64_VER) || defined (WIN32) || defined (i386_) || defined (x86_64_)
+	#if defined (_WIN_32_VER) || defined (_WIN_64_VER)
 		_mm_pause();
+	#else 
+		std::this_thread::yield();
 	#endif
 #endif
 }
@@ -900,7 +619,6 @@ DG_INLINE void dgSpinLock(dgInt32* const ptr)
 {
 #ifndef DG_USE_THREAD_EMULATION 
 	while (dgInterlockedExchange(ptr, 1)) {
-//		DG_TRACKTIME_NAMED("lock");
 		dgThreadYield();
 	}
 #endif
@@ -941,7 +659,6 @@ class dgScopeSpinPause
 		:m_atomicLock(lock)
 	{
 		while (dgInterlockedExchange(m_atomicLock, 1)) {
-			//DG_TRACKTIME_NAMED("pause");
 			dgThreadPause();
 		}
 	}
@@ -958,8 +675,12 @@ class dgScopeSpinPause
 
 #ifdef _MACOSX_VER
 #include <sys/time.h>
-#define CLOCK_REALTIME 0
-#define CLOCK_MONOTONIC 0
+#ifndef CLOCK_REALTIME
+	#define CLOCK_REALTIME 0
+#endif
+#ifndef CLOCK_MONOTONIC
+	#define CLOCK_MONOTONIC 0
+#endif
 //clock_gettime is not implemented on OSX
 DG_INLINE int clock_gettime(int /*clk_id*/, struct timespec* t) {
     struct timeval now;

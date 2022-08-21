@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 *
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -576,6 +576,8 @@ class dgHACDClusterGraph: public dgGraph<dgHACDCluster, dgHACDEdge>
 
 		void CastBackFace (dgListNode* const clusterNodeA, const dgBigVector& p0, const dgBigVector& p1, const dgBigVector& p2, dgFloat32 distanceThreshold)
 		{
+			dgAssert(0);
+			/*
 			dgBigVector origin ((p0 + p1 + p2).Scale (dgFloat32 (1.0f/3.0f)));
 
 			dgFloat32 rayDistance = distanceThreshold * dgFloat32 (2.0f);
@@ -585,8 +587,6 @@ class dgHACDClusterGraph: public dgGraph<dgHACDCluster, dgHACDEdge>
 			dgHACDClusterFace& faceA = m_clusterA->GetFirst()->GetInfo();
 			dgBigVector end (origin - faceA.m_normal.Scale (rayDistance));
 
-			dgAssert (0);
-/*
 			dgFloat64 paramOut;
 			//dgMeshBVHNode* const node = FaceRayCast (origin, end, paramOut, false);
 
@@ -899,7 +899,7 @@ class dgHACDClusterGraph: public dgGraph<dgHACDCluster, dgHACDEdge>
 
 	dgFloat64 CalculateConcavityMetric (dgFloat64 convexConcavity, dgFloat64 area, dgFloat64 perimeter, dgInt32 faceCountA, dgInt32 faceCountB) const 
 	{
-		dgFloat64 edgeCost = perimeter * perimeter / (dgFloat64(4.0f * dgPI) * area);
+		dgFloat64 edgeCost = perimeter * perimeter / (dgFloat64(4.0f * dgPi) * area);
 		return convexConcavity * DG_CONCAVITY_SCALE + edgeCost + ConcavityByFaceMedian (faceCountA, faceCountB);
 	}
 

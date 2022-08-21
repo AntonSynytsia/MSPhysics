@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -28,7 +28,7 @@
 
 dgUnsigned64 dgGetTimeInMicrosenconds()
 {
-#ifdef _MSC_VER
+#if (defined (_MSC_VER) || defined (_MINGW_32_VER) || defined (_MINGW_64_VER))
 	static LARGE_INTEGER frequency;
 	static LARGE_INTEGER baseCount;
 	if (!frequency.QuadPart) {
@@ -42,7 +42,7 @@ dgUnsigned64 dgGetTimeInMicrosenconds()
 	dgUnsigned64 ticks = dgUnsigned64 (count.QuadPart * LONGLONG (1000000) / frequency.QuadPart);
 	return ticks;
 
-#elif (defined (_POSIX_VER) || defined (_POSIX_VER_64))
+#elif (defined (_POSIX_VER) || defined (_POSIX_VER_64) || defined (ANDROID))
 
 	timespec ts;
 	static dgUnsigned64 baseCount = 0;
@@ -493,9 +493,6 @@ dgInt32 dgDeserializeMarker(dgDeserialize serializeCallback, void* const userDat
 	return revision;
 }
 
-
-
-
 dgSetPrecisionDouble::dgSetPrecisionDouble()
 {
 	#if (defined (_MSC_VER) && defined (_WIN_32_VER))
@@ -513,9 +510,7 @@ dgSetPrecisionDouble::~dgSetPrecisionDouble()
 	#endif
 }
 
-
 dgFloatExceptions::dgFloatExceptions(dgUnsigned32 mask)
-	:m_mask (0)
 {
 	#if (defined (_MSC_VER) && defined (_WIN_32_VER))
 		dgClearFP();
@@ -527,8 +522,11 @@ dgFloatExceptions::dgFloatExceptions(dgUnsigned32 mask)
 		#ifndef IOS
 			fesetenv(FE_DFL_DISABLE_SSE_DENORMS_ENV);
 		#endif
-	#else
+	#elif (defined (_WIN_32_VER) || defined (_WIN_64_VER))
 		_MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+	#elif defined (_ARM_VER)
+		//_MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+		#pragma message ("warning!!! do not forget to set flush to zero for arm cpus")
 	#endif
 
 //	float a (1.0f);

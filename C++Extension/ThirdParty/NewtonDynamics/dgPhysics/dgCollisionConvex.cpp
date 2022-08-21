@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -37,14 +37,6 @@
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-
-dgVector dgCollisionConvex::m_unitCircle[] = { dgVector(dgFloat32(0.0f), dgFloat32(1.0f), dgFloat32(0.000000f), dgFloat32(0.0f)),
-												dgVector(dgFloat32(0.0f), dgFloat32(0.5f), dgFloat32(0.866025f), dgFloat32(0.0f)),
-												dgVector(dgFloat32(0.0f), dgFloat32(-0.5f), dgFloat32(0.866026f), dgFloat32(0.0f)),
-												dgVector(dgFloat32(0.0f), dgFloat32(-1.0f), dgFloat32(0.000000f), dgFloat32(0.0f)),
-												dgVector(dgFloat32(0.0f), dgFloat32(-0.5f), dgFloat32(-0.866025f), dgFloat32(0.0f)),
-												dgVector(dgFloat32(0.0f), dgFloat32(0.5f), dgFloat32(-0.866026f), dgFloat32(0.0f)) };
-
 
 
 dgCollisionConvex::dgCollisionConvex (dgMemoryAllocator* const allocator, dgUnsigned32 signature, dgCollisionID id)
@@ -133,8 +125,7 @@ void dgCollisionConvex::SetVolumeAndCG ()
 		dir[i] = dgFloat32 (1.0f);
 		p1[i] = SupportVertex(dir, NULL)[i];
 	}
-//	p0[3] = dgFloat32 (0.0f);
-//	p1[3] = dgFloat32 (0.0f);
+
 	dgAssert (p0.m_w == dgFloat32 (0.0f));
 	dgAssert (p1.m_w == dgFloat32 (0.0f));
 	m_boxSize = (p1 - p0) * dgVector::m_half; 
@@ -144,7 +135,6 @@ void dgCollisionConvex::SetVolumeAndCG ()
 
 	MassProperties ();
 }
-
 
 bool dgCollisionConvex::SanityCheck (dgPolyhedra& hull) const
 {
@@ -187,8 +177,6 @@ bool dgCollisionConvex::SanityCheck (dgPolyhedra& hull) const
 	return true;
 }
 
-
-
 void dgCollisionConvex::DebugCollision (const dgMatrix& matrix, dgCollision::OnDebugCollisionMeshCallback callback, void* const userData) const
 {
 	dgInt8 mark[DG_MAX_EDGE_COUNT];
@@ -226,14 +214,11 @@ void dgCollisionConvex::CalcAABB (const dgMatrix& matrix, dgVector& p0, dgVector
 	p1 = (origin + size) & dgVector::m_triplexMask;
 }
 
-
-
 void dgCollisionConvex::CalculateInertia (void* userData, int indexCount, const dgFloat32* const faceVertex, int faceId)
 {
 	dgPolyhedraMassProperties& localData = *((dgPolyhedraMassProperties*) userData);
 	localData.AddInertiaAndCrossFace(indexCount, faceVertex);
 }
-
 
 dgFloat32 dgCollisionConvex::CalculateMassProperties (const dgMatrix& offset, dgVector& inertia, dgVector& crossInertia, dgVector& centerOfMass) const
 {
@@ -242,28 +227,30 @@ dgFloat32 dgCollisionConvex::CalculateMassProperties (const dgMatrix& offset, dg
 	return localData.MassProperties (centerOfMass, inertia, crossInertia);
 }
 
-
 void dgCollisionConvex::MassProperties ()
 {
-	m_centerOfMass.m_w = dgCollisionConvex::CalculateMassProperties (dgGetIdentityMatrix(), m_inertia, m_crossInertia, m_centerOfMass);
-	if (m_centerOfMass.m_w < DG_MAX_MIN_VOLUME) {
-		m_centerOfMass.m_w = DG_MAX_MIN_VOLUME;
+	dgFloat32 volume = dgCollisionConvex::CalculateMassProperties (dgGetIdentityMatrix(), m_inertia, m_crossInertia, m_centerOfMass);
+	if (volume < DG_MAX_MIN_VOLUME) {
+		volume = DG_MAX_MIN_VOLUME;
 	}
-	dgFloat32 invVolume = dgFloat32 (1.0f) / m_centerOfMass.m_w;
+	dgFloat32 invVolume = dgFloat32 (1.0f) / volume;
 	m_inertia = m_inertia.Scale (invVolume);
 	m_crossInertia = m_crossInertia.Scale (invVolume);
 	m_centerOfMass = m_centerOfMass.Scale (invVolume);
+	m_centerOfMass.m_w = volume;
 
 	// complete the calculation 
 	dgCollision::MassProperties ();
 }
 
-dgMatrix dgCollisionConvex::CalculateInertiaAndCenterOfMass (const dgMatrix& m_alignMatrix, const dgVector& localScale, const dgMatrix& matrix) const
+dgMatrix dgCollisionConvex::CalculateInertiaAndCenterOfMass (const dgMatrix& alignMatrix, const dgVector& localScale, const dgMatrix& matrix) const
 {
-	if ((dgAbs (localScale.m_x - localScale.m_y) < dgFloat32 (1.0e-5f)) && (dgAbs (localScale.m_x - localScale.m_z) < dgFloat32 (1.0e-5f))) {
-		dgAssert (m_alignMatrix[0][0] == dgFloat32(1.0f));
-		dgAssert (m_alignMatrix[1][1] == dgFloat32(1.0f));
-		dgAssert (m_alignMatrix[2][2] == dgFloat32(1.0f));
+//	if ((dgAbs (localScale.m_x - localScale.m_y) < dgFloat32 (1.0e-5f)) && (dgAbs (localScale.m_x - localScale.m_z) < dgFloat32 (1.0e-5f))) {
+	if ((dgAbs(localScale.m_x - localScale.m_y) < dgFloat32(1.0e-5f)) &&
+		(dgAbs(localScale.m_x - localScale.m_z) < dgFloat32(1.0e-5f)) &&
+		(dgAbs(localScale.m_y - localScale.m_z) < dgFloat32(1.0e-5f))) {
+
+		dgAssert(alignMatrix.TestIdentity());
 
 		// using general central theorem, is much faster and more accurate;
 		//IImatrix = IIorigin + mass * [(displacemnet % displacemnet) * identityMatrix - transpose(displacement) * displacement)];
@@ -283,7 +270,8 @@ dgMatrix dgCollisionConvex::CalculateInertiaAndCenterOfMass (const dgMatrix& m_a
 		dgAssert (localScale.m_w == dgFloat32 (0.0f));
 		dgVector origin (matrix.TransformVector (m_centerOfMass * localScale));
 
-		dgFloat32 originMag2 = origin.DotProduct(origin & dgVector::m_triplexMask).GetScalar();
+		origin.m_w = dgFloat32 (0.0f);
+		dgFloat32 originMag2 = origin.DotProduct(origin).GetScalar();
 		dgMatrix Covariance(origin, origin);
 		dgMatrix parallel(dgGetIdentityMatrix());
 		for (dgInt32 i = 0; i < 3; i++) {
@@ -293,7 +281,7 @@ dgMatrix dgCollisionConvex::CalculateInertiaAndCenterOfMass (const dgMatrix& m_a
 		}
 
 		inertia.m_posit = origin;
-		inertia.m_posit.m_w = 1.0f;
+		inertia.m_posit.m_w = dgFloat32 (1.0f);
 		return inertia;
 	} else {
 		// for non uniform scale we need to the general divergence theorem
@@ -304,7 +292,7 @@ dgMatrix dgCollisionConvex::CalculateInertiaAndCenterOfMass (const dgMatrix& m_a
 		scaledMatrix[0] = scaledMatrix[0].Scale(localScale.m_x);
 		scaledMatrix[1] = scaledMatrix[1].Scale(localScale.m_y);
 		scaledMatrix[2] = scaledMatrix[2].Scale(localScale.m_z);
-		scaledMatrix = m_alignMatrix * scaledMatrix;
+		scaledMatrix = alignMatrix * scaledMatrix;
 
 		dgFloat32 volume = CalculateMassProperties (scaledMatrix, inertiaII, crossInertia, centerOfMass);
 		if (volume < DG_MAX_MIN_VOLUME) {
@@ -345,8 +333,6 @@ dgFloat32 dgCollisionConvex::GetBoxMaxRadius () const
 {
 	return m_boxMaxRadius;
 } 
-
-
 
 dgVector dgCollisionConvex::CalculateVolumeIntegral (const dgMatrix& globalMatrix, const dgVector& globalPlane, const dgCollisionInstance& parentScale) const
 {
@@ -391,8 +377,6 @@ dgVector dgCollisionConvex::CalculateVolumeIntegral (const dgMatrix& globalMatri
 	return cg;
 }
 
-
-
 dgVector dgCollisionConvex::CalculateVolumeIntegral (const dgPlane& plane) const 
 {
 	dgInt8 mark[DG_MAX_EDGE_COUNT];
@@ -413,20 +397,17 @@ dgVector dgCollisionConvex::CalculateVolumeIntegral (const dgPlane& plane) const
 	}
 
 	if (positive == m_vertexCount) {
-		return dgVector (dgFloat32 (0.0f));
+		return dgVector::m_zero;
 	}
 
 	if (negative == m_vertexCount) {
-		//dgVector volume (this->GetVolume());
-		//volume.m_w = m_simplexVolume;
-		//return volume;
 		return m_centerOfMass;
 	}
 
 	dgPolyhedraMassProperties localData;
 	dgConvexSimplexEdge* capEdge = NULL;
 
-	dgVector cg (dgFloat32 (0.0f)); 
+	dgVector cg (dgVector::m_zero); 
 	memset (mark, 0, sizeof (mark));
 	for (dgInt32 i = 0; i < m_edgeCount; i ++) {
 		if (!mark[i]) {
@@ -470,7 +451,6 @@ dgVector dgCollisionConvex::CalculateVolumeIntegral (const dgPlane& plane) const
 			}
 		}
 	}
-
 
 	if (capEdge) {
 		dgInt32 count = 0;
@@ -595,160 +575,113 @@ bool dgCollisionConvex::SanityCheck(dgInt32 count, const dgVector& normal, dgVec
 	return true;
 }
 
-dgInt32 dgCollisionConvex::SimplifyClipPolygon (dgInt32 count, const dgVector& normal, dgVector* const polygon) const
-{
-	dgInt8 mark[DG_MAX_VERTEX_CLIP_FACE * 8];
-	dgInt8 buffer[8 * DG_MAX_VERTEX_CLIP_FACE * (sizeof (dgInt32) + sizeof (dgFloat32))];
-
-	dgAssert (count < dgInt32 (sizeof (mark) / sizeof (mark[0])));
-	dgUpHeap<dgInt32, dgFloat32> sortHeap (buffer, sizeof (buffer));	
-
-	dgAssert (normal.m_w == dgFloat32 (0.0f));
-	while (count > DG_MAX_VERTEX_CLIP_FACE) {
-		sortHeap.Flush();
-
-		//dgInt32 i0 = count - 2;
-		//dgInt32 i1 = count - 1;
-		for (dgInt32 i0 = count - 2, i1 = count - 1, i2 = 0; i2 < count; i2 ++) {
-			mark[i2] = 0;
-
-			dgVector e0 = polygon[i1] - polygon[i0];
-			dgVector e1 = polygon[i2] - polygon[i0];
-			dgFloat32 area = dgAbs (normal.DotProduct(e0.CrossProduct(e1)).GetScalar());
-
-			sortHeap.Push(i1, area);
-
-			i0 = i1;
-			i1 = i2;
-		}
-
-		dgInt32 removeCount = count - DG_MAX_VERTEX_CLIP_FACE;
-		while (sortHeap.GetCount() && removeCount) {
-			dgInt32 m1 = sortHeap[0];
-			sortHeap.Pop();
-
-			dgInt32 m0 = (m1 - 1) >= 0 ? m1 - 1 : count - 1;
-			dgInt32 m2 = (m1 + 1) < count ? m1 + 1 : 0;
-			dgAssert (m0 >= 0);
-
-			if (!(mark[m0] || mark[m2])) {
-				mark[m1] = 1;
-				removeCount --;
-			}
-		}
-
-		dgInt32 i0 = 0;
-		for (dgInt32 i1 = 0; i1 < count; i1 ++) {
-			if (!mark[i1]) {
-				polygon[i0] = polygon[i1];
-				i0 ++;
-			}
-		}
-		count = i0;
-	}
-
-	return count;
-}
-
-
 dgInt32 dgCollisionConvex::RectifyConvexSlice (dgInt32 count, const dgVector& normal, dgVector* const contactsOut) const
 {
-	struct DG_CONVEX_FIXUP_FACE
+	class dgConveFaceNode
 	{
-		dgInt32 m_vertex;
-		DG_CONVEX_FIXUP_FACE* m_next;
+		public:
+		dgInt32 m_vertexIndex;
+		dgConveFaceNode* m_next;
+		dgConveFaceNode* m_prev;
+		dgInt32 m_mask;
 	};
 
-	DG_CONVEX_FIXUP_FACE linkFace[DG_CLIP_MAX_POINT_COUNT * 2];
+	dgConveFaceNode convexHull[DG_MAX_CONTATCS + 1];
+	char buffer[DG_MAX_CONTATCS * (sizeof (void*) + sizeof (dgFloat32))];
 
-	dgAssert (count > 2);
-	dgAssert (normal.m_w == dgFloat32 (0.0f));
-	DG_CONVEX_FIXUP_FACE* poly = &linkFace[0];
+	dgInt32 start = count;
+	dgInt32 i0 = count - 1;
 	for (dgInt32 i = 0; i < count; i ++) {
-		dgAssert (contactsOut[i].m_w == dgFloat32 (0.0f));
-		linkFace[i].m_vertex = i;
-		linkFace[i].m_next = &linkFace[i + 1];
+		convexHull[i].m_vertexIndex = i;
+		convexHull[i].m_next = &convexHull[i + 1];
+		convexHull[i].m_prev = &convexHull[i0];
+		i0 = i;
 	}
-	linkFace[count - 1].m_next = &linkFace[0];
+	convexHull[count - 1].m_next = &convexHull[0];
 
-	dgInt32 restart = 1;
-	dgInt32 tmpCount = count;
-	while (restart && (tmpCount >= 2)) {
-		restart = 0;
-		DG_CONVEX_FIXUP_FACE* ptr = poly; 
-		dgInt32 loops = tmpCount;
-		do {
-			dgInt32 i0 = ptr->m_vertex;
-			dgInt32 i1 = ptr->m_next->m_vertex;
-			dgVector error (contactsOut[i1] - contactsOut[i0]);
-			dgAssert (error.m_w == dgFloat32 (0.0f));
-			dgFloat32 dist2 = error.DotProduct(error).GetScalar();
-			if (dist2 < dgFloat32 (0.003f * 0.003f)) {
-				if (ptr->m_next == poly) {
-					poly = ptr;
-				} 
-				restart = 1;
-				tmpCount --;
-				contactsOut[i1].m_w = dgFloat32 (1.0f);
-				ptr->m_next = ptr->m_next->m_next;
-			} else {
-				ptr = ptr->m_next;
-			}
-
-			loops --;
-		} while (loops);
+	dgVector hullArea (dgVector::m_zero);
+	dgVector edge0 (contactsOut[1] - contactsOut[0]);
+	for (dgInt32 i = 2; i < count; i ++) {
+		dgVector edge1 (contactsOut[i] - contactsOut[0]);
+		hullArea += edge1.CrossProduct(edge0);
+		edge0 = edge1;
 	}
 
-	restart = 1;
-	while (restart && (tmpCount >= 3)) {
-		restart = 0;
-		DG_CONVEX_FIXUP_FACE* ptr = poly;
-		dgInt32 loops = tmpCount;
+	dgFloat32 totalArea = dgAbs (hullArea.DotProduct(normal).GetScalar());
+	if (totalArea < dgFloat32 (1.0e-5f)) {
+		return 1;
+	}
+	dgConveFaceNode* hullPoint = &convexHull[0];
+	
+	bool hasLinearCombination = true;
+	dgUpHeap<dgConveFaceNode*, dgFloat32> sortHeap(buffer, sizeof (buffer));
+	while (hasLinearCombination) {
+		hasLinearCombination = false;
+		sortHeap.Flush();
+		dgConveFaceNode* ptr = hullPoint;
+		dgVector e0(contactsOut[ptr->m_next->m_vertexIndex] - contactsOut[ptr->m_vertexIndex]);
 		do {
-			dgInt32 i0 = ptr->m_vertex;
-			dgInt32 i1 = ptr->m_next->m_vertex;
-			dgInt32 i2 = ptr->m_next->m_next->m_vertex;
-			dgVector e0 (contactsOut[i2] - contactsOut[i1]);
-			dgVector e1 (contactsOut[i0] - contactsOut[i1]);
-			dgVector n (e0.CrossProduct(e1));
-			dgFloat32 area = normal.DotProduct(n).GetScalar();
-			if (area <= dgFloat32 (1.0e-5f)) {
-				if (ptr->m_next == poly) {
-					poly = ptr;
+			dgVector e1(contactsOut[ptr->m_next->m_next->m_vertexIndex] - contactsOut[ptr->m_next->m_vertexIndex]);
+			dgFloat32 area = dgAbs (e0.CrossProduct(e1).DotProduct(normal).GetScalar());
+			sortHeap.Push(ptr->m_next, area);
+			e0 = e1;
+			ptr->m_mask = 1;
+			ptr = ptr->m_next;
+		} while (ptr != hullPoint);
+	
+		while (sortHeap.GetCount() && (sortHeap.Value() * dgFloat32(32.0f) < totalArea)) {
+			dgConveFaceNode* const corner = sortHeap[0];
+			if (corner->m_mask && corner->m_prev->m_mask) {
+				if (hullPoint == corner) {
+					hullPoint = corner->m_prev;
 				}
-				restart = 1;
-				tmpCount --;
-				contactsOut[i1].m_w = dgFloat32 (1.0f);
-				ptr->m_next = ptr->m_next->m_next;
-			} else {
-				ptr = ptr->m_next;
+				count --;
+				hasLinearCombination = true;
+				corner->m_prev->m_mask = 0;
+				corner->m_next->m_prev = corner->m_prev;
+				corner->m_prev->m_next = corner->m_next;
 			}
-			loops --;
-		} while (loops);
-	}
-
-	if (tmpCount < count) {
-		dgInt32 newCount = 0;
-		for (; newCount < count; newCount ++) {
-			if (contactsOut[newCount].m_w == dgFloat32 (1.0f)) {
-				break;
-			}
+			sortHeap.Pop();
 		}
+	}
 
-		for (dgInt32 i = newCount + 1; i < count; i ++) {
-			if (contactsOut[i].m_w == dgFloat32 (0.0f)) {
-				contactsOut[newCount] = contactsOut[i];
-				newCount ++;
+	const dgInt32 maxVertexCount = DG_MAX_VERTEX_CLIP_FACE;
+	while (count > maxVertexCount) {
+		sortHeap.Flush();
+		dgConveFaceNode* ptr = hullPoint;
+		dgVector e0(contactsOut[ptr->m_next->m_vertexIndex] - contactsOut[ptr->m_vertexIndex]);
+		do {
+			dgVector e1(contactsOut[ptr->m_next->m_next->m_vertexIndex] - contactsOut[ptr->m_next->m_vertexIndex]);
+			dgFloat32 area = dgAbs(e0.CrossProduct(e1).DotProduct(normal).GetScalar());
+			sortHeap.Push(ptr->m_next, area);
+			e0 = e1;
+			ptr->m_mask = 1;
+			ptr = ptr->m_next;
+		} while (ptr != hullPoint);
+
+		while (sortHeap.GetCount() && (count > maxVertexCount)) {
+			dgConveFaceNode* const corner = sortHeap[0];
+			if (corner->m_mask && corner->m_prev->m_mask) {
+				if (hullPoint == corner) {
+					hullPoint = corner->m_prev;
+				}
+				count--;
+				corner->m_prev->m_mask = 0;
+				corner->m_next->m_prev = corner->m_prev;
+				corner->m_prev->m_next = corner->m_next;
 			}
+			sortHeap.Pop();
 		}
-		count = newCount;
-		dgAssert (tmpCount == count);
 	}
-
-
-	if (count > DG_MAX_VERTEX_CLIP_FACE) {
-		count = SimplifyClipPolygon (count, normal, contactsOut);
-	}
+	
+	dgInt32 index = start;
+	dgConveFaceNode* ptr = hullPoint;
+	do {
+		contactsOut[index] = contactsOut[ptr->m_vertexIndex];
+		index ++;
+		ptr = ptr->m_next;
+	} while (ptr != hullPoint);
+	memcpy (contactsOut, &contactsOut[start], count * sizeof (dgVector));
 
 	dgAssert (SanityCheck(count, normal, contactsOut));
 	return count;
@@ -972,3 +905,36 @@ dgInt32 dgCollisionConvex::CalculatePlaneIntersection (const dgVector& normal, c
 	return count;
 }
 
+dgInt32 dgCollisionConvex::BuildCylinderCapPoly (dgFloat32 radius, const dgMatrix& transform, dgVector* const vertexOut) const
+{
+/*
+	dgFloat32 h = 2.0;
+	dgInt32 n = 8;
+	dgFloat32 a0 = h * h * (dgPi / n);
+
+	dgFloat32 h0 = h * dgSin (0.5 * dgPI2 / n);
+	dgFloat32 h1 = h * dgCos (0.5 * dgPI2 / n);
+	dgFloat32 a1 = h * h * (dgSin (0.5 * dgPI2 / n) * dgCos (0.5 * dgPI2 / n));
+
+	dgFloat32 a = h * h * (dgPi / n - 0.5f * dgSin (dgPI2 / n));
+
+	for (int i = 8; i < 16; i ++) {
+		dgFloat32 den = dgPi / i - 0.5f * dgSin (dgPI2 / i);
+		dgFloat32 h1 = dgSqrt (a / den);
+		dgFloat32 h2 = dgSqrt (a / den);
+	}
+*/
+
+	dgInt32 count = (radius < dgFloat32 (1.0f)) ? 8 : ((radius < dgFloat32 (2.0f)) ? 12 : 16);
+
+	dgFloat32 angle = dgPI2 / count;
+	dgVector r (dgFloat32 (0.0f), dgFloat32 (0.0f), radius, dgFloat32 (0.0f));
+	dgMatrix rotation (dgPitchMatrix(angle));
+
+	for (dgInt32 i = 0; i < count; i++) {
+		vertexOut[i] = transform.TransformVector(r); 
+		r = rotation.RotateVector(r);
+	}
+
+	return count;
+}

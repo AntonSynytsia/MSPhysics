@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -22,70 +22,18 @@
 #ifndef __DG_PROFILER_H__
 #define __DG_PROFILER_H__
 
-// uncomment out _DG_USE_PROFILER to enable profiler frame capture profiler traces
-// alternatively the end application can use a command line option to enable this define
-//#define _DG_USE_PROFILER
+// to make a profile build use Use CMAKE to create a profile configuration
+// or make a configuration that define macro D_PROFILER
 
-#ifdef _DG_USE_PROFILER
-
-inline void dProfilerSetTrackName(const char* const name)
-{
-	ttSetTrackName(name);
-}
-
-inline void dProfilerDeleteTrack()
-{
-	ttDeleteTrack();
-}
-
-inline void dProfilerStartRecording(const char* const fileName)
-{
-	ttStartRecording(fileName);
-}
-
-inline void dProfilerStopRecording()
-{
-	ttStopRecording();
-}
-
-
-class dgProfile
-{
-	public:
-	dgProfile(const char* const functionName)
-		:m_entry(ttOpenRecord(functionName))
-		,m_name(functionName)
-	{
-	}
-
-	~dgProfile()
-	{
-		ttCloseRecord(m_entry);
-	}
-
-	private:
-	dgInt32 m_entry;
-	const char* m_name;
-};
-
-#define DG_START_RECORDING(fileName) dProfilerStartRecording(fileName)
-#define DG_STOP_RECORDING() dProfilerStopRecording()
-
-#define DG_DELETE_TRACK() dProfilerDeleteTrack()
-#define DG_SET_TRACK_NAME(trackName) dProfilerSetTrackName(trackName)
-#define DG_TRACKTIME(name) dgProfile _profile##name(name);
-
-#define DG_TRACKTIME_NAMED(name) dgProfile _profile(name);
-
+#ifdef D_PROFILER
+	#include <dProfiler.h>
+	#define D_TRACKTIME() dProfilerZoneScoped(__FUNCTION__)
+	#define D_SET_TRACK_NAME(trackName) dProfilerSetTrackName(trackName)
+	#define DG_TRACKTIME() D_TRACKTIME()
 #else
-
-#define DG_START_RECORDING(fileName);
-#define DG_STOP_RECORDING();
-#define DG_TRACKTIME(name);
-#define DG_TRACKTIME_NAMED(name);
-#define DG_SET_TRACK_NAME(trackName);
-#define DG_DELETE_TRACK();
-
+	#define D_TRACKTIME() 
+	#define D_SET_TRACK_NAME(trackName)
+	#define DG_TRACKTIME()
 #endif
 
 #endif

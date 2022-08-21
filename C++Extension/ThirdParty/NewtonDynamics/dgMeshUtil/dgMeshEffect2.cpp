@@ -1,4 +1,4 @@
-﻿/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+﻿/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -168,20 +168,20 @@ class dgTetraIsoSufaceStuffing
 		void TessellateTriangle(dgInt32 level, const dgVector& p0, const dgVector& p1, const dgVector& p2, dgInt32& count)
 		{
 			if (level) {
-				dgAssert(dgAbs(p0.DotProduct3(p0) - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
-				dgAssert(dgAbs(p1.DotProduct3(p1) - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
-				dgAssert(dgAbs(p2.DotProduct3(p2) - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
+				dgAssert(dgAbs(p0.DotProduct(p0).GetScalar() - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
+				dgAssert(dgAbs(p1.DotProduct(p1).GetScalar() - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
+				dgAssert(dgAbs(p2.DotProduct(p2).GetScalar() - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
 				dgVector p01(p0 + p1);
 				dgVector p12(p1 + p2);
 				dgVector p20(p2 + p0);
 
-				p01 = p01.Scale(dgRsqrt(p01.DotProduct3(p01)));
-				p12 = p12.Scale(dgRsqrt(p12.DotProduct3(p12)));
-				p20 = p20.Scale(dgRsqrt(p20.DotProduct3(p20)));
+				p01 = p01.Scale(dgRsqrt(p01.DotProduct(p01).GetScalar()));
+				p12 = p12.Scale(dgRsqrt(p12.DotProduct(p12).GetScalar()));
+				p20 = p20.Scale(dgRsqrt(p20.DotProduct(p20).GetScalar()));
 
-				dgAssert(dgAbs(p01.DotProduct3(p01) - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
-				dgAssert(dgAbs(p12.DotProduct3(p12) - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
-				dgAssert(dgAbs(p20.DotProduct3(p20) - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
+				dgAssert(dgAbs(p01.DotProduct(p01).GetScalar() - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
+				dgAssert(dgAbs(p12.DotProduct(p12).GetScalar() - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
+				dgAssert(dgAbs(p20.DotProduct(p20).GetScalar() - dgFloat32(1.0f)) < dgFloat32(1.0e-4f));
 
 				TessellateTriangle(level - 1, p0, p01, p20, count);
 				TessellateTriangle(level - 1, p1, p12, p01, count);
@@ -880,7 +880,7 @@ void dgMeshEffect::LoadOffMesh(const char* const fileName)
 					vertexFormat.m_vertex.m_indexList = &indexList[0];
 					BuildFromIndexList(&vertexFormat);
 
-					CalculateNormals(30.0f * dgDEG2RAD);
+					CalculateNormals(30.0f * dgDegreeToRad);
 					stillData = false;
 					break;
 				}
@@ -898,23 +898,24 @@ void dgMeshEffect::LoadTetraMesh (const char* const filename)
 	FILE* const file = fopen(filename, "rb");
 	if (file) {
 		dgInt32 vertexCount;
-		fscanf(file, "%d", &vertexCount);
+		size_t ret = fscanf(file, "%d", &vertexCount);
 		dgArray<dgBigVector> points(GetAllocator());
 		for (dgInt32 i = 0; i < vertexCount; i ++) {
 			float x;
 			float y;
 			float z;
-			fscanf(file, "%f %f %f", &x, &y, &z);
+			ret = fscanf(file, "%f %f %f", &x, &y, &z);
 			points[i] = dgBigVector (x, y, z, dgFloat32 (0.0f));
 		}
 		
 		BeginBuild();
 		dgInt32 tetras;
-		fscanf(file, "%d", &tetras);
+		ret = fscanf(file, "%d", &tetras);
 		dgMemoryAllocator* const allocator = GetAllocator();
 		for (dgInt32 layers = 0; layers < tetras; layers ++) {
 			dgInt32 tetra[4];
-			fscanf(file, "%d %d %d %d", &tetra[0], &tetra[1], &tetra[2], &tetra[3]);
+			ret = fscanf(file, "%d %d %d %d", &tetra[0], &tetra[1], &tetra[2], &tetra[3]);
+			ret = 0; 
 			dgBigVector pointArray[4];
 			for (dgInt32 i = 0; i < 4; i++) {
 				dgInt32 index = tetra[i];
@@ -924,7 +925,7 @@ void dgMeshEffect::LoadTetraMesh (const char* const filename)
 			dgMeshEffect convexMesh(allocator, &pointArray[0].m_x, 4, sizeof (dgBigVector), dgFloat64(0.0f));
 
 			dgAssert(convexMesh.GetCount());
-			convexMesh.CalculateNormals(dgFloat32(30.0f * dgDEG2RAD));
+			convexMesh.CalculateNormals(dgFloat32(30.0f * dgDegreeToRad));
 			for (dgInt32 i = 0; i < convexMesh.m_points.m_vertex.m_count; i++) {
 				convexMesh.m_points.m_layers[i] = layers;
 			}
@@ -1017,7 +1018,7 @@ dgMeshEffect* dgMeshEffect::CreateVoronoiConvexDecomposition (dgMemoryAllocator*
 		index ++;
 	}
 
-	const dgFloat32 normalAngleInRadians = dgFloat32 (30.0f * dgDEG2RAD);
+	const dgFloat32 normalAngleInRadians = dgFloat32 (30.0f * dgDegreeToRad);
 	dgMeshEffect* const voronoiPartition = new (allocator) dgMeshEffect (allocator);
 	voronoiPartition->BeginBuild();
 	dgInt32 layer = 0;
@@ -1122,9 +1123,10 @@ xxxx.EndBuild(dgFloat64(1.0e-8f), false);
 	return delaunayPartition;
 }
 
-
 void dgMeshEffect::CreateTetrahedraLinearBlendSkinWeightsChannel (const dgMeshEffect* const tetrahedraMesh)
 {
+dgAssert(0);
+/*
 	dgRayTrataAABBAccelerator accelerator (tetrahedraMesh);
 	m_points.m_weights.Clear();
 	m_points.m_weights.Reserve(m_points.m_vertex.m_count);
@@ -1190,19 +1192,19 @@ void dgMeshEffect::CreateTetrahedraLinearBlendSkinWeightsChannel (const dgMeshEf
 
 				dgFloat64 u0 = dgFloat64 (1.0f) - u1 - u2 - u3;
 				dgBigVector r1 (q0.Scale (u0) + q1.Scale (u1) + q2.Scale (u2) + q3.Scale (u3));
-				dgPointFormat::dgWeightSet& weighSet = m_points.m_weights[i];
+				dgWeights& weighSet = m_points.m_weights[i];
 
-				weighSet.m_weightPair[0].m_controlIndex = i0;
-				weighSet.m_weightPair[0].m_weight = dgFloat32 (u0);
+				weighSet.m_controlIndex[0] = i0;
+				weighSet.m_weightBlends[0] = dgFloat32(u0);
 
-				weighSet.m_weightPair[1].m_controlIndex = i1;
-				weighSet.m_weightPair[1].m_weight = dgFloat32(u1);
+				weighSet.m_controlIndex[1] = i1;
+				weighSet.m_weightBlends[1] = dgFloat32(u1);
 
-				weighSet.m_weightPair[2].m_controlIndex = i2;
-				weighSet.m_weightPair[2].m_weight = dgFloat32(u2);
+				weighSet.m_controlIndex[2] = i2;
+				weighSet.m_weightBlends[2] = dgFloat32(u2);
 
-				weighSet.m_weightPair[3].m_controlIndex = i3;
-				weighSet.m_weightPair[3].m_weight = dgFloat32(u3);
+				weighSet.m_controlIndex[3] = i3;
+				weighSet.m_weightBlends[3] = dgFloat32(u3);
 
 				weightFound = true;
 				break;
@@ -1213,7 +1215,7 @@ void dgMeshEffect::CreateTetrahedraLinearBlendSkinWeightsChannel (const dgMeshEf
 			dgTrace (("%d %f %f %f\n", i, p.m_x, p.m_y, p.m_z));
 		}
 
-
 		overlapNodes.RemoveAll();
 	}
+*/
 }

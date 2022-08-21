@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -44,17 +44,17 @@ class dgBroadPhaseAggregate;
 
 
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 struct dgLineBox
 {
 	dgVector m_l0;
 	dgVector m_l1;
 	dgVector m_boxL0;
 	dgVector m_boxL1;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgBody  
 {
 	public:
@@ -82,11 +82,11 @@ class dgBody
 	class dgSetInfo
 	{
 		public:
-		dgSetInfo()
+		DG_INLINE dgSetInfo()
 		{
 		}
 
-		void Init(dgBody* const self)
+		DG_INLINE void Init(dgBody* const self)
 		{
 			m_parent = self;
 			m_rank = 0;
@@ -155,6 +155,9 @@ class dgBody
 	bool GetAutoSleep () const;
 	void SetAutoSleep (bool state);
 
+	bool GetGyroMode() const;
+	void SetGyroMode(bool state);
+	
 	dgCollisionInstance* GetCollision () const;
 	dgBodyMasterList::dgListNode* GetMasterList() const;
 
@@ -203,9 +206,9 @@ class dgBody
 	virtual dgVector PredictLinearVelocity(dgFloat32 timestep) const = 0;
 	virtual dgVector PredictAngularVelocity(dgFloat32 timestep) const = 0;
 	virtual void InvalidateCache();
-	
-    virtual void SetMatrix(const dgMatrix& matrix);
-    virtual void SetMatrixResetSleep(const dgMatrix& matrix);
+
+	virtual void SetMatrix(const dgMatrix& matrix);
+	virtual void SetMatrixResetSleep(const dgMatrix& matrix);
 	virtual void SetMatrixNoSleep(const dgMatrix& matrix);
 	virtual void IntegrateVelocity (dgFloat32 timestep);
 	virtual void AttachCollision (dgCollisionInstance* const collision);
@@ -221,10 +224,9 @@ class dgBody
 	virtual dgConstraint* GetNextJoint(dgConstraint* const joint) const;
 	virtual dgConstraint* GetFirstContact() const;
 	virtual dgConstraint* GetNextContact(dgConstraint* const joint) const;
-	virtual dgVector CalculateInverseDynamicForce (const dgVector& desiredVeloc, dgFloat32 timestep) const;
 	virtual dgSkeletonContainer* GetSkeleton() const;
 
-    void SetMatrixOriginAndRotation(const dgMatrix& matrix);
+	void SetMatrixOriginAndRotation(const dgMatrix& matrix);
 
 	dgBroadPhaseBodyNode* GetBroadPhase () const;
 	void SetBroadPhase(dgBroadPhaseBodyNode* const node);
@@ -237,8 +239,11 @@ class dgBody
 
 	dgInt32 GetSerializedID() const;
 	void CalcInvInertiaMatrix();
+	void UpdateGyroData();
 
 	void InitJointSet ();
+
+	void SetCollision(dgCollisionInstance* const collision);
 
 	protected:
 	void UpdateWorlCollisionMatrix() const;
@@ -261,7 +266,8 @@ class dgBody
 	dgVector m_localCentreOfMass;	
 	dgVector m_globalCentreOfMass;	
 	dgVector m_impulseForce;	
-	dgVector m_impulseTorque;	
+	dgVector m_impulseTorque;
+	dgVector m_gyroAlpha;
 	dgVector m_gyroTorque;
 	dgQuaternion m_gyroRotation;
 
@@ -275,12 +281,15 @@ class dgBody
 			dgUnsigned32 m_sleeping					: 1;
 			dgUnsigned32 m_autoSleep				: 1;
 			dgUnsigned32 m_inCallback				: 1;
+			dgUnsigned32 m_jointSet					: 1;
 			dgUnsigned32 m_collidable				: 1;
 			dgUnsigned32 m_equilibrium				: 1;
 			dgUnsigned32 m_spawnnedFromCallback		: 1;
 			dgUnsigned32 m_continueCollisionMode	: 1;
 			dgUnsigned32 m_collideWithLinkedBodies	: 1;
 			dgUnsigned32 m_transformIsDirty			: 1;
+			dgUnsigned32 m_gyroTorqueOn				: 1;
+			dgUnsigned32 m_isdead					: 1;
 		};
 	};
 
@@ -306,14 +315,15 @@ class dgBody
 	friend class dgWorld;
 	friend class dgSolver;
 	friend class dgContact;
-	friend class dgConstraint;	
+	friend class dgConstraint;
+	friend class dgDeadBodies;
 	friend class dgBroadPhase;
 	friend class dgCollisionBVH;
 	friend class dgBroadPhaseNode;
 	friend class dgBodyMasterList;
 	friend class dgCollisionScene;
 	friend class dgCollisionConvex;
-	friend class dgInverseDynamics;
+	friend class dgBroadPhaseMixed;
 	friend class dgCollisionCompound;
 	friend class dgCollisionUserMesh;
 	friend class dgBodyMasterListRow;
@@ -322,11 +332,12 @@ class dgBody
 	friend class dgBroadPhaseBodyNode;
 	friend class dgBilateralConstraint;
 	friend class dgBroadPhaseAggregate;
+	friend class dgBroadPhaseSegregated;
 	friend class dgCollisionConvexPolygon;
 	friend class dgCollidingPairCollector;
 	friend class dgCollisionLumpedMassParticles;
 
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 // *****************************************************************************
 // 
@@ -422,13 +433,11 @@ DG_INLINE void dgBody::SetOmegaNoSleep(const dgVector& omega)
 	m_omega = omega;
 }
 
-
 DG_INLINE void dgBody::SetOmega (const dgVector& omega)
 {
 	SetOmegaNoSleep(omega);
 	m_equilibrium = false;
 }
-
 
 DG_INLINE dgVector dgBody::GetVelocityAtPoint (const dgVector& point) const
 {
@@ -445,7 +454,6 @@ DG_INLINE void dgBody::SetVelocity (const dgVector& velocity)
 	SetVelocityNoSleep(velocity);
 	m_equilibrium = false;
 }
-
 
 DG_INLINE const dgMatrix& dgBody::GetMatrix() const
 {
@@ -535,10 +543,8 @@ DG_INLINE bool dgBody::GetFreeze () const
 
 DG_INLINE void dgBody::SetAutoSleep (bool state)
 {
+	SetSleepState(false);
 	m_autoSleep = dgUnsigned32 (state);
-	if (m_autoSleep == 0) {
-		m_sleeping = false;
-	}
 }
 
 DG_INLINE bool dgBody::GetAutoSleep () const
@@ -552,12 +558,15 @@ DG_INLINE bool dgBody::GetSleepState () const
 	return m_sleeping;
 }
 
-DG_INLINE void dgBody::SetSleepState (bool state)
+DG_INLINE bool dgBody::GetGyroMode() const
 {
-	m_sleeping = state;
-	m_equilibrium = state;
+	return m_gyroTorqueOn;
 }
 
+DG_INLINE void dgBody::SetGyroMode(bool state)
+{
+	m_gyroTorqueOn = state;
+}
 
 DG_INLINE bool dgBody::IsCollidable() const
 {
@@ -596,6 +605,30 @@ DG_INLINE void dgBody::SetBroadPhaseAggregate(dgBroadPhaseAggregate* const aggre
 	m_broadPhaseaggregateNode = aggregate;
 }
 
+DG_INLINE dgVector dgBody::CalculateLinearMomentum() const
+{
+	return dgVector(m_veloc.Scale(m_mass.m_w));
+}
+
+DG_INLINE dgVector dgBody::CalculateAngularMomentum() const
+{
+	dgVector localOmega(m_matrix.UnrotateVector(m_omega));
+	dgVector localAngularMomentum(m_mass * localOmega);
+	return m_matrix.RotateVector(localAngularMomentum);
+}
+
+DG_INLINE void dgBody::UpdateGyroData()
+{
+	if (m_gyroTorqueOn) {
+		m_gyroTorque = m_omega.CrossProduct(CalculateAngularMomentum());
+		m_gyroAlpha = m_invWorldInertiaMatrix.RotateVector(m_gyroTorque);
+	} else {
+		dgVector zero(0.0f);
+		m_gyroTorque = zero;
+		m_gyroAlpha = zero;
+	}
+}
+
 DG_INLINE void dgBody::CalcInvInertiaMatrix ()
 {
 	dgAssert (m_invWorldInertiaMatrix[0][3] == dgFloat32 (0.0f));
@@ -609,18 +642,8 @@ DG_INLINE void dgBody::CalcInvInertiaMatrix ()
 	dgAssert (m_invWorldInertiaMatrix[1][3] == dgFloat32 (0.0f));
 	dgAssert (m_invWorldInertiaMatrix[2][3] == dgFloat32 (0.0f));
 	dgAssert (m_invWorldInertiaMatrix[3][3] == dgFloat32 (1.0f));
-}
 
-DG_INLINE dgVector dgBody::CalculateLinearMomentum() const
-{
-	return dgVector (m_veloc.Scale (m_mass.m_w));
-}
-
-DG_INLINE dgVector dgBody::CalculateAngularMomentum() const
-{
-	dgVector localOmega(m_matrix.UnrotateVector(m_omega));
-	dgVector localAngularMomentum(m_mass * localOmega);
-	return m_matrix.RotateVector(localAngularMomentum);
+	UpdateGyroData();
 }
 
 DG_INLINE dgSkeletonContainer* dgBody::GetSkeleton() const
@@ -636,8 +659,13 @@ DG_INLINE dgInt32 dgBody::GetSerializedID() const
 DG_INLINE void dgBody::InitJointSet ()
 {
 	m_index = -1;
-	m_resting = 1;
+	m_jointSet = 1;
 	m_disjointInfo.Init (this);
+}
+
+DG_INLINE void dgBody::SetCollision(dgCollisionInstance* const collision)
+{
+	m_collision = collision;
 }
 
 #endif 

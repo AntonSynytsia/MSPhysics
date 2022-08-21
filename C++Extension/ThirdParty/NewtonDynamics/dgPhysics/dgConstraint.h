@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -63,12 +63,44 @@ class dgJointCallbackParam
 	dgFloat32 m_timestep;
 };
 
-
 class dgForceImpactPair
 {
 	public:
+	void Clear()
+	{
+		m_force = dgFloat32 (0.0f);
+		m_impact = dgFloat32(0.0f);
+		for (dgInt32 i = 0; i < sizeof(m_initialGuess) / sizeof(m_initialGuess[0]); i++) {
+			m_initialGuess[i] = dgFloat32(0.0f);
+		}
+	}
+
+	void Push(dgFloat32 val)
+	{
+		for (dgInt32 i = 1; i < sizeof(m_initialGuess) / sizeof(m_initialGuess[0]); i++) {
+			m_initialGuess[i - 1] = m_initialGuess[i];
+		}
+		m_initialGuess[sizeof(m_initialGuess) / sizeof(m_initialGuess[0]) - 1] = val;
+	}
+
+	dgFloat32 GetInitiailGuess() const
+	{
+		dgFloat32 value = dgFloat32(0.0f);
+		dgFloat32 smallest = dgFloat32(1.0e15f);
+		for (dgInt32 i = 0; i < sizeof(m_initialGuess) / sizeof(m_initialGuess[0]); i++)
+		{
+			dgFloat32 mag = dgAbs(m_initialGuess[i]);
+			if (mag < smallest) {
+				smallest = mag;
+				value = m_initialGuess[i];
+			}
+		}
+		return value;
+	}
+
 	dgFloat32 m_force;
 	dgFloat32 m_impact;
+	dgFloat32 m_initialGuess[4];
 };
 
 class dgBilateralBounds
@@ -80,21 +112,21 @@ class dgBilateralBounds
 	dgInt32 m_normalIndex;
 };
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgJacobian
 {
 	public:
 	dgVector m_linear;
 	dgVector m_angular;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgJacobianPair
 {
 	public:
 	dgJacobian m_jacobianM0;
 	dgJacobian m_jacobianM1;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 class dgLeftHandSide;
 class dgRightHandSide;
@@ -110,29 +142,29 @@ class dgJointAccelerationDecriptor
 	const dgLeftHandSide* m_leftHandSide;
 };
 
-
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgContraintDescritor
 {
 	public:
 	dgJacobianPair m_jacobian[DG_CONSTRAINT_MAX_ROWS];
 	dgBilateralBounds m_forceBounds[DG_CONSTRAINT_MAX_ROWS];
 	dgFloat32 m_jointAccel[DG_CONSTRAINT_MAX_ROWS];
-	dgFloat32 m_jointStiffness[DG_CONSTRAINT_MAX_ROWS];
 	dgFloat32 m_restitution[DG_CONSTRAINT_MAX_ROWS];
 	dgFloat32 m_penetration[DG_CONSTRAINT_MAX_ROWS];
+	dgFloat32 m_diagonalRegularizer[DG_CONSTRAINT_MAX_ROWS];
 	dgFloat32 m_penetrationStiffness[DG_CONSTRAINT_MAX_ROWS];
 	dgFloat32 m_zeroRowAcceleration[DG_CONSTRAINT_MAX_ROWS];
+	dgInt8	m_flags[DG_CONSTRAINT_MAX_ROWS];
 	dgWorld* m_world;
 	dgInt32 m_threadIndex;
 	dgFloat32 m_timestep;
 	dgFloat32 m_invTimestep;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
 typedef void (dgApi *OnConstraintDestroy) (dgConstraint& me);
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgConstraint
 {
 	public:
@@ -154,8 +186,6 @@ class dgConstraint
 	dgBody* GetBody0 ()	const;
 	dgBody* GetBody1 ()	const;
 
-	void SetBodies (dgBody* const body0, dgBody* const body1);
-
 	dgBodyMasterListRow::dgListNode* GetLink0()	const;
 	dgBodyMasterListRow::dgListNode* GetLink1()	const;
 	void* GetUserData () const;
@@ -164,9 +194,15 @@ class dgConstraint
 	bool IsCollidable () const;
 	bool IsBilateral () const;
 	bool IsSkeleton () const;
+	bool IsSkeletonLoop () const;
 
-	virtual void ResetMaxDOF();
 	dgInt32 GetMaxDOF() const;
+	virtual void ResetMaxDOF();
+	virtual dgFloat32 GetImpulseContactSpeed() const;
+	virtual void SetImpulseContactSpeed(dgFloat32 speed);
+
+	virtual dgFloat32 GetMassScaleBody0 () const;
+	virtual dgFloat32 GetMassScaleBody1 () const;
 	
 	void SetUserData (void *userData);
 	void SetCollidable (bool state);
@@ -183,6 +219,7 @@ class dgConstraint
 	ConstraintsForceFeeback GetUpdateFeedbackFunction ();
 	virtual void JointAccelerations(dgJointAccelerationDecriptor* const params) = 0; 
 
+	void SetIndex (dgInt32 index);
 
 	class dgPointParam
 	{
@@ -191,18 +228,13 @@ class dgConstraint
 		dgVector m_r1;
 		dgVector m_posit0;
 		dgVector m_posit1;
-		dgVector m_veloc0;
-		dgVector m_veloc1;
-		//dgVector m_centripetal0;
-		//dgVector m_centripetal1;
-		dgFloat32 m_stiffness;
+		dgFloat32 m_defaultDiagonalRegularizer;
 	};
 
 	protected:
 	dgConstraint();
 	virtual ~dgConstraint();
 
-	virtual void ResetInverseDynamics() = 0;
 	virtual dgUnsigned32 JacobianDerivative (dgContraintDescritor& params) = 0; 
 	
 	void SetUpdateFeedbackFunction (ConstraintsForceFeeback function);
@@ -217,20 +249,21 @@ class dgConstraint
 	ConstraintsForceFeeback m_updaFeedbackCallback;
 	dgInt32 m_clusterLRU;
 	dgUnsigned32 m_index;
+	dgUnsigned32 m_impulseLru;
 	dgUnsigned32 m_dynamicsLru;
 	dgUnsigned32 m_maxDOF				: 6;
 	dgUnsigned32 m_constId				: 6;		
 	dgUnsigned32 m_solverModel			: 2;
 	dgUnsigned32 m_enableCollision		: 1;
-	dgUnsigned32 m_contactActive		: 1;
+	dgUnsigned32 m_isActive				: 1;
 	dgUnsigned32 m_isBilateral			: 1;
-	dgUnsigned32 m_isInSkeleton			: 1;
 	dgUnsigned32 m_graphTagged			: 1;
+	dgUnsigned32 m_isInSkeleton			: 1;
+	dgUnsigned32 m_isInSkeletonLoop		: 1;
 	
 	friend class dgWorld;
 	friend class dgJacobianMemory;
 	friend class dgBodyMasterList;
-	friend class dgInverseDynamics;
 	friend class dgSkeletonContainer;
 	friend class dgWorldDynamicUpdate;
 	friend class dgParallelBodySolver;
@@ -238,7 +271,7 @@ class dgConstraint
 	friend class dgParallelSolverInitFeedbackUpdate;
 	friend class dgParallelSolverBuildJacobianMatrix;
 	friend class dgBroadPhaseMaterialCallbackWorkerThread;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 DG_INLINE dgConstraint::dgConstraint() 
 	:m_userData(NULL)
@@ -249,15 +282,17 @@ DG_INLINE dgConstraint::dgConstraint()
 	,m_updaFeedbackCallback(NULL)
 	,m_clusterLRU(-1)
 	,m_index(0)
+	,m_impulseLru(0)
 	,m_dynamicsLru(0)
 	,m_maxDOF(6)
 	,m_constId(m_unknownConstraint)
 	,m_solverModel(2)
 	,m_enableCollision(false)
-	,m_contactActive(false)
+	,m_isActive(false)
 	,m_isBilateral(false)
-	,m_isInSkeleton(false)
 	,m_graphTagged(false)
+	,m_isInSkeleton(false)
+	,m_isInSkeletonLoop(false)
 {
 	dgAssert ((((dgUnsigned64) this) & 15) == 0);
 }
@@ -286,6 +321,11 @@ DG_INLINE bool dgConstraint::IsSkeleton () const
 	return m_isInSkeleton ? true : false;
 }
 
+DG_INLINE bool dgConstraint::IsSkeletonLoop () const
+{
+	return m_isInSkeletonLoop ? true : false;
+}
+
 DG_INLINE bool dgConstraint::IsCollidable () const
 {
 	return m_enableCollision ? true : false;
@@ -311,12 +351,11 @@ DG_INLINE dgBody* dgConstraint::GetBody1 () const
 	return m_body1;
 }
 
-DG_INLINE void dgConstraint::SetBodies (dgBody* const body0, dgBody* const body1)
-{
-	m_body0 = body0;
-	m_body1 = body1;
-}
-
+//DG_INLINE void dgConstraint::SetBodies (dgBody* const body0, dgBody* const body1)
+//{
+//	m_body0 = body0;
+//	m_body1 = body1;
+//}
 
 DG_INLINE dgBodyMasterListRow::dgListNode* dgConstraint::GetLink0()	const
 {
@@ -351,6 +390,15 @@ DG_INLINE void dgConstraint::ResetMaxDOF()
 {
 }
 
+DG_INLINE void dgConstraint::SetImpulseContactSpeed(dgFloat32 speed)
+{
+}
+
+DG_INLINE dgFloat32 dgConstraint::GetImpulseContactSpeed() const
+{
+	return dgFloat32 (0.0f);
+}
+
 DG_INLINE dgInt32 dgConstraint::GetMaxDOF() const
 {
 	return dgInt32 (m_maxDOF);
@@ -358,9 +406,18 @@ DG_INLINE dgInt32 dgConstraint::GetMaxDOF() const
 
 DG_INLINE bool dgConstraint::IsActive() const
 {
-	return m_contactActive ? true : false;
+	return m_isActive ? true : false;
 }
 
+DG_INLINE void dgConstraint::SetIndex (dgInt32 index)
+{
+	m_index = index;
+}
+
+DG_INLINE void dgConstraint::GetInfo(dgConstraintInfo* const info) const
+{
+	dgAssert(0);
+}
 
 #endif 
 

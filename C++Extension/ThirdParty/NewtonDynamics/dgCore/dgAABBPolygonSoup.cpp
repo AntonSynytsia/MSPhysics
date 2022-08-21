@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -31,7 +31,7 @@
 #define DG_STACK_DEPTH 512
 
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgAABBPolygonSoup::dgNodeBuilder: public dgAABBPolygonSoup::dgNode
 {
 	public:
@@ -132,7 +132,7 @@ class dgAABBPolygonSoup::dgNodeBuilder: public dgAABBPolygonSoup::dgNode
 	dgInt32 m_faceIndex;
 	dgInt32 m_indexCount;
 	const dgInt32* m_faceIndices;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
 
@@ -400,7 +400,6 @@ void dgAABBPolygonSoup::ImproveNodeFitness (dgNodeBuilder* const node) const
 	}
 }
 
-
 dgFloat32 dgAABBPolygonSoup::CalculateFaceMaxSize (const dgVector* const vertex, dgInt32 indexCount, const dgInt32* const indexArray) const
 {
 	dgFloat32 maxSize = dgFloat32 (0.0f);
@@ -412,7 +411,6 @@ dgFloat32 dgAABBPolygonSoup::CalculateFaceMaxSize (const dgVector* const vertex,
 
 		dgVector dir (p1 - p0);
 		dgAssert (dir.m_w == dgFloat32 (0.0f));
-		//dir = dir.Scale (dgRsqrt (dir.DotProduct3(dir)));
 		dir = dir.Normalize();
 
 		dgFloat32 maxVal = dgFloat32 (-1.0e10f);
@@ -420,7 +418,7 @@ dgFloat32 dgAABBPolygonSoup::CalculateFaceMaxSize (const dgVector* const vertex,
 		for (dgInt32 j = 0; j < indexCount; j ++) {
 			dgInt32 index2 = indexArray[j];
 			dgVector q (vertex[index2]);
-			dgFloat32 val = dir.DotProduct3(q);
+			dgFloat32 val = dir.DotProduct(q).GetScalar();
 			minVal = dgMin(minVal, val);
 			maxVal = dgMax(maxVal, val);
 		}
@@ -433,20 +431,15 @@ dgFloat32 dgAABBPolygonSoup::CalculateFaceMaxSize (const dgVector* const vertex,
 	return dgFloor (maxSize + dgFloat32 (1.0f));
 }
 
-
-
-
 void dgAABBPolygonSoup::GetAABB (dgVector& p0, dgVector& p1) const
 {
 	if (m_aabb) { 
 		GetNodeAABB (m_aabb, p0, p1);
 	} else {
-		p0 = dgVector (dgFloat32 (0.0f));
-		p1 = dgVector (dgFloat32 (0.0f));
+		p0 = dgVector::m_zero;
+		p1 = dgVector::m_zero;
 	}
 }
-
-
 
 void dgAABBPolygonSoup::CalculateAdjacendy ()
 {
@@ -469,16 +462,19 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 
 				dgInt32 j0 = 2 * (vCount + 1) - 1;
 				dgVector normal (&vertexArray[face[vCount + 1]].m_x);
-				dgAssert (dgAbs (normal.DotProduct3(normal) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
+				normal = normal & dgVector::m_triplexMask;
+				dgAssert (dgAbs (normal.DotProduct(normal).GetScalar() - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
 				dgVector q0 (&vertexArray[face[vCount - 1]].m_x);
+				q0 = q0 & dgVector::m_triplexMask;
 				for (dgInt32 j = 0; j < vCount; j ++) {
 					dgInt32 j1 = vCount + 2 + j;
 					dgVector q1 (&vertexArray[face[j]].m_x);
+					q1 = q1 & dgVector::m_triplexMask;
 					if (face[j0] == -1) {
 						dgVector e (q1 - q0);
 						dgVector n (e.CrossProduct(normal));
-						n = n.Scale(dgFloat32 (1.0f) / dgSqrt (n.DotProduct3(n)));
-						dgAssert (dgAbs (n.DotProduct3(n) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
+						n = n.Scale(dgFloat32 (1.0f) / dgSqrt (n.DotProduct(n).GetScalar()));
+						dgAssert (dgAbs (n.DotProduct(n).GetScalar() - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
 						pool[normalCount].m_x = n.m_x;
 						pool[normalCount].m_y = n.m_y;
 						pool[normalCount].m_z = n.m_z;
@@ -499,16 +495,19 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 
 				dgInt32 j0 = 2 * (vCount + 1) - 1;
 				dgVector normal (&vertexArray[face[vCount + 1]].m_x);
-				dgAssert (dgAbs (normal.DotProduct3(normal) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
+				normal = normal & dgVector::m_triplexMask;
+				dgAssert (dgAbs (normal.DotProduct(normal).GetScalar() - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
 				dgVector q0 (&vertexArray[face[vCount - 1]].m_x);
+				q0 = q0 & dgVector::m_triplexMask;
 				for (dgInt32 j = 0; j < vCount; j ++) {
 					dgInt32 j1 = vCount + 2 + j;
 					dgVector q1 (&vertexArray[face[j]].m_x);
+					q1 = q1 & dgVector::m_triplexMask;
 					if (face[j0] == -1) {
 						dgVector e (q1 - q0);
 						dgVector n (e.CrossProduct(normal));
-						n = n.Scale(dgFloat32 (1.0f) / dgSqrt (n.DotProduct3(n)));
-						dgAssert (dgAbs (n.DotProduct3(n) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
+						n = n.Scale(dgFloat32 (1.0f) / dgSqrt (n.DotProduct(n).GetScalar()));
+						dgAssert (dgAbs (n.DotProduct(n).GetScalar() - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
 						pool[normalCount].m_x = n.m_x;
 						pool[normalCount].m_y = n.m_y;
 						pool[normalCount].m_z = n.m_z;
@@ -548,7 +547,8 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 					}
 					#ifdef _DEBUG	
 						dgVector normal (&vertexArray1[face[vCount + 2 + j]].m_x);
-						dgAssert (dgAbs (normal.DotProduct3 (normal) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
+						normal = normal & dgVector::m_triplexMask;
+						dgAssert (dgAbs (normal.DotProduct(normal).GetScalar() - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
 					#endif
 				}
 			}
@@ -565,14 +565,14 @@ void dgAABBPolygonSoup::CalculateAdjacendy ()
 
 					#ifdef _DEBUG	
 						dgVector normal (&vertexArray1[face[vCount + 2 + j]].m_x);
-						dgAssert (dgAbs (normal.DotProduct3 (normal) - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
+						normal = normal & dgVector::m_triplexMask;
+						dgAssert (dgAbs (normal.DotProduct(normal).GetScalar() - dgFloat32 (1.0f)) < dgFloat32 (1.0e-6f));
 					#endif
 				}
 			}
 		}
 	}
 }
-
 
 dgIntersectStatus dgAABBPolygonSoup::CalculateAllFaceEdgeNormals (void* const context, const dgFloat32* const polygon, dgInt32 strideInBytes, const dgInt32* const indexArray, dgInt32 indexCount, dgFloat32 hitDistance)
 {
@@ -584,7 +584,9 @@ dgIntersectStatus dgAABBPolygonSoup::CalculateAllFaceEdgeNormals (void* const co
 
 	dgVector n (&polygon[indexArray[indexCount + 1] * stride]);
 	dgVector p (&polygon[indexArray[0] * stride]);
-	adjacentFaces.m_normal = dgPlane (n, - n.DotProduct3 (p));
+	n = n & dgVector::m_triplexMask;
+	p = p & dgVector::m_triplexMask;
+	adjacentFaces.m_normal = dgPlane (n, - n.DotProduct(p).GetScalar());
 
 	dgAssert (indexCount < dgInt32 (sizeof (adjacentFaces.m_edgeMap) / sizeof (adjacentFaces.m_edgeMap[0])));
 
@@ -596,6 +598,7 @@ dgIntersectStatus dgAABBPolygonSoup::CalculateAllFaceEdgeNormals (void* const co
 		dgInt32 i1 = indexArray[i];
 		dgInt32 index = i1 * stride;
 		dgVector point (&polygon[index]);
+		point = point & dgVector::m_triplexMask;
 		p0 = p0.GetMin(point);
 		p1 = p1.GetMax(point);
 		adjacentFaces.m_edgeMap[edgeIndex] = (dgInt64 (i1) << 32) + i0;
@@ -633,37 +636,39 @@ dgIntersectStatus dgAABBPolygonSoup::CalculateDisjointedFaceEdgeNormals (void* c
 		dgInt32 indexJ0 = adjacentFace.m_index[adjacentCount - 1];
 		for (dgInt32 j = 0; j < adjacentCount; j ++) {
 			dgInt32 indexJ1 = adjacentFace.m_index[j];
-			dgBigVector q0 (&polygon[indexJ1 * stride]);
-			dgBigVector q1 (&polygon[indexJ0 * stride]);
+			dgBigVector q0 (dgVector(&polygon[indexJ1 * stride]) & dgVector::m_triplexMask);
+			dgBigVector q1 (dgVector(&polygon[indexJ0 * stride]) & dgVector::m_triplexMask);
 			dgBigVector q1q0 (q1 - q0);
-			dgFloat64 q1q0Mag2 = q1q0.DotProduct3 (q1q0);
+			dgFloat64 q1q0Mag2 = q1q0.DotProduct(q1q0).GetScalar();
 
 			dgInt32 indexI0 = indexArray[indexCount - 1];
 			for (dgInt32 i = 0; i < indexCount; i ++) {
 				dgInt32 indexI1 = indexArray[i];
-				dgBigVector p0 (&polygon[indexI0 * stride]);
-				dgBigVector p1 (&polygon[indexI1 * stride]);
+				dgBigVector p0 (dgVector(&polygon[indexI0 * stride]) & dgVector::m_triplexMask);
+				dgBigVector p1 (dgVector(&polygon[indexI1 * stride]) & dgVector::m_triplexMask);
 				dgBigVector p1p0 (p1 - p0);
-				dgFloat64 dot = p1p0.DotProduct3 (q1q0);
+				dgFloat64 dot = p1p0.DotProduct(q1q0).GetScalar();
 				if (dot > 0.0f) {
-					dgFloat64 q1p0Mag2 = p1p0.DotProduct3 (p1p0);
+					dgFloat64 q1p0Mag2 = p1p0.DotProduct(p1p0).GetScalar();
 					if ((dot * dot) >= (q1p0Mag2 * q1q0Mag2 * dgFloat64(0.99995f))) {
-						dgFloat64 x0 = q0.DotProduct3 (q1q0);
-						dgFloat64 x1 = q1.DotProduct3 (q1q0);
-						dgFloat64 y0 = p0.DotProduct3 (q1q0);
-						dgFloat64 y1 = p1.DotProduct3 (q1q0);
+						dgFloat64 x0 = q0.DotProduct(q1q0).GetScalar();
+						dgFloat64 x1 = q1.DotProduct(q1q0).GetScalar();
+						dgFloat64 y0 = p0.DotProduct(q1q0).GetScalar();
+						dgFloat64 y1 = p1.DotProduct(q1q0).GetScalar();
 						dgAssert (x1 > x0);
 						dgAssert (y1 > y0);
 						if (!((y0 >= x1) || (y1 <= x0))) {
-							dgFloat64 t = q1q0.DotProduct3 (p0 - q0) / q1q0Mag2;
+							dgFloat64 t = q1q0.DotProduct(p0 - q0).GetScalar() / q1q0Mag2;
 							dgAssert (q1q0.m_w == dgFloat32 (0.0f));
 							dgBigVector q (q0 + q1q0.Scale(t));
 							dgBigVector dist (p0 - q);
-							dgFloat64 err2 = dist.DotProduct3 (dist);
+							dgAssert (dist.m_w == dgFloat32 (0.0f));
+							dgFloat64 err2 = dist.DotProduct(dist).GetScalar();
 							if (err2 < DG_WELDING_TOL2) {
 								dgFloat32 maxDist = dgFloat32 (0.0f);
 								for (dgInt32 k = 0; k < indexCount; k ++) {
 									dgVector r (&polygon[indexArray[k] * stride]);
+									r = r & dgVector::m_triplexMask;
 									dgFloat32 dist1 = adjacentFace.m_normal.Evalue(r);
 									if (dgAbs (dist1) > dgAbs (maxDist)) {
 										maxDist = dist1;
@@ -679,13 +684,13 @@ dgIntersectStatus dgAABBPolygonSoup::CalculateDisjointedFaceEdgeNormals (void* c
 								} else {
 									if (maxDist < -dgFloat32 (1.0e-3f)) {
 										dgBigVector n0 (adjacentFace.m_normal[0], adjacentFace.m_normal[1], adjacentFace.m_normal[2], dgFloat64(0.0f));
-										dgBigVector n1 (&polygon[adjacentFace.m_index[j0 + adjacentCount + 2] * stride]);
-										dgBigVector n2 (&polygon[indexArray[indexCount + 1] * stride]);
+										dgBigVector n1 (dgVector(&polygon[adjacentFace.m_index[j0 + adjacentCount + 2] * stride]) & dgVector::m_triplexMask);
+										dgBigVector n2 (dgVector(&polygon[indexArray[indexCount + 1] * stride]) & dgVector::m_triplexMask);
 
 										dgBigVector tilt0 (n0.CrossProduct(n1)); 
 										dgBigVector tilt1 (n0.CrossProduct(n2)); 
-										dgFloat64 dist0 (q1q0.DotProduct3 (tilt0));
-										dgFloat64 dist1 (q1q0.DotProduct3 (tilt1));
+										dgFloat64 dist0 (q1q0.DotProduct(tilt0).GetScalar());
+										dgFloat64 dist1 (q1q0.DotProduct(tilt1).GetScalar());
 										if (dist0 < dist1) {
 											adjacentFace.m_index[j0 + adjacentCount + 2] = indexArray[indexCount + 1];
 										}
@@ -732,11 +737,7 @@ dgAABBPolygonSoup::dgNodeBuilder* dgAABBPolygonSoup::BuildTopDown (dgNodeBuilder
 	}
 }
 
-
-
-
-
-void dgAABBPolygonSoup::Create (const dgPolygonSoupDatabaseBuilder& builder, bool optimizedBuild)
+void dgAABBPolygonSoup::Create (const dgPolygonSoupDatabaseBuilder& builder)
 {
 	if (builder.m_faceCount == 0) {
 		return;
@@ -1017,7 +1018,8 @@ dgVector dgAABBPolygonSoup::ForAllSectorsSupportVectex (const dgVector& dir) con
 					for (dgInt32 j = 0; j < vCount; j ++) {
 						dgInt32 i0 = m_indices[index + j] * dgInt32 (sizeof (dgTriplex) / sizeof (dgFloat32));
 						dgVector p (&boxArray[i0].m_x);
-						dgFloat32 dist = p.DotProduct3 (dir);
+						p = p & dgVector::m_triplexMask;
+						dgFloat32 dist = p.DotProduct(dir).GetScalar();
 						if (dist > backSupportDist) {
 							backSupportDist = dist;
 							vertex = p;
@@ -1040,7 +1042,7 @@ dgVector dgAABBPolygonSoup::ForAllSectorsSupportVectex (const dgVector& dir) con
 					box[1].m_z = boxArray[node->m_indexBox1].m_z;
 
 					dgVector supportPoint (box[ix].m_x, box[iy].m_y, box[iz].m_z, dgFloat32 (0.0));
-					backSupportDist = supportPoint.DotProduct3 (dir);
+					backSupportDist = supportPoint.DotProduct(dir).GetScalar();
 				}
 
 				if (me->m_right.IsLeaf()) {
@@ -1051,7 +1053,8 @@ dgVector dgAABBPolygonSoup::ForAllSectorsSupportVectex (const dgVector& dir) con
 					for (dgInt32 j = 0; j < vCount; j ++) {
 						dgInt32 i0 = m_indices[index + j] * dgInt32 (sizeof (dgTriplex) / sizeof (dgFloat32));
 						dgVector p (&boxArray[i0].m_x);
-						dgFloat32 dist = p.DotProduct3 (dir);
+						p = p & dgVector::m_triplexMask;
+						dgFloat32 dist = p.DotProduct(dir).GetScalar();
 						if (dist > frontSupportDist) {
 							frontSupportDist = dist;
 							vertex = p;
@@ -1073,7 +1076,7 @@ dgVector dgAABBPolygonSoup::ForAllSectorsSupportVectex (const dgVector& dir) con
 					box[1].m_z = boxArray[node->m_indexBox1].m_z;
 
 					dgVector supportPoint (box[ix].m_x, box[iy].m_y, box[iz].m_z, dgFloat32 (0.0f));
-					frontSupportDist = supportPoint.DotProduct3 (dir);
+					frontSupportDist = supportPoint.DotProduct(dir).GetScalar();
 				}
 
 				if (frontSupportDist >= backSupportDist) {
@@ -1191,7 +1194,6 @@ void dgAABBPolygonSoup::ForAllSectorsRayHit (const dgFastRayTest& raySrc, dgFloa
 	}
 }
 
-
 void dgAABBPolygonSoup::ForAllSectors (const dgFastAABBInfo& obbAabbInfo, const dgVector& boxDistanceTravel, dgFloat32 m_maxT, dgAABBIntersectCallback callback, void* const context) const
 {
 	dgAssert (dgAbs(dgAbs(obbAabbInfo[0][0]) - obbAabbInfo.m_absDir[0][0]) < dgFloat32 (1.0e-4f));
@@ -1209,13 +1211,14 @@ void dgAABBPolygonSoup::ForAllSectors (const dgFastAABBInfo& obbAabbInfo, const 
 		const dgInt32 stride = sizeof (dgTriplex) / sizeof (dgFloat32);
 		const dgTriplex* const vertexArray = (dgTriplex*) m_localVertex;
 
-		if (boxDistanceTravel.DotProduct3 (boxDistanceTravel) < dgFloat32 (1.0e-8f)) {
+		dgAssert (boxDistanceTravel.m_w == dgFloat32 (0.0f));
+		if (boxDistanceTravel.DotProduct(boxDistanceTravel).GetScalar() < dgFloat32 (1.0e-8f)) {
 
 			dgInt32 stack = 1;
 			stackPool[0] = m_aabb;
 			distance[0] = m_aabb->BoxPenetration(obbAabbInfo, vertexArray);
 			if (distance[0] <= dgFloat32(0.0f)) {
-				obbAabbInfo.m_separationDistance = dgMin(obbAabbInfo.m_separationDistance, -distance[0]);
+				obbAabbInfo.m_separationDistance = dgMin(obbAabbInfo.m_separationDistance[0], -distance[0]);
 			}
 			while (stack) {
 				stack --;
@@ -1229,6 +1232,7 @@ void dgAABBPolygonSoup::ForAllSectors (const dgFastAABBInfo& obbAabbInfo, const 
 							const dgInt32* const indices = &m_indices[index];
 							dgInt32 normalIndex = indices[vCount + 1];
 							dgVector faceNormal (&vertexArray[normalIndex].m_x);
+							faceNormal = faceNormal & dgVector::m_triplexMask;
 							dgFloat32 dist1 = obbAabbInfo.PolygonBoxDistance (faceNormal, vCount, indices, stride, &vertexArray[0].m_x);
 							if (dist1 > dgFloat32 (0.0f)) {
 								obbAabbInfo.m_separationDistance = dgFloat32(0.0f);
@@ -1237,7 +1241,7 @@ void dgAABBPolygonSoup::ForAllSectors (const dgFastAABBInfo& obbAabbInfo, const 
 									return;
 								}
 							} else {
-								obbAabbInfo.m_separationDistance = dgMin(obbAabbInfo.m_separationDistance, -dist1);
+								obbAabbInfo.m_separationDistance = dgMin(obbAabbInfo.m_separationDistance[0], -dist1);
 							}
 						}
 
@@ -1255,7 +1259,7 @@ void dgAABBPolygonSoup::ForAllSectors (const dgFastAABBInfo& obbAabbInfo, const 
 							distance[j] = dist1;
 							stack++;
 						} else {
-							obbAabbInfo.m_separationDistance = dgMin(obbAabbInfo.m_separationDistance, -dist1);
+							obbAabbInfo.m_separationDistance = dgMin(obbAabbInfo.m_separationDistance[0], -dist1);
 						}
 					}
 
@@ -1266,6 +1270,7 @@ void dgAABBPolygonSoup::ForAllSectors (const dgFastAABBInfo& obbAabbInfo, const 
 							const dgInt32* const indices = &m_indices[index];
 							dgInt32 normalIndex = indices[vCount + 1];
 							dgVector faceNormal (&vertexArray[normalIndex].m_x);
+							faceNormal = faceNormal & dgVector::m_triplexMask;
 							dgFloat32 dist1 = obbAabbInfo.PolygonBoxDistance (faceNormal, vCount, indices, stride, &vertexArray[0].m_x);
 							if (dist1 > dgFloat32 (0.0f)) {
 								dgAssert (vCount >= 3);
@@ -1274,7 +1279,7 @@ void dgAABBPolygonSoup::ForAllSectors (const dgFastAABBInfo& obbAabbInfo, const 
 									return;
 								}
 							} else {
-								obbAabbInfo.m_separationDistance = dgMin(obbAabbInfo.m_separationDistance, -dist1);
+								obbAabbInfo.m_separationDistance = dgMin(obbAabbInfo.m_separationDistance[0], -dist1);
 							}
 						}
 
@@ -1292,7 +1297,7 @@ void dgAABBPolygonSoup::ForAllSectors (const dgFastAABBInfo& obbAabbInfo, const 
 							distance[j] = dist1;
 							stack++;
 						} else {
-							obbAabbInfo.m_separationDistance = dgMin(obbAabbInfo.m_separationDistance, -dist1);
+							obbAabbInfo.m_separationDistance = dgMin(obbAabbInfo.m_separationDistance[0], -dist1);
 						}
 					}
 				}
@@ -1318,6 +1323,7 @@ void dgAABBPolygonSoup::ForAllSectors (const dgFastAABBInfo& obbAabbInfo, const 
 							const dgInt32* const indices = &m_indices[index];
 							dgInt32 normalIndex = indices[vCount + 1];
 							dgVector faceNormal (&vertexArray[normalIndex].m_x);
+							faceNormal = faceNormal & dgVector::m_triplexMask;
 							dgFloat32 hitDistance = obbAabbInfo.PolygonBoxRayDistance (faceNormal, vCount, indices, stride, &vertexArray[0].m_x, ray);
 							if (hitDistance < dgFloat32 (1.0f)) {
 								dgAssert (vCount >= 3);
@@ -1350,6 +1356,7 @@ void dgAABBPolygonSoup::ForAllSectors (const dgFastAABBInfo& obbAabbInfo, const 
 							const dgInt32* const indices = &m_indices[index];
 							dgInt32 normalIndex = indices[vCount + 1];
 							dgVector faceNormal (&vertexArray[normalIndex].m_x);
+							faceNormal = faceNormal & dgVector::m_triplexMask;
 							dgFloat32 hitDistance = obbAabbInfo.PolygonBoxRayDistance (faceNormal, vCount, indices, stride, &vertexArray[0].m_x, ray);
 							if (hitDistance < dgFloat32 (1.0f)) {
 								dgAssert (vCount >= 3);

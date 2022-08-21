@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -251,6 +251,7 @@ dgFloat32 dgCollisionLumpedMassParticles::RayCast(const dgVector& localP0, const
 
 dgMatrix dgCollisionLumpedMassParticles::CalculateInertiaAndCenterOfMass(const dgMatrix& m_alignMatrix, const dgVector& localScale, const dgMatrix& matrix) const
 {
+dgAssert (0);
 	dgVector com(dgFloat32(0.0f));
 	for (dgInt32 i = 0; i < m_particlesCount; i++) {
 		com = matrix.RotateVector(m_posit[i] * localScale);

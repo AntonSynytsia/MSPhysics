@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -61,7 +61,6 @@ class dgArray
 	dgMemoryAllocator* m_allocator;
 };
 
-
 template<class T>
 dgArray<T>::dgArray()
 	:m_array(NULL)
@@ -71,7 +70,6 @@ dgArray<T>::dgArray()
 {
 	m_aligmentInBytes = 1 << dgExp2(m_aligmentInBytes);
 }
-
 
 template<class T>
 dgArray<T>::dgArray (dgMemoryAllocator* const allocator, dgInt32 aligmentInBytes)
@@ -85,8 +83,6 @@ dgArray<T>::dgArray (dgMemoryAllocator* const allocator, dgInt32 aligmentInBytes
 	}
 	m_aligmentInBytes = 1 << dgExp2(m_aligmentInBytes);
 }
-
-
 
 template<class T>
 dgArray<T>::dgArray (const dgArray& source, dgInt32 itemsToCopy)
@@ -119,7 +115,6 @@ dgArray<T>::dgArray(const dgArray& source)
 	}
 }
 
-
 template<class T>
 dgArray<T>::~dgArray ()
 {
@@ -127,7 +122,6 @@ dgArray<T>::~dgArray ()
 		m_allocator->FreeLow (m_array);
 	}
 }
-
 
 template<class T>
 DG_INLINE const T& dgArray<T>::operator[] (dgInt32 i) const
@@ -138,7 +132,6 @@ DG_INLINE const T& dgArray<T>::operator[] (dgInt32 i) const
 	}
 	return m_array[i];
 }
-
 
 template<class T>
 DG_INLINE T& dgArray<T>::operator[] (dgInt32 i)
@@ -161,7 +154,6 @@ dgInt32 dgArray<T>::GetElementsCapacity () const
 {
 	return m_maxSize;
 }
-
 
 template<class T>
 dgInt32 dgArray<T>::GetBytesCapacity () const
@@ -219,7 +211,6 @@ void dgArray<T>::Resize (dgInt32 size) const
 		m_maxSize = size;
 	}
 }
-
 
 template<class T>
 DG_INLINE void dgArray<T>::ResizeIfNecessary  (dgInt32 size) const

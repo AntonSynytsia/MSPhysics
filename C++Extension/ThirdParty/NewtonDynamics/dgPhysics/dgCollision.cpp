@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -30,11 +30,11 @@ dgVector dgCollision::m_flushZero (dgFloat32 (1.0e-7f));
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 dgCollision::dgCollision(dgMemoryAllocator* const allocator, dgUnsigned32 signature, dgCollisionID id)
-	:m_inertia(dgFloat32 (0.0f))	
-	,m_crossInertia(dgFloat32 (0.0f))		
-	,m_centerOfMass(dgFloat32 (0.0f))		
-	,m_boxSize (dgFloat32 (0.0f)) 
-	,m_boxOrigin (dgFloat32 (0.0f))
+	:m_inertia(dgVector::m_zero)
+	,m_crossInertia(dgVector::m_zero)
+	,m_centerOfMass(dgVector::m_zero)
+	,m_boxSize (dgVector::m_zero)
+	,m_boxOrigin (dgVector::m_zero)
 	,m_rtti(0)
 	,m_refCount(1)
 	,m_signature(signature)
@@ -44,10 +44,10 @@ dgCollision::dgCollision(dgMemoryAllocator* const allocator, dgUnsigned32 signat
 }
 
 dgCollision::dgCollision (const dgCollision& source)
-	:m_inertia(source.m_inertia)	
-	,m_crossInertia(source.m_crossInertia)		
-	,m_centerOfMass(source.m_centerOfMass)		
-	,m_boxSize(source.m_boxSize) 
+	:m_inertia(source.m_inertia)
+	,m_crossInertia(source.m_crossInertia)
+	,m_centerOfMass(source.m_centerOfMass)
+	,m_boxSize(source.m_boxSize)
 	,m_boxOrigin (source.m_boxOrigin)
 	,m_rtti(source.m_rtti)
 	,m_refCount(1)
@@ -55,15 +55,14 @@ dgCollision::dgCollision (const dgCollision& source)
 	,m_collisionId(source.m_collisionId)
 	,m_allocator(source.m_allocator)
 {
-
 }
 
 dgCollision::dgCollision (dgWorld* const world, dgDeserialize deserialization, void* const userData, dgInt32 revision)
-	:m_inertia(dgFloat32 (0.0f))	
-	,m_crossInertia(dgFloat32 (0.0f))		
-	,m_centerOfMass(dgFloat32 (0.0f))		
-	,m_boxSize (dgFloat32 (0.0f)) 
-	,m_boxOrigin (dgFloat32 (0.0f))
+	:m_inertia(dgVector::m_zero)
+	,m_crossInertia(dgVector::m_zero)
+	,m_centerOfMass(dgVector::m_zero)
+	,m_boxSize (dgVector::m_zero)
+	,m_boxOrigin (dgVector::m_zero)
 	,m_rtti(0)
 	,m_refCount(1)
 	,m_signature(0)
@@ -91,7 +90,7 @@ dgUnsigned32 dgCollision::Quantize(dgFloat32 value)
 	return dgUnsigned32 (value * 1024.0f);
 }
 
-dgUnsigned32 dgCollision::Quantize(void *buffer, int size)
+dgUnsigned32 dgCollision::Quantize(const void* const buffer, int size)
 {
 	dgUnsigned32 crc = dgCRC (buffer, size);
 	return crc;

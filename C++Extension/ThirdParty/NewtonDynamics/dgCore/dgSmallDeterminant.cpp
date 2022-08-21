@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -39,8 +39,6 @@ dgGoogol Determinant2x2 (const dgGoogol matrix[2][2])
 	dgGoogol a01xa10 (matrix[0][1] * matrix[1][0]);
 	return a00xa11 - a01xa10;
 }
-
-
 
 dgFloat64 Determinant3x3 (const dgFloat64 matrix[3][3], dgFloat64* const error)
 {

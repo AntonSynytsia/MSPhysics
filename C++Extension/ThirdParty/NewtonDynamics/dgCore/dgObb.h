@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -31,7 +31,7 @@
 
 class dgPlane;
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgObb: public dgMatrix
 {
 	public:
@@ -72,7 +72,7 @@ class dgObb: public dgMatrix
 
 	public:
 	dgVector m_size;
-} DG_GCC_VECTOR_ALIGMENT; 
+} DG_GCC_VECTOR_ALIGNMENT; 
 
 
 inline dgObb::dgObb (const dgQuaternion &quat, const dgVector &position, const dgVector& dim)

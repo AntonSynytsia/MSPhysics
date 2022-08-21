@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -58,13 +58,10 @@ dgFloat32 dgRayCastSphere (const dgVector& p0, const dgVector& p1, const dgVecto
 
 DG_INLINE dgInt32 dgOverlapTest (const dgVector& p0, const dgVector& p1, const dgVector& q0, const dgVector& q1)
 {
-//	dgVector val0 ((p0 < q1) & (p1 > q0));
-//	dgInt32 mask1 = val0.GetSignMask();
 	dgVector val((p0 - q1) * (p1 - q0));
 	dgInt32 mask = val.GetSignMask();
 	return ((mask & 0x07) == 0x07);
 }
-
 
 DG_INLINE dgInt32 dgBoxInclusionTest (const dgVector& p0, const dgVector& p1, const dgVector& q0, const dgVector& q1)
 {
@@ -79,13 +76,13 @@ DG_INLINE dgInt32 dgCompareBox (const dgVector& p0, const dgVector& p1, const dg
 	return (p0.m_x != q0.m_x) || (p0.m_y != q0.m_y) || (p0.m_z != q0.m_z) || (p1.m_x != q1.m_x) || (p1.m_y != q1.m_y) || (p1.m_z != q1.m_z);
 }
 
-
 DG_INLINE void dgMovingAABB (dgVector& p0, dgVector& p1, const dgVector& veloc, const dgVector& omega, dgFloat32 timestep, dgFloat32 maxRadius, dgFloat32 minRadius)
 {
 	dgVector linearStep (veloc.Scale (timestep));
 
 	// estimate the maximum effect of the angular velocity and enlarge that box by that value (use 45 degrees as max angle not 90)
-	dgFloat32 maxAngle = dgMin (dgSqrt (omega.DotProduct3(omega) * timestep * timestep), dgFloat32 (45.0f * dgDEG2RAD));
+	dgAssert (omega.m_w == dgFloat32 (0.0f));
+	dgFloat32 maxAngle = dgMin (dgSqrt (omega.DotProduct(omega).GetScalar() * timestep * timestep), dgFloat32 (45.0f * dgDegreeToRad));
 
 	dgFloat32 angularTravel = (maxRadius - minRadius) * maxAngle;
 	dgVector angularStep (angularTravel, angularTravel, angularTravel, dgFloat32 (0.0f));
@@ -94,14 +91,9 @@ DG_INLINE void dgMovingAABB (dgVector& p0, dgVector& p1, const dgVector& veloc, 
 	dgVector r1 (p1 + angularStep);
 	dgVector q0 (r0 + linearStep);
 	dgVector q1 (r1 + linearStep);
-	//p0 = dgVector (dgMin (r0.m_x, q0.m_x), dgMin (r0.m_y, q0.m_y), dgMin (r0.m_z, q0.m_z), dgFloat32 (0.0f));
-	p0 = r0.GetMin (q0);
-	//p1 = dgVector (dgMax (r1.m_x, q1.m_x), dgMax (r1.m_y, q1.m_y), dgMax (r1.m_z, q1.m_z), dgFloat32 (0.0f));
-	p1 = r1.GetMax (q1);
-	p0.m_w = dgFloat32 (0.0f);
-	p1.m_w = dgFloat32 (0.0f);
+	p0 = r0.GetMin (q0) & dgVector::m_triplexMask;
+	p1 = r1.GetMax (q1) & dgVector::m_triplexMask;
 }
-
 
 DG_INLINE dgFloat32 BoxPenetration (const dgVector& minBox, const dgVector& maxBox)
 {
@@ -126,8 +118,7 @@ DG_INLINE dgFloat32 dgBoxDistanceToOrigin2 (const dgVector& minBox, const dgVect
 	return dist.DotProduct(dist).GetScalar();
 }
 
-
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgFastRayTest
 {
 	public:
@@ -144,7 +135,8 @@ class dgFastRayTest
 
 		dgAssert (m_diff.DotProduct(m_diff).GetScalar() > dgFloat32 (0.0f));
 		m_isParallel = (m_diff.Abs() < dgVector(1.0e-8f));
-		m_dpInv = (((dgVector(dgFloat32(1.0e-20)) & m_isParallel) | m_diff.AndNot(m_isParallel)).Reciproc()) & dgVector::m_triplexMask;
+		//m_dpInv = (((dgVector(dgFloat32(1.0e-20)) & m_isParallel) | m_diff.AndNot(m_isParallel)).Reciproc()) & dgVector::m_triplexMask;
+		m_dpInv = m_diff.Select (dgVector(dgFloat32(1.0e-20f)), m_isParallel).Reciproc() & dgVector::m_triplexMask;
 		m_unitDir = m_diff.Normalize();
 	}
 
@@ -217,7 +209,8 @@ class dgFastRayTest
 		t1 = t1.GetMin(t1.ShiftTripleRight());
 		dgVector mask(t0 < t1);
 		dgVector maxDist(dgFloat32(1.2f));
-		t0 = (t0 & mask) | maxDist.AndNot(mask);
+		//t0 = (t0 & mask) | maxDist.AndNot(mask);
+		t0 = maxDist.Select(t0, mask);
 		dgAssert((mask.GetSignMask() & 1) == (t0.m_x < dgFloat32(1.0f)));
 		return t0.GetScalar();
 	}
@@ -230,18 +223,17 @@ class dgFastRayTest
 	dgVector m_maxT;
 	dgVector m_unitDir;
 	dgVector m_isParallel;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
-DG_MSC_VECTOR_ALIGMENT 
+DG_MSC_VECTOR_ALIGNMENT 
 class dgFastAABBInfo: public dgObb
 {
 	public:
 	DG_INLINE dgFastAABBInfo()
 		:dgObb()
-		,m_separationDistance(dgFloat32(1.0e10f))
 		,m_absDir(dgGetIdentityMatrix())
-		
+		,m_separationDistance(dgFloat32(1.0e10f))
 	{
 	}
 
@@ -257,8 +249,8 @@ class dgFastAABBInfo: public dgObb
 
 	DG_INLINE dgFastAABBInfo(const dgVector& p0, const dgVector& p1)
 		:dgObb(dgGetIdentityMatrix(), dgVector::m_half * (p1 - p0))
-		,m_separationDistance(dgFloat32(1.0e10f))
 		,m_absDir(dgGetIdentityMatrix())
+		,m_separationDistance(dgFloat32(1.0e10f))
 		,m_p0(p0)
 		,m_p1(p1)
 	{
@@ -331,9 +323,11 @@ class dgFastAABBInfo: public dgObb
 	DG_INLINE void MakeBox1 (dgInt32 indexCount, const dgInt32* const indexArray, dgInt32 stride, const dgFloat32* const vertexArray, dgVector& minBox, dgVector& maxBox) const
 	{
 		dgVector faceBoxP0 (&vertexArray[indexArray[0] * stride]);
+		faceBoxP0 = faceBoxP0 & dgVector::m_triplexMask;
 		dgVector faceBoxP1 (faceBoxP0);
 		for (dgInt32 i = 1; i < indexCount; i ++) {
 			dgVector p (&vertexArray[indexArray[i] * stride]);
+			p = p & dgVector::m_triplexMask;
 			faceBoxP0 = faceBoxP0.GetMin(p); 
 			faceBoxP1 = faceBoxP1.GetMax(p); 
 		}
@@ -344,10 +338,10 @@ class dgFastAABBInfo: public dgObb
 
 	DG_INLINE void MakeBox2 (const dgMatrix& faceMatrix, dgInt32 indexCount, const dgInt32* const indexArray, dgInt32 stride, const dgFloat32* const vertexArray, dgVector& minBox, dgVector& maxBox) const
 	{
-		dgVector faceBoxP0 (faceMatrix.TransformVector (dgVector (&vertexArray[indexArray[0] * stride])));
+		dgVector faceBoxP0 (faceMatrix.TransformVector (dgVector (&vertexArray[indexArray[0] * stride]) & dgVector::m_triplexMask));
 		dgVector faceBoxP1 (faceBoxP0);
 		for (dgInt32 i = 1; i < indexCount; i ++) {
-			dgVector p (faceMatrix.TransformVector (dgVector (&vertexArray[indexArray[i] * stride])));
+			dgVector p (faceMatrix.TransformVector (dgVector (&vertexArray[indexArray[i] * stride]) & dgVector::m_triplexMask));
 			faceBoxP0 = faceBoxP0.GetMin(p); 
 			faceBoxP1 = faceBoxP1.GetMax(p); 
 		}
@@ -368,10 +362,15 @@ class dgFastAABBInfo: public dgObb
 	{
 		dgMatrix faceMatrix;
 		dgVector origin (&vertexArray[indexArray[0] * stride]);
+		dgVector pin (&vertexArray[indexArray[0] * stride]);
+		pin = pin & dgVector::m_triplexMask;
+		origin = origin & dgVector::m_triplexMask;
+
+		dgVector pin1 (&vertexArray[indexArray[1] * stride]);
+		pin1 = pin1 & dgVector::m_triplexMask;
 
 		faceMatrix[0] = faceNormal;
-		faceMatrix[1] = dgVector (&vertexArray[indexArray[1] * stride]) - origin;
-		//faceMatrix[1] = faceMatrix[1] * (faceMatrix[1].DotProduct(faceMatrix[1]).InvSqrt());
+		faceMatrix[1] = pin1 - origin;
 		faceMatrix[1] = faceMatrix[1].Normalize();
 		faceMatrix[2] = faceMatrix[0].CrossProduct(faceMatrix[1]);
 		faceMatrix[3] = origin | dgVector::m_wOne; 
@@ -380,14 +379,14 @@ class dgFastAABBInfo: public dgObb
 
 	protected:
 	dgMatrix m_absDir;
+	mutable dgVector m_separationDistance;
 	dgVector m_p0;
 	dgVector m_p1;
-	mutable dgFloat32 m_separationDistance;
 
 	friend class dgAABBPolygonSoup;
 	friend class dgCollisionUserMesh;
 	friend class dgCollisionHeightField;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
 #endif

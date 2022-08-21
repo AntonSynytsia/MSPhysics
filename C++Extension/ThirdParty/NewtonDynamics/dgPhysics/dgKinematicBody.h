@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -26,7 +26,7 @@
 #include "dgBody.h"
 
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgKinematicBody: public dgBody 
 {
 	public:
@@ -56,23 +56,14 @@ class dgKinematicBody: public dgBody
 	virtual bool IsInEquilibrium  () const {return true;}
 	virtual void SetCollidable (bool state) {m_collidable = state;}
 	virtual void Serialize (const dgTree<dgInt32, const dgCollision*>& collisionRemapId, dgSerialize serializeCallback, void* const userData);
-
 	virtual void AddDampingAcceleration(dgFloat32 timestep) {}
-
-/*
-	virtual dgConstraint* GetFirstJoint() const;
-	virtual dgConstraint* GetNextJoint(dgConstraint* const joint) const;
-	virtual dgConstraint* GetFirstContact() const;
-	virtual dgConstraint* GetNextContact(dgConstraint* const joint) const;
-	virtual dgVector CalculateInverseDynamicForce (const dgVector& desiredVeloc, dgFloat32 timestep) const;
-*/
 
 	static dgVector m_dummy;
 
 	friend class dgWorld;
 	friend class dgBroadPhase;
 	friend class dgWorldDynamicUpdate;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
 

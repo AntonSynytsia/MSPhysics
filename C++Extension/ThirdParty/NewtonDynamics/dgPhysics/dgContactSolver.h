@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -25,7 +25,7 @@
 #include "dgCollision.h"
 #include "dgCollisionInstance.h"
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgMinkFace
 {
 	public:
@@ -34,7 +34,7 @@ class dgMinkFace
 	dgInt16 m_vertex[3];
 	dgInt8 m_mark;
 	dgInt8 m_alive;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 #define DG_SEPARATION_PLANES_ITERATIONS	8
 #define DG_CONVEX_MINK_STACK_SIZE		64
@@ -49,7 +49,7 @@ class dgMinkFace
 
 class dgCollisionParamProxy;
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgContactSolver: public dgDownHeap<dgMinkFace *, dgFloat32>  
 {
 	public: 
@@ -89,11 +89,12 @@ class dgContactSolver: public dgDownHeap<dgMinkFace *, dgFloat32>
 	DG_INLINE void TranslateSimplex(const dgVector& step);
 	
 	DG_INLINE void CalculateContactFromFeacture(dgInt32 featureType);
-	DG_INLINE dgPerimenterEdge* ReduceContacts(dgPerimenterEdge* poly, dgInt32 maxCount) const;
-//	DG_INLINE void ReduceDegeneratedTriangle();
 	DG_INLINE dgBigVector ReduceLine(dgInt32& indexOut);
 	DG_INLINE dgBigVector ReduceTriangle (dgInt32& indexOut);
 	DG_INLINE dgBigVector ReduceTetrahedrum (dgInt32& indexOut);
+
+	DG_INLINE dgPerimenterEdge* OldReduceContacts(dgPerimenterEdge* poly, dgInt32 maxCount) const;
+
 
 	bool SanityCheck() const;
 	dgInt32 ConvexPolygonsIntersection(const dgVector& normal, dgInt32 count1, dgVector* const shape1, dgInt32 count2, dgVector* const shape2, dgVector* const contactOut, dgInt32 maxContacts) const;
@@ -123,7 +124,7 @@ class dgContactSolver: public dgDownHeap<dgMinkFace *, dgFloat32>
 
 	static dgVector m_hullDirs[14]; 
 	static dgInt32 m_rayCastSimplex[4][4];
-}DG_GCC_VECTOR_ALIGMENT;
+}DG_GCC_VECTOR_ALIGNMENT;
 
 
 #endif 

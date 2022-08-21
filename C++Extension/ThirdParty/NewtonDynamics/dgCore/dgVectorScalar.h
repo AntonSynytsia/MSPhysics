@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -22,8 +22,6 @@
 #ifndef __dgVectorScalar__
 #define __dgVectorScalar__
 
-
-#ifdef DG_SCALAR_VECTOR_CLASS
 // *****************************************************************************************
 //
 // 4 x 1 single precision vector class declaration
@@ -34,7 +32,7 @@
 #else
 
 class dgBigVector;
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgVector
 {
 	public:
@@ -54,7 +52,7 @@ class dgVector
 	}
 
 	DG_INLINE dgVector (const dgFloat32* const ptr)
-		:m_x(ptr[0]), m_y(ptr[1]), m_z(ptr[2]), m_w (dgFloat32 (0.0f))
+		:m_x(ptr[0]), m_y(ptr[1]), m_z(ptr[2]), m_w (ptr[3])
 	{
 		dgAssert (dgCheckVector ((*this)));
 	}
@@ -64,7 +62,7 @@ class dgVector
 		:m_x(dgFloat32(ptr[0]))
 		,m_y(dgFloat32(ptr[1]))
 		,m_z(dgFloat32(ptr[2]))
-		,m_w(dgFloat32(0.0f))
+		,m_w(dgFloat32(ptr[3]))
 	{
 	}
 #endif
@@ -397,11 +395,22 @@ class dgVector
 		return dgVector (a[0] & ~b[0], a[1] & ~b[1], a[2] & ~b[2], a[3] & ~b[3]); 
 	}
 
+	DG_INLINE dgVector Select (const dgVector& data, const dgVector& mask) const
+	{
+		// (((b ^ a) & mask)^a)
+		return  (*this) ^ (mask & (data ^ (*this)));
+	}
+
 	DG_INLINE dgInt32 GetSignMask() const
 	{
 		const dgInt32* const a = (dgInt32*)&m_x;
 		return (((a[0] & 0x80000000) ? 1 : 0) | ((a[1] & 0x80000000) ? 2 : 0) | ((a[2] & 0x80000000) ? 4 : 0) | ((a[3] & 0x80000000) ? 8 : 0));
 	} 
+
+	DG_INLINE dgVector ShiftRight() const
+	{
+		return dgVector (m_w, m_x, m_y, m_z); 
+	}
 
 	DG_INLINE dgVector ShiftTripleRight () const
 	{
@@ -460,13 +469,14 @@ class dgVector
 	static dgVector m_yMask;
 	static dgVector m_zMask;
 	static dgVector m_wMask;
+	static dgVector m_epsilon;
 	static dgVector m_signMask;
 	static dgVector m_triplexMask;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 #endif
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgBigVector
 {
 	public:
@@ -498,7 +508,7 @@ class dgBigVector
 #endif
 
 	DG_INLINE dgBigVector (const dgFloat64* const ptr)
-		:m_x(ptr[0]), m_y(ptr[1]), m_z(ptr[2]), m_w (dgFloat32 (0.0f))
+		:m_x(ptr[0]), m_y(ptr[1]), m_z(ptr[2]), m_w (ptr[3])
 	{
 		dgAssert (dgCheckVector ((*this)));
 	}
@@ -821,11 +831,22 @@ class dgBigVector
 		return dgBigVector (a[0] & ~b[0], a[1] & ~b[1], a[2] & ~b[2], a[3] & ~b[3]); 
 	}
 
+	DG_INLINE dgBigVector Select(const dgBigVector& data, const dgBigVector& mask) const
+	{
+		// (((b ^ a) & mask)^a)
+		return  (*this) ^ (mask & (data ^ (*this)));
+	}
+
 	DG_INLINE dgInt32 GetSignMask() const
 	{
 		const dgInt64* const a = (dgInt64*)&m_x;
 		return (((a[0]>>63) ? 1 : 0) | ((a[1]>>63) ? 2 : 0) | ((a[2]>>63) ? 4 : 0) | ((a[3]>>63) ? 8 : 0));
 	} 
+
+	DG_INLINE dgVector ShiftRight() const
+	{
+		return dgBigVector (m_w, m_x, m_y, m_z); 
+	}
 
 	DG_INLINE dgBigVector ShiftTripleRight () const
 	{
@@ -887,12 +908,13 @@ class dgBigVector
 	static dgBigVector m_yMask;
 	static dgBigVector m_zMask;
 	static dgBigVector m_wMask;
+	static dgBigVector m_epsilon;
 	static dgBigVector m_signMask;
 	static dgBigVector m_triplexMask;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgSpatialVector
 {
 	public:
@@ -974,7 +996,7 @@ class dgSpatialVector
 
 	dgFloat64 m_d[6];
 	static dgSpatialVector m_zero;
-} DG_GCC_VECTOR_ALIGMENT;
+} DG_GCC_VECTOR_ALIGNMENT;
 
-#endif
+
 #endif

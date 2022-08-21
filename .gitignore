@@ -3,8 +3,16 @@
 /C++Extension/Projects/VS/x64
 /C++Extension/Projects/xCode/Release
 /C++Extension/Projects/xCode/Debug
+# /RubyExtension/MSPhysics/libaries
 
+*.xcuserstate
+*.pdf
+*.vs
+*.vspx
 *.user
 *.DS_Store
 .yardoc
 /doc
+.eslintcache
+
+/Gemfile.lock

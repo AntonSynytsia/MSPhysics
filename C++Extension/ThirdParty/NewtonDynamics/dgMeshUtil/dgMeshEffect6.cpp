@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 *
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -51,7 +51,7 @@
 #endif
 
 
-class dgTriangleAnglesToUV: public dgSymmetricBiconjugateGradientSolve
+class dgTriangleAnglesToUV: public dgSymmetricConjugateGradientSolver<dgFloat64>
 {
 	public:
 	dgTriangleAnglesToUV (dgMeshEffect* const mesh, dgInt32 material, dgReportProgress progressReportCallback, void* const userData, const dgFloat64* const pinnedPoint, dgFloat64* const triangleAnglesVector = NULL)
@@ -788,17 +788,14 @@ class dgTriangleAnglesToUV: public dgSymmetricBiconjugateGradientSolve
 		DG_DEBUG_UV (("\n"));
 	}
 
-
-	bool InversePrecoditionerTimeVector (dgFloat64* const out, const dgFloat64* const v) const
+	void InversePrecoditionerTimeVector (dgFloat64* const out, const dgFloat64* const v) const
 	{
 		const dgInt32 count = m_mesh->GetVertexCount();
 		for (dgInt32 i = 0; i < count; i ++) {
 			out[2 * i + 0] = m_pinnedPoints[i] * v[i * 2 + 0] / m_diagonal[2 * i + 0];
 			out[2 * i + 1] = m_pinnedPoints[i] * v[i * 2 + 1] / m_diagonal[2 * i + 1];
 		}
-		return true;
 	}
-
 
 	void MatrixTimeVector (dgFloat64* const out, const dgFloat64* const v) const
 	{
@@ -822,7 +819,13 @@ class dgTriangleAnglesToUV: public dgSymmetricBiconjugateGradientSolve
 	void LagrangeOptimization()
 	{
 		CalculateGradientVectorAndHessianMatrix ();
+		dgStack<dgFloat64> r0(2 * m_mesh->GetVertexCount());
+		dgStack<dgFloat64> z0(2 * m_mesh->GetVertexCount());
+		dgStack<dgFloat64> p0(2 * m_mesh->GetVertexCount());
+		dgStack<dgFloat64> q0(2 * m_mesh->GetVertexCount());
+		SetBuffers(&r0[0], &z0[0], &p0[0], &q0[0]);
 		Solve(2 * m_mesh->GetVertexCount(), dgABF_UV_TOL2, m_uvArray, m_gradients);
+		SetBuffers(NULL, NULL, NULL, NULL);
 	}
 
 	dgArray<dgInt32> m_hessianCoLumnIndex;
@@ -843,7 +846,7 @@ class dgTriangleAnglesToUV: public dgSymmetricBiconjugateGradientSolve
 	bool m_allocated;
 };
 
-class dgAngleBasedFlatteningMapping: public dgSymmetricBiconjugateGradientSolve
+class dgAngleBasedFlatteningMapping: public dgSymmetricConjugateGradientSolver<dgFloat64>
 {
 	public: 
 	dgAngleBasedFlatteningMapping (dgMeshEffect* const mesh, dgInt32 material, dgReportProgress progressReportCallback, void* const userData)
@@ -1375,7 +1378,7 @@ dgAssert (0);
 		}
 	}
 
-	bool InversePrecoditionerTimeVector (dgFloat64* const out, const dgFloat64* const v) const
+	void InversePrecoditionerTimeVector (dgFloat64* const out, const dgFloat64* const v) const
 	{
 		for (dgInt32 i = 0; i < m_anglesCount; i ++) {
 			out[i] = v[i] / m_weight[i];
@@ -1395,7 +1398,6 @@ dgAssert (0);
 				m_continueExecution = m_progressReportCallback (dgMin (dgFloat32 (m_progressNum) / m_progressDen, dgFloat32 (1.0f)), m_progressReportUserData);
 			}
 		}
-		return m_continueExecution;
 	}
 
 	void LagrangeOptimization()
@@ -1412,6 +1414,11 @@ dgAssert (0);
 		m_continueExecution = true;
 
 /*
+		dgStack<dgFloat64> r0(2 * m_mesh->GetVertexCount());
+		dgStack<dgFloat64> z0(2 * m_mesh->GetVertexCount());
+		dgStack<dgFloat64> p0(2 * m_mesh->GetVertexCount());
+		dgStack<dgFloat64> q0(2 * m_mesh->GetVertexCount());
+		SetBuffers(&r0[0], &z0[0], &p0[0], &q0[0]);
 		dgFloat64 gradientNorm = CalculateGradientVector ();
 		for (dgInt32 iter = 0; (iter < dgABF_MAX_ITERATIONS) && (gradientNorm > dgABF_TOL2) && m_continueExecution; iter++) {
 			m_progressDen = m_progressNum + m_totalVariablesCount;
@@ -1421,6 +1428,7 @@ dgAssert (0);
 			}
 			gradientNorm = CalculateGradientVector ();
 		}
+		SetBuffers(NULL, NULL, NULL, NULL);
 */
 
 #ifdef _DEBUG
@@ -1570,12 +1578,12 @@ void dgMeshEffect::CalculateNormals (dgFloat64 angleInRadians)
 	PackAttibuteData ();
 }
 
-void dgMeshEffect::SphericalMapping (dgInt32 material, const dgMatrix& matrix)
+void dgMeshEffect::SphericalMapping (dgInt32 material, const dgMatrix& uvAligment)
 {
     dgBigVector origin (GetOrigin());
     dgStack<dgBigVector>sphere (m_points.m_vertex.m_count);
     for (dgInt32 i = 0; i < m_points.m_vertex.m_count; i ++) {
-		dgBigVector point(matrix.RotateVector(m_points.m_vertex[i] - origin));
+		dgBigVector point(uvAligment.RotateVector(m_points.m_vertex[i] - origin));
 		dgAssert(point.m_w == dgFloat32(0.0f));
 		dgAssert(point.DotProduct(point).GetScalar() > dgFloat32(0.0f));
 		point = point.Normalize();
@@ -1583,11 +1591,11 @@ void dgMeshEffect::SphericalMapping (dgInt32 material, const dgMatrix& matrix)
 		dgFloat64 u = dgAsin(dgClamp(point.m_x, dgFloat64(-1.0f + 1.0e-6f), dgFloat64(1.0f - 1.0e-6f)));
 		dgFloat64 v = dgAtan2(point.m_y, point.m_z);
 
-		u = dgFloat32(1.0f) - (dgFloat64(dgPI / 2.0f) - u) / dgFloat64(dgPI);
+		u = dgFloat32(1.0f) - (dgFloat64(dgPi / 2.0f) - u) / dgFloat64(dgPi);
 		dgAssert(u >= dgFloat32(0.0f));
 		dgAssert(u <= dgFloat32(1.0f));
 
-		v = v + dgPI;
+		v = v + dgPi;
 		sphere[i].m_x = u;
 		sphere[i].m_y = v;
     }
@@ -1630,37 +1638,39 @@ void dgMeshEffect::SphericalMapping (dgInt32 material, const dgMatrix& matrix)
 	PackAttibuteData();
 }
 
-
 void dgMeshEffect::CylindricalMapping (dgInt32 cylinderMaterial, dgInt32 capMaterial, const dgMatrix& uvAligment)
 {
-    dgBigVector origin (GetOrigin());
+	dgBigVector origin (GetOrigin());
+	dgStack<dgBigVector> buffer(m_points.m_vertex.m_count);
+	dgBigVector pMin(dgFloat64(1.0e10f), dgFloat64(1.0e10f), dgFloat64(1.0e10f), dgFloat64(0.0f));
+	dgBigVector pMax(dgFloat64(-1.0e10f), dgFloat64(-1.0e10f), dgFloat64(-1.0e10f), dgFloat64(0.0f));
 
-    dgBigVector pMin (dgFloat64 (1.0e10f), dgFloat64 (1.0e10f), dgFloat64 (1.0e10f), dgFloat64 (0.0f));
-    dgBigVector pMax (dgFloat64 (-1.0e10f), dgFloat64 (-1.0e10f), dgFloat64 (-1.0e10f), dgFloat64 (0.0f));
-    for (dgInt32 i = 0; i < m_points.m_vertex.m_count; i ++) {
-        dgBigVector tmp (uvAligment.RotateVector (m_points.m_vertex[i] - origin));
-        pMin.m_x = dgMin (pMin.m_x, tmp.m_x);
-        pMax.m_x = dgMax (pMax.m_x, tmp.m_x);
-        pMin.m_y = dgMin (pMin.m_y, tmp.m_y);
-        pMax.m_y = dgMax (pMax.m_y, tmp.m_y);
-        pMin.m_z = dgMin (pMin.m_z, tmp.m_z);
-        pMax.m_z = dgMax (pMax.m_z, tmp.m_z);
-    }
+	for (dgInt32 i = 0; i < m_points.m_vertex.m_count; i ++) {
+		buffer[i] = uvAligment.RotateVector (m_points.m_vertex[i] - origin);
+		const dgBigVector& tmp = buffer[i];
+		pMin.m_x = dgMin (pMin.m_x, tmp.m_x);
+		pMax.m_x = dgMax (pMax.m_x, tmp.m_x);
+		pMin.m_y = dgMin (pMin.m_y, tmp.m_y);
+		pMax.m_y = dgMax (pMax.m_y, tmp.m_y);
+		pMin.m_z = dgMin (pMin.m_z, tmp.m_z);
+		pMax.m_z = dgMax (pMax.m_z, tmp.m_z);
+	}
 
 	dgStack<dgBigVector>cylinder (m_points.m_vertex.m_count);
     dgBigVector scale (dgFloat64 (1.0f)/ (pMax.m_x - pMin.m_x), dgFloat64 (1.0f)/ (pMax.m_y - pMin.m_y), dgFloat64 (1.0f)/ (pMax.m_z - pMin.m_z), dgFloat64 (0.0f));
     for (dgInt32 i = 0; i < m_points.m_vertex.m_count; i ++) {
-        dgBigVector point (uvAligment.RotateVector (m_points.m_vertex[i] - origin));
-        dgFloat64 u = (point.m_x - pMin.m_x) * scale.m_x;
+		//dgBigVector point (uvAligment.RotateVector (m_points.m_vertex[i] - origin));
+		dgBigVector point (buffer[i]);
+		dgFloat64 u = (point.m_x - pMin.m_x) * scale.m_x;
 
 		dgAssert(point.m_w == dgFloat32(0.0f));
-        dgAssert(point.DotProduct(point).GetScalar() > dgFloat32 (0.0f));
-        point = point.Normalize();
-        dgFloat64 v = dgAtan2 (point.m_y, point.m_z);
+		dgAssert(point.DotProduct(point).GetScalar() > dgFloat32 (0.0f));
+		point = point.Normalize();
+		dgFloat64 v = dgAtan2 (point.m_y, point.m_z);
 
-        v = v + dgPI;
-        cylinder[i].m_x = u;
-        cylinder[i].m_y = v;
+		v = v + dgPi;
+		cylinder[i].m_x = u;
+		cylinder[i].m_y = v;
     }
 
 	UnpackAttibuteData();
@@ -1703,12 +1713,16 @@ void dgMeshEffect::CylindricalMapping (dgInt32 cylinderMaterial, dgInt32 capMate
     for(iter.Begin(); iter; iter ++){
         dgEdge* const edge = &(*iter);
 		if ((edge->m_incidentFace > 0) && (edge->m_mark != mark)) {
-			dgVector p0(uvAligment.RotateVector(m_points.m_vertex[edge->m_incidentVertex] - origin));
-			dgVector p1(uvAligment.RotateVector(m_points.m_vertex[edge->m_next->m_incidentVertex] - origin));
+			//dgVector p0(uvAligment.RotateVector(m_points.m_vertex[edge->m_incidentVertex] - origin));
+			//dgVector p1(uvAligment.RotateVector(m_points.m_vertex[edge->m_next->m_incidentVertex] - origin));
+			dgVector p0(buffer[edge->m_incidentVertex]);
+			dgVector p1(buffer[edge->m_next->m_incidentVertex]);
+
 			dgVector e1(p1 - p0);
 			dgBigVector normal(dgFloat32(0.0f));
 			for (dgEdge* ptr = edge->m_next; ptr != edge; ptr = ptr->m_next) {
-				dgVector p2(uvAligment.RotateVector(m_points.m_vertex[ptr->m_next->m_incidentVertex] - origin));
+				//dgVector p2(uvAligment.RotateVector(m_points.m_vertex[ptr->m_next->m_incidentVertex] - origin));
+				dgVector p2(buffer[ptr->m_next->m_incidentVertex]);
 				dgBigVector e2(p2 - p0);
 				normal += e1.CrossProduct(e2);
 				e1 = e2;
@@ -1718,7 +1732,8 @@ void dgMeshEffect::CylindricalMapping (dgInt32 cylinderMaterial, dgInt32 capMate
 				dgEdge* ptr = edge;
 				do {
 					dgAttibutFormat::dgUV uv;
-					dgVector p(uvAligment.RotateVector(m_points.m_vertex[ptr->m_incidentVertex] - origin));
+					//dgVector p(uvAligment.RotateVector(m_points.m_vertex[ptr->m_incidentVertex] - origin));
+					dgVector p(buffer[ptr->m_incidentVertex]);
 					uv.m_u = dgFloat32((p.m_y - pMin.m_y) * scale.m_y);
 					uv.m_v = dgFloat32((p.m_z - pMin.m_z) * scale.m_z);
 					m_attrib.m_uv0Channel[dgInt32(ptr->m_userData)] = uv;
@@ -1738,11 +1753,11 @@ void dgMeshEffect::CylindricalMapping (dgInt32 cylinderMaterial, dgInt32 capMate
 	PackAttibuteData();
 }
 
-void dgMeshEffect::BoxMapping (dgInt32 front, dgInt32 side, dgInt32 top)
+void dgMeshEffect::BoxMapping (dgInt32 front, dgInt32 side, dgInt32 top, const dgMatrix& uvAligment)
 {
+/*
     dgBigVector minVal;
     dgBigVector maxVal;
-    dgInt32 materialArray[3];
 
     dgGetMinMax (minVal, maxVal, &m_points.m_vertex[0][0], m_points.m_vertex.m_count, sizeof (dgBigVector));
     dgBigVector dist (maxVal - minVal);
@@ -1750,6 +1765,30 @@ void dgMeshEffect::BoxMapping (dgInt32 front, dgInt32 side, dgInt32 top)
     dist[1] = dgMax (dgFloat64 (1.0e-3f), dist[1]);
     dist[2] = dgMax (dgFloat64 (1.0e-3f), dist[2]);
     dgBigVector scale (dgFloat64 (1.0f)/ dist[0], dgFloat64 (1.0f)/ dist[1], dgFloat64 (1.0f)/ dist[2], dgFloat64 (0.0f));
+*/
+
+	dgBigVector origin(GetOrigin());
+	dgStack<dgBigVector> buffer(m_points.m_vertex.m_count);
+	dgBigVector pMin(dgFloat64(1.0e10f), dgFloat64(1.0e10f), dgFloat64(1.0e10f), dgFloat64(0.0f));
+	dgBigVector pMax(dgFloat64(-1.0e10f), dgFloat64(-1.0e10f), dgFloat64(-1.0e10f), dgFloat64(0.0f));
+
+	for (dgInt32 i = 0; i < m_points.m_vertex.m_count; i++) {
+		buffer[i] = uvAligment.RotateVector(m_points.m_vertex[i] - origin);
+		const dgBigVector& tmp = buffer[i];
+		pMin.m_x = dgMin(pMin.m_x, tmp.m_x);
+		pMax.m_x = dgMax(pMax.m_x, tmp.m_x);
+		pMin.m_y = dgMin(pMin.m_y, tmp.m_y);
+		pMax.m_y = dgMax(pMax.m_y, tmp.m_y);
+		pMin.m_z = dgMin(pMin.m_z, tmp.m_z);
+		pMax.m_z = dgMax(pMax.m_z, tmp.m_z);
+	}
+    dgInt32 materialArray[3];
+
+    dgBigVector dist (pMax);
+	dist[0] = dgMax(dgFloat64(1.0e-3f), dist[0]);
+	dist[1] = dgMax(dgFloat64(1.0e-3f), dist[1]);
+	dist[2] = dgMax(dgFloat64(1.0e-3f), dist[2]);
+    dgBigVector scale (dgFloat64 (0.5f)/ dist[0], dgFloat64 (0.5f)/ dist[1], dgFloat64 (0.5f)/ dist[2], dgFloat64 (0.0f));
 
 	UnpackAttibuteData();
 	m_attrib.m_uv0Channel.Reserve(m_attrib.m_pointChannel.m_count);
@@ -1764,9 +1803,9 @@ void dgMeshEffect::BoxMapping (dgInt32 front, dgInt32 side, dgInt32 top)
     for(iter.Begin(); iter; iter ++){
         dgEdge* const edge = &(*iter);
         if ((edge->m_mark < mark) && (edge->m_incidentFace > 0)) {
-            const dgBigVector& p0 = m_points.m_vertex[edge->m_incidentVertex];
-            const dgBigVector& p1 = m_points.m_vertex[edge->m_next->m_incidentVertex];
-            const dgBigVector& p2 = m_points.m_vertex[edge->m_prev->m_incidentVertex];
+            const dgBigVector& p0 = buffer[edge->m_incidentVertex];
+            const dgBigVector& p1 = buffer[edge->m_next->m_incidentVertex];
+            const dgBigVector& p2 = buffer[edge->m_prev->m_incidentVertex];
 
             edge->m_mark = mark;
             edge->m_next->m_mark = mark;
@@ -1795,13 +1834,13 @@ void dgMeshEffect::BoxMapping (dgInt32 front, dgInt32 side, dgInt32 top)
             dgEdge* ptr = edge;
             do {
 				dgAttibutFormat::dgUV uv;
-				dgBigVector p(scale * (m_points.m_vertex[ptr->m_incidentVertex] - minVal));
+				dgBigVector p(scale * buffer[ptr->m_incidentVertex] - dgFloat32 (0.5f));
 				uv.m_u = dgFloat32 (p[u]);
 				uv.m_v = dgFloat32 (p[v]);
 				m_attrib.m_uv0Channel[dgInt32(ptr->m_userData)] = uv;
 				m_attrib.m_materialChannel[dgInt32(ptr->m_userData)] = materialArray[index];
                 ptr = ptr->m_next;
-            }while (ptr !=  edge);
+            } while (ptr !=  edge);
         }
     }
 	PackAttibuteData();
@@ -1818,9 +1857,9 @@ void dgMeshEffect::UniformBoxMapping (dgInt32 material, const dgMatrix& textureM
     for (dgInt32 i = 0; i < 3; i ++) {
         dgMatrix rotationMatrix (dgGetIdentityMatrix());
         if (i == 1) {
-            rotationMatrix = dgYawMatrix(dgFloat32 (90.0f * dgDEG2RAD));
+            rotationMatrix = dgYawMatrix(dgFloat32 (90.0f * dgDegreeToRad));
         } else if (i == 2) {
-            rotationMatrix = dgPitchMatrix(dgFloat32 (90.0f * dgDEG2RAD));
+            rotationMatrix = dgPitchMatrix(dgFloat32 (90.0f * dgDegreeToRad));
         }
 
         dgPolyhedra::Iterator iter (*this);	

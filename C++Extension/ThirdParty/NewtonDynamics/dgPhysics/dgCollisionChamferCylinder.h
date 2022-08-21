@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -49,6 +49,8 @@ class dgCollisionChamferCylinder: public dgCollisionConvex
 	virtual void Serialize(dgSerialize callback, void* const userData) const;
 
 	static dgInt32 CalculateSignature (dgFloat32 radius, dgFloat32 height);
+
+	virtual void CalculateImplicitContacts(dgInt32 count, dgContactPoint* const contactPoints) const;
 	virtual dgVector SupportVertexSpecial (const dgVector& dir, dgFloat32 skinThickness, dgInt32* const vertexIndex) const;
 	virtual dgVector SupportVertexSpecialProjectPoint (const dgVector& point, const dgVector& dir) const;
 

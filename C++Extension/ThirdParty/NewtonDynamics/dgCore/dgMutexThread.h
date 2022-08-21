@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -33,15 +33,34 @@ class dgMutexThread: public dgThread
 
 	void Tick(); 
 	void Terminate(); 
-	bool IsBusy() const;
 
 	protected:
 	virtual void Execute (dgInt32 threadID);
 	virtual void TickCallback (dgInt32 threadID) = 0;
 
 	private:
-	dgInt32 m_isBusy;
 	dgSemaphore m_mutex;
+	dgSemaphore m_parentMutex;
 };
 
+
+class dgAsyncThread: public dgThread
+{
+	public:
+	dgAsyncThread(const char* const name, dgInt32 id);
+	virtual ~dgAsyncThread(void);
+
+	void Tick();
+	void Sync();
+	void Terminate();
+
+	protected:
+	virtual void Execute(dgInt32 threadID);
+	virtual void TickCallback(dgInt32 threadID) = 0;
+
+	private:
+	dgSemaphore m_mutex;
+	dgInt32 m_inUpdate;
+	dgInt32 m_beginUpdate;
+};
 #endif

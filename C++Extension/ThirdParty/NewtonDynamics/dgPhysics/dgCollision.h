@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -75,7 +75,7 @@ enum dgCollisionID
 };
 
 
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgCollisionInfo
 {
 	public:
@@ -87,10 +87,15 @@ class dgCollisionInfo
 			memset(this, 0, sizeof (dgInstanceMaterial));
 		}
 
-		void* m_userData;
-		dgInt32 m_userId;
-		dgInt32 m_userFlags;
-		dgFloat32 m_userParam[4];
+		dgInt64 m_userId;
+		union {
+			void* m_userData;
+			dgUnsigned64 m_alignPad;
+		};
+		union {
+			dgUnsigned64 m_intData;
+			dgFloat32 m_floatData;
+		} m_userParam[6];
 	};
 
 	struct dgBoxData
@@ -174,12 +179,8 @@ class dgCollisionInfo
 		dgFloat32 m_verticalScale;
 		dgFloat32 m_horizonalScale_x;
 		dgFloat32 m_horizonalScale_z;
-		dgFloat32 m_horizonalDisplacementScale_x;
-		dgFloat32 m_horizonalDisplacementScale_z;
 		void* m_elevation;
-		dgUnsigned16* m_horizotalDisplacement;
 		dgInt8* m_atributes;
-		
 	};
 
 	struct dgSceneData
@@ -207,16 +208,13 @@ class dgCollisionInfo
 		dgSceneData m_sceneCollision;
 		dgFloat32 m_paramArray[32];
 	};
-}DG_GCC_VECTOR_ALIGMENT;
+}DG_GCC_VECTOR_ALIGNMENT;
 
-
-
-
-DG_MSC_VECTOR_ALIGMENT
+DG_MSC_VECTOR_ALIGNMENT
 class dgCollision
 {
 	public:
-	typedef void (dgApi *OnDebugCollisionMeshCallback) (void* userData, int vertexCount, const dgFloat32* FaceArray, int faceId);
+	typedef void (dgApi *OnDebugCollisionMeshCallback) (void* userData, int vertexCount, const dgFloat32* faceArray, int faceId);
 
 	enum dgRTTI {
 		dgCollisionNull_RTTI						= 1<<0,
@@ -245,7 +243,7 @@ class dgCollision
 	
 	DG_CLASS_ALLOCATOR(allocator)
 	static dgUnsigned32 Quantize (dgFloat32 value);
-	static dgUnsigned32 Quantize( void* buffer, int size);
+	static dgUnsigned32 Quantize(const void* const buffer, int size);
 
 	// these function should be be virtual
 	dgInt32 IsType (dgRTTI type) const; 
@@ -279,6 +277,9 @@ class dgCollision
 	virtual void GetCollisionInfo(dgCollisionInfo* const info) const;
 	virtual void SerializeLow(dgSerialize callback, void* const userData) const;
 
+	virtual void CalculateImplicitContacts(dgInt32 count, dgContactPoint* const contactPoints) const {dgAssert (0);}
+
+
 	virtual dgInt32 GetConvexVertexCount() const; 
 
 	const dgCollision* AddRef () const;
@@ -302,7 +303,7 @@ class dgCollision
 
 	dgVector m_inertia;	
 	dgVector m_crossInertia;	
-	dgVector m_centerOfMass;	
+	dgVector m_centerOfMass;
 	dgVector m_boxSize;
 	dgVector m_boxOrigin;
 	dgInt32 m_rtti;
@@ -317,7 +318,7 @@ class dgCollision
 	friend class dgMinkowskiConv;
 	friend class dgCollisionInstance;
 	friend class dgCollisionCompound;
-}DG_GCC_VECTOR_ALIGMENT;
+}DG_GCC_VECTOR_ALIGNMENT;
 
 DG_INLINE dgCollisionID dgCollision::GetCollisionPrimityType () const
 {

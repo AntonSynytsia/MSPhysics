@@ -1,4 +1,4 @@
-/* Copyright (c) <2003-2016> <Julio Jerez, Newton Game Dynamics>
+/* Copyright (c) <2003-2019> <Julio Jerez, Newton Game Dynamics>
 * 
 * This software is provided 'as-is', without any express or implied
 * warranty. In no event will the authors be held liable for any damages
@@ -26,8 +26,8 @@
 
 dgMutexThread::dgMutexThread(const char* const name, dgInt32 id)
 	:dgThread(name, id)
-	,m_isBusy(0)
 	,m_mutex()
+	,m_parentMutex()
 {
 	Init ();
 }
@@ -46,31 +46,79 @@ void dgMutexThread::Terminate()
 	}
 } 
 
-
 void dgMutexThread::Execute (dgInt32 threadID)
 {
 	// suspend this tread until the call thread decide to 
 	dgAssert (threadID == m_id);
 	while (!m_terminate) {
 		// wait for the main thread to signal an update
-		SuspendExecution(m_mutex);
+		m_mutex.Wait();
 		if (!m_terminate) {
-			dgInterlockedExchange(&m_isBusy, 1);
 			TickCallback(threadID);
-			dgInterlockedExchange(&m_isBusy, 0);
 		}
+		m_parentMutex.Release();
 	}
-	dgInterlockedExchange(&m_isBusy, 0);
-}
-
-bool dgMutexThread::IsBusy() const
-{
-	return m_isBusy ? true : false;
 }
 
 void dgMutexThread::Tick()
 {
 	// let the thread run until the update function return  
 	m_mutex.Release();
+	m_parentMutex.Wait();
 }
 
+dgAsyncThread::dgAsyncThread(const char* const name, dgInt32 id)
+	:dgThread(name, id)
+	,m_mutex()
+	,m_inUpdate(0)
+	,m_beginUpdate(0)
+{
+	Init();
+}
+
+dgAsyncThread::~dgAsyncThread(void)
+{
+	Terminate();
+}
+
+void dgAsyncThread::Terminate()
+{
+	if (IsThreadActive()) {
+		dgInterlockedExchange(&m_terminate, 1);
+		m_mutex.Release();
+		Close();
+	}
+}
+
+void dgAsyncThread::Sync()
+{
+	while (m_inUpdate) {
+		dgThreadYield();
+	}
+}
+
+void dgAsyncThread::Tick()
+{
+	// let the thread run until the update function return  
+	Sync();
+	m_beginUpdate = 0;
+	m_mutex.Release();
+	while (!m_beginUpdate) {
+		dgThreadPause();
+	}
+}
+
+
+void dgAsyncThread::Execute(dgInt32 threadID)
+{
+	dgAssert(threadID == m_id);
+	while (!m_terminate) {
+		m_mutex.Wait();
+		if (!m_terminate) {
+			dgInterlockedExchange(&m_inUpdate, 1);
+			dgInterlockedExchange(&m_beginUpdate, 1);
+			TickCallback(threadID);
+			dgInterlockedExchange(&m_inUpdate, 0);
+		}
+	}
+}
