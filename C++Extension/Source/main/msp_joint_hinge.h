@@ -60,8 +60,8 @@ public:
             m_spring_drag(DEFAULT_SPRING_DRAG),
             m_start_angle(DEFAULT_START_ANGLE),
             m_controller(DEFAULT_CONTROLLER),
-            m_cur_omega(0.0f),
-            m_cur_alpha(0.0f),
+            m_cur_omega(0.0),
+            m_cur_alpha(0.0),
             m_desired_start_angle(DEFAULT_START_ANGLE * DEFAULT_CONTROLLER),
             m_temp_disable_limits(true)
         {

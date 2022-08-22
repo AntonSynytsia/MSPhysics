@@ -42,9 +42,9 @@ private:
             m_max_twist_angle(DEFAULT_MAX_TWIST_ANGLE),
             m_cone_limits_enabled(DEFAULT_CONE_LIMITS_ENABLED),
             m_twist_limits_enabled(DEFAULT_TWIST_LIMITS_ENABLED),
-            m_cur_cone_angle(0.0f),
-            m_cur_twist_omega(0.0f),
-            m_cur_twist_alpha(0.0f),
+            m_cur_cone_angle(0.0),
+            m_cur_twist_omega(0.0),
+            m_cur_twist_alpha(0.0),
             m_friction(DEFAULT_FRICTION),
             m_controller(DEFAULT_CONTROLLER)
         {

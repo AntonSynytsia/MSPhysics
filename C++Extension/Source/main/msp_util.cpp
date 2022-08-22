@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_util.h"
 
 /*
@@ -14,10 +15,10 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dVector Util::X_AXIS(1.0f, 0.0f, 0.0f, 0.0f);
-const dVector Util::Y_AXIS(0.0f, 1.0f, 0.0f, 0.0f);
-const dVector Util::Z_AXIS(0.0f, 0.0f, 1.0f, 0.0f);
-const dVector Util::ORIGIN(0.0f, 0.0f, 0.0f, 1.0f);
+const dVector Util::X_AXIS(1.0, 0.0, 0.0, 0.0);
+const dVector Util::Y_AXIS(0.0, 1.0, 0.0, 0.0);
+const dVector Util::Z_AXIS(0.0, 0.0, 1.0, 0.0);
+const dVector Util::ORIGIN(0.0, 0.0, 0.0, 1.0);
 
 
 /*
@@ -87,18 +88,30 @@ bool Util::s_validate_objects(true);
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-float Util::min_float(float a, float b) {
+dFloat Util::min_dFloat(dFloat a, dFloat b) {
+#ifdef _NEWTON_USE_DOUBLE
+    _mm_store_sd(&a, _mm_min_sd(_mm_set_sd(a), _mm_set_sd(b)));
+#else
     _mm_store_ss(&a, _mm_min_ss(_mm_set_ss(a), _mm_set_ss(b)));
+#endif
     return a;
 }
 
-float Util::max_float(float a, float b) {
+dFloat Util::max_dFloat(dFloat a, dFloat b) {
+#ifdef _NEWTON_USE_DOUBLE
+    _mm_store_sd(&a, _mm_max_sd(_mm_set_sd(a), _mm_set_sd(b)));
+#else
     _mm_store_ss(&a, _mm_max_ss(_mm_set_ss(a), _mm_set_ss(b)));
+#endif
     return a;
 }
 
-float Util::clamp_float(float val, float min_val, float max_val) {
+dFloat Util::clamp_dFloat(dFloat val, dFloat min_val, dFloat max_val) {
+#ifdef _NEWTON_USE_DOUBLE
+    _mm_store_sd(&val, _mm_min_sd(_mm_max_sd(_mm_set_sd(val), _mm_set_sd(min_val)), _mm_set_sd(max_val)));
+#else
     _mm_store_ss(&val, _mm_min_ss(_mm_max_ss(_mm_set_ss(val), _mm_set_ss(min_val)), _mm_set_ss(max_val)));
+#endif
     return val;
 }
 
@@ -274,10 +287,10 @@ dMatrix Util::value_to_matrix(VALUE value) {
         ma[i] = static_cast<dFloat>(rb_num2dbl(rb_ary_entry(v_matrix_ary, i)));
     // Extract global scale
     if (dAbs(ma[15]) > M_EPSILON) {
-        dFloat inv_wscale = 1.0f / ma[15];
+        dFloat inv_wscale = 1.0 / ma[15];
         for (unsigned int i = 0; i < 15; ++i)
             ma[i] *= inv_wscale;
-        ma[15] = 1.0f;
+        ma[15] = 1.0;
     }
     // Create matrix
     dMatrix matrix(ma);
@@ -324,7 +337,7 @@ void Util::set_vector_magnitude(dVector& vector, dFloat magnitude) {
 void Util::normalize_vector(dVector& vector) {
     dFloat m = get_vector_magnitude(vector);
     if (m > M_EPSILON) {
-        dFloat r = 1.0f / m;
+        dFloat r = 1.0 / m;
         vector.m_x *= r;
         vector.m_y *= r;
         vector.m_z *= r;
@@ -340,9 +353,9 @@ void Util::scale_vector(dVector& vector, dFloat scale) {
 }
 
 void Util::zero_out_vector(dVector& vector) {
-    vector.m_x = 0.0f;
-    vector.m_y = 0.0f;
-    vector.m_z = 0.0f;
+    vector.m_x = 0.0;
+    vector.m_y = 0.0;
+    vector.m_z = 0.0;
 }
 
 bool Util::vectors_identical(const dVector& a, const dVector& b) {
@@ -391,36 +404,36 @@ void Util::matrix_from_pin_dir(const dVector& pos, const dVector& dir, dMatrix& 
     if (dAbs(zaxis.m_z) > 0.9999995f) {
         //xaxis = Y_AXIS.CrossProduct(zaxis);
         xaxis.m_x = zaxis.m_z;
-        xaxis.m_y = 0.0f;
+        xaxis.m_y = 0.0;
         xaxis.m_z = -zaxis.m_x;
     }
     else {
         //xaxis = Z_AXIS.CrossProduct(zaxis);
         xaxis.m_x = -zaxis.m_y;
         xaxis.m_y = zaxis.m_x;
-        xaxis.m_z = 0.0f;
+        xaxis.m_z = 0.0;
     }
     Util::normalize_vector(xaxis);
     dVector yaxis(zaxis.CrossProduct(xaxis));
     Util::normalize_vector(yaxis);
     matrix_out.m_front = xaxis;
-    matrix_out.m_front.m_w = 0.0f;
+    matrix_out.m_front.m_w = 0.0;
     matrix_out.m_up = yaxis;
-    matrix_out.m_up.m_w = 0.0f;
+    matrix_out.m_up.m_w = 0.0;
     matrix_out.m_right = zaxis;
-    matrix_out.m_right.m_w = 0.0f;
+    matrix_out.m_right.m_w = 0.0;
     matrix_out.m_posit = pos;
-    matrix_out.m_posit.m_w = 1.0f;
+    matrix_out.m_posit.m_w = 1.0;
 }
 
 void Util::rotate_matrix_to_dir(const dMatrix& matrix, const dVector& dir, dMatrix& matrix_out) {
     // Determine the cross product between the z-axis of matrix 1 and the given dir.
     dVector dir1(matrix.m_right);
     Util::normalize_vector(dir1);
-    dir1.m_w = 0.0f;
+    dir1.m_w = 0.0;
     dVector dir2(dir);
     Util::normalize_vector(dir2);
-    dir2.m_w = 0.0f;
+    dir2.m_w = 0.0;
     dFloat cos_theta = dir1.DotProduct3(dir2);
     dVector normal;
     if (cos_theta > 0.9999995f) {
@@ -435,14 +448,14 @@ void Util::rotate_matrix_to_dir(const dMatrix& matrix, const dVector& dir, dMatr
     }
     //dVector normal(dir1.CrossProduct(dir2));
     Util::normalize_vector(normal);
-    normal.m_w = 0.0f;
+    normal.m_w = 0.0;
     // Develop two temporary matrices.
     dVector yaxis1(normal.CrossProduct(dir1));
     Util::normalize_vector(yaxis1);
-    yaxis1.m_w = 0.0f;
+    yaxis1.m_w = 0.0;
     dVector yaxis2(normal.CrossProduct(dir2));
     Util::normalize_vector(yaxis2);
-    yaxis2.m_w = 0.0f;
+    yaxis2.m_w = 0.0;
     dMatrix t1(dir1, yaxis1, normal, ORIGIN);
     dMatrix t2(dir2, yaxis2, normal, ORIGIN);
     // Unrotate matrix with respect to t1.
@@ -455,10 +468,10 @@ void Util::rotate_matrix_to_dir2(dMatrix& matrix, const dVector& dir) {
     // Determine the cross product between the z-axis of matrix 1 and the given dir.
     dVector dir1(matrix.m_right);
     Util::normalize_vector(dir1);
-    dir1.m_w = 0.0f;
+    dir1.m_w = 0.0;
     dVector dir2(dir);
     Util::normalize_vector(dir2);
-    dir2.m_w = 0.0f;
+    dir2.m_w = 0.0;
     dFloat cos_theta = dir1.DotProduct3(dir2);
     dVector normal;
     if (cos_theta > 0.9999995f)
@@ -469,14 +482,14 @@ void Util::rotate_matrix_to_dir2(dMatrix& matrix, const dVector& dir) {
         normal = dir1.CrossProduct(dir2);
     //dVector normal(dir1.CrossProduct(dir2));
     Util::normalize_vector(normal);
-    normal.m_w = 0.0f;
+    normal.m_w = 0.0;
     // Develop two temporary matrices.
     dVector yaxis1(normal.CrossProduct(dir1));
     Util::normalize_vector(yaxis1);
-    yaxis1.m_w = 0.0f;
+    yaxis1.m_w = 0.0;
     dVector yaxis2(normal.CrossProduct(dir2));
     Util::normalize_vector(yaxis2);
-    yaxis2.m_w = 0.0f;
+    yaxis2.m_w = 0.0;
     dMatrix t1(dir1, yaxis1, normal, ORIGIN);
     dMatrix t2(dir2, yaxis2, normal, ORIGIN);
     // Unrotate matrix with respect to t1.
@@ -494,7 +507,7 @@ dVector Util::rotate_vector(const dVector& vector, const dVector& normal, const 
     dFloat mag = dSqrt(loc_vector.m_x * loc_vector.m_x + loc_vector.m_y * loc_vector.m_y);
     if (mag < 1.0e-8f)
         return dVector(vector);
-    dFloat theta = dAcos(Util::clamp_float(loc_vector.m_x/mag, -1.0f, 1.0f));
+    dFloat theta = dAcos(Util::clamp_dFloat(loc_vector.m_x/mag, -1.0, 1.0));
     if (loc_vector.m_y < 0)
         theta = -theta;
     theta += angle;

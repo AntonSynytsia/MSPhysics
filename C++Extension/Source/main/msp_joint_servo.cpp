@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_joint_servo.h"
 #include "msp_world.h"
 
@@ -15,13 +16,13 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dFloat MSP::Servo::DEFAULT_MIN(-180.0f * M_DEG_TO_RAD);
-const dFloat MSP::Servo::DEFAULT_MAX(180.0f * M_DEG_TO_RAD);
+const dFloat MSP::Servo::DEFAULT_MIN(-180.0 * M_DEG_TO_RAD);
+const dFloat MSP::Servo::DEFAULT_MAX(180.0 * M_DEG_TO_RAD);
 const bool MSP::Servo::DEFAULT_LIMITS_ENABLED(false);
-const dFloat MSP::Servo::DEFAULT_RATE(360.0f * M_DEG_TO_RAD);
-const dFloat MSP::Servo::DEFAULT_POWER(0.0f);
+const dFloat MSP::Servo::DEFAULT_RATE(360.0 * M_DEG_TO_RAD);
+const dFloat MSP::Servo::DEFAULT_POWER(0.0);
 const dFloat MSP::Servo::DEFAULT_REDUCTION_RATIO(0.1f);
-const dFloat MSP::Servo::DEFAULT_CONTROLLER(0.0f);
+const dFloat MSP::Servo::DEFAULT_CONTROLLER(0.0);
 const bool MSP::Servo::DEFAULT_CONTROLLER_ENABLED(false);
 
 
@@ -35,7 +36,7 @@ void MSP::Servo::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     ServoData* cj_data = reinterpret_cast<ServoData*>(joint_data->m_cj_data);
 
-    dFloat inv_timestep = 1.0f / timestep;
+    dFloat inv_timestep = 1.0 / timestep;
 
     // Calculate position of pivot points and Jacobian direction vectors in global space.
     dMatrix matrix0, matrix1;
@@ -92,12 +93,12 @@ void MSP::Servo::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
         }
         else if (cur_angle < cj_data->m_min_ang) {
             NewtonUserJointAddAngularRow(joint, cj_data->m_min_ang - cur_angle + Joint::ANGULAR_LIMIT_EPSILON, &matrix1.m_right[0]);
-            NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMinimumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else if (cur_angle > cj_data->m_max_ang) {
             NewtonUserJointAddAngularRow(joint, cj_data->m_max_ang - cur_angle - Joint::ANGULAR_LIMIT_EPSILON, &matrix1.m_right[0]);
-            NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMaximumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else
@@ -109,7 +110,7 @@ void MSP::Servo::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
     if (bcontinue) {
         if (cj_data->m_controller_enabled) {
             // Control by angle
-            dFloat des_angle = cj_data->m_limits_enabled ? Util::clamp_float(cj_data->m_controller, cj_data->m_min_ang, cj_data->m_max_ang) : cj_data->m_controller;
+            dFloat des_angle = cj_data->m_limits_enabled ? Util::clamp_dFloat(cj_data->m_controller, cj_data->m_min_ang, cj_data->m_max_ang) : cj_data->m_controller;
             dFloat rel_angle = des_angle - cur_angle;
             dFloat mrt = cj_data->m_rate * cj_data->m_reduction_ratio;
             dFloat des_omega = rel_angle * inv_timestep;
@@ -128,9 +129,9 @@ void MSP::Servo::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
         }
         else {
             // Add angular row
-            NewtonUserJointAddAngularRow(joint, 0.0f, &matrix1.m_right[0]);
+            NewtonUserJointAddAngularRow(joint, 0.0, &matrix1.m_right[0]);
         }
-        if (cj_data->m_power == 0.0f) {
+        if (cj_data->m_power == 0.0) {
             NewtonUserJointSetRowMinimumFriction(joint, -Joint::CUSTOM_LARGE_VALUE);
             NewtonUserJointSetRowMaximumFriction(joint, Joint::CUSTOM_LARGE_VALUE);
         }
@@ -146,17 +147,17 @@ void MSP::Servo::get_info(const NewtonJoint* const joint, NewtonJointRecord* con
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     ServoData* cj_data = reinterpret_cast<ServoData*>(joint_data->m_cj_data);
 
-    info->m_minLinearDof[0] = -0.0f;
-    info->m_maxLinearDof[0] = 0.0f;
-    info->m_minLinearDof[1] = -0.0f;
-    info->m_maxLinearDof[1] = 0.0f;
-    info->m_minLinearDof[2] = -0.0f;
-    info->m_maxLinearDof[2] = 0.0f;
+    info->m_minLinearDof[0] = -0.0;
+    info->m_maxLinearDof[0] = 0.0;
+    info->m_minLinearDof[1] = -0.0;
+    info->m_maxLinearDof[1] = 0.0;
+    info->m_minLinearDof[2] = -0.0;
+    info->m_maxLinearDof[2] = 0.0;
 
-    info->m_minAngularDof[0] = -0.0f;
-    info->m_maxAngularDof[0] = 0.0f;
-    info->m_minAngularDof[1] = -0.0f;
-    info->m_maxAngularDof[1] = 0.0f;
+    info->m_minAngularDof[0] = -0.0;
+    info->m_maxAngularDof[0] = 0.0;
+    info->m_minAngularDof[1] = -0.0;
+    info->m_maxAngularDof[1] = 0.0;
 
     if (cj_data->m_limits_enabled) {
         info->m_minAngularDof[2] = (cj_data->m_min_ang - cj_data->m_ai->get_angle()) * M_RAD_TO_DEG;
@@ -174,9 +175,9 @@ void MSP::Servo::on_destroy(MSP::Joint::JointData* joint_data) {
 
 void MSP::Servo::on_disconnect(MSP::Joint::JointData* joint_data) {
     ServoData* cj_data = reinterpret_cast<ServoData*>(joint_data->m_cj_data);
-    cj_data->m_ai->set_angle(0.0f);
-    cj_data->m_cur_omega = 0.0f;
-    cj_data->m_cur_alpha = 0.0f;
+    cj_data->m_ai->set_angle(0.0);
+    cj_data->m_cur_omega = 0.0;
+    cj_data->m_cur_alpha = 0.0;
 }
 
 void MSP::Servo::adjust_pin_matrix_proc(MSP::Joint::JointData* joint_data, dMatrix& pin_matrix) {
@@ -186,7 +187,7 @@ void MSP::Servo::adjust_pin_matrix_proc(MSP::Joint::JointData* joint_data, dMatr
     NewtonBodyGetCentreOfMass(joint_data->m_child, &centre[0]);
     centre = matrix.TransformVector(centre);
     centre = pin_matrix.UntransformVector(centre);
-    dVector point(0.0f, 0.0f, centre.m_z);
+    dVector point(0.0, 0.0, centre.m_z);
     pin_matrix.m_posit = pin_matrix.TransformVector(point);
 }
 
@@ -283,7 +284,7 @@ VALUE MSP::Servo::rbf_get_rate(VALUE self, VALUE v_joint) {
 VALUE MSP::Servo::rbf_set_rate(VALUE self, VALUE v_joint, VALUE v_rate) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::SERVO);
     ServoData* cj_data = reinterpret_cast<ServoData*>(joint_data->m_cj_data);
-    cj_data->m_rate = Util::max_float(Util::value_to_dFloat(v_rate), 0.0f);
+    cj_data->m_rate = Util::max_dFloat(Util::value_to_dFloat(v_rate), 0.0);
     return Qnil;
 }
 
@@ -296,7 +297,7 @@ VALUE MSP::Servo::rbf_get_power(VALUE self, VALUE v_joint) {
 VALUE MSP::Servo::rbf_set_power(VALUE self, VALUE v_joint, VALUE v_power) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::SERVO);
     ServoData* cj_data = reinterpret_cast<ServoData*>(joint_data->m_cj_data);
-    cj_data->m_power = Util::max_float(Util::value_to_dFloat(v_power) * M_METER2_TO_INCH2, 0.0f);
+    cj_data->m_power = Util::max_dFloat(Util::value_to_dFloat(v_power) * M_METER2_TO_INCH2, 0.0);
     return Qnil;
 }
 
@@ -309,7 +310,7 @@ VALUE MSP::Servo::rbf_get_reduction_ratio(VALUE self, VALUE v_joint) {
 VALUE MSP::Servo::rbf_set_reduction_ratio(VALUE self, VALUE v_joint, VALUE v_reduction_ratio) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::SERVO);
     ServoData* cj_data = reinterpret_cast<ServoData*>(joint_data->m_cj_data);
-    cj_data->m_reduction_ratio = Util::clamp_float(Util::value_to_dFloat(v_reduction_ratio), 0.0f, 1.0f);
+    cj_data->m_reduction_ratio = Util::clamp_dFloat(Util::value_to_dFloat(v_reduction_ratio), 0.0, 1.0);
     return Qnil;
 }
 

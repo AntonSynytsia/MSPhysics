@@ -31,8 +31,8 @@ private:
         bool m_free_rotate_enabled;
         dFloat m_controller;
         MotorData() :
-            m_cur_omega(0.0f),
-            m_cur_alpha (0.0f),
+            m_cur_omega(0.0),
+            m_cur_alpha (0.0),
             m_accel(DEFAULT_ACCEL),
             m_damp(DEFAULT_DAMP),
             m_free_rotate_enabled(DEFAULT_FREE_ROTATE_ENABLED),

@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_gear.h"
 #include "msp_joint.h"
 #include "msp_world.h"
@@ -16,7 +17,7 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dFloat MSP::Gear::DEFAULT_RATIO(1.0f);
+const dFloat MSP::Gear::DEFAULT_RATIO(1.0);
 
 
 /*
@@ -56,7 +57,7 @@ MSP::Gear::GearData* MSP::Gear::c_create(const NewtonWorld* world, MSP::Joint::J
         rb_raise(rb_eTypeError, "The given joints may not reference the same joint!");
     if (!c_are_joints_gearable(joint_data1, joint_data2) && !c_are_joints_gearable(joint_data2, joint_data1))
         rb_raise(rb_eTypeError, "Cannot create gear between %s and %s!", MSP::Joint::JOINT_NAMES[joint_data1->m_jtype], MSP::Joint::JOINT_NAMES[joint_data2->m_jtype]);
-    GearData* gear_data = new GearData(world, joint_data1, joint_data2, 0.0f, 0.0f);
+    GearData* gear_data = new GearData(world, joint_data1, joint_data2, 0.0, 0.0);
     s_valid_gears.insert(gear_data);
     return gear_data;
 }

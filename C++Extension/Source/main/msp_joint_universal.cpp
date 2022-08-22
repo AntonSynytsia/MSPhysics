@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_joint_universal.h"
 #include "msp_world.h"
 
@@ -15,11 +16,11 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dFloat MSP::Universal::DEFAULT_MIN(-180.0f * M_DEG_TO_RAD);
-const dFloat MSP::Universal::DEFAULT_MAX(180.0f * M_DEG_TO_RAD);
+const dFloat MSP::Universal::DEFAULT_MIN(-180.0 * M_DEG_TO_RAD);
+const dFloat MSP::Universal::DEFAULT_MAX(180.0 * M_DEG_TO_RAD);
 const bool MSP::Universal::DEFAULT_LIMITS_ENABLED(false);
-const dFloat MSP::Universal::DEFAULT_FRICTION(0.0f);
-const dFloat MSP::Universal::DEFAULT_CONTROLLER(1.0f);
+const dFloat MSP::Universal::DEFAULT_FRICTION(0.0);
+const dFloat MSP::Universal::DEFAULT_CONTROLLER(1.0);
 
 
 /*
@@ -32,7 +33,7 @@ void MSP::Universal::submit_constraints(const NewtonJoint* joint, dFloat timeste
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     UniversalData* cj_data = reinterpret_cast<UniversalData*>(joint_data->m_cj_data);
 
-    dFloat inv_timestep = 1.0f / timestep;
+    dFloat inv_timestep = 1.0 / timestep;
 
     // Calculate position of pivot points and Jacobian direction vectors in global space.
     dMatrix matrix0, matrix1;
@@ -52,12 +53,12 @@ void MSP::Universal::submit_constraints(const NewtonJoint* joint, dFloat timeste
     dMatrix matrix1_1;
     matrix1_1.m_front = matrix1.m_front;
     matrix1_1.m_up = matrix0.m_right.CrossProduct(matrix1.m_front);
-    matrix1_1.m_up = matrix1_1.m_up.Scale(1.0f / dSqrt(matrix1_1.m_up.DotProduct3(matrix1_1.m_up)));
+    matrix1_1.m_up = matrix1_1.m_up.Scale(1.0 / dSqrt(matrix1_1.m_up.DotProduct3(matrix1_1.m_up)));
     matrix1_1.m_right = matrix1_1.m_front.CrossProduct(matrix1_1.m_up);
 
     // Override the normal right side because the joint is too week due two centripetal accelerations
-    dVector omega0(0.0f);
-    dVector omega1(0.0f);
+    dVector omega0(0.0);
+    dVector omega1(0.0);
     NewtonBodyGetOmega(joint_data->m_child, &omega0[0]);
     if (joint_data->m_parent != nullptr)
         NewtonBodyGetOmega(joint_data->m_parent, &omega1[0]);
@@ -98,12 +99,12 @@ void MSP::Universal::submit_constraints(const NewtonJoint* joint, dFloat timeste
         }
         else if (cur_angle1 < cj_data->m_min1) {
             NewtonUserJointAddAngularRow(joint, cj_data->m_min1 - cur_angle1 + Joint::ANGULAR_LIMIT_EPSILON, &matrix0.m_right[0]);
-            NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMinimumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else if (cur_angle1 > cj_data->m_max1) {
             NewtonUserJointAddAngularRow(joint, cj_data->m_max1 - cur_angle1 - Joint::ANGULAR_LIMIT_EPSILON, &matrix0.m_right[0]);
-            NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMaximumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else
@@ -112,7 +113,7 @@ void MSP::Universal::submit_constraints(const NewtonJoint* joint, dFloat timeste
     else
         bcontinue = true;
     if (bcontinue) {
-        NewtonUserJointAddAngularRow(joint, 0.0f, &matrix0.m_right[0]);
+        NewtonUserJointAddAngularRow(joint, 0.0, &matrix0.m_right[0]);
         NewtonUserJointSetRowAcceleration(joint, -cj_data->m_cur_omega1 * inv_timestep);
         dFloat power = cj_data->m_friction * dAbs(cj_data->m_controller);
         NewtonUserJointSetRowMinimumFriction(joint, -power);
@@ -133,12 +134,12 @@ void MSP::Universal::submit_constraints(const NewtonJoint* joint, dFloat timeste
         }
         else if (cur_angle2 < cj_data->m_min2) {
             NewtonUserJointAddAngularRow(joint, cj_data->m_min2 - cur_angle2 + Joint::ANGULAR_LIMIT_EPSILON, &matrix0.m_front[0]);
-            NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMinimumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else if (cur_angle2 > cj_data->m_max2) {
             NewtonUserJointAddAngularRow(joint, cj_data->m_max2 - cur_angle2 - Joint::ANGULAR_LIMIT_EPSILON, &matrix0.m_front[0]);
-            NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMaximumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else
@@ -147,7 +148,7 @@ void MSP::Universal::submit_constraints(const NewtonJoint* joint, dFloat timeste
     else
         bcontinue = true;
     if (bcontinue) {
-        NewtonUserJointAddAngularRow(joint, 0.0f, &matrix0.m_front[0]);
+        NewtonUserJointAddAngularRow(joint, 0.0, &matrix0.m_front[0]);
         NewtonUserJointSetRowAcceleration(joint, -cj_data->m_cur_omega2 * inv_timestep);
         dFloat power = cj_data->m_friction * dAbs(cj_data->m_controller);
         NewtonUserJointSetRowMinimumFriction(joint, -power);
@@ -160,12 +161,12 @@ void MSP::Universal::get_info(const NewtonJoint* const joint, NewtonJointRecord*
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     UniversalData* cj_data = reinterpret_cast<UniversalData*>(joint_data->m_cj_data);
 
-    info->m_minLinearDof[0] = -0.0f;
-    info->m_maxLinearDof[0] = 0.0f;
-    info->m_minLinearDof[1] = -0.0f;
-    info->m_maxLinearDof[1] = 0.0f;
-    info->m_minLinearDof[2] = -0.0f;
-    info->m_maxLinearDof[2] = 0.0f;
+    info->m_minLinearDof[0] = -0.0;
+    info->m_maxLinearDof[0] = 0.0;
+    info->m_minLinearDof[1] = -0.0;
+    info->m_maxLinearDof[1] = 0.0;
+    info->m_minLinearDof[2] = -0.0;
+    info->m_maxLinearDof[2] = 0.0;
 
     if (cj_data->m_limits2_enabled) {
         info->m_minAngularDof[0] = (cj_data->m_min2 - cj_data->m_ai2->get_angle()) * M_RAD_TO_DEG;
@@ -176,8 +177,8 @@ void MSP::Universal::get_info(const NewtonJoint* const joint, NewtonJointRecord*
         info->m_maxAngularDof[0] = Joint::CUSTOM_LARGE_VALUE;
     }
 
-    info->m_minAngularDof[1] = -0.0f;
-    info->m_maxAngularDof[1] = 0.0f;
+    info->m_minAngularDof[1] = -0.0;
+    info->m_maxAngularDof[1] = 0.0;
 
     if (cj_data->m_limits1_enabled) {
         info->m_minAngularDof[2] = (cj_data->m_min1 - cj_data->m_ai1->get_angle()) * M_RAD_TO_DEG;
@@ -195,12 +196,12 @@ void MSP::Universal::on_destroy(MSP::Joint::JointData* joint_data) {
 
 void MSP::Universal::on_disconnect(MSP::Joint::JointData* joint_data) {
     UniversalData* cj_data = reinterpret_cast<UniversalData*>(joint_data->m_cj_data);
-    cj_data->m_ai1->set_angle(0.0f);
-    cj_data->m_cur_omega1 = 0.0f;
-    cj_data->m_cur_alpha1 = 0.0f;
-    cj_data->m_ai2->set_angle(0.0f);
-    cj_data->m_cur_omega2 = 0.0f;
-    cj_data->m_cur_alpha2 = 0.0f;
+    cj_data->m_ai1->set_angle(0.0);
+    cj_data->m_cur_omega1 = 0.0;
+    cj_data->m_cur_alpha1 = 0.0;
+    cj_data->m_ai2->set_angle(0.0);
+    cj_data->m_cur_omega2 = 0.0;
+    cj_data->m_cur_alpha2 = 0.0;
 }
 
 
@@ -353,7 +354,7 @@ VALUE MSP::Universal::rbf_get_friction(VALUE self, VALUE v_joint) {
 VALUE MSP::Universal::rbf_set_friction(VALUE self, VALUE v_joint, VALUE v_friction) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::UNIVERSAL);
     UniversalData* cj_data = reinterpret_cast<UniversalData*>(joint_data->m_cj_data);
-    cj_data->m_friction = Util::max_float(Util::value_to_dFloat(v_friction) * M_METER2_TO_INCH2, 0.0f);
+    cj_data->m_friction = Util::max_dFloat(Util::value_to_dFloat(v_friction) * M_METER2_TO_INCH2, 0.0);
     return Qnil;
 }
 

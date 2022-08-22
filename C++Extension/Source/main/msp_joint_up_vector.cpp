@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_joint_up_vector.h"
 
 /*
@@ -14,9 +15,9 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dVector MSP::UpVector::DEFAULT_PIN_DIR(0.0f, 0.0f, 1.0f);
-const dFloat MSP::UpVector::DEFAULT_ACCEL(40.0f);
-const dFloat MSP::UpVector::DEFAULT_DAMP(10.0f);
+const dVector MSP::UpVector::DEFAULT_PIN_DIR(0.0, 0.0, 1.0);
+const dFloat MSP::UpVector::DEFAULT_ACCEL(40.0);
+const dFloat MSP::UpVector::DEFAULT_DAMP(10.0);
 const dFloat MSP::UpVector::DEFAULT_STRENGTH(0.9f);
 
 
@@ -30,7 +31,7 @@ void MSP::UpVector::submit_constraints(const NewtonJoint* joint, dFloat timestep
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     UpVectorData* cj_data = reinterpret_cast<UpVectorData*>(joint_data->m_cj_data);
 
-    dFloat inv_timestep = 1.0f / timestep;
+    dFloat inv_timestep = 1.0 / timestep;
 
     // Calculate position of pivot points and Jacobian direction vectors in global space.
     dMatrix matrix0, matrix1;
@@ -49,7 +50,7 @@ void MSP::UpVector::submit_constraints(const NewtonJoint* joint, dFloat timestep
     dFloat cur_omega_x = (cj_data->m_cone_angle_x - last_cone_angle_x) * inv_timestep;
     dFloat cur_omega_y = (cj_data->m_cone_angle_y - last_cone_angle_y) * inv_timestep;
 
-    dFloat stiffness = 0.999f - (1.0f - joint_data->m_stiffness_ratio * cj_data->m_strength) * Joint::DEFAULT_STIFFNESS_RANGE;
+    dFloat stiffness = 0.999f - (1.0 - joint_data->m_stiffness_ratio * cj_data->m_strength) * Joint::DEFAULT_STIFFNESS_RANGE;
 
     // Add cone omegas
     NewtonUserJointAddAngularRow(joint, cj_data->m_cone_angle_x, &pin_matrix.m_front[0]);
@@ -71,10 +72,10 @@ void MSP::UpVector::get_info(const NewtonJoint* const joint, NewtonJointRecord* 
     info->m_minLinearDof[2] = -Joint::CUSTOM_LARGE_VALUE;
     info->m_maxLinearDof[2] = Joint::CUSTOM_LARGE_VALUE;
 
-    info->m_minAngularDof[0] = -0.0f;
-    info->m_maxAngularDof[0] = 0.0f;
-    info->m_minAngularDof[1] = -0.0f;
-    info->m_maxAngularDof[1] = 0.0f;
+    info->m_minAngularDof[0] = -0.0;
+    info->m_maxAngularDof[0] = 0.0;
+    info->m_minAngularDof[1] = -0.0;
+    info->m_maxAngularDof[1] = 0.0;
     info->m_minAngularDof[2] = -Joint::CUSTOM_LARGE_VALUE;
     info->m_maxAngularDof[2] = Joint::CUSTOM_LARGE_VALUE;
 }
@@ -85,8 +86,8 @@ void MSP::UpVector::on_destroy(MSP::Joint::JointData* joint_data) {
 
 void MSP::UpVector::on_disconnect(MSP::Joint::JointData* joint_data) {
     UpVectorData* cj_data = reinterpret_cast<UpVectorData*>(joint_data->m_cj_data);
-    cj_data->m_cone_angle_x = 0.0f;
-    cj_data->m_cone_angle_y = 0.0f;
+    cj_data->m_cone_angle_x = 0.0;
+    cj_data->m_cone_angle_y = 0.0;
 }
 
 
@@ -148,7 +149,7 @@ VALUE MSP::UpVector::rbf_get_accel(VALUE self, VALUE v_joint) {
 VALUE MSP::UpVector::rbf_set_accel(VALUE self, VALUE v_joint, VALUE v_accel) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::UP_VECTOR);
     UpVectorData* cj_data = reinterpret_cast<UpVectorData*>(joint_data->m_cj_data);
-    cj_data->m_accel = Util::max_float(Util::value_to_dFloat(v_accel), 0.0f);
+    cj_data->m_accel = Util::max_dFloat(Util::value_to_dFloat(v_accel), 0.0);
     return Qnil;
 }
 
@@ -161,7 +162,7 @@ VALUE MSP::UpVector::rbf_get_damp(VALUE self, VALUE v_joint) {
 VALUE MSP::UpVector::rbf_set_damp(VALUE self, VALUE v_joint, VALUE v_damp) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::UP_VECTOR);
     UpVectorData* cj_data = reinterpret_cast<UpVectorData*>(joint_data->m_cj_data);
-    cj_data->m_damp = Util::max_float(Util::value_to_dFloat(v_damp), 0.0f);
+    cj_data->m_damp = Util::max_dFloat(Util::value_to_dFloat(v_damp), 0.0);
     return Qnil;
 }
 
@@ -174,7 +175,7 @@ VALUE MSP::UpVector::rbf_get_strength(VALUE self, VALUE v_joint) {
 VALUE MSP::UpVector::rbf_set_strength(VALUE self, VALUE v_joint, VALUE v_strength) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::UP_VECTOR);
     UpVectorData* cj_data = reinterpret_cast<UpVectorData*>(joint_data->m_cj_data);
-    cj_data->m_strength = Util::clamp_float(Util::value_to_dFloat(v_strength), 0.0f, 1.0f);
+    cj_data->m_strength = Util::clamp_dFloat(Util::value_to_dFloat(v_strength), 0.0, 1.0);
     return Qnil;
 }
 

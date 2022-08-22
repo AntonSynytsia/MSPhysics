@@ -84,9 +84,6 @@ Do the following when updating NewtonDynamics:
 #define MSP_H
 
 #include "msp_util.h"
-#include <set>
-#include <map>
-#include <vector>
 
 // Comment out if SDL is not needed
 #define MSP_USE_SDL

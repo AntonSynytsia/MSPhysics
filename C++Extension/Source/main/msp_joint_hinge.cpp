@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_joint_hinge.h"
 #include "msp_world.h"
 #include "msp_body.h"
@@ -16,18 +17,18 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dFloat MSP::Hinge::DEFAULT_MIN(-180.0f * M_DEG_TO_RAD);
-const dFloat MSP::Hinge::DEFAULT_MAX(180.0f * M_DEG_TO_RAD);
+const dFloat MSP::Hinge::DEFAULT_MIN(-180.0 * M_DEG_TO_RAD);
+const dFloat MSP::Hinge::DEFAULT_MAX(180.0 * M_DEG_TO_RAD);
 const bool MSP::Hinge::DEFAULT_LIMITS_ENABLED(false);
 const int MSP::Hinge::DEFAULT_MODE(0);
-const dFloat MSP::Hinge::DEFAULT_FRICTION(0.0f);
-const dFloat MSP::Hinge::DEFAULT_ACCEL(40.0f);
+const dFloat MSP::Hinge::DEFAULT_FRICTION(0.0);
+const dFloat MSP::Hinge::DEFAULT_ACCEL(40.0);
 const dFloat MSP::Hinge::DEFAULT_DAMP(0.1f);
 const dFloat MSP::Hinge::DEFAULT_STRENGTH(0.8f);
-const dFloat MSP::Hinge::DEFAULT_SPRING_CONSTANT(40.0f);
-const dFloat MSP::Hinge::DEFAULT_SPRING_DRAG(1.0f);
-const dFloat MSP::Hinge::DEFAULT_START_ANGLE(0.0f);
-const dFloat MSP::Hinge::DEFAULT_CONTROLLER(1.0f);
+const dFloat MSP::Hinge::DEFAULT_SPRING_CONSTANT(40.0);
+const dFloat MSP::Hinge::DEFAULT_SPRING_DRAG(1.0);
+const dFloat MSP::Hinge::DEFAULT_START_ANGLE(0.0);
+const dFloat MSP::Hinge::DEFAULT_CONTROLLER(1.0);
 
 
 /*
@@ -40,7 +41,7 @@ void MSP::Hinge::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     HingeData* cj_data = reinterpret_cast<HingeData*>(joint_data->m_cj_data);
 
-    dFloat inv_timestep = 1.0f / timestep;
+    dFloat inv_timestep = 1.0 / timestep;
 
     // Calculate position of pivot points and Jacobian direction vectors in global space.
     dMatrix matrix0, matrix1;
@@ -78,13 +79,21 @@ void MSP::Hinge::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
 
     NewtonUserJointAddLinearRow(joint, &q0[0], &q1[0], &matrix0.m_up[0]);
     NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);*/
-    NewtonUserJointAddAngularRow(joint, Joint::c_calculate_angle2(matrix0.m_right, matrix1.m_right, matrix1.m_front), &matrix1.m_front[0]);
-    //NewtonUserJointSetRowSpringDamperAcceleration(joint, joint_data->m_stiffness, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
+    dFloat angle0 = Joint::c_calculate_angle2(matrix0.m_right, matrix1.m_right, matrix1.m_front);
+    NewtonUserJointAddAngularRow(joint, angle0, &matrix1.m_front[0]);
     NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
+    if (dAbs(angle0) > joint_data->m_max_angle_error) {
+		const dFloat alpha = NewtonUserJointCalculateRowZeroAcceleration(joint) + dFloat(0.25f) * angle0 / (timestep * timestep);
+		NewtonUserJointSetRowAcceleration(joint, alpha);
+	}
 
-    NewtonUserJointAddAngularRow(joint, Joint::c_calculate_angle2(matrix0.m_right, matrix1.m_right, matrix1.m_up), &matrix1.m_up[0]);
-    //NewtonUserJointSetRowSpringDamperAcceleration(joint, joint_data->m_stiffness, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP);
+    dFloat angle1 = Joint::c_calculate_angle2(matrix0.m_right, matrix1.m_right, matrix1.m_up);
+    NewtonUserJointAddAngularRow(joint, angle1, &matrix1.m_up[0]);
     NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
+    if (dAbs(angle1) > joint_data->m_max_angle_error) {
+		const dFloat alpha = NewtonUserJointCalculateRowZeroAcceleration(joint) + dFloat(0.25f) * angle1 / (timestep * timestep);
+		NewtonUserJointSetRowAcceleration(joint, alpha);
+	}
 
     // Check if need to re-enable limits.
     if (cj_data->m_temp_disable_limits && cur_angle >= cj_data->m_min_ang && cur_angle <= cj_data->m_max_ang)
@@ -103,12 +112,12 @@ void MSP::Hinge::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
         }
         else if (cur_angle < cj_data->m_min_ang) {
             NewtonUserJointAddAngularRow(joint, cj_data->m_min_ang - cur_angle + Joint::ANGULAR_LIMIT_EPSILON, &matrix1.m_right[0]);
-            NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMinimumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else if (cur_angle > cj_data->m_max_ang) {
             NewtonUserJointAddAngularRow(joint, cj_data->m_max_ang - cur_angle - Joint::ANGULAR_LIMIT_EPSILON, &matrix1.m_right[0]);
-            NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMaximumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else
@@ -129,20 +138,20 @@ void MSP::Hinge::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
                 force_dir = matrix0.m_right.Scale(-force);
                 MSP::Body::c_body_add_torque(pbody_data, &force_dir[0]);
             }
-            //NewtonUserJointSetRowAcceleration(joint, 0.0f);
-            NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
-            NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
+            //NewtonUserJointSetRowAcceleration(joint, 0.0);
+            NewtonUserJointSetRowMinimumFriction(joint, 0.0);
+            NewtonUserJointSetRowMaximumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else if (cj_data->m_mode == 1) {
             NewtonUserJointAddAngularRow(joint, cur_angle, &matrix1.m_right[0]);
             dFloat accel = cj_data->m_accel * -cur_angle - cj_data->m_cur_omega * inv_timestep * cj_data->m_damp;
             NewtonUserJointSetRowAcceleration(joint, accel);
-            dFloat stiffness = 0.999f - (1.0f - joint_data->m_stiffness_ratio * cj_data->m_strength) * Joint::DEFAULT_STIFFNESS_RANGE;
+            dFloat stiffness = 0.999f - (1.0 - joint_data->m_stiffness_ratio * cj_data->m_strength) * Joint::DEFAULT_STIFFNESS_RANGE;
             NewtonUserJointSetRowStiffness(joint, stiffness);
         }
         else {
-            NewtonUserJointAddAngularRow(joint, 0.0f, &matrix1.m_right[0]);
+            NewtonUserJointAddAngularRow(joint, 0.0, &matrix1.m_right[0]);
             NewtonUserJointSetRowAcceleration(joint, -cj_data->m_cur_omega * inv_timestep);
             dFloat power = cj_data->m_friction * dAbs(cj_data->m_controller);
             NewtonUserJointSetRowMinimumFriction(joint, -power);
@@ -156,17 +165,17 @@ void MSP::Hinge::get_info(const NewtonJoint* const joint, NewtonJointRecord* con
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     HingeData* cj_data = reinterpret_cast<HingeData*>(joint_data->m_cj_data);
 
-    info->m_minLinearDof[0] = -0.0f;
-    info->m_maxLinearDof[0] = 0.0f;
-    info->m_minLinearDof[1] = -0.0f;
-    info->m_maxLinearDof[1] = 0.0f;
-    info->m_minLinearDof[2] = -0.0f;
-    info->m_maxLinearDof[2] = 0.0f;
+    info->m_minLinearDof[0] = -0.0;
+    info->m_maxLinearDof[0] = 0.0;
+    info->m_minLinearDof[1] = -0.0;
+    info->m_maxLinearDof[1] = 0.0;
+    info->m_minLinearDof[2] = -0.0;
+    info->m_maxLinearDof[2] = 0.0;
 
-    info->m_minAngularDof[0] = -0.0f;
-    info->m_maxAngularDof[0] = 0.0f;
-    info->m_minAngularDof[1] = -0.0f;
-    info->m_maxAngularDof[1] = 0.0f;
+    info->m_minAngularDof[0] = -0.0;
+    info->m_maxAngularDof[0] = 0.0;
+    info->m_minAngularDof[1] = -0.0;
+    info->m_maxAngularDof[1] = 0.0;
 
     if (cj_data->m_limits_enabled) {
         info->m_minAngularDof[2] = (cj_data->m_min_ang - cj_data->m_ai->get_angle()) * M_RAD_TO_DEG;
@@ -190,9 +199,9 @@ void MSP::Hinge::on_connect(MSP::Joint::JointData* joint_data) {
 
 void MSP::Hinge::on_disconnect(MSP::Joint::JointData* joint_data) {
     HingeData* cj_data = reinterpret_cast<HingeData*>(joint_data->m_cj_data);
-    cj_data->m_ai->set_angle(0.0f);
-    cj_data->m_cur_omega = 0.0f;
-    cj_data->m_cur_alpha = 0.0f;
+    cj_data->m_ai->set_angle(0.0);
+    cj_data->m_cur_omega = 0.0;
+    cj_data->m_cur_alpha = 0.0;
 }
 
 void MSP::Hinge::adjust_pin_matrix_proc(MSP::Joint::JointData* joint_data, dMatrix& pin_matrix) {
@@ -202,7 +211,7 @@ void MSP::Hinge::adjust_pin_matrix_proc(MSP::Joint::JointData* joint_data, dMatr
     NewtonBodyGetCentreOfMass(joint_data->m_child, &centre[0]);
     centre = matrix.TransformVector(centre);
     centre = pin_matrix.UntransformVector(centre);
-    dVector point(0.0f, 0.0f, centre.m_z);
+    dVector point(0.0, 0.0, centre.m_z);
     pin_matrix.m_posit = pin_matrix.TransformVector(point);
 }
 
@@ -295,7 +304,7 @@ VALUE MSP::Hinge::rbf_get_friction(VALUE self, VALUE v_joint) {
 VALUE MSP::Hinge::rbf_set_friction(VALUE self, VALUE v_joint, VALUE v_friction) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::HINGE);
     HingeData* cj_data = reinterpret_cast<HingeData*>(joint_data->m_cj_data);
-    cj_data->m_friction = Util::max_float(Util::value_to_dFloat(v_friction) * M_METER2_TO_INCH2, 0.0f);
+    cj_data->m_friction = Util::max_dFloat(Util::value_to_dFloat(v_friction) * M_METER2_TO_INCH2, 0.0);
     return Qnil;
 }
 
@@ -308,7 +317,7 @@ VALUE MSP::Hinge::rbf_get_accel(VALUE self, VALUE v_joint) {
 VALUE MSP::Hinge::rbf_set_accel(VALUE self, VALUE v_joint, VALUE v_accel) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::HINGE);
     HingeData* cj_data = reinterpret_cast<HingeData*>(joint_data->m_cj_data);
-    cj_data->m_accel = Util::max_float(Util::value_to_dFloat(v_accel), 0.0f);
+    cj_data->m_accel = Util::max_dFloat(Util::value_to_dFloat(v_accel), 0.0);
     return Qnil;
 }
 
@@ -321,7 +330,7 @@ VALUE MSP::Hinge::rbf_get_damp(VALUE self, VALUE v_joint) {
 VALUE MSP::Hinge::rbf_set_damp(VALUE self, VALUE v_joint, VALUE v_damp) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::HINGE);
     HingeData* cj_data = reinterpret_cast<HingeData*>(joint_data->m_cj_data);
-    cj_data->m_damp = Util::clamp_float(Util::value_to_dFloat(v_damp), 0.0f, 1.0f);
+    cj_data->m_damp = Util::clamp_dFloat(Util::value_to_dFloat(v_damp), 0.0, 1.0);
     return Qnil;
 }
 
@@ -334,7 +343,7 @@ VALUE MSP::Hinge::rbf_get_strength(VALUE self, VALUE v_joint) {
 VALUE MSP::Hinge::rbf_set_strength(VALUE self, VALUE v_joint, VALUE v_strength) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::HINGE);
     HingeData* cj_data = reinterpret_cast<HingeData*>(joint_data->m_cj_data);
-    cj_data->m_strength = Util::clamp_float(Util::value_to_dFloat(v_strength), 0.0f, 1.0f);
+    cj_data->m_strength = Util::clamp_dFloat(Util::value_to_dFloat(v_strength), 0.0, 1.0);
     return Qnil;
 }
 
@@ -347,7 +356,7 @@ VALUE MSP::Hinge::rbf_get_spring_constant(VALUE self, VALUE v_joint) {
 VALUE MSP::Hinge::rbf_set_spring_constant(VALUE self, VALUE v_joint, VALUE v_spring_constant) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::HINGE);
     HingeData* cj_data = reinterpret_cast<HingeData*>(joint_data->m_cj_data);
-    cj_data->m_spring_constant = Util::max_float(Util::value_to_dFloat(v_spring_constant) * M_METER2_TO_INCH2, 0.0f);
+    cj_data->m_spring_constant = Util::max_dFloat(Util::value_to_dFloat(v_spring_constant) * M_METER2_TO_INCH2, 0.0);
     return Qnil;
 }
 
@@ -360,7 +369,7 @@ VALUE MSP::Hinge::rbf_get_spring_drag(VALUE self, VALUE v_joint) {
 VALUE MSP::Hinge::rbf_set_spring_drag(VALUE self, VALUE v_joint, VALUE v_spring_drag) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::HINGE);
     HingeData* cj_data = reinterpret_cast<HingeData*>(joint_data->m_cj_data);
-    cj_data->m_spring_drag = Util::max_float(Util::value_to_dFloat(v_spring_drag) * M_METER2_TO_INCH2, 0.0f);
+    cj_data->m_spring_drag = Util::max_dFloat(Util::value_to_dFloat(v_spring_drag) * M_METER2_TO_INCH2, 0.0);
     return Qnil;
 }
 

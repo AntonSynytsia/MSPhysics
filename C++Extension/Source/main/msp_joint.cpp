@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_joint.h"
 #include "msp_world.h"
 #include "msp_body.h"
@@ -16,10 +17,10 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dFloat MSP::Joint::DEFAULT_STIFFNESS(1.0f);
+const dFloat MSP::Joint::DEFAULT_STIFFNESS(1.0);
 const int MSP::Joint::DEFAULT_SOLVER_MODEL(2);
 const bool MSP::Joint::DEFAULT_BODIES_COLLIDABLE(false);
-const dFloat MSP::Joint::DEFAULT_BREAKING_FORCE(0.0f);
+const dFloat MSP::Joint::DEFAULT_BREAKING_FORCE(0.0);
 const dFloat MSP::Joint::LINEAR_STIFF(1.5e8f);
 const dFloat MSP::Joint::LINEAR_DAMP(0.1e8f);
 const dFloat MSP::Joint::LINEAR_DAMP2(1.0e8f);
@@ -34,8 +35,8 @@ const dFloat MSP::Joint::ANGULAR_LIMIT_EPSILON(0.01f * M_DEG_TO_RAD);
 const dFloat MSP::Joint::ANGULAR_LIMIT_EPSILON2(0.02f * M_DEG_TO_RAD);
 const char* MSP::Joint::TYPE_NAME("MSPhysicsJoint");
 const dFloat MSP::Joint::CUSTOM_LARGE_VALUE(1.0e20f);
-const dFloat MSP::Joint::DEFAULT_STIFFNESS_RANGE(500.0f);
-const dFloat MSP::Joint::MIN_PIN_LENGTH(50.0f);
+const dFloat MSP::Joint::DEFAULT_STIFFNESS_RANGE(500.0);
+const dFloat MSP::Joint::MIN_PIN_LENGTH(50.0);
 const char* MSP::Joint::JOINT_NAMES[16] = { "None", "Hinge", "Motor", "Servo", "Slider", "Piston", "UpVector", "Spring", "Corkscrew", "BallAndSocket", "Universal", "Fixed", "CurvySlider", "CurvyPiston", "Plane", "PointToPoint" };
 
 
@@ -87,12 +88,12 @@ void MSP::Joint::constraint_destructor(const NewtonJoint* joint) {
     joint_data->m_constraint = nullptr;
     joint_data->m_connected = false;
     joint_data->m_child = nullptr;
-    joint_data->m_tension1.m_x = 0.0f;
-    joint_data->m_tension1.m_y = 0.0f;
-    joint_data->m_tension1.m_z = 0.0f;
-    joint_data->m_tension2.m_x = 0.0f;
-    joint_data->m_tension2.m_y = 0.0f;
-    joint_data->m_tension2.m_z = 0.0f;
+    joint_data->m_tension1.m_x = 0.0;
+    joint_data->m_tension1.m_y = 0.0;
+    joint_data->m_tension1.m_z = 0.0;
+    joint_data->m_tension2.m_x = 0.0;
+    joint_data->m_tension2.m_y = 0.0;
+    joint_data->m_tension2.m_z = 0.0;
 }
 
 void MSP::Joint::get_info(const NewtonJoint* const joint, NewtonJointRecord* const info) {
@@ -471,13 +472,12 @@ VALUE MSP::Joint::rbf_set_bodies_collidable(VALUE self, VALUE v_joint, VALUE v_s
 
 VALUE MSP::Joint::rbf_get_stiffness(VALUE self, VALUE v_joint) {
     JointData* joint_data = c_value_to_joint(v_joint);
-    return Util::to_value(joint_data->m_stiffness_ratio);
+    return Util::to_value(joint_data->m_stiffness);
 }
 
 VALUE MSP::Joint::rbf_set_stiffness(VALUE self, VALUE v_joint, VALUE v_stiffness) {
     JointData* joint_data = c_value_to_joint(v_joint);
-    joint_data->m_stiffness_ratio = Util::clamp_float(Util::value_to_dFloat(v_stiffness), 0.0f, 1.0f);
-    joint_data->m_stiffness = 0.999f - (1.0f - joint_data->m_stiffness_ratio) * DEFAULT_STIFFNESS_RANGE;
+    joint_data->m_stiffness = Util::clamp_dFloat(Util::value_to_dFloat(v_stiffness), 0.0, 1.0);
     on_stiffness_changed(joint_data);
     return Qnil;
 }
@@ -500,7 +500,7 @@ VALUE MSP::Joint::rbf_get_breaking_force(VALUE self, VALUE v_joint) {
 
 VALUE MSP::Joint::rbf_set_breaking_force(VALUE self, VALUE v_joint, VALUE v_force) {
     JointData* joint_data = c_value_to_joint(v_joint);
-    joint_data->m_breaking_force = Util::max_float(Util::value_to_dFloat(v_force) * M_METER_TO_INCH, 0.0f);
+    joint_data->m_breaking_force = Util::max_dFloat(Util::value_to_dFloat(v_force) * M_METER_TO_INCH, 0.0);
     return Qnil;
 }
 

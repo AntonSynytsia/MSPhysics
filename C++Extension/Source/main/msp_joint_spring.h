@@ -61,9 +61,9 @@ private:
             m_spring_drag(DEFAULT_SPRING_DRAG),
             m_start_pos(DEFAULT_START_POSITION),
             m_controller(DEFAULT_CONTROLLER),
-            m_cur_pos(0.0f),
-            m_cur_vel(0.0f),
-            m_cur_accel(0.0f),
+            m_cur_pos(0.0),
+            m_cur_vel(0.0),
+            m_cur_accel(0.0),
             m_desired_start_pos(DEFAULT_START_POSITION * DEFAULT_CONTROLLER),
             m_temp_disable_limits(true)
         {

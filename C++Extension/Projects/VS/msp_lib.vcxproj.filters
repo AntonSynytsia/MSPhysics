@@ -7,12 +7,15 @@
     <Filter Include="win">
       <UniqueIdentifier>{e2c680d7-0a53-4006-afbd-9264da36717f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="utils">
+      <UniqueIdentifier>{c845b9a6-5287-4e49-b7f0-4d54334eac7e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Source\win\msp_lib.cpp">
       <Filter>win</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\win\stdafx.cpp">
+    <ClCompile Include="..\..\Source\win\pch.cpp">
       <Filter>win</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\main\angular_integration.cpp">
@@ -110,7 +113,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Source\win\stdafx.h">
+    <ClInclude Include="..\..\Source\win\pch.h">
       <Filter>win</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\win\targetver.h">
@@ -211,6 +214,12 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\main\ruby_prep.h">
       <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\utils\ruby_prep.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\utils\common.h">
+      <Filter>utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -38,8 +38,8 @@ private:
         dFloat m_controller;
         bool m_controller_enabled;
         ServoData() :
-            m_cur_omega(0.0f),
-            m_cur_alpha(0.0f),
+            m_cur_omega(0.0),
+            m_cur_alpha(0.0),
             m_min_ang(DEFAULT_MIN),
             m_max_ang(DEFAULT_MAX),
             m_limits_enabled(DEFAULT_LIMITS_ENABLED),

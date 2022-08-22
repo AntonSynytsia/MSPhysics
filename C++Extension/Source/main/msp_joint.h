@@ -63,8 +63,8 @@ public:
         unsigned int m_dof;
         int m_solver_model;
         JointType m_jtype;
-        dFloat m_stiffness_ratio;
         dFloat m_stiffness;
+        dFloat m_max_angle_error;
         bool m_bodies_collidable;
         dFloat m_breaking_force;
         NewtonJoint* m_constraint;
@@ -95,8 +95,8 @@ public:
             m_dof(dof),
             m_solver_model(DEFAULT_SOLVER_MODEL),
             m_jtype(NONE),
-            m_stiffness_ratio(DEFAULT_STIFFNESS),
-            m_stiffness(0.999f - (1.0f - DEFAULT_STIFFNESS) * DEFAULT_STIFFNESS_RANGE),
+            m_stiffness(DEFAULT_STIFFNESS),
+            m_max_angle_error(5.0 * M_DEG_TO_RAD),
             m_bodies_collidable(DEFAULT_BODIES_COLLIDABLE),
             m_breaking_force(DEFAULT_BREAKING_FORCE),
             m_connected(false),

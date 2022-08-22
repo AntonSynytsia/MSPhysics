@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_joint_point_to_point.h"
 #include "msp_world.h"
 
@@ -15,12 +16,12 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dFloat MSP::PointToPoint::DEFAULT_ACCEL(40.0f);
+const dFloat MSP::PointToPoint::DEFAULT_ACCEL(40.0);
 const dFloat MSP::PointToPoint::DEFAULT_DAMP(0.1f);
 const dFloat MSP::PointToPoint::DEFAULT_STRENGTH(0.8f);
 const int MSP::PointToPoint::DEFAULT_MODE(0);
-const dFloat MSP::PointToPoint::DEFAULT_START_DISTANCE(0.0f);
-const dFloat MSP::PointToPoint::DEFAULT_CONTROLLER(1.0f);
+const dFloat MSP::PointToPoint::DEFAULT_START_DISTANCE(0.0);
+const dFloat MSP::PointToPoint::DEFAULT_CONTROLLER(1.0);
 
 
 /*
@@ -33,7 +34,7 @@ void MSP::PointToPoint::submit_constraints(const NewtonJoint* joint, dFloat time
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     PointToPointData* cj_data = reinterpret_cast<PointToPointData*>(joint_data->m_cj_data);
 
-    dFloat inv_timestep = 1.0f / timestep;
+    dFloat inv_timestep = 1.0 / timestep;
 
     dMatrix matrix0, matrix1;
     MSP::Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1);
@@ -41,24 +42,24 @@ void MSP::PointToPoint::submit_constraints(const NewtonJoint* joint, dFloat time
     dVector p0(matrix0.m_posit + matrix0.m_right.Scale(cj_data->m_start_distance));
     const dVector& p1 = matrix1.m_posit;
 
-    dVector veloc0(0.0f);
-    dVector veloc1(0.0f);
+    dVector veloc0(0.0);
+    dVector veloc1(0.0);
     NewtonBodyGetVelocity(joint_data->m_child, &veloc0[0]);
     if (joint_data->m_parent != nullptr)
         NewtonBodyGetVelocity(joint_data->m_parent, &veloc1[0]);
     dVector rel_veloc(veloc0 - veloc1);
 
-    dFloat stiffness = 0.999f - (1.0f - joint_data->m_stiffness_ratio * cj_data->m_strength) * Joint::DEFAULT_STIFFNESS_RANGE;
+    dFloat stiffness = 0.999f - (1.0 - joint_data->m_stiffness_ratio * cj_data->m_strength) * Joint::DEFAULT_STIFFNESS_RANGE;
 
     if (cj_data->m_mode == 0) {
         dVector dir(p0 - p1);
         cj_data->m_cur_distance = Util::get_vector_magnitude(dir);
         if (cj_data->m_cur_distance > M_EPSILON)
-            Util::scale_vector(dir, 1.0f / cj_data->m_cur_distance);
+            Util::scale_vector(dir, 1.0 / cj_data->m_cur_distance);
         else {
-            dir.m_x = 0.0f;
-            dir.m_y = 0.0f;
-            dir.m_z = 1.0f;
+            dir.m_x = 0.0;
+            dir.m_y = 0.0;
+            dir.m_z = 1.0;
         }
         dFloat offset = cj_data->m_cur_distance - cj_data->m_start_distance * cj_data->m_controller;
         dFloat dir_veloc = rel_veloc.DotProduct3(dir);
@@ -100,7 +101,7 @@ void MSP::PointToPoint::on_connect(MSP::Joint::JointData* joint_data) {
 
 void MSP::PointToPoint::on_disconnect(MSP::Joint::JointData* joint_data) {
     PointToPointData* cj_data = reinterpret_cast<PointToPointData*>(joint_data->m_cj_data);
-    cj_data->m_cur_distance = 0.0f;
+    cj_data->m_cur_distance = 0.0;
 }
 
 
@@ -139,7 +140,7 @@ VALUE MSP::PointToPoint::rbf_get_accel(VALUE self, VALUE v_joint) {
 VALUE MSP::PointToPoint::rbf_set_accel(VALUE self, VALUE v_joint, VALUE v_accel) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::POINT_TO_POINT);
     PointToPointData* cj_data = reinterpret_cast<PointToPointData*>(joint_data->m_cj_data);
-    cj_data->m_accel = Util::max_float(Util::value_to_dFloat(v_accel), 0.0f);
+    cj_data->m_accel = Util::max_dFloat(Util::value_to_dFloat(v_accel), 0.0);
     return Qnil;
 }
 
@@ -152,7 +153,7 @@ VALUE MSP::PointToPoint::rbf_get_damp(VALUE self, VALUE v_joint) {
 VALUE MSP::PointToPoint::rbf_set_damp(VALUE self, VALUE v_joint, VALUE v_damp) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::POINT_TO_POINT);
     PointToPointData* cj_data = reinterpret_cast<PointToPointData*>(joint_data->m_cj_data);
-    cj_data->m_damp = Util::clamp_float(Util::value_to_dFloat(v_damp), 0.0f, 1.0f);
+    cj_data->m_damp = Util::clamp_dFloat(Util::value_to_dFloat(v_damp), 0.0, 1.0);
     return Qnil;
 }
 
@@ -165,7 +166,7 @@ VALUE MSP::PointToPoint::rbf_get_strength(VALUE self, VALUE v_joint) {
 VALUE MSP::PointToPoint::rbf_set_strength(VALUE self, VALUE v_joint, VALUE v_strength) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::POINT_TO_POINT);
     PointToPointData* cj_data = reinterpret_cast<PointToPointData*>(joint_data->m_cj_data);
-    cj_data->m_strength = Util::clamp_float(Util::value_to_dFloat(v_strength), 0.0f, 1.0f);
+    cj_data->m_strength = Util::clamp_dFloat(Util::value_to_dFloat(v_strength), 0.0, 1.0);
     return Qnil;
 }
 
@@ -191,7 +192,7 @@ VALUE MSP::PointToPoint::rbf_get_start_distance(VALUE self, VALUE v_joint) {
 VALUE MSP::PointToPoint::rbf_set_start_distance(VALUE self, VALUE v_joint, VALUE v_distance) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::POINT_TO_POINT);
     PointToPointData* cj_data = reinterpret_cast<PointToPointData*>(joint_data->m_cj_data);
-    dFloat des_start_distance = Util::max_float(Util::value_to_dFloat(v_distance) * M_METER_TO_INCH, 0.0f);
+    dFloat des_start_distance = Util::max_dFloat(Util::value_to_dFloat(v_distance) * M_METER_TO_INCH, 0.0);
     if (des_start_distance != cj_data->m_start_distance) {
         cj_data->m_start_distance = des_start_distance;
         if (joint_data->m_connected)
@@ -209,7 +210,7 @@ VALUE MSP::PointToPoint::rbf_get_controller(VALUE self, VALUE v_joint) {
 VALUE MSP::PointToPoint::rbf_set_controller(VALUE self, VALUE v_joint, VALUE v_controller) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::POINT_TO_POINT);
     PointToPointData* cj_data = reinterpret_cast<PointToPointData*>(joint_data->m_cj_data);
-    dFloat desired_controller = Util::max_float(Util::value_to_dFloat(v_controller), 0.0f);
+    dFloat desired_controller = Util::max_dFloat(Util::value_to_dFloat(v_controller), 0.0);
     if (desired_controller != cj_data->m_controller) {
         cj_data->m_controller = desired_controller;
         if (joint_data->m_connected)

@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_bodies.h"
 #include "msp_world.h"
 #include "msp_body.h"
@@ -67,7 +68,7 @@ VALUE MSP::Bodies::rbf_get_force_in_between(VALUE self, VALUE v_body1, VALUE v_b
     const NewtonBody* body1 = MSP::Body::c_value_to_body(v_body1);
     const NewtonBody* body2 = MSP::Body::c_value_to_body(v_body2);
     MSP::Body::c_validate_two_bodies(body1, body2);
-    dVector net_force(0.0f);
+    dVector net_force(0.0);
     for (NewtonJoint* joint = NewtonBodyGetFirstContactJoint(body1); joint; joint = NewtonBodyGetNextContactJoint(body1, joint)) {
         if (NewtonJointGetBody0(joint) == body2 || NewtonJointGetBody1(joint) == body2) {
             for (void* contact = NewtonContactJointGetFirstContact(joint); contact; contact = NewtonContactJointGetNextContact(joint, contact)) {

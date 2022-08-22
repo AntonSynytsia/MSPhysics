@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_joint_slider.h"
 #include "msp_world.h"
 
@@ -15,11 +16,11 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dFloat MSP::Slider::DEFAULT_MIN(-10.0f);
-const dFloat MSP::Slider::DEFAULT_MAX(10.0f);
+const dFloat MSP::Slider::DEFAULT_MIN(-10.0);
+const dFloat MSP::Slider::DEFAULT_MAX(10.0);
 const bool MSP::Slider::DEFAULT_LIMITS_ENABLED(false);
-const dFloat MSP::Slider::DEFAULT_FRICTION(0.0f);
-const dFloat MSP::Slider::DEFAULT_CONTROLLER(1.0f);
+const dFloat MSP::Slider::DEFAULT_FRICTION(0.0);
+const dFloat MSP::Slider::DEFAULT_CONTROLLER(1.0);
 
 /*
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31,7 +32,7 @@ void MSP::Slider::submit_constraints(const NewtonJoint* joint, dFloat timestep, 
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     SliderData* cj_data = reinterpret_cast<SliderData*>(joint_data->m_cj_data);
 
-    dFloat inv_timestep = 1.0f / timestep;
+    dFloat inv_timestep = 1.0 / timestep;
 
     // Calculate position of pivot points and Jacobian direction vectors in global space.
     dMatrix matrix0, matrix1;
@@ -85,13 +86,13 @@ void MSP::Slider::submit_constraints(const NewtonJoint* joint, dFloat timestep, 
         else if (cj_data->m_cur_pos < cj_data->m_min_pos) {
             dVector s1(p0 + matrix1.m_right.Scale(cj_data->m_min_pos - cj_data->m_cur_pos + Joint::LINEAR_LIMIT_EPSILON));
             NewtonUserJointAddLinearRow(joint, &p0[0], &s1[0], &matrix0.m_right[0]);
-            NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMinimumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else if (cj_data->m_cur_pos > cj_data->m_max_pos) {
             dVector s1(p0 + matrix1.m_right.Scale(cj_data->m_max_pos - cj_data->m_cur_pos - Joint::LINEAR_LIMIT_EPSILON));
             NewtonUserJointAddLinearRow(joint, &p0[0], &s1[0], &matrix0.m_right[0]);
-            NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMaximumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else
@@ -113,10 +114,10 @@ void MSP::Slider::get_info(const NewtonJoint* const joint, NewtonJointRecord* co
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     SliderData* cj_data = reinterpret_cast<SliderData*>(joint_data->m_cj_data);
 
-    info->m_minLinearDof[0] = -0.0f;
-    info->m_maxLinearDof[0] = 0.0f;
-    info->m_minLinearDof[1] = -0.0f;
-    info->m_maxLinearDof[1] = 0.0f;
+    info->m_minLinearDof[0] = -0.0;
+    info->m_maxLinearDof[0] = 0.0;
+    info->m_minLinearDof[1] = -0.0;
+    info->m_maxLinearDof[1] = 0.0;
 
     if (cj_data->m_limits_enabled) {
         info->m_minLinearDof[2] = (cj_data->m_min_pos - cj_data->m_cur_pos);
@@ -127,12 +128,12 @@ void MSP::Slider::get_info(const NewtonJoint* const joint, NewtonJointRecord* co
         info->m_minLinearDof[2] = Joint::CUSTOM_LARGE_VALUE;
     }
 
-    info->m_minAngularDof[0] = -0.0f;
-    info->m_maxAngularDof[0] = 0.0f;
-    info->m_minAngularDof[1] = -0.0f;
-    info->m_maxAngularDof[1] = 0.0f;
-    info->m_minAngularDof[2] = -0.0f;
-    info->m_maxAngularDof[2] = 0.0f;
+    info->m_minAngularDof[0] = -0.0;
+    info->m_maxAngularDof[0] = 0.0;
+    info->m_minAngularDof[1] = -0.0;
+    info->m_maxAngularDof[1] = 0.0;
+    info->m_minAngularDof[2] = -0.0;
+    info->m_maxAngularDof[2] = 0.0;
 }
 
 void MSP::Slider::on_destroy(MSP::Joint::JointData* joint_data) {
@@ -141,9 +142,9 @@ void MSP::Slider::on_destroy(MSP::Joint::JointData* joint_data) {
 
 void MSP::Slider::on_disconnect(MSP::Joint::JointData* joint_data) {
     SliderData* cj_data = reinterpret_cast<SliderData*>(joint_data->m_cj_data);
-    cj_data->m_cur_pos = 0.0f;
-    cj_data->m_cur_vel = 0.0f;
-    cj_data->m_cur_accel = 0.0f;
+    cj_data->m_cur_pos = 0.0;
+    cj_data->m_cur_vel = 0.0;
+    cj_data->m_cur_accel = 0.0;
 }
 
 void MSP::Slider::adjust_pin_matrix_proc(MSP::Joint::JointData* joint_data, dMatrix& pin_matrix) {
@@ -247,7 +248,7 @@ VALUE MSP::Slider::rbf_get_friction(VALUE self, VALUE v_joint) {
 VALUE MSP::Slider::rbf_set_friction(VALUE self, VALUE v_joint, VALUE v_friction) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::SLIDER);
     SliderData* cj_data = reinterpret_cast<SliderData*>(joint_data->m_cj_data);
-    cj_data->m_friction = Util::max_float(Util::value_to_dFloat(v_friction) * M_METER_TO_INCH, 0.0f);
+    cj_data->m_friction = Util::max_dFloat(Util::value_to_dFloat(v_friction) * M_METER_TO_INCH, 0.0);
     return Qnil;
 }
 

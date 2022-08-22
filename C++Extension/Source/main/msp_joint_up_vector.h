@@ -35,8 +35,8 @@ private:
             m_accel(DEFAULT_ACCEL),
             m_damp(DEFAULT_DAMP),
             m_strength(DEFAULT_STRENGTH),
-            m_cone_angle_x(0.0f),
-            m_cone_angle_y(0.0f)
+            m_cone_angle_x(0.0),
+            m_cone_angle_y(0.0)
         {
         }
     };

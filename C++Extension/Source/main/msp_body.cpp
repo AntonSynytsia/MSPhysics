@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_body.h"
 #include "msp_collision.h"
 #include "msp_world.h"
@@ -19,7 +20,7 @@
 
 const dFloat MSP::Body::DEFAULT_STATIC_FRICTION_COEF(0.90f);
 const dFloat MSP::Body::DEFAULT_KINETIC_FRICTION_COEF(0.50f);
-const dFloat MSP::Body::DEFAULT_DENSITY(700.0f);
+const dFloat MSP::Body::DEFAULT_DENSITY(700.0);
 const dFloat MSP::Body::DEFAULT_ELASTICITY(0.40f);
 const dFloat MSP::Body::DEFAULT_SOFTNESS(0.10f);
 const dVector MSP::Body::DEFAULT_LINEAR_DAMPING(0.01f);
@@ -179,8 +180,8 @@ void MSP::Body::collision_iterator2(void* const user_data, int vertex_count, con
         j += 3;
     }
     // Calculate face area and centroid
-    dVector centroid(0.0f, 0.0f, vertices[0].m_z);
-    dFloat signed_area = 0.0f;
+    dVector centroid(0.0, 0.0, vertices[0].m_z);
+    dFloat signed_area = 0.0;
     for (int i = 0; i < vertex_count; ++i) {
         const dFloat& x0 = vertices[i].m_x;
         const dFloat& y0 = vertices[i].m_y;
@@ -192,7 +193,7 @@ void MSP::Body::collision_iterator2(void* const user_data, int vertex_count, con
         centroid.m_y += (y0 + y1)*a;
     }
     signed_area *= 0.5f;
-    dFloat scale = 1.0f / (6.0f * signed_area);
+    dFloat scale = 1.0 / (6.0 * signed_area);
     centroid.m_x *= scale;
     centroid.m_y *= scale;
     VALUE v_face_centroid = Util::point_to_value(face_matrix.TransformVector(centroid));
@@ -225,8 +226,8 @@ void MSP::Body::collision_iterator3(void* const user_data, int vertex_count, con
         j += 3;
     }
     // Calculate face area and centroid
-    dVector centroid(0.0f, 0.0f, vertices[0].m_z);
-    dFloat signed_area = 0.0f;
+    dVector centroid(0.0, 0.0, vertices[0].m_z);
+    dFloat signed_area = 0.0;
     for (int i = 0; i < vertex_count; ++i) {
         const dFloat& x0 = vertices[i].m_x;
         const dFloat& y0 = vertices[i].m_y;
@@ -238,7 +239,7 @@ void MSP::Body::collision_iterator3(void* const user_data, int vertex_count, con
         centroid.m_y += (y0 + y1)*a;
     }
     signed_area *= 0.5f;
-    dFloat scale = 1.0f / (6.0f * signed_area);
+    dFloat scale = 1.0 / (6.0 * signed_area);
     centroid.m_x *= scale;
     centroid.m_y *= scale;
     VALUE v_face_centroid = Util::point_to_value(face_matrix.TransformVector(centroid));
@@ -262,7 +263,7 @@ void MSP::Body::collision_iterator4(void* const user_data, int vertex_count, con
     dVector normal((vertices[1] - vertices[0]).CrossProduct(vertices[2] - vertices[0]));
     dFloat normal_mag = Util::get_vector_magnitude(normal);
     if (normal_mag < 1.0e-6f) return;
-    Util::scale_vector(normal, 1.0f / normal_mag);
+    Util::scale_vector(normal, 1.0 / normal_mag);
     // Face matrix from normal
     dMatrix face_matrix;
     Util::matrix_from_pin_dir(vertices[0], normal, face_matrix);
@@ -285,12 +286,12 @@ void MSP::Body::collision_iterator4(void* const user_data, int vertex_count, con
         dFloat c = p2.m_x*p0.m_y - p0.m_x*p2.m_y;
         dFloat signed_area = (a + b + c) * 0.5f;
         dVector centroid((p0.m_x + p1.m_x)*a + (p1.m_x + p2.m_x)*b + (p2.m_x + p0.m_x)*c, (p0.m_y + p1.m_y)*a + (p1.m_y + p2.m_y)*b + (p2.m_y + p0.m_y)*c, vertices[0].m_z);
-        dFloat cscale = 1.0f / (6.0f * signed_area);
+        dFloat cscale = 1.0 / (6.0 * signed_area);
         centroid.m_x *= cscale;
         centroid.m_y *= cscale;
         centroid = face_matrix.TransformVector(centroid);
         // Apply force and torque from linear velocity
-        if (lv > 0.0f) {
+        if (lv > 0.0) {
             // Calculate the necessary force on face
             dVector point_force(normal.Scale(-dAbs(signed_area) * lv * lv * ci_data->m_drag));
             // Add point force
@@ -305,7 +306,7 @@ void MSP::Body::collision_iterator4(void* const user_data, int vertex_count, con
                 dVector dir(centroid - data->centre);
                 dFloat dir_mag = Util::get_vector_magnitude(dir);
                 dVector xaxis(data->omega);
-                Util::scale_vector(xaxis, 1.0f / qmag);
+                Util::scale_vector(xaxis, 1.0 / qmag);
                 dVector yaxis;
                 dVector zaxis;
                 if (dir_mag < 1.0e-6f) {
@@ -325,7 +326,7 @@ void MSP::Body::collision_iterator4(void* const user_data, int vertex_count, con
                 dVector q3(omega_matrix.UntransformVector(vertices[i+1]));
                 dVector qnormal(omega_matrix.UnrotateVector(normal));
                 // Calculate the necessary force on face
-                dFloat point_force_mag = -qnormal.m_z * qmag * qmag / 6.0f *
+                dFloat point_force_mag = -qnormal.m_z * qmag * qmag / 6.0 *
                 (q1.m_x * (q3.m_y*q3.m_y + q1.m_y*q3.m_y - q1.m_y*q2.m_y - q2.m_y*q2.m_y) +
                  q2.m_x * (q1.m_y*q1.m_y + q2.m_y*q1.m_y - q2.m_y*q3.m_y - q3.m_y*q3.m_y) +
                  q3.m_x * (q2.m_y*q2.m_y + q3.m_y*q2.m_y - q3.m_y*q1.m_y - q1.m_y*q1.m_y));
@@ -338,7 +339,7 @@ void MSP::Body::collision_iterator4(void* const user_data, int vertex_count, con
         }*/
     }
     // Apply force and torque from linear velocity
-    /*if (lv > 0.0f) {
+    /*if (lv > 0.0) {
         // Transform points with respect to face normal
         std::map<unsigned int, dVector> vertices;
         dMatrix face_matrix;
@@ -348,8 +349,8 @@ void MSP::Body::collision_iterator4(void* const user_data, int vertex_count, con
             vertices[i] = vertex;
         }
         // Calculate face area and centroid
-        dVector centroid(0.0f, 0.0f, vertices[0].m_z);
-        dFloat signed_area = 0.0f;
+        dVector centroid(0.0, 0.0, vertices[0].m_z);
+        dFloat signed_area = 0.0;
         for (unsigned int i = 0; i < vertex_count; ++i) {
             const dFloat& x0 = vertices[i].m_x;
             const dFloat& y0 = vertices[i].m_y;
@@ -361,7 +362,7 @@ void MSP::Body::collision_iterator4(void* const user_data, int vertex_count, con
             centroid.m_y += (y0 + y1)*a;
         }
         signed_area *= 0.5f;
-        dFloat scale = 1.0f / (6.0f * signed_area);
+        dFloat scale = 1.0 / (6.0 * signed_area);
         centroid.m_x *= scale;
         centroid.m_y *= scale;
         centroid = face_matrix.TransformVector(centroid);
@@ -389,8 +390,8 @@ void MSP::Body::collision_iterator4(void* const user_data, int vertex_count, con
         vertices.push_back(vertex);
     }
     // Calculate face area and centroid
-    dVector centroid(0.0f, 0.0f, vertices[0].m_z);
-    dFloat signed_area = 0.0f;
+    dVector centroid(0.0, 0.0, vertices[0].m_z);
+    dFloat signed_area = 0.0;
     for (int i = 0; i < vertex_count; ++i) {
         const dFloat& x0 = vertices[i].m_x;
         const dFloat& y0 = vertices[i].m_y;
@@ -402,7 +403,7 @@ void MSP::Body::collision_iterator4(void* const user_data, int vertex_count, con
         centroid.m_y += (y0 + y1)*a;
     }
     signed_area *= 0.5f;
-    dFloat scale = 1.0f / (6.0f * signed_area);
+    dFloat scale = 1.0 / (6.0 * signed_area);
     centroid.m_x *= scale;
     centroid.m_y *= scale;
     centroid = face_matrix.TransformVector(centroid);
@@ -414,7 +415,7 @@ void MSP::Body::collision_iterator4(void* const user_data, int vertex_count, con
     if (veloc_mag < M_EPSILON) return;
     dFloat cos_theta = normal.DotProduct3(point_veloc) / veloc_mag;
     if (cos_theta < M_EPSILON) return;
-    Util::scale_vector(point_veloc, 1.0f / veloc_mag);
+    Util::scale_vector(point_veloc, 1.0 / veloc_mag);
     dMatrix veloc_matrix;
     Util::matrix_from_pin_dir(Util::ORIGIN, point_veloc, veloc_matrix);
     dVector loc_normal(veloc_matrix.UnrotateVector(normal));
@@ -422,14 +423,14 @@ void MSP::Body::collision_iterator4(void* const user_data, int vertex_count, con
     dFloat quantity = -dAbs(signed_area) * veloc_mag * veloc_mag * data->drag;
     dVector point_force(loc_normal.Scale(quantity));
     point_force = veloc_matrix.RotateVector(point_force);
-    //dVector loc_point_force(0.0f, 0.0f, -loc_normal.m_z * dAbs(signed_area) * data->density * veloc_mag);
+    //dVector loc_point_force(0.0, 0.0, -loc_normal.m_z * dAbs(signed_area) * data->density * veloc_mag);
     //dVector point_force(veloc_matrix.RotateVector(loc_point_force));
     // Add force and torque
     data->force += point_force;
     dVector r(centroid - data->centre);
     data->torque += r.CrossProduct(point_force);
     // Add additional rotational force.
-    //if (1.0f - cos_theta < M_EPSILON) return;
+    //if (1.0 - cos_theta < M_EPSILON) return;
     //dVector side_force(normal.CrossProduct(point_veloc));
     //data->torque += r.CrossProduct(side_force.Scale(dAbs(signed_area) * veloc_mag * data->density));*/
 }
@@ -581,24 +582,24 @@ VALUE MSP::Body::rbf_create(VALUE self, VALUE v_world, VALUE v_collision, VALUE 
 
     int collision_type = NewtonCollisionGetType(collision);
     if (collision_type == SERIALIZE_ID_NULL)
-        body_data->m_volume = 1.0f;
+        body_data->m_volume = 1.0;
     else if (collision_type < SERIALIZE_ID_TREE)
         body_data->m_volume = NewtonConvexCollisionCalculateVolume(collision);
     else
-        body_data->m_volume = 0.0f;
+        body_data->m_volume = 0.0;
 
     if (body_data->m_volume < MIN_VOLUME) {
         body_data->m_dynamic = false;
         body_data->m_bstatic = true;
-        body_data->m_volume = 0.0f;
-        body_data->m_density = 0.0f;
-        body_data->m_mass = 0.0f;
+        body_data->m_volume = 0.0;
+        body_data->m_density = 0.0;
+        body_data->m_mass = 0.0;
     }
     else {
         body_data->m_dynamic = true;
         body_data->m_bstatic = false;
-        body_data->m_volume = Util::clamp_float(body_data->m_volume, MIN_VOLUME, MAX_VOLUME);
-        body_data->m_mass = Util::clamp_float(body_data->m_volume * body_data->m_density, MIN_MASS, MAX_MASS);
+        body_data->m_volume = Util::clamp_dFloat(body_data->m_volume, MIN_VOLUME, MAX_VOLUME);
+        body_data->m_mass = Util::clamp_dFloat(body_data->m_volume * body_data->m_density, MIN_MASS, MAX_MASS);
     }
 
     NewtonBodySetMassProperties(body, body_data->m_mass, collision);
@@ -609,8 +610,8 @@ VALUE MSP::Body::rbf_create(VALUE self, VALUE v_world, VALUE v_collision, VALUE 
     NewtonBodySetCollidable(body, body_data->m_collidable ? 1 : 0);
     NewtonBodySetAutoSleep(body, body_data->m_auto_sleep_enabled ? 1 : 0);
     NewtonBodySetUserData(body, body_data);
-    NewtonBodySetLinearDamping(body, 0.0f);
-    dVector damp(0.0f);
+    NewtonBodySetLinearDamping(body, 0.0);
+    dVector damp(0.0);
     NewtonBodySetAngularDamping(body, &damp[0]);
 
     s_valid_bodies.insert(body);
@@ -864,11 +865,11 @@ VALUE MSP::Body::rbf_set_mass(VALUE self, VALUE v_body, VALUE v_mass) {
     BodyData* body_data = reinterpret_cast<BodyData*>(NewtonBodyGetUserData(body));
     if (!body_data->m_dynamic)
         return Qnil;
-    body_data->m_mass = Util::clamp_float(Util::value_to_dFloat(v_mass), MIN_MASS, MAX_MASS);
-    body_data->m_density = Util::clamp_float(body_data->m_mass / body_data->m_volume, MIN_DENSITY, MAX_DENSITY);
+    body_data->m_mass = Util::clamp_dFloat(Util::value_to_dFloat(v_mass), MIN_MASS, MAX_MASS);
+    body_data->m_density = Util::clamp_dFloat(body_data->m_mass / body_data->m_volume, MIN_DENSITY, MAX_DENSITY);
     dVector com;
     NewtonBodyGetCentreOfMass(body, &com[0]);
-    NewtonBodySetMassProperties(body, body_data->m_bstatic ? 0.0f : body_data->m_mass, NewtonBodyGetCollision(body));
+    NewtonBodySetMassProperties(body, body_data->m_bstatic ? 0.0 : body_data->m_mass, NewtonBodyGetCollision(body));
     NewtonBodySetCentreOfMass(body, &com[0]);
     return Qnil;
 }
@@ -884,11 +885,11 @@ VALUE MSP::Body::rbf_set_density(VALUE self, VALUE v_body, VALUE v_density) {
     BodyData* body_data = reinterpret_cast<BodyData*>(NewtonBodyGetUserData(body));
     if (!body_data->m_dynamic)
         return Qnil;
-    body_data->m_density = Util::clamp_float(Util::value_to_dFloat(v_density), MIN_DENSITY, MAX_DENSITY);
-    body_data->m_mass = Util::clamp_float(body_data->m_density * body_data->m_volume, MIN_MASS, MAX_MASS);
+    body_data->m_density = Util::clamp_dFloat(Util::value_to_dFloat(v_density), MIN_DENSITY, MAX_DENSITY);
+    body_data->m_mass = Util::clamp_dFloat(body_data->m_density * body_data->m_volume, MIN_MASS, MAX_MASS);
     dVector com;
     NewtonBodyGetCentreOfMass(body, &com[0]);
-    NewtonBodySetMassProperties(body, body_data->m_bstatic ? 0.0f : body_data->m_mass, NewtonBodyGetCollision(body));
+    NewtonBodySetMassProperties(body, body_data->m_bstatic ? 0.0 : body_data->m_mass, NewtonBodyGetCollision(body));
     NewtonBodySetCentreOfMass(body, &com[0]);
     return Qnil;
 }
@@ -903,11 +904,11 @@ VALUE MSP::Body::rbf_set_volume(VALUE self, VALUE v_body, VALUE v_volume) {
     const NewtonBody* body = c_value_to_body(v_body);
     BodyData* body_data = reinterpret_cast<BodyData*>(NewtonBodyGetUserData(body));
     if (!body_data->m_dynamic) return Qnil;
-    body_data->m_volume = Util::clamp_float(Util::value_to_dFloat(v_volume), MIN_VOLUME, MAX_VOLUME);
-    body_data->m_mass = Util::clamp_float(body_data->m_density * body_data->m_volume, MIN_MASS, MAX_MASS);
+    body_data->m_volume = Util::clamp_dFloat(Util::value_to_dFloat(v_volume), MIN_VOLUME, MAX_VOLUME);
+    body_data->m_mass = Util::clamp_dFloat(body_data->m_density * body_data->m_volume, MIN_MASS, MAX_MASS);
     dVector com;
     NewtonBodyGetCentreOfMass(body, &com[0]);
-    NewtonBodySetMassProperties(body, body_data->m_bstatic ? 0.0f : body_data->m_mass, NewtonBodyGetCollision(body));
+    NewtonBodySetMassProperties(body, body_data->m_bstatic ? 0.0 : body_data->m_mass, NewtonBodyGetCollision(body));
     NewtonBodySetCentreOfMass(body, &com[0]);
     return Qnil;
 }
@@ -915,13 +916,13 @@ VALUE MSP::Body::rbf_set_volume(VALUE self, VALUE v_body, VALUE v_volume) {
 VALUE MSP::Body::rbf_reset_mass_properties(VALUE self, VALUE v_body, VALUE v_density) {
     const NewtonBody* body = c_value_to_body(v_body);
     BodyData* body_data = reinterpret_cast<BodyData*>(NewtonBodyGetUserData(body));
-    dFloat density = Util::clamp_float(Util::value_to_dFloat(v_density), MIN_DENSITY, MAX_DENSITY);
+    dFloat density = Util::clamp_dFloat(Util::value_to_dFloat(v_density), MIN_DENSITY, MAX_DENSITY);
     if (!body_data->m_dynamic) return Qfalse;
     const NewtonCollision* collision = NewtonBodyGetCollision(body);
     body_data->m_density = density;
-    body_data->m_volume = Util::clamp_float(NewtonConvexCollisionCalculateVolume(collision), MIN_VOLUME, MAX_VOLUME);
-    body_data->m_mass = Util::clamp_float(body_data->m_density * body_data->m_volume, MIN_MASS, MAX_MASS);
-    NewtonBodySetMassProperties(body, body_data->m_bstatic ? 0.0f : body_data->m_mass, collision);
+    body_data->m_volume = Util::clamp_dFloat(NewtonConvexCollisionCalculateVolume(collision), MIN_VOLUME, MAX_VOLUME);
+    body_data->m_mass = Util::clamp_dFloat(body_data->m_density * body_data->m_volume, MIN_MASS, MAX_MASS);
+    NewtonBodySetMassProperties(body, body_data->m_bstatic ? 0.0 : body_data->m_mass, collision);
     return Qtrue;
 }
 
@@ -940,11 +941,11 @@ VALUE MSP::Body::rbf_set_static(VALUE self, VALUE v_body, VALUE v_state) {
     body_data->m_bstatic = state;
     dVector com;
     NewtonBodyGetCentreOfMass(body, &com[0]);
-    NewtonBodySetMassProperties(body, body_data->m_bstatic ? 0.0f : body_data->m_mass, NewtonBodyGetCollision(body));
+    NewtonBodySetMassProperties(body, body_data->m_bstatic ? 0.0 : body_data->m_mass, NewtonBodyGetCollision(body));
     NewtonBodySetCentreOfMass(body, &com[0]);
     NewtonBodySetSleepState(body, 0);
     if (body_data->m_bstatic) {
-        dVector zero_vector(0.0f);
+        dVector zero_vector(0.0);
         NewtonBodySetVelocity(body, &zero_vector[0]);
         NewtonBodySetOmega(body, &zero_vector[0]);
         body_data->m_matrix_changed = true;
@@ -1070,7 +1071,7 @@ VALUE MSP::Body::rbf_get_elasticity(VALUE self, VALUE v_body) {
 VALUE MSP::Body::rbf_set_elasticity(VALUE self, VALUE v_body, VALUE v_elasticity) {
     const NewtonBody* body = c_value_to_body(v_body);
     BodyData* body_data = reinterpret_cast<BodyData*>(NewtonBodyGetUserData(body));
-    body_data->m_elasticity = Util::clamp_float(Util::value_to_dFloat(v_elasticity), 0.01f, 2.00f);
+    body_data->m_elasticity = Util::clamp_dFloat(Util::value_to_dFloat(v_elasticity), 0.01f, 2.00f);
     return Qnil;
 }
 
@@ -1083,7 +1084,7 @@ VALUE MSP::Body::rbf_get_softness(VALUE self, VALUE v_body) {
 VALUE MSP::Body::rbf_set_softness(VALUE self, VALUE v_body, VALUE v_softness) {
     const NewtonBody* body = c_value_to_body(v_body);
     BodyData* body_data = reinterpret_cast<BodyData*>(NewtonBodyGetUserData(body));
-    body_data->m_softness = Util::clamp_float(Util::value_to_dFloat(v_softness), 0.01f, 1.00f);
+    body_data->m_softness = Util::clamp_dFloat(Util::value_to_dFloat(v_softness), 0.01f, 1.00f);
     return Qnil;
 }
 
@@ -1096,7 +1097,7 @@ VALUE MSP::Body::rbf_get_static_friction(VALUE self, VALUE v_body) {
 VALUE MSP::Body::rbf_set_static_friction(VALUE self, VALUE v_body, VALUE v_friction) {
     const NewtonBody* body = c_value_to_body(v_body);
     BodyData* body_data = reinterpret_cast<BodyData*>(NewtonBodyGetUserData(body));
-    body_data->m_static_friction = Util::clamp_float(Util::value_to_dFloat(v_friction), 0.01f, 2.00f);
+    body_data->m_static_friction = Util::clamp_dFloat(Util::value_to_dFloat(v_friction), 0.01f, 2.00f);
     return Qnil;
 }
 
@@ -1109,7 +1110,7 @@ VALUE MSP::Body::rbf_get_kinetic_friction(VALUE self, VALUE v_body) {
 VALUE MSP::Body::rbf_set_kinetic_friction(VALUE self, VALUE v_body, VALUE v_friction) {
     const NewtonBody* body = c_value_to_body(v_body);
     BodyData* body_data = reinterpret_cast<BodyData*>(NewtonBodyGetUserData(body));
-    body_data->m_kinetic_friction = Util::clamp_float(Util::value_to_dFloat(v_friction), 0.01f, 2.00f);
+    body_data->m_kinetic_friction = Util::clamp_dFloat(Util::value_to_dFloat(v_friction), 0.01f, 2.00f);
     return Qnil;
 }
 
@@ -1211,9 +1212,9 @@ VALUE MSP::Body::rbf_set_linear_damping(VALUE self, VALUE v_body, VALUE v_damp_v
     const NewtonBody* body = c_value_to_body(v_body);
     dVector damp_vector(Util::value_to_vector(v_damp_vector));
     BodyData* body_data = reinterpret_cast<BodyData*>(NewtonBodyGetUserData(body));
-    body_data->m_linear_damping.m_x = Util::clamp_float(damp_vector.m_x, 0.0f, 1.0f);
-    body_data->m_linear_damping.m_y = Util::clamp_float(damp_vector.m_y, 0.0f, 1.0f);
-    body_data->m_linear_damping.m_z = Util::clamp_float(damp_vector.m_z, 0.0f, 1.0f);
+    body_data->m_linear_damping.m_x = Util::clamp_dFloat(damp_vector.m_x, 0.0, 1.0);
+    body_data->m_linear_damping.m_y = Util::clamp_dFloat(damp_vector.m_y, 0.0, 1.0);
+    body_data->m_linear_damping.m_z = Util::clamp_dFloat(damp_vector.m_z, 0.0, 1.0);
     body_data->m_linear_damping_enabled = (damp_vector.m_x > M_EPSILON || damp_vector.m_y > M_EPSILON || damp_vector.m_z > M_EPSILON);
     return Qnil;
 }
@@ -1228,9 +1229,9 @@ VALUE MSP::Body::rbf_set_angular_damping(VALUE self, VALUE v_body, VALUE v_damp_
     const NewtonBody* body = c_value_to_body(v_body);
     dVector damp_vector(Util::value_to_vector(v_damp_vector));
     BodyData* body_data = reinterpret_cast<BodyData*>(NewtonBodyGetUserData(body));
-    body_data->m_angular_damping.m_x = Util::clamp_float(damp_vector.m_x, 0.0f, 1.0f);
-    body_data->m_angular_damping.m_y = Util::clamp_float(damp_vector.m_y, 0.0f, 1.0f);
-    body_data->m_angular_damping.m_z = Util::clamp_float(damp_vector.m_z, 0.0f, 1.0f);
+    body_data->m_angular_damping.m_x = Util::clamp_dFloat(damp_vector.m_x, 0.0, 1.0);
+    body_data->m_angular_damping.m_y = Util::clamp_dFloat(damp_vector.m_y, 0.0, 1.0);
+    body_data->m_angular_damping.m_z = Util::clamp_dFloat(damp_vector.m_z, 0.0, 1.0);
     body_data->m_angular_damping_enabled = (damp_vector.m_x > M_EPSILON || damp_vector.m_y > M_EPSILON || damp_vector.m_z > M_EPSILON);
     return Qnil;
 }
@@ -1331,7 +1332,7 @@ VALUE MSP::Body::rbf_set_torque(VALUE self, VALUE v_body, VALUE v_torque) {
 
 VALUE MSP::Body::rbf_get_net_contact_force(VALUE self, VALUE v_body) {
     const NewtonBody* body = c_value_to_body(v_body);
-    dVector net_force(0.0f);
+    dVector net_force(0.0);
     for (NewtonJoint* joint = NewtonBodyGetFirstContactJoint(body); joint; joint = NewtonBodyGetNextContactJoint(body, joint)) {
         for (void* contact = NewtonContactJointGetFirstContact(joint); contact; contact = NewtonContactJointGetNextContact(joint, contact)) {
             NewtonMaterial* material = NewtonContactGetMaterial(contact);
@@ -1346,7 +1347,7 @@ VALUE MSP::Body::rbf_get_net_contact_force(VALUE self, VALUE v_body) {
 VALUE MSP::Body::rbf_get_net_joint_tension1(VALUE self, VALUE v_body) {
     const NewtonBody* body = c_value_to_body(v_body);
     const NewtonWorld* world = NewtonBodyGetWorld(body);
-    dVector net_force(0.0f);
+    dVector net_force(0.0);
     for (std::map<MSP::Joint::JointData*, bool>::const_iterator it = MSP::Joint::s_valid_joints.begin(); it != MSP::Joint::s_valid_joints.end(); ++it) {
         if (it->first->m_world == world) {
             dMatrix parent_matrix;
@@ -1364,7 +1365,7 @@ VALUE MSP::Body::rbf_get_net_joint_tension1(VALUE self, VALUE v_body) {
 VALUE MSP::Body::rbf_get_net_joint_tension2(VALUE self, VALUE v_body) {
     const NewtonBody* body = c_value_to_body(v_body);
     const NewtonWorld* world = NewtonBodyGetWorld(body);
-    dVector net_force(0.0f);
+    dVector net_force(0.0);
     for (std::map<MSP::Joint::JointData*, bool>::const_iterator it = MSP::Joint::s_valid_joints.begin(); it != MSP::Joint::s_valid_joints.end(); ++it) {
         if (it->first->m_world == world) {
             dMatrix parent_matrix;
@@ -1428,8 +1429,8 @@ VALUE MSP::Body::rbf_get_contacts(VALUE self, VALUE v_body, VALUE v_inc_non_coll
             if (count == 0) continue;
             BodyData* touching_body_data = reinterpret_cast<BodyData*>(NewtonBodyGetUserData(tbody));
             VALUE v_touching_body = c_body_to_value(tbody);
-            dVector force(0.0f);
-            dFloat speed = 0.0f;
+            dVector force(0.0);
+            dFloat speed = 0.0;
             for (int i = 0; i < count*3; i += 3) {
                 dVector point(points[i+0], points[i+1], points[i+2]);
                 dVector normal(normals[i+0], normals[i+1], normals[i+2]);
@@ -1561,10 +1562,10 @@ VALUE MSP::Body::rbf_apply_pick_and_drag(VALUE self, VALUE v_body, VALUE v_pick_
     BodyData* body_data = reinterpret_cast<BodyData*>(NewtonBodyGetUserData(body));
     dVector pick_pt(Util::value_to_point(v_pick_pt));
     dVector dest_pt(Util::value_to_point(v_dest_pt));
-    dFloat stiffness = Util::clamp_float(Util::value_to_dFloat(v_stiffness), 0.0f, 1.0f);
-    dFloat damp = Util::clamp_float(Util::value_to_dFloat(v_damp), 0.0f, 1.0f);
+    dFloat stiffness = Util::clamp_dFloat(Util::value_to_dFloat(v_stiffness), 0.0, 1.0);
+    dFloat damp = Util::clamp_dFloat(Util::value_to_dFloat(v_damp), 0.0, 1.0);
     dFloat timestep = Util::value_to_dFloat(v_timestep);
-    dFloat inv_timestep = timestep > M_EPSILON ? 1.0f / timestep : 0.0f;
+    dFloat inv_timestep = timestep > M_EPSILON ? 1.0 / timestep : 0.0;
     // Verify
     if (body_data->m_bstatic)
         return Qfalse;
@@ -1582,9 +1583,9 @@ VALUE MSP::Body::rbf_apply_pick_and_drag(VALUE self, VALUE v_body, VALUE v_pick_
     NewtonBodyGetOmega(body, &omega[0]);
     com = matrix.TransformVector(com);
     //inertia = matrix.RotateVector(inertia);
-    //dFloat inv_mass = 1.0f / mass;
+    //dFloat inv_mass = 1.0 / mass;
     // Calculate force
-    dVector des_vel((dest_pt - pick_pt).Scale((1.0f - damp) * inv_timestep));
+    dVector des_vel((dest_pt - pick_pt).Scale((1.0 - damp) * inv_timestep));
     dVector accel((des_vel - velocity).Scale(inv_timestep));
     dVector force(accel.Scale(mass * stiffness));
     // Calculate torque
@@ -1610,9 +1611,9 @@ VALUE MSP::Body::rbf_apply_buoyancy(VALUE self, VALUE v_body, VALUE v_plane_orig
     dVector normal(Util::value_to_vector(v_plane_normal));
     dVector linear_current(Util::value_to_vector(v_linear_current));
     dVector angular_current(Util::value_to_vector(v_angular_current));
-    dFloat density = Util::max_float(Util::value_to_dFloat(v_density), MIN_DENSITY);
-    dFloat linear_viscosity = Util::clamp_float(Util::value_to_dFloat(v_linear_viscosity), 0.0f, 1.0f);
-    dFloat angular_viscosity = Util::clamp_float(Util::value_to_dFloat(v_angular_viscosity), 0.0f, 1.0f);
+    dFloat density = Util::max_dFloat(Util::value_to_dFloat(v_density), MIN_DENSITY);
+    dFloat linear_viscosity = Util::clamp_dFloat(Util::value_to_dFloat(v_linear_viscosity), 0.0, 1.0);
+    dFloat angular_viscosity = Util::clamp_dFloat(Util::value_to_dFloat(v_angular_viscosity), 0.0, 1.0);
     dFloat timestep = Util::value_to_dFloat(v_timestep);
 
     if (body_data->m_bstatic) return Qfalse;
@@ -1627,9 +1628,12 @@ VALUE MSP::Body::rbf_apply_buoyancy(VALUE self, VALUE v_body, VALUE v_plane_orig
     NewtonBodyGetCentreOfMass(body, &com[0]);
     com = transformation_matrix.TransformVector(com);
 
-    dVector force(0.0f);
-    dVector torque(0.0f);
-    NewtonConvexCollisionCalculateBuoyancyAcceleration(collision, &transformation_matrix[0][0], &com[0], &world_data->m_gravity[0], &normal[0], density, 0.0f, &force[0], &torque[0]);
+    dVector force(0.0);
+    dVector torque(0.0);
+    dVector centerOfPreasure(0.0f);
+
+    NewtonConvexCollisionCalculateBuoyancyVolume(collision, &transformation_matrix[0][0], )
+    //NewtonConvexCollisionCalculateBuoyancyAcceleration(collision, &transformation_matrix[0][0], &com[0], &world_data->m_gravity[0], &normal[0], density, 0.0, &force[0], &torque[0]);
 
     dVector inertia;
     dFloat mass;
@@ -1680,7 +1684,7 @@ VALUE MSP::Body::rbf_apply_aerodynamics(VALUE self, VALUE v_body, VALUE v_drag, 
     dVector omega;
     NewtonBodyGetVelocity(body, &velocity[0]);
     NewtonBodyGetOmega(body, &omega[0]);
-    CollisionIteratorData2* iterator_data = new CollisionIteratorData2(body, centre, velocity, omega, drag, wind, dVector(0.0f), dVector(0.0f));
+    CollisionIteratorData2* iterator_data = new CollisionIteratorData2(body, centre, velocity, omega, drag, wind, dVector(0.0), dVector(0.0));
     NewtonCollisionForEachPolygonDo(collision, &matrix[0][0], collision_iterator4, reinterpret_cast<void*>(iterator_data));
 
     c_body_add_force(body_data, iterator_data->m_force);
@@ -1720,7 +1724,7 @@ VALUE MSP::Body::rbf_copy(VALUE self, VALUE v_body, VALUE v_matrix, VALUE v_reap
     else
         new_body = NewtonCreateDynamicBody(world, new_col, &matrix[0][0]);
 
-    NewtonBodySetMassProperties(new_body, body_data->m_bstatic ? 0.0f : body_data->m_mass, new_col);
+    NewtonBodySetMassProperties(new_body, body_data->m_bstatic ? 0.0 : body_data->m_mass, new_col);
     NewtonDestroyCollision(new_col);
 
     dVector com;
@@ -1749,8 +1753,8 @@ VALUE MSP::Body::rbf_copy(VALUE self, VALUE v_body, VALUE v_matrix, VALUE v_reap
     dVector angular_damp;
     NewtonBodyGetAngularDamping(body, &angular_damp[0]);
     NewtonBodySetAngularDamping(new_body, &angular_damp[0]);*/
-    NewtonBodySetLinearDamping(body, 0.0f);
-    dVector damp(0.0f);
+    NewtonBodySetLinearDamping(body, 0.0);
+    dVector damp(0.0);
     NewtonBodySetAngularDamping(body, &damp[0]);
 
     NewtonBodySetSimulationState(new_body, NewtonBodyGetSimulationState(body));
@@ -1956,9 +1960,9 @@ VALUE MSP::Body::rbf_set_collision_scale(VALUE self, VALUE v_body, VALUE v_scale
         rb_raise(rb_eTypeError, "Only convex collisions can be scaled!");
     dVector scale(Util::value_to_vector(v_scale));
     dVector& cscale = MSP::Collision::s_valid_collisions[collision]->m_scale;
-    cscale.m_x = Util::clamp_float(scale.m_x, 0.01f, 100.0f);
-    cscale.m_y = Util::clamp_float(scale.m_y, 0.01f, 100.0f);
-    cscale.m_z = Util::clamp_float(scale.m_z, 0.01f, 100.0f);
+    cscale.m_x = Util::clamp_dFloat(scale.m_x, 0.01f, 100.0);
+    cscale.m_y = Util::clamp_dFloat(scale.m_y, 0.01f, 100.0);
+    cscale.m_z = Util::clamp_dFloat(scale.m_z, 0.01f, 100.0);
     const dVector& dco = body_data->m_default_collision_offset;
     const dVector& dcs = body_data->m_default_collision_scale;
     dMatrix col_matrix;
@@ -1968,11 +1972,11 @@ VALUE MSP::Body::rbf_set_collision_scale(VALUE self, VALUE v_body, VALUE v_scale
     col_matrix.m_posit.m_z = dco.m_z * scale.m_z / dcs.m_z;
     NewtonCollisionSetMatrix(collision, &col_matrix[0][0]);
     NewtonBodySetCollisionScale(body, cscale.m_x, cscale.m_y, cscale.m_z);
-    body_data->m_volume = Util::clamp_float(NewtonConvexCollisionCalculateVolume(collision), MIN_VOLUME, MAX_VOLUME) * M_INCH3_TO_METER3;
-    body_data->m_mass = Util::clamp_float(body_data->m_density * body_data->m_volume, MIN_MASS, MAX_MASS);
+    body_data->m_volume = Util::clamp_dFloat(NewtonConvexCollisionCalculateVolume(collision), MIN_VOLUME, MAX_VOLUME) * M_INCH3_TO_METER3;
+    body_data->m_mass = Util::clamp_dFloat(body_data->m_density * body_data->m_volume, MIN_MASS, MAX_MASS);
     dVector com;
     NewtonBodyGetCentreOfMass(body, &com[0]);
-    NewtonBodySetMassProperties(body, body_data->m_bstatic ? 0.0f : body_data->m_mass, collision);
+    NewtonBodySetMassProperties(body, body_data->m_bstatic ? 0.0 : body_data->m_mass, collision);
     NewtonBodySetCentreOfMass(body, &com[0]);
     NewtonBodySetSleepState(body, 0);
     body_data->m_matrix_changed = true;

@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_joint_plane.h"
 #include "msp_world.h"
 
@@ -15,8 +16,8 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dFloat MSP::Plane::DEFAULT_LINEAR_FRICTION(0.0f);
-const dFloat MSP::Plane::DEFAULT_ANGULAR_FRICTION(0.0f);
+const dFloat MSP::Plane::DEFAULT_LINEAR_FRICTION(0.0);
+const dFloat MSP::Plane::DEFAULT_ANGULAR_FRICTION(0.0);
 const bool MSP::Plane::DEFAULT_ROTATION_ENABLED(false);
 
 
@@ -30,24 +31,24 @@ void MSP::Plane::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     PlaneData* cj_data = reinterpret_cast<PlaneData*>(joint_data->m_cj_data);
 
-    dFloat inv_timestep = 1.0f / timestep;
+    dFloat inv_timestep = 1.0 / timestep;
 
     // Calculate position of pivot points and Jacobian direction vectors in global space.
     dMatrix matrix0, matrix1;
     MSP::Joint::c_calculate_global_matrix(joint_data, matrix0, matrix1);
 
-    dVector veloc0(0.0f);
-    dVector veloc1(0.0f);
+    dVector veloc0(0.0);
+    dVector veloc1(0.0);
     NewtonBodyGetVelocity(joint_data->m_child, &veloc0[0]);
     if (joint_data->m_parent != nullptr)
         NewtonBodyGetVelocity(joint_data->m_parent, &veloc1[0]);
 
     dVector loc_veloc(matrix1.UnrotateVector(veloc0 - veloc1));
-    dVector loc_desired_lin_accel(loc_veloc.Scale(-1.0f * inv_timestep));
+    dVector loc_desired_lin_accel(loc_veloc.Scale(-1.0 * inv_timestep));
 
     const dVector& p0 = matrix0.m_posit;
     dVector p1(matrix1.UntransformVector(matrix0.m_posit));
-    p1.m_z = 0.0f;
+    p1.m_z = 0.0;
     p1 = matrix1.TransformVector(p1);
 
     // Add friction on axes perpendicular to the pin direction.
@@ -75,8 +76,8 @@ void MSP::Plane::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
     NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
 
     if (cj_data->m_rotation_enabled) {
-        dVector omega0(0.0f);
-        dVector omega1(0.0f);
+        dVector omega0(0.0);
+        dVector omega1(0.0);
         NewtonBodyGetOmega(joint_data->m_child, &omega0[0]);
         if (joint_data->m_parent != nullptr)
             NewtonBodyGetOmega(joint_data->m_parent, &omega1[0]);
@@ -84,7 +85,7 @@ void MSP::Plane::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
         dVector loc_omega(matrix1.UnrotateVector(omega0 - omega1));
         dFloat loc_desired_ang_accel = -loc_omega.m_z * inv_timestep;
 
-        NewtonUserJointAddAngularRow(joint, 0.0f, &matrix1.m_right[0]);
+        NewtonUserJointAddAngularRow(joint, 0.0, &matrix1.m_right[0]);
         NewtonUserJointSetRowAcceleration(joint, loc_desired_ang_accel);
         NewtonUserJointSetRowMinimumFriction(joint, -cj_data->m_ang_friction);
         NewtonUserJointSetRowMaximumFriction(joint, cj_data->m_ang_friction);
@@ -99,15 +100,15 @@ void MSP::Plane::get_info(const NewtonJoint* const joint, NewtonJointRecord* con
     info->m_maxLinearDof[0] = Joint::CUSTOM_LARGE_VALUE;
     info->m_minLinearDof[1] = -Joint::CUSTOM_LARGE_VALUE;
     info->m_maxLinearDof[1] = Joint::CUSTOM_LARGE_VALUE;
-    info->m_minLinearDof[2] = -0.0f;
-    info->m_maxLinearDof[2] = 0.0f;
+    info->m_minLinearDof[2] = -0.0;
+    info->m_maxLinearDof[2] = 0.0;
 
-    info->m_minAngularDof[0] = -0.0f;
-    info->m_maxAngularDof[0] = 0.0f;
-    info->m_minAngularDof[1] = -0.0f;
-    info->m_maxAngularDof[1] = 0.0f;
-    info->m_minAngularDof[2] = -0.0f;
-    info->m_maxAngularDof[2] = 0.0f;
+    info->m_minAngularDof[0] = -0.0;
+    info->m_maxAngularDof[0] = 0.0;
+    info->m_minAngularDof[1] = -0.0;
+    info->m_maxAngularDof[1] = 0.0;
+    info->m_minAngularDof[2] = -0.0;
+    info->m_maxAngularDof[2] = 0.0;
 }
 
 void MSP::Plane::on_destroy(MSP::Joint::JointData* joint_data) {
@@ -158,7 +159,7 @@ VALUE MSP::Plane::rbf_get_linear_friction(VALUE self, VALUE v_joint) {
 VALUE MSP::Plane::rbf_set_linear_friction(VALUE self, VALUE v_joint, VALUE v_friction) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::PLANE);
     PlaneData* cj_data = reinterpret_cast<PlaneData*>(joint_data->m_cj_data);
-    cj_data->m_lin_friction = Util::max_float(Util::value_to_dFloat(v_friction) * M_METER_TO_INCH, 0.0f);
+    cj_data->m_lin_friction = Util::max_dFloat(Util::value_to_dFloat(v_friction) * M_METER_TO_INCH, 0.0);
     return Qnil;
 }
 
@@ -171,7 +172,7 @@ VALUE MSP::Plane::rbf_get_angular_friction(VALUE self, VALUE v_joint) {
 VALUE MSP::Plane::rbf_set_angular_friction(VALUE self, VALUE v_joint, VALUE v_friction) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::PLANE);
     PlaneData* cj_data = reinterpret_cast<PlaneData*>(joint_data->m_cj_data);
-    cj_data->m_ang_friction = Util::max_float(Util::value_to_dFloat(v_friction) * M_METER2_TO_INCH2, 0.0f);
+    cj_data->m_ang_friction = Util::max_dFloat(Util::value_to_dFloat(v_friction) * M_METER2_TO_INCH2, 0.0);
     return Qnil;
 }
 

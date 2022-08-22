@@ -41,11 +41,11 @@ private:
         bool m_ang_limits_enabled;
         bool m_lin_limits_enabled;
         CorkscrewData() :
-            m_cur_omega(0.0f),
-            m_cur_alpha(0.0f),
-            m_cur_pos(0.0f),
-            m_cur_vel(0.0f),
-            m_cur_accel(0.0f),
+            m_cur_omega(0.0),
+            m_cur_alpha(0.0),
+            m_cur_pos(0.0),
+            m_cur_vel(0.0),
+            m_cur_accel(0.0),
             m_min_ang(DEFAULT_MIN_ANG),
             m_max_ang(DEFAULT_MAX_ANG),
             m_min_pos(DEFAULT_MIN_POS),

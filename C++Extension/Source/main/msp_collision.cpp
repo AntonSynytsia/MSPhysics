@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_collision.h"
 #include "msp_world.h"
 
@@ -71,9 +72,9 @@ VALUE MSP::Collision::rbf_create_box(VALUE self, VALUE v_world, VALUE v_width, V
     const NewtonWorld* world = MSP::World::c_value_to_world(v_world);
     const NewtonCollision* col = NewtonCreateBox(
         world,
-        Util::clamp_float(Util::value_to_dFloat(v_width), MIN_SIZE, MAX_SIZE),
-        Util::clamp_float(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE),
-        Util::clamp_float(Util::value_to_dFloat(v_depth), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_width), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_depth), MIN_SIZE, MAX_SIZE),
         Util::value_to_int(v_id),
         v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix)[0][0]);
     s_valid_collisions[col] = new CollisionData;
@@ -84,7 +85,7 @@ VALUE MSP::Collision::rbf_create_sphere(VALUE self, VALUE v_world, VALUE v_radiu
     const NewtonWorld* world = MSP::World::c_value_to_world(v_world);
     const NewtonCollision* col = NewtonCreateSphere(
         world,
-        Util::clamp_float(Util::value_to_dFloat(v_radius), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_radius), MIN_SIZE, MAX_SIZE),
         Util::value_to_int(v_id),
         v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix)[0][0]);
     s_valid_collisions[col] = new CollisionData;
@@ -93,11 +94,11 @@ VALUE MSP::Collision::rbf_create_sphere(VALUE self, VALUE v_world, VALUE v_radiu
 
 VALUE MSP::Collision::rbf_create_scaled_sphere(VALUE self, VALUE v_world, VALUE v_width, VALUE v_height, VALUE v_depth, VALUE v_id, VALUE v_offset_matrix) {
     const NewtonWorld* world = MSP::World::c_value_to_world(v_world);
-    dFloat w = Util::clamp_float(Util::value_to_dFloat(v_width), MIN_SIZE, MAX_SIZE);
-    dFloat h = Util::clamp_float(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE);
-    dFloat d = Util::clamp_float(Util::value_to_dFloat(v_depth), MIN_SIZE, MAX_SIZE);
-    dFloat r = Util::min_float(d, Util::min_float(h, w));
-    dFloat ir = 1.0f / r;
+    dFloat w = Util::clamp_dFloat(Util::value_to_dFloat(v_width), MIN_SIZE, MAX_SIZE);
+    dFloat h = Util::clamp_dFloat(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE);
+    dFloat d = Util::clamp_dFloat(Util::value_to_dFloat(v_depth), MIN_SIZE, MAX_SIZE);
+    dFloat r = Util::min_dFloat(d, Util::min_dFloat(h, w));
+    dFloat ir = 1.0 / r;
     const NewtonCollision* col = NewtonCreateSphere(
         world,
         r * 0.5f,
@@ -115,8 +116,8 @@ VALUE MSP::Collision::rbf_create_cone(VALUE self, VALUE v_world, VALUE v_radius,
     const NewtonWorld* world = MSP::World::c_value_to_world(v_world);
     const NewtonCollision* col = NewtonCreateCone(
         world,
-        Util::clamp_float(Util::value_to_dFloat(v_radius), MIN_SIZE, MAX_SIZE),
-        Util::clamp_float(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_radius), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE),
         Util::value_to_int(v_id),
         v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix)[0][0]);
     s_valid_collisions[col] = new CollisionData;
@@ -125,18 +126,18 @@ VALUE MSP::Collision::rbf_create_cone(VALUE self, VALUE v_world, VALUE v_radius,
 
 VALUE MSP::Collision::rbf_create_scaled_cone(VALUE self, VALUE v_world, VALUE v_radiusx, VALUE v_radiusy, VALUE v_height, VALUE v_id, VALUE v_offset_matrix) {
     const NewtonWorld* world = MSP::World::c_value_to_world(v_world);
-    dFloat rx = Util::clamp_float(Util::value_to_dFloat(v_radiusx), MIN_SIZE, MAX_SIZE);
-    dFloat ry = Util::clamp_float(Util::value_to_dFloat(v_radiusy), MIN_SIZE, MAX_SIZE);
-    dFloat h = Util::clamp_float(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE);
-    dFloat r = Util::min_float(rx, ry);
-    dFloat ir = 1.0f / r;
+    dFloat rx = Util::clamp_dFloat(Util::value_to_dFloat(v_radiusx), MIN_SIZE, MAX_SIZE);
+    dFloat ry = Util::clamp_dFloat(Util::value_to_dFloat(v_radiusy), MIN_SIZE, MAX_SIZE);
+    dFloat h = Util::clamp_dFloat(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE);
+    dFloat r = Util::min_dFloat(rx, ry);
+    dFloat ir = 1.0 / r;
     const NewtonCollision* col = NewtonCreateCone(
         world,
         r,
         h,
         Util::value_to_int(v_id),
         v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix)[0][0]);
-    dFloat sx = 1.0f;
+    dFloat sx = 1.0;
     dFloat sy = ry * ir;
     dFloat sz = rx * ir;
     NewtonCollisionSetScale(col, sx, sy, sz);
@@ -148,9 +149,9 @@ VALUE MSP::Collision::rbf_create_cylinder(VALUE self, VALUE v_world, VALUE v_rad
     const NewtonWorld* world = MSP::World::c_value_to_world(v_world);
     const NewtonCollision* col = NewtonCreateCylinder(
         world,
-        Util::clamp_float(Util::value_to_dFloat(v_radius), MIN_SIZE, MAX_SIZE),
-        Util::clamp_float(Util::value_to_dFloat(v_radius), MIN_SIZE, MAX_SIZE),
-        Util::clamp_float(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_radius), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_radius), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE),
         Util::value_to_int(v_id),
         v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix)[0][0]);
     s_valid_collisions[col] = new CollisionData;
@@ -159,11 +160,11 @@ VALUE MSP::Collision::rbf_create_cylinder(VALUE self, VALUE v_world, VALUE v_rad
 
 VALUE MSP::Collision::rbf_create_scaled_cylinder(VALUE self, VALUE v_world, VALUE v_radiusx, VALUE v_radiusy, VALUE v_height, VALUE v_id, VALUE v_offset_matrix) {
     const NewtonWorld* world = MSP::World::c_value_to_world(v_world);
-    dFloat rx = Util::clamp_float(Util::value_to_dFloat(v_radiusx), MIN_SIZE, MAX_SIZE);
-    dFloat ry = Util::clamp_float(Util::value_to_dFloat(v_radiusy), MIN_SIZE, MAX_SIZE);
-    dFloat h = Util::clamp_float(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE);
-    dFloat r = Util::min_float(rx, ry);
-    dFloat ir = 1.0f / r;
+    dFloat rx = Util::clamp_dFloat(Util::value_to_dFloat(v_radiusx), MIN_SIZE, MAX_SIZE);
+    dFloat ry = Util::clamp_dFloat(Util::value_to_dFloat(v_radiusy), MIN_SIZE, MAX_SIZE);
+    dFloat h = Util::clamp_dFloat(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE);
+    dFloat r = Util::min_dFloat(rx, ry);
+    dFloat ir = 1.0 / r;
     const NewtonCollision* col = NewtonCreateCylinder(
         world,
         r,
@@ -171,7 +172,7 @@ VALUE MSP::Collision::rbf_create_scaled_cylinder(VALUE self, VALUE v_world, VALU
         h,
         Util::value_to_int(v_id),
         v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix)[0][0]);
-    dFloat sx = 1.0f;
+    dFloat sx = 1.0;
     dFloat sy = ry * ir;
     dFloat sz = rx * ir;
     NewtonCollisionSetScale(col, sx, sy, sz);
@@ -183,9 +184,9 @@ VALUE MSP::Collision::rbf_create_capsule(VALUE self, VALUE v_world, VALUE v_radi
     const NewtonWorld* world = MSP::World::c_value_to_world(v_world);
     const NewtonCollision* col = NewtonCreateCapsule(
         world,
-        Util::clamp_float(Util::value_to_dFloat(v_radius), MIN_SIZE, MAX_SIZE),
-        Util::clamp_float(Util::value_to_dFloat(v_radius), MIN_SIZE, MAX_SIZE),
-        Util::clamp_float(Util::value_to_dFloat(v_height), 0.0f, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_radius), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_radius), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_height), 0.0, MAX_SIZE),
         Util::value_to_int(v_id),
         v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix)[0][0]);
     s_valid_collisions[col] = new CollisionData;
@@ -194,12 +195,12 @@ VALUE MSP::Collision::rbf_create_capsule(VALUE self, VALUE v_world, VALUE v_radi
 
 VALUE MSP::Collision::rbf_create_scaled_capsule(VALUE self, VALUE v_world, VALUE v_radiusx, VALUE v_radiusy, VALUE v_total_height, VALUE v_id, VALUE v_offset_matrix) {
     const NewtonWorld* world = MSP::World::c_value_to_world(v_world);
-    dFloat rx = Util::clamp_float(Util::value_to_dFloat(v_radiusx), MIN_SIZE, MAX_SIZE);
-    dFloat ry = Util::clamp_float(Util::value_to_dFloat(v_radiusy), MIN_SIZE, MAX_SIZE);
-    dFloat th = Util::clamp_float(Util::value_to_dFloat(v_total_height), MIN_SIZE, MAX_SIZE);
-    dFloat r = Util::min_float(rx, ry);
-    dFloat ir = 1.0f / r;
-    dFloat h = th - r * 2.0f;
+    dFloat rx = Util::clamp_dFloat(Util::value_to_dFloat(v_radiusx), MIN_SIZE, MAX_SIZE);
+    dFloat ry = Util::clamp_dFloat(Util::value_to_dFloat(v_radiusy), MIN_SIZE, MAX_SIZE);
+    dFloat th = Util::clamp_dFloat(Util::value_to_dFloat(v_total_height), MIN_SIZE, MAX_SIZE);
+    dFloat r = Util::min_dFloat(rx, ry);
+    dFloat ir = 1.0 / r;
+    dFloat h = th - r * 2.0;
     const NewtonCollision* col = NewtonCreateCapsule(
         world,
         r,
@@ -207,7 +208,7 @@ VALUE MSP::Collision::rbf_create_scaled_capsule(VALUE self, VALUE v_world, VALUE
         h < 0 ? 0 : h,
         Util::value_to_int(v_id),
         v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix)[0][0]);
-    dFloat sx = h < 0 ? th * 0.5f * ir : 1.0f;
+    dFloat sx = h < 0 ? th * 0.5f * ir : 1.0;
     dFloat sy = ry * ir;
     dFloat sz = rx * ir;
     NewtonCollisionSetScale(col, sx, sy, sz);
@@ -219,9 +220,9 @@ VALUE MSP::Collision::rbf_create_tapered_capsule(VALUE self, VALUE v_world, VALU
     const NewtonWorld* world = MSP::World::c_value_to_world(v_world);
     const NewtonCollision* col = NewtonCreateCapsule(
         world,
-        Util::clamp_float(Util::value_to_dFloat(v_radius0), MIN_SIZE, MAX_SIZE),
-        Util::clamp_float(Util::value_to_dFloat(v_radius1), MIN_SIZE, MAX_SIZE),
-        Util::clamp_float(Util::value_to_dFloat(v_height), 0.0f, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_radius0), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_radius1), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_height), 0.0, MAX_SIZE),
         Util::value_to_int(v_id),
         v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix)[0][0]);
     s_valid_collisions[col] = new CollisionData;
@@ -232,9 +233,9 @@ VALUE MSP::Collision::rbf_create_tapered_cylinder(VALUE self, VALUE v_world, VAL
     const NewtonWorld* world = MSP::World::c_value_to_world(v_world);
     const NewtonCollision* col = NewtonCreateCylinder(
         world,
-        Util::clamp_float(Util::value_to_dFloat(v_radius0), MIN_SIZE, MAX_SIZE),
-        Util::clamp_float(Util::value_to_dFloat(v_radius1), MIN_SIZE, MAX_SIZE),
-        Util::clamp_float(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_radius0), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_radius1), MIN_SIZE, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE),
         Util::value_to_int(v_id),
         v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix)[0][0]);
     s_valid_collisions[col] = new CollisionData;
@@ -245,8 +246,8 @@ VALUE MSP::Collision::rbf_create_chamfer_cylinder(VALUE self, VALUE v_world, VAL
     const NewtonWorld* world = MSP::World::c_value_to_world(v_world);
     const NewtonCollision* col = NewtonCreateChamferCylinder(
         world,
-        Util::clamp_float(Util::value_to_dFloat(v_radius), 0.0f, MAX_SIZE),
-        Util::clamp_float(Util::value_to_dFloat(v_height), 0.0f, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_radius), 0.0, MAX_SIZE),
+        Util::clamp_dFloat(Util::value_to_dFloat(v_height), 0.0, MAX_SIZE),
         Util::value_to_int(v_id),
         v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix)[0][0]);
     s_valid_collisions[col] = new CollisionData;
@@ -256,17 +257,17 @@ VALUE MSP::Collision::rbf_create_chamfer_cylinder(VALUE self, VALUE v_world, VAL
 
 VALUE MSP::Collision::rbf_create_scaled_chamfer_cylinder(VALUE self, VALUE v_world, VALUE v_radiusx, VALUE v_radiusy, VALUE v_height, VALUE v_id, VALUE v_offset_matrix) {
     const NewtonWorld* world = MSP::World::c_value_to_world(v_world);
-    dFloat rx = Util::clamp_float(Util::value_to_dFloat(v_radiusx), MIN_SIZE, MAX_SIZE);
-    dFloat ry = Util::clamp_float(Util::value_to_dFloat(v_radiusy), MIN_SIZE, MAX_SIZE);
-    dFloat h = Util::clamp_float(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE);
-    dFloat r = Util::min_float(rx, ry);
+    dFloat rx = Util::clamp_dFloat(Util::value_to_dFloat(v_radiusx), MIN_SIZE, MAX_SIZE);
+    dFloat ry = Util::clamp_dFloat(Util::value_to_dFloat(v_radiusy), MIN_SIZE, MAX_SIZE);
+    dFloat h = Util::clamp_dFloat(Util::value_to_dFloat(v_height), MIN_SIZE, MAX_SIZE);
+    dFloat r = Util::min_dFloat(rx, ry);
     const NewtonCollision* col = NewtonCreateChamferCylinder(
         world,
         r,
         h,
         Util::value_to_int(v_id),
         v_offset_matrix == Qnil ? NULL : &Util::value_to_matrix(v_offset_matrix)[0][0]);
-    dFloat sx = 1.0f;
+    dFloat sx = 1.0;
     dFloat sy = ry / (h * 0.5f + r);
     dFloat sz = rx / (h * 0.5f + r);
     NewtonCollisionSetScale(col, sx, sy, sz);
@@ -383,7 +384,7 @@ VALUE MSP::Collision::rbf_create_compound_from_cd(
     const NewtonCollision* collision = NewtonCreateCompoundCollisionFromMesh(world, convex_approximation, hull_tolerance, id, id);
     NewtonMeshDestroy(convex_approximation);
     NewtonMeshDestroy(mesh);
-    s_valid_collisions[collision] = dVector(1.0f, 1.0f, 1.0f);
+    s_valid_collisions[collision] = dVector(1.0, 1.0, 1.0);
     return c_collision_to_value(collision);
 #endif
 }
@@ -432,9 +433,9 @@ VALUE MSP::Collision::rbf_set_scale(VALUE self, VALUE v_collision, VALUE v_scale
     const NewtonCollision* collision = c_value_to_collision(v_collision);
     dVector scale(Util::value_to_vector(v_scale));
     dVector& cscale = s_valid_collisions[collision]->m_scale;
-    cscale.m_x = Util::clamp_float(scale.m_x, 0.01f, 100.0f);
-    cscale.m_y = Util::clamp_float(scale.m_y, 0.01f, 100.0f);
-    cscale.m_z = Util::clamp_float(scale.m_z, 0.01f, 100.0f);
+    cscale.m_x = Util::clamp_dFloat(scale.m_x, 0.01f, 100.0);
+    cscale.m_y = Util::clamp_dFloat(scale.m_y, 0.01f, 100.0);
+    cscale.m_z = Util::clamp_dFloat(scale.m_z, 0.01f, 100.0);
     NewtonCollisionSetScale(collision, cscale.m_x, cscale.m_y, cscale.m_z);
     return Qnil;
 }

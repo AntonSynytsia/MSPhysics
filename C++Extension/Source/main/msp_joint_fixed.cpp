@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_joint_fixed.h"
 
 /*
@@ -69,19 +70,19 @@ void MSP::Fixed::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
 }
 
 void MSP::Fixed::get_info(const NewtonJoint* const joint, NewtonJointRecord* const info) {
-    info->m_minLinearDof[0] = -0.0f;
-    info->m_maxLinearDof[0] = 0.0f;
-    info->m_minLinearDof[1] = -0.0f;
-    info->m_maxLinearDof[1] = 0.0f;
-    info->m_minLinearDof[2] = -0.0f;
-    info->m_maxLinearDof[2] = 0.0f;
+    info->m_minLinearDof[0] = -0.0;
+    info->m_maxLinearDof[0] = 0.0;
+    info->m_minLinearDof[1] = -0.0;
+    info->m_maxLinearDof[1] = 0.0;
+    info->m_minLinearDof[2] = -0.0;
+    info->m_maxLinearDof[2] = 0.0;
 
-    info->m_minAngularDof[0] = -0.0f;
-    info->m_maxAngularDof[0] = 0.0f;
-    info->m_minAngularDof[1] = -0.0f;
-    info->m_maxAngularDof[1] = 0.0f;
-    info->m_minAngularDof[2] = -0.0f;
-    info->m_maxAngularDof[2] = 0.0f;
+    info->m_minAngularDof[0] = -0.0;
+    info->m_maxAngularDof[0] = 0.0;
+    info->m_minAngularDof[1] = -0.0;
+    info->m_maxAngularDof[1] = 0.0;
+    info->m_minAngularDof[2] = -0.0;
+    info->m_maxAngularDof[2] = 0.0;
 }
 
 

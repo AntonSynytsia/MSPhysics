@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_joint_piston.h"
 #include "msp_world.h"
 
@@ -15,13 +16,13 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dFloat MSP::Piston::DEFAULT_MIN(-10.0f);
-const dFloat MSP::Piston::DEFAULT_MAX(10.0f);
+const dFloat MSP::Piston::DEFAULT_MIN(-10.0);
+const dFloat MSP::Piston::DEFAULT_MAX(10.0);
 const bool MSP::Piston::DEFAULT_LIMITS_ENABLED(false);
-const dFloat MSP::Piston::DEFAULT_RATE(40.0f);
-const dFloat MSP::Piston::DEFAULT_POWER(0.0f);
+const dFloat MSP::Piston::DEFAULT_RATE(40.0);
+const dFloat MSP::Piston::DEFAULT_POWER(0.0);
 const dFloat MSP::Piston::DEFAULT_REDUCTION_RATIO(0.1f);
-const dFloat MSP::Piston::DEFAULT_CONTROLLER(0.0f);
+const dFloat MSP::Piston::DEFAULT_CONTROLLER(0.0);
 const int MSP::Piston::DEFAULT_CONTROLLER_MODE(0);
 const bool MSP::Piston::DEFAULT_CONTROLLER_ENABLED(false);
 
@@ -36,7 +37,7 @@ void MSP::Piston::submit_constraints(const NewtonJoint* joint, dFloat timestep, 
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     PistonData* cj_data = reinterpret_cast<PistonData*>(joint_data->m_cj_data);
 
-    dFloat inv_timestep = 1.0f / timestep;
+    dFloat inv_timestep = 1.0 / timestep;
 
     // Calculate position of pivot points and Jacobian direction vectors in global space.
     dMatrix matrix0, matrix1;
@@ -90,13 +91,13 @@ void MSP::Piston::submit_constraints(const NewtonJoint* joint, dFloat timestep, 
         else if (cj_data->m_cur_pos < cj_data->m_min_pos) {
             dVector s1(p0 + matrix1.m_right.Scale(cj_data->m_min_pos - cj_data->m_cur_pos + Joint::LINEAR_LIMIT_EPSILON));
             NewtonUserJointAddLinearRow(joint, &p0[0], &s1[0], &matrix0.m_right[0]);
-            NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMinimumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else if (cj_data->m_cur_pos > cj_data->m_max_pos) {
             dVector s1(p0 + matrix1.m_right.Scale(cj_data->m_max_pos - cj_data->m_cur_pos - Joint::LINEAR_LIMIT_EPSILON));
             NewtonUserJointAddLinearRow(joint, &p0[0], &s1[0], &matrix0.m_right[0]);
-            NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMaximumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else
@@ -107,7 +108,7 @@ void MSP::Piston::submit_constraints(const NewtonJoint* joint, dFloat timestep, 
     // Add power
     if (bcontinue) {
         if (cj_data->m_controller_enabled) {
-            dFloat des_vel = 0.0f;
+            dFloat des_vel = 0.0;
             if (cj_data->m_controller_mode == 2) {
                 // Control by speed - adaptive
                 des_vel = cj_data->m_rate * cj_data->m_controller;
@@ -124,7 +125,7 @@ void MSP::Piston::submit_constraints(const NewtonJoint* joint, dFloat timestep, 
                 // Control by speed - strict
                 dFloat des_step = cj_data->m_rate * cj_data->m_controller * timestep;
                 if (cj_data->m_limits_enabled)
-                    cj_data->m_des_pos = Util::clamp_float(cj_data->m_des_pos + des_step, cj_data->m_min_pos, cj_data->m_max_pos);
+                    cj_data->m_des_pos = Util::clamp_dFloat(cj_data->m_des_pos + des_step, cj_data->m_min_pos, cj_data->m_max_pos);
                 else
                     cj_data->m_des_pos += des_step;
                 dFloat rel_pos = cj_data->m_des_pos - cj_data->m_cur_pos;
@@ -133,7 +134,7 @@ void MSP::Piston::submit_constraints(const NewtonJoint* joint, dFloat timestep, 
             else {
                 // Control by position
                 if (cj_data->m_limits_enabled)
-                    cj_data->m_des_pos = Util::clamp_float(cj_data->m_controller, cj_data->m_min_pos, cj_data->m_max_pos);
+                    cj_data->m_des_pos = Util::clamp_dFloat(cj_data->m_controller, cj_data->m_min_pos, cj_data->m_max_pos);
                 else
                     cj_data->m_des_pos = cj_data->m_controller;
                 dFloat rel_pos = cj_data->m_des_pos - cj_data->m_cur_pos;
@@ -159,7 +160,7 @@ void MSP::Piston::submit_constraints(const NewtonJoint* joint, dFloat timestep, 
             NewtonUserJointAddLinearRow(joint, &p0[0], &p1[0], &matrix1.m_right[0]);
             NewtonUserJointSetRowAcceleration(joint, -cj_data->m_cur_vel * inv_timestep);
         }
-        if (cj_data->m_power == 0.0f) {
+        if (cj_data->m_power == 0.0) {
             NewtonUserJointSetRowMinimumFriction(joint, -Joint::CUSTOM_LARGE_VALUE);
             NewtonUserJointSetRowMaximumFriction(joint, Joint::CUSTOM_LARGE_VALUE);
         }
@@ -175,10 +176,10 @@ void MSP::Piston::get_info(const NewtonJoint* const joint, NewtonJointRecord* co
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     PistonData* cj_data = reinterpret_cast<PistonData*>(joint_data->m_cj_data);
 
-    info->m_minLinearDof[0] = -0.0f;
-    info->m_maxLinearDof[0] = 0.0f;
-    info->m_minLinearDof[1] = -0.0f;
-    info->m_maxLinearDof[1] = 0.0f;
+    info->m_minLinearDof[0] = -0.0;
+    info->m_maxLinearDof[0] = 0.0;
+    info->m_minLinearDof[1] = -0.0;
+    info->m_maxLinearDof[1] = 0.0;
 
     if (cj_data->m_limits_enabled) {
         info->m_minLinearDof[2] = (cj_data->m_min_pos - cj_data->m_cur_pos);
@@ -189,12 +190,12 @@ void MSP::Piston::get_info(const NewtonJoint* const joint, NewtonJointRecord* co
         info->m_minLinearDof[2] = Joint::CUSTOM_LARGE_VALUE;
     }
 
-    info->m_minAngularDof[0] = -0.0f;
-    info->m_maxAngularDof[0] = 0.0f;
-    info->m_minAngularDof[1] = -0.0f;
-    info->m_maxAngularDof[1] = 0.0f;
-    info->m_minAngularDof[2] = -0.0f;
-    info->m_maxAngularDof[2] = 0.0f;
+    info->m_minAngularDof[0] = -0.0;
+    info->m_maxAngularDof[0] = 0.0;
+    info->m_minAngularDof[1] = -0.0;
+    info->m_maxAngularDof[1] = 0.0;
+    info->m_minAngularDof[2] = -0.0;
+    info->m_maxAngularDof[2] = 0.0;
 }
 
 void MSP::Piston::on_destroy(MSP::Joint::JointData* joint_data) {
@@ -203,10 +204,10 @@ void MSP::Piston::on_destroy(MSP::Joint::JointData* joint_data) {
 
 void MSP::Piston::on_disconnect(MSP::Joint::JointData* joint_data) {
     PistonData* cj_data = reinterpret_cast<PistonData*>(joint_data->m_cj_data);
-    cj_data->m_cur_pos = 0.0f;
-    cj_data->m_cur_vel = 0.0f;
-    cj_data->m_cur_accel = 0.0f;
-    cj_data->m_des_pos = 0.0f;
+    cj_data->m_cur_pos = 0.0;
+    cj_data->m_cur_vel = 0.0;
+    cj_data->m_cur_accel = 0.0;
+    cj_data->m_des_pos = 0.0;
 }
 
 void MSP::Piston::adjust_pin_matrix_proc(MSP::Joint::JointData* joint_data, dMatrix& pin_matrix) {
@@ -310,7 +311,7 @@ VALUE MSP::Piston::rbf_get_rate(VALUE self, VALUE v_joint) {
 VALUE MSP::Piston::rbf_set_rate(VALUE self, VALUE v_joint, VALUE v_rate) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::PISTON);
     PistonData* cj_data = reinterpret_cast<PistonData*>(joint_data->m_cj_data);
-    cj_data->m_rate = Util::max_float(Util::value_to_dFloat(v_rate) * M_METER_TO_INCH, 0.0f);
+    cj_data->m_rate = Util::max_dFloat(Util::value_to_dFloat(v_rate) * M_METER_TO_INCH, 0.0);
     return Qnil;
 }
 
@@ -323,7 +324,7 @@ VALUE MSP::Piston::rbf_get_power(VALUE self, VALUE v_joint) {
 VALUE MSP::Piston::rbf_set_power(VALUE self, VALUE v_joint, VALUE v_power) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::PISTON);
     PistonData* cj_data = reinterpret_cast<PistonData*>(joint_data->m_cj_data);
-    cj_data->m_power = Util::max_float(Util::value_to_dFloat(v_power) * M_METER_TO_INCH, 0.0f);
+    cj_data->m_power = Util::max_dFloat(Util::value_to_dFloat(v_power) * M_METER_TO_INCH, 0.0);
     return Qnil;
 }
 
@@ -336,7 +337,7 @@ VALUE MSP::Piston::rbf_get_reduction_ratio(VALUE self, VALUE v_joint) {
 VALUE MSP::Piston::rbf_set_reduction_ratio(VALUE self, VALUE v_joint, VALUE v_reduction_ratio) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::PISTON);
     PistonData* cj_data = reinterpret_cast<PistonData*>(joint_data->m_cj_data);
-    cj_data->m_reduction_ratio = Util::clamp_float(Util::value_to_dFloat(v_reduction_ratio), 0.0f, 1.0f);
+    cj_data->m_reduction_ratio = Util::clamp_dFloat(Util::value_to_dFloat(v_reduction_ratio), 0.0, 1.0);
     return Qnil;
 }
 

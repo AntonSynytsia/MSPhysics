@@ -67,12 +67,12 @@ private:
         bool m_rotate;
         unsigned int m_initial_edge_index;
         CurvyPistonData() :
-            m_curve_len(0.0f),
-            m_cur_pos(0.0f),
-            m_cur_vel(0.0f),
-            m_cur_accel(0.0f),
-            m_cur_dist(0.0f),
-            m_des_pos(0.0f),
+            m_curve_len(0.0),
+            m_cur_pos(0.0),
+            m_cur_vel(0.0),
+            m_cur_accel(0.0),
+            m_cur_dist(0.0),
+            m_des_pos(0.0),
             m_cur_normal_matrix_set(false),
             m_angular_friction(DEFAULT_ANGULAR_FRICTION),
             m_rate(DEFAULT_RATE),

@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_joint_ball_and_socket.h"
 #include "msp_world.h"
 
@@ -15,13 +16,13 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dFloat MSP::BallAndSocket::DEFAULT_MAX_CONE_ANGLE(30.0f * M_DEG_TO_RAD);
+const dFloat MSP::BallAndSocket::DEFAULT_MAX_CONE_ANGLE(30.0 * M_DEG_TO_RAD);
 const bool MSP::BallAndSocket::DEFAULT_CONE_LIMITS_ENABLED( false);
-const dFloat MSP::BallAndSocket::DEFAULT_MIN_TWIST_ANGLE(-180.0f * M_DEG_TO_RAD);
-const dFloat MSP::BallAndSocket::DEFAULT_MAX_TWIST_ANGLE(180.0f * M_DEG_TO_RAD);
+const dFloat MSP::BallAndSocket::DEFAULT_MIN_TWIST_ANGLE(-180.0 * M_DEG_TO_RAD);
+const dFloat MSP::BallAndSocket::DEFAULT_MAX_TWIST_ANGLE(180.0 * M_DEG_TO_RAD);
 const bool MSP::BallAndSocket::DEFAULT_TWIST_LIMITS_ENABLED(false);
-const dFloat MSP::BallAndSocket::DEFAULT_FRICTION(0.0f);
-const dFloat MSP::BallAndSocket::DEFAULT_CONTROLLER(1.0f);
+const dFloat MSP::BallAndSocket::DEFAULT_FRICTION(0.0);
+const dFloat MSP::BallAndSocket::DEFAULT_CONTROLLER(1.0);
 
 
 /*
@@ -34,7 +35,7 @@ void MSP::BallAndSocket::submit_constraints(const NewtonJoint* joint, dFloat tim
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     BallAndSocketData* cj_data = reinterpret_cast<BallAndSocketData*>(joint_data->m_cj_data);
 
-    dFloat inv_timestep = 1.0f / timestep;
+    dFloat inv_timestep = 1.0 / timestep;
 
     // Calculate the position of the pivot point and the Jacobian direction vectors, in global space.
     dMatrix matrix0, matrix1;
@@ -44,12 +45,12 @@ void MSP::BallAndSocket::submit_constraints(const NewtonJoint* joint, dFloat tim
 
     // Calculate current cone angle
     dFloat cur_cone_angle_cos = matrix0.m_right.DotProduct3(matrix1.m_right);
-    cj_data->m_cur_cone_angle = dAcos(Util::clamp_float(cur_cone_angle_cos, -1.0f, 1.0f));
+    cj_data->m_cur_cone_angle = dAcos(Util::clamp_dFloat(cur_cone_angle_cos, -1.0, 1.0));
 
     // Calculate current twist angle, omega, and acceleration.
     if (cur_cone_angle_cos < -0.999999f) {
-        cj_data->m_cur_twist_omega = 0.0f;
-        cj_data->m_cur_twist_alpha = 0.0f;
+        cj_data->m_cur_twist_omega = 0.0;
+        cj_data->m_cur_twist_alpha = 0.0;
     }
     else {
         dFloat last_twist_angle = cj_data->m_twist_ai->get_angle();
@@ -102,10 +103,10 @@ void MSP::BallAndSocket::submit_constraints(const NewtonJoint* joint, dFloat tim
         // Handle in case current cone angle is greater than max cone angle
         dFloat dangle = cj_data->m_cur_cone_angle - cj_data->m_max_cone_angle;
         NewtonUserJointAddAngularRow(joint, dangle, &lateral_dir[0]);
-        NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
+        NewtonUserJointSetRowMaximumFriction(joint, 0.0);
         NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
 
-        NewtonUserJointAddAngularRow(joint, 0.0f, &front_dir[0]);
+        NewtonUserJointAddAngularRow(joint, 0.0, &front_dir[0]);
         NewtonUserJointSetRowMinimumFriction(joint, -power);
         NewtonUserJointSetRowMaximumFriction(joint, power);
         NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
@@ -115,13 +116,13 @@ void MSP::BallAndSocket::submit_constraints(const NewtonJoint* joint, dFloat tim
         dFloat cur_cone_omega = (cj_data->m_cur_cone_angle - last_cone_angle) * inv_timestep;
         dFloat des_cone_accel = -cur_cone_omega * inv_timestep;
 
-        NewtonUserJointAddAngularRow(joint, 0.0f, &lateral_dir[0]);
+        NewtonUserJointAddAngularRow(joint, 0.0, &lateral_dir[0]);
         NewtonUserJointSetRowAcceleration(joint, des_cone_accel);
         NewtonUserJointSetRowMinimumFriction(joint, -power);
         NewtonUserJointSetRowMaximumFriction(joint, power);
         NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
 
-        NewtonUserJointAddAngularRow(joint, 0.0f, &front_dir[0]);
+        NewtonUserJointAddAngularRow(joint, 0.0, &front_dir[0]);
         NewtonUserJointSetRowMinimumFriction(joint, -power);
         NewtonUserJointSetRowMaximumFriction(joint, power);
         NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
@@ -143,13 +144,13 @@ void MSP::BallAndSocket::submit_constraints(const NewtonJoint* joint, dFloat tim
         else if (cj_data->m_twist_ai->get_angle() < cj_data->m_min_twist_angle) {
             // Handle in case current twist angle is less than min
             NewtonUserJointAddAngularRow(joint, cj_data->m_min_twist_angle - cj_data->m_twist_ai->get_angle() + Joint::ANGULAR_LIMIT_EPSILON, &matrix0.m_right[0]);
-            NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMinimumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else if (cj_data->m_twist_ai->get_angle() > cj_data->m_max_twist_angle) {
             // Handle in case current twist angle is greater than max
             NewtonUserJointAddAngularRow(joint, cj_data->m_max_twist_angle - cj_data->m_twist_ai->get_angle() - Joint::ANGULAR_LIMIT_EPSILON, &matrix0.m_right[0]);
-            NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMaximumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else
@@ -159,7 +160,7 @@ void MSP::BallAndSocket::submit_constraints(const NewtonJoint* joint, dFloat tim
         bcontinue = true;
     if (bcontinue) {
         // Handle in case limits are not necessary
-        NewtonUserJointAddAngularRow(joint, 0.0f, &matrix0.m_right[0]);
+        NewtonUserJointAddAngularRow(joint, 0.0, &matrix0.m_right[0]);
         NewtonUserJointSetRowAcceleration(joint, -cj_data->m_cur_twist_omega * inv_timestep);
         NewtonUserJointSetRowMinimumFriction(joint, -power);
         NewtonUserJointSetRowMaximumFriction(joint, power);
@@ -168,12 +169,12 @@ void MSP::BallAndSocket::submit_constraints(const NewtonJoint* joint, dFloat tim
 }
 
 void MSP::BallAndSocket::get_info(const NewtonJoint* const joint, NewtonJointRecord* const info) {
-    info->m_minLinearDof[0] = -0.0f;
-    info->m_maxLinearDof[0] = 0.0f;
-    info->m_minLinearDof[1] = -0.0f;
-    info->m_maxLinearDof[1] = 0.0f;
-    info->m_minLinearDof[2] = -0.0f;
-    info->m_maxLinearDof[2] = 0.0f;
+    info->m_minLinearDof[0] = -0.0;
+    info->m_maxLinearDof[0] = 0.0;
+    info->m_minLinearDof[1] = -0.0;
+    info->m_maxLinearDof[1] = 0.0;
+    info->m_minLinearDof[2] = -0.0;
+    info->m_maxLinearDof[2] = 0.0;
 
     info->m_minAngularDof[0] = -Joint::CUSTOM_LARGE_VALUE;
     info->m_maxAngularDof[0] = Joint::CUSTOM_LARGE_VALUE;
@@ -189,10 +190,10 @@ void MSP::BallAndSocket::on_destroy(MSP::Joint::JointData* joint_data) {
 
 void MSP::BallAndSocket::on_disconnect(MSP::Joint::JointData* joint_data) {
     BallAndSocketData* cj_data = reinterpret_cast<BallAndSocketData*>(joint_data->m_cj_data);
-    cj_data->m_cur_cone_angle = 0.0f;
-    cj_data->m_twist_ai->set_angle(0.0f);
-    cj_data->m_cur_twist_omega = 0.0f;
-    cj_data->m_cur_twist_alpha = 0.0f;
+    cj_data->m_cur_cone_angle = 0.0;
+    cj_data->m_twist_ai->set_angle(0.0);
+    cj_data->m_cur_twist_omega = 0.0;
+    cj_data->m_cur_twist_alpha = 0.0;
 }
 
 
@@ -230,7 +231,7 @@ VALUE MSP::BallAndSocket::rbf_get_max_cone_angle(VALUE self, VALUE v_joint) {
 VALUE MSP::BallAndSocket::rbf_set_max_cone_angle(VALUE self, VALUE v_joint, VALUE v_angle) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::BALL_AND_SOCKET);
     BallAndSocketData* cj_data = reinterpret_cast<BallAndSocketData*>(joint_data->m_cj_data);
-    cj_data->m_max_cone_angle = Util::clamp_float(Util::value_to_dFloat(v_angle), 0.0f, M_SPI);
+    cj_data->m_max_cone_angle = Util::clamp_dFloat(Util::value_to_dFloat(v_angle), 0.0, M_SPI);
     return Qnil;
 }
 
@@ -319,7 +320,7 @@ VALUE MSP::BallAndSocket::rbf_get_friction(VALUE self, VALUE v_joint) {
 VALUE MSP::BallAndSocket::rbf_set_friction(VALUE self, VALUE v_joint, VALUE v_friction) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::BALL_AND_SOCKET);
     BallAndSocketData* cj_data = reinterpret_cast<BallAndSocketData*>(joint_data->m_cj_data);
-    cj_data->m_friction = Util::max_float(Util::value_to_dFloat(v_friction) * M_METER2_TO_INCH2, 0.0f);
+    cj_data->m_friction = Util::max_dFloat(Util::value_to_dFloat(v_friction) * M_METER2_TO_INCH2, 0.0);
     return Qnil;
 }
 

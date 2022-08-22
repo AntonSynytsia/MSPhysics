@@ -6,10 +6,11 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "angular_integration.h"
 
 AngularIntegration::AngularIntegration() {
-    set_angle(0.0f);
+    set_angle(0.0);
 }
 
 AngularIntegration::AngularIntegration(dFloat angle) {

@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_world.h"
 #include "msp_collision.h"
 #include "msp_body.h"
@@ -18,14 +19,14 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dVector MSP::World::DEFAULT_GRAVITY(0.0f, 0.0f, -9.8f);
+const dVector MSP::World::DEFAULT_GRAVITY(0.0, 0.0, -9.8f);
 const int MSP::World::DEFAULT_SOLVER_MODEL(4);
 const int MSP::World::DEFAULT_CONVERGENCE_QUALITY(1);
 const dFloat MSP::World::DEFAULT_MATERIAL_THICKNESS(0.005f);
 const dFloat MSP::World::DEFAULT_CONTACT_MERGE_TOLERANCE(0.005f);
 const dFloat MSP::World::MIN_TOUCH_DISTANCE(0.005f);
-const dFloat MSP::World::MIN_TIMESTEP(1.0f / 1200.0f);
-const dFloat MSP::World::MAX_TIMESTEP(1.0f / 30.0f);
+const dFloat MSP::World::MIN_TIMESTEP(1.0 / 1200.0);
+const dFloat MSP::World::MAX_TIMESTEP(1.0 / 30.0);
 
 
 /*
@@ -191,7 +192,7 @@ dFloat MSP::World::continuous_ray_filter_callback(const NewtonBody* const body, 
     RayData* ray_data = reinterpret_cast<RayData*>(user_data);
     HitData* hit = new HitData(body, dVector(hit_contact), dVector(hit_normal));
     ray_data->m_hits.push_back(hit);
-    return 1.0f;
+    return 1.0;
 }
 
 int MSP::World::body_iterator(const NewtonBody* const body, void* const user_data) {
@@ -366,7 +367,7 @@ void MSP::World::c_process_touch_events(const NewtonWorld* world) {
                 colB = NewtonBodyGetCollision(body1);
                 NewtonBodyGetMatrix(body1, &matB[0][0]);
                 if (NewtonCollisionCollide(world, 1, colA, &matA[0][0], colB, &matB[0][0], points, normals, penetrations, attrA, attrB, 0) != 0) {
-                    BodyTouchData* touch_data = new BodyTouchData(body0, body1, dVector(points), dVector(normals), dVector(0.0f), 0.0f);
+                    BodyTouchData* touch_data = new BodyTouchData(body0, body1, dVector(points), dVector(normals), dVector(0.0), 0.0);
                     world_data->m_touch_data.push_back(touch_data);
                     body0_data->m_touchers[body1] = 0;
                 }
@@ -550,7 +551,7 @@ VALUE MSP::World::rbf_get_constraint_count(VALUE self, VALUE v_world) {
 
 VALUE MSP::World::rbf_update(VALUE self, VALUE v_world, VALUE v_timestep) {
     const NewtonWorld* world = c_value_to_world(v_world);
-    dFloat timestep = Util::clamp_float(Util::value_to_dFloat(v_timestep), MIN_TIMESTEP, MAX_TIMESTEP);
+    dFloat timestep = Util::clamp_dFloat(Util::value_to_dFloat(v_timestep), MIN_TIMESTEP, MAX_TIMESTEP);
     WorldData* world_data = reinterpret_cast<WorldData*>(NewtonWorldGetUserData(world));
     c_clear_touch_events(world);
     c_update_magnets(world, timestep);
@@ -564,7 +565,7 @@ VALUE MSP::World::rbf_update(VALUE self, VALUE v_world, VALUE v_timestep) {
 
 VALUE MSP::World::rbf_update_async(VALUE self, VALUE v_world, VALUE v_timestep) {
     const NewtonWorld* world = c_value_to_world(v_world);
-    dFloat timestep = Util::clamp_float(Util::value_to_dFloat(v_timestep), MIN_TIMESTEP, MAX_TIMESTEP);
+    dFloat timestep = Util::clamp_dFloat(Util::value_to_dFloat(v_timestep), MIN_TIMESTEP, MAX_TIMESTEP);
     WorldData* world_data = reinterpret_cast<WorldData*>(NewtonWorldGetUserData(world));
     c_clear_touch_events(world);
     c_update_magnets(world, timestep);
@@ -698,7 +699,7 @@ VALUE MSP::World::rbf_get_material_thickness(VALUE self, VALUE v_world) {
 VALUE MSP::World::rbf_set_material_thickness(VALUE self, VALUE v_world, VALUE v_material_thinkness) {
     const NewtonWorld* world = c_value_to_world(v_world);
     WorldData* world_data = reinterpret_cast<WorldData*>(NewtonWorldGetUserData(world));
-    world_data->m_material_thickness = Util::clamp_float(Util::value_to_dFloat(v_material_thinkness), 0.0f, 1.0f/32.0f);
+    world_data->m_material_thickness = Util::clamp_dFloat(Util::value_to_dFloat(v_material_thinkness), 0.0, 1.0/32.0);
     NewtonMaterialSetSurfaceThickness(world, world_data->m_material_id, world_data->m_material_id, world_data->m_material_thickness);
     return Qnil;
 }
@@ -707,7 +708,7 @@ VALUE MSP::World::rbf_ray_cast(VALUE self, VALUE v_world, VALUE v_point1, VALUE 
     const NewtonWorld* world = c_value_to_world(v_world);
     dVector point1(Util::value_to_point(v_point1));
     dVector point2(Util::value_to_point(v_point2));
-    HitData* hit = new HitData(nullptr, dVector(0.0f), dVector(0.0f));
+    HitData* hit = new HitData(nullptr, dVector(0.0), dVector(0.0));
     NewtonWorldRayCast(world, &point1[0], &point2[0], ray_filter_callback, reinterpret_cast<void*>(hit), NULL, 0);
     VALUE v_res;
     if (hit->m_body != nullptr) {
@@ -803,8 +804,8 @@ VALUE MSP::World::rbf_add_explosion(VALUE self, VALUE v_world, VALUE v_center, V
     dFloat blast_radius = Util::value_to_dFloat(v_blast_radius) * M_METER_TO_INCH;
     dFloat blast_force = Util::value_to_dFloat(v_blast_force) * M_METER_TO_INCH;
     if (blast_radius > M_EPSILON && dAbs(blast_force) > M_EPSILON) {
-        HitData* hit = new HitData(nullptr, dVector(0.0f), dVector(0.0f));
-        dFloat inv_blast_radius = 1.0f / blast_radius;
+        HitData* hit = new HitData(nullptr, dVector(0.0), dVector(0.0));
+        dFloat inv_blast_radius = 1.0 / blast_radius;
         for (const NewtonBody* body = NewtonWorldGetFirstBody(world); body; body = NewtonWorldGetNextBody(world, body)) {
             MSP::Body::BodyData* body_data = reinterpret_cast<MSP::Body::BodyData*>(NewtonBodyGetUserData(body));
             if (body_data->m_dynamic && !body_data->m_bstatic && body_data->m_mass > MSP::Body::MIN_MASS) {

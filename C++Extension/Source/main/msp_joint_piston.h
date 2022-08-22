@@ -41,10 +41,10 @@ private:
         int m_controller_mode;
         bool m_controller_enabled;
         PistonData() :
-            m_cur_pos(0.0f),
-            m_cur_vel(0.0f),
-            m_cur_accel(0.0f),
-            m_des_pos(0.0f),
+            m_cur_pos(0.0),
+            m_cur_vel(0.0),
+            m_cur_accel(0.0),
+            m_des_pos(0.0),
             m_min_pos(DEFAULT_MIN),
             m_max_pos(DEFAULT_MAX),
             m_limits_enabled(DEFAULT_LIMITS_ENABLED),

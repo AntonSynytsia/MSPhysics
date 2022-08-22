@@ -6,13 +6,15 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef MSP_UTIL_H
-#define MSP_UTIL_H
+#pragma once
 
-#include "ruby_prep.h"
-#include <iostream>
-#include <float.h>
-#include <cmath>
+#include "utils/ruby_prep.h"
+#include "utils/common.h"
+
+#ifndef _NEWTON_USE_DOUBLE
+#define _NEWTON_USE_DOUBLE
+#endif
+
 #include "Newton.h"
 #include "dVector.h"
 #include "dMatrix.h"
@@ -94,10 +96,6 @@ namespace Util {
     extern bool s_validate_objects;
 
     // Functions
-    float min_float(float a, float b);
-    float max_float(float a, float b);
-    float clamp_float(float val, float min_val, float max_val);
-
     double min_double(double a, double b);
     double max_double(double a, double b);
     double clamp_double(double val, double min_val, double max_val);
@@ -105,6 +103,10 @@ namespace Util {
     int clamp_int(int val, int min_val, int max_val);
     unsigned int clamp_uint(unsigned int val, unsigned int min_val, unsigned int max_val);
     int max_int(int val1, int val2);
+
+    dFloat min_dFloat(dFloat a, dFloat b);
+    dFloat max_dFloat(dFloat a, dFloat b);
+    dFloat clamp_dFloat(dFloat val, dFloat min_val, dFloat max_val);
 
     inline VALUE to_value(bool value) {
         return value ? Qtrue : Qfalse;
@@ -270,4 +272,3 @@ namespace Util {
     void init_ruby();
 };
 
-#endif  /* MSP_UTIL_H */

@@ -22,7 +22,7 @@ public:
     struct CollisionData {
         dVector m_scale;
         CollisionData()
-            : m_scale(1.0f, 1.0f, 1.0f, 1.0f)
+            : m_scale(1.0, 1.0, 1.0, 1.0)
         {
         }
         CollisionData(const dVector& scale)
@@ -30,7 +30,7 @@ public:
         {
         }
         CollisionData(dFloat x, dFloat y, dFloat z)
-            : m_scale(x, y, z, 1.0f)
+            : m_scale(x, y, z, 1.0)
         {
         }
     };

@@ -38,7 +38,7 @@ private:
             m_mode(DEFAULT_MODE),
             m_start_distance(DEFAULT_START_DISTANCE),
             m_controller(DEFAULT_CONTROLLER),
-            m_cur_distance(0.0f)
+            m_cur_distance(0.0)
         {
         }
     };

@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_joint_motor.h"
 
 /*
@@ -14,10 +15,10 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dFloat MSP::Motor::DEFAULT_ACCEL(1.0f);
+const dFloat MSP::Motor::DEFAULT_ACCEL(1.0);
 const dFloat MSP::Motor::DEFAULT_DAMP(0.5f);
 const bool MSP::Motor::DEFAULT_FREE_ROTATE_ENABLED(false);
-const dFloat MSP::Motor::DEFAULT_CONTROLLER(1.0f);
+const dFloat MSP::Motor::DEFAULT_CONTROLLER(1.0);
 
 
 /*
@@ -30,7 +31,7 @@ void MSP::Motor::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     MotorData* cj_data = reinterpret_cast<MotorData*>(joint_data->m_cj_data);
 
-    dFloat inv_timestep = 1.0f / timestep;
+    dFloat inv_timestep = 1.0 / timestep;
 
     // Calculate position of pivot points and Jacobian direction vectors in global space.
     dMatrix matrix0, matrix1;
@@ -75,34 +76,34 @@ void MSP::Motor::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
 
     // Add accel and damp
     dFloat desired_accel = cj_data->m_accel * cj_data->m_controller;
-    if (cj_data->m_free_rotate_enabled && desired_accel == 0.0f) {
-        NewtonUserJointAddAngularRow(joint, 0.0f, &matrix1.m_right[0]);
-        NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
-        NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
+    if (cj_data->m_free_rotate_enabled && desired_accel == 0.0) {
+        NewtonUserJointAddAngularRow(joint, 0.0, &matrix1.m_right[0]);
+        NewtonUserJointSetRowMinimumFriction(joint, 0.0);
+        NewtonUserJointSetRowMaximumFriction(joint, 0.0);
         NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
     }
     else {
         // Calculate the desired acceleration
         dFloat rel_accel = desired_accel - cj_data->m_damp * cj_data->m_cur_omega;
         // Set angular acceleration
-        NewtonUserJointAddAngularRow(joint, 0.0f, &matrix1.m_right[0]);
+        NewtonUserJointAddAngularRow(joint, 0.0, &matrix1.m_right[0]);
         NewtonUserJointSetRowAcceleration(joint, rel_accel);
         NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
     }
 }
 
 void MSP::Motor::get_info(const NewtonJoint* const joint, NewtonJointRecord* const info) {
-    info->m_minLinearDof[0] = -0.0f;
-    info->m_maxLinearDof[0] = 0.0f;
-    info->m_minLinearDof[1] = -0.0f;
-    info->m_maxLinearDof[1] = 0.0f;
-    info->m_minLinearDof[2] = -0.0f;
-    info->m_maxLinearDof[2] = 0.0f;
+    info->m_minLinearDof[0] = -0.0;
+    info->m_maxLinearDof[0] = 0.0;
+    info->m_minLinearDof[1] = -0.0;
+    info->m_maxLinearDof[1] = 0.0;
+    info->m_minLinearDof[2] = -0.0;
+    info->m_maxLinearDof[2] = 0.0;
 
-    info->m_minAngularDof[0] = -0.0f;
-    info->m_maxAngularDof[0] = 0.0f;
-    info->m_minAngularDof[1] = -0.0f;
-    info->m_maxAngularDof[1] = 0.0f;
+    info->m_minAngularDof[0] = -0.0;
+    info->m_maxAngularDof[0] = 0.0;
+    info->m_minAngularDof[1] = -0.0;
+    info->m_maxAngularDof[1] = 0.0;
     info->m_minAngularDof[2] = -Joint::CUSTOM_LARGE_VALUE;
     info->m_maxAngularDof[2] = Joint::CUSTOM_LARGE_VALUE;
 }
@@ -113,9 +114,9 @@ void MSP::Motor::on_destroy(MSP::Joint::JointData* joint_data) {
 
 void MSP::Motor::on_disconnect(MSP::Joint::JointData* joint_data) {
     MotorData* cj_data = reinterpret_cast<MotorData*>(joint_data->m_cj_data);
-    cj_data->m_ai->set_angle(0.0f);
-    cj_data->m_cur_omega = 0.0f;
-    cj_data->m_cur_alpha = 0.0f;
+    cj_data->m_ai->set_angle(0.0);
+    cj_data->m_cur_omega = 0.0;
+    cj_data->m_cur_alpha = 0.0;
 }
 
 void MSP::Motor::adjust_pin_matrix_proc(MSP::Joint::JointData* joint_data, dMatrix& pin_matrix) {
@@ -125,7 +126,7 @@ void MSP::Motor::adjust_pin_matrix_proc(MSP::Joint::JointData* joint_data, dMatr
     NewtonBodyGetCentreOfMass(joint_data->m_child, &centre[0]);
     centre = matrix.TransformVector(centre);
     centre = pin_matrix.UntransformVector(centre);
-    dVector point(0.0f, 0.0f, centre.m_z);
+    dVector point(0.0, 0.0, centre.m_z);
     pin_matrix.m_posit = pin_matrix.TransformVector(point);
 }
 
@@ -196,7 +197,7 @@ VALUE MSP::Motor::rbf_get_damp(VALUE self, VALUE v_joint) {
 VALUE MSP::Motor::rbf_set_damp(VALUE self, VALUE v_joint, VALUE v_damp) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::MOTOR);
     MotorData* cj_data = reinterpret_cast<MotorData*>(joint_data->m_cj_data);
-    cj_data->m_damp = Util::max_float(Util::value_to_dFloat(v_damp), 0.0f);
+    cj_data->m_damp = Util::max_dFloat(Util::value_to_dFloat(v_damp), 0.0);
     return Qnil;
 }
 

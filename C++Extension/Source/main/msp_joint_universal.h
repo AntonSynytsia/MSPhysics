@@ -39,13 +39,13 @@ private:
         dFloat m_friction;
         dFloat m_controller;
         UniversalData() :
-            m_cur_omega1(0.0f),
-            m_cur_alpha1(0.0f),
+            m_cur_omega1(0.0),
+            m_cur_alpha1(0.0),
             m_min1(DEFAULT_MIN),
             m_max1(DEFAULT_MAX),
             m_limits1_enabled(DEFAULT_LIMITS_ENABLED),
-            m_cur_omega2(0.0f),
-            m_cur_alpha2(0.0f),
+            m_cur_omega2(0.0),
+            m_cur_alpha2(0.0),
             m_min2(DEFAULT_MIN),
             m_max2(DEFAULT_MAX),
             m_limits2_enabled(DEFAULT_LIMITS_ENABLED),

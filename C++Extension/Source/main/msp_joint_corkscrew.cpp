@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_joint_corkscrew.h"
 #include "msp_world.h"
 
@@ -15,14 +16,14 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dFloat MSP::Corkscrew::DEFAULT_MIN_POS(-10.0f);
-const dFloat MSP::Corkscrew::DEFAULT_MAX_POS(10.0f);
+const dFloat MSP::Corkscrew::DEFAULT_MIN_POS(-10.0);
+const dFloat MSP::Corkscrew::DEFAULT_MAX_POS(10.0);
 const bool MSP::Corkscrew::DEFAULT_LIN_LIMITS_ENABLED(false);
-const dFloat MSP::Corkscrew::DEFAULT_LIN_FRICTION(0.0f);
-const dFloat MSP::Corkscrew::DEFAULT_MIN_ANG(-180.0f * M_DEG_TO_RAD);
-const dFloat MSP::Corkscrew::DEFAULT_MAX_ANG(180.0f * M_DEG_TO_RAD);
+const dFloat MSP::Corkscrew::DEFAULT_LIN_FRICTION(0.0);
+const dFloat MSP::Corkscrew::DEFAULT_MIN_ANG(-180.0 * M_DEG_TO_RAD);
+const dFloat MSP::Corkscrew::DEFAULT_MAX_ANG(180.0 * M_DEG_TO_RAD);
 const bool MSP::Corkscrew::DEFAULT_ANG_LIMITS_ENABLED(false);
-const dFloat MSP::Corkscrew::DEFAULT_ANG_FRICTION(0.0f);
+const dFloat MSP::Corkscrew::DEFAULT_ANG_FRICTION(0.0);
 
 
 /*
@@ -35,7 +36,7 @@ void MSP::Corkscrew::submit_constraints(const NewtonJoint* joint, dFloat timeste
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     CorkscrewData* cj_data = reinterpret_cast<CorkscrewData*>(joint_data->m_cj_data);
 
-    dFloat inv_timestep = 1.0f / timestep;
+    dFloat inv_timestep = 1.0 / timestep;
 
     // Calculate position of pivot points and Jacobian direction vectors in global space.
     dMatrix matrix0, matrix1;
@@ -94,13 +95,13 @@ void MSP::Corkscrew::submit_constraints(const NewtonJoint* joint, dFloat timeste
         else if (cj_data->m_cur_pos < cj_data->m_min_pos) {
             dVector s1(p0 + matrix1.m_right.Scale(cj_data->m_min_pos - cj_data->m_cur_pos + Joint::LINEAR_LIMIT_EPSILON));
             NewtonUserJointAddLinearRow(joint, &p0[0], &s1[0], &matrix1.m_right[0]);
-            NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMinimumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else if (cj_data->m_cur_pos > cj_data->m_max_pos) {
             dVector s1(p0 + matrix1.m_right.Scale(cj_data->m_max_pos - cj_data->m_cur_pos - Joint::LINEAR_LIMIT_EPSILON));
             NewtonUserJointAddLinearRow(joint, &p0[0], &s1[0], &matrix1.m_right[0]);
-            NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMaximumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else
@@ -129,12 +130,12 @@ void MSP::Corkscrew::submit_constraints(const NewtonJoint* joint, dFloat timeste
         }
         else if (cur_angle < cj_data->m_min_ang) {
             NewtonUserJointAddAngularRow(joint, cj_data->m_min_ang - cur_angle + Joint::ANGULAR_LIMIT_EPSILON, &matrix1.m_right[0]);
-            NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMinimumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else if (cur_angle > cj_data->m_max_ang) {
             NewtonUserJointAddAngularRow(joint, cj_data->m_max_ang - cur_angle - Joint::ANGULAR_LIMIT_EPSILON, &matrix1.m_right[0]);
-            NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
+            NewtonUserJointSetRowMaximumFriction(joint, 0.0);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else
@@ -143,7 +144,7 @@ void MSP::Corkscrew::submit_constraints(const NewtonJoint* joint, dFloat timeste
     else
         bcontinue = true;
     if (bcontinue) {
-        NewtonUserJointAddAngularRow(joint, 0.0f, &matrix1.m_right[0]);
+        NewtonUserJointAddAngularRow(joint, 0.0, &matrix1.m_right[0]);
         NewtonUserJointSetRowAcceleration(joint, -cj_data->m_cur_omega * inv_timestep);
         NewtonUserJointSetRowMinimumFriction(joint, -cj_data->m_ang_friction);
         NewtonUserJointSetRowMaximumFriction(joint, cj_data->m_ang_friction);
@@ -155,10 +156,10 @@ void MSP::Corkscrew::get_info(const NewtonJoint* const joint, NewtonJointRecord*
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     CorkscrewData* cj_data = reinterpret_cast<CorkscrewData*>(joint_data->m_cj_data);
 
-    info->m_minLinearDof[0] = -0.0f;
-    info->m_maxLinearDof[0] = 0.0f;
-    info->m_minLinearDof[1] = -0.0f;
-    info->m_maxLinearDof[1] = 0.0f;
+    info->m_minLinearDof[0] = -0.0;
+    info->m_maxLinearDof[0] = 0.0;
+    info->m_minLinearDof[1] = -0.0;
+    info->m_maxLinearDof[1] = 0.0;
 
     if (cj_data->m_lin_limits_enabled) {
         info->m_minLinearDof[2] = (cj_data->m_min_pos - cj_data->m_cur_pos);
@@ -169,10 +170,10 @@ void MSP::Corkscrew::get_info(const NewtonJoint* const joint, NewtonJointRecord*
         info->m_minLinearDof[2] = Joint::CUSTOM_LARGE_VALUE;
     }
 
-    info->m_minAngularDof[0] = -0.0f;
-    info->m_maxAngularDof[0] = 0.0f;
-    info->m_minAngularDof[1] = -0.0f;
-    info->m_maxAngularDof[1] = 0.0f;
+    info->m_minAngularDof[0] = -0.0;
+    info->m_maxAngularDof[0] = 0.0;
+    info->m_minAngularDof[1] = -0.0;
+    info->m_maxAngularDof[1] = 0.0;
 
     if (cj_data->m_ang_limits_enabled) {
         info->m_minAngularDof[2] = (cj_data->m_min_ang - cj_data->m_ai->get_angle()) * M_RAD_TO_DEG;
@@ -190,12 +191,12 @@ void MSP::Corkscrew::on_destroy(MSP::Joint::JointData* joint_data) {
 
 void MSP::Corkscrew::on_disconnect(MSP::Joint::JointData* joint_data) {
     CorkscrewData* cj_data = reinterpret_cast<CorkscrewData*>(joint_data->m_cj_data);
-    cj_data->m_ai->set_angle(0.0f);
-    cj_data->m_cur_omega = 0.0f;
-    cj_data->m_cur_alpha = 0.0f;
-    cj_data->m_cur_pos = 0.0f;
-    cj_data->m_cur_vel = 0.0f;
-    cj_data->m_cur_accel = 0.0f;
+    cj_data->m_ai->set_angle(0.0);
+    cj_data->m_cur_omega = 0.0;
+    cj_data->m_cur_alpha = 0.0;
+    cj_data->m_cur_pos = 0.0;
+    cj_data->m_cur_vel = 0.0;
+    cj_data->m_cur_accel = 0.0;
 }
 
 void MSP::Corkscrew::adjust_pin_matrix_proc(MSP::Joint::JointData* joint_data, dMatrix& pin_matrix) {
@@ -205,7 +206,7 @@ void MSP::Corkscrew::adjust_pin_matrix_proc(MSP::Joint::JointData* joint_data, d
     NewtonBodyGetCentreOfMass(joint_data->m_child, &centre[0]);
     centre = matrix.TransformVector(centre);
     centre = pin_matrix.UntransformVector(centre);
-    dVector point(0.0f, 0.0f, centre.m_z);
+    dVector point(0.0, 0.0, centre.m_z);
     pin_matrix.m_posit = pin_matrix.TransformVector(point);
 }
 
@@ -302,7 +303,7 @@ VALUE MSP::Corkscrew::rbf_get_linear_friction(VALUE self, VALUE v_joint) {
 VALUE MSP::Corkscrew::rbf_set_linear_friction(VALUE self, VALUE v_joint, VALUE v_friction) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::CORKSCREW);
     CorkscrewData* cj_data = reinterpret_cast<CorkscrewData*>(joint_data->m_cj_data);
-    cj_data->m_lin_friction = Util::max_float(Util::value_to_dFloat(v_friction) * M_METER_TO_INCH, 0.0f);
+    cj_data->m_lin_friction = Util::max_dFloat(Util::value_to_dFloat(v_friction) * M_METER_TO_INCH, 0.0);
     return Qnil;
 }
 
@@ -372,7 +373,7 @@ VALUE MSP::Corkscrew::rbf_get_angular_friction(VALUE self, VALUE v_joint) {
 VALUE MSP::Corkscrew::rbf_set_angular_friction(VALUE self, VALUE v_joint, VALUE v_friction) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::CORKSCREW);
     CorkscrewData* cj_data = reinterpret_cast<CorkscrewData*>(joint_data->m_cj_data);
-    cj_data->m_ang_friction = Util::max_float(Util::value_to_dFloat(v_friction) * M_METER2_TO_INCH2, 0.0f);
+    cj_data->m_ang_friction = Util::max_dFloat(Util::value_to_dFloat(v_friction) * M_METER2_TO_INCH2, 0.0);
     return Qnil;
 }
 

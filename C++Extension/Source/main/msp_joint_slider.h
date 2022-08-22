@@ -34,9 +34,9 @@ private:
         SliderData() :
             m_min_pos(DEFAULT_MIN),
             m_max_pos(DEFAULT_MAX),
-            m_cur_pos(0.0f),
-            m_cur_vel(0.0f),
-            m_cur_accel(0.0f),
+            m_cur_pos(0.0),
+            m_cur_vel(0.0),
+            m_cur_accel(0.0),
             m_limits_enabled(DEFAULT_LIMITS_ENABLED),
             m_friction(DEFAULT_FRICTION),
             m_controller(DEFAULT_CONTROLLER)

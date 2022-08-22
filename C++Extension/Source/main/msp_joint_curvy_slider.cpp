@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_joint_curvy_slider.h"
 #include "msp_world.h"
 
@@ -15,10 +16,10 @@
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 */
 
-const dFloat MSP::CurvySlider::DEFAULT_LINEAR_FRICTION(0.0f);
-const dFloat MSP::CurvySlider::DEFAULT_ANGULAR_FRICTION(0.0f);
-const dFloat MSP::CurvySlider::DEFAULT_ALIGNMENT_POWER(0.0f);
-const dFloat MSP::CurvySlider::DEFAULT_CONTROLLER(1.0f);
+const dFloat MSP::CurvySlider::DEFAULT_LINEAR_FRICTION(0.0);
+const dFloat MSP::CurvySlider::DEFAULT_ANGULAR_FRICTION(0.0);
+const dFloat MSP::CurvySlider::DEFAULT_ALIGNMENT_POWER(0.0);
+const dFloat MSP::CurvySlider::DEFAULT_CONTROLLER(1.0);
 const bool MSP::CurvySlider::DEFAULT_LOOP_ENABLED(false);
 const bool MSP::CurvySlider::DEFAULT_ALIGNMENT_ENABLED(true);
 const bool MSP::CurvySlider::DEFAULT_ROTATION_ENABLED(true);
@@ -36,7 +37,7 @@ void MSP::CurvySlider::c_clear_curve_edges(MSP::Joint::JointData* joint_data) {
         delete it->second;
     }
     cj_data->m_edges.clear();
-    cj_data->m_curve_len = 0.0f;
+    cj_data->m_curve_len = 0.0;
 }
 
 void MSP::CurvySlider::c_update_curve_edges(MSP::Joint::JointData* joint_data) {
@@ -55,8 +56,8 @@ void MSP::CurvySlider::c_update_curve_edges(MSP::Joint::JointData* joint_data) {
         dVector dir(pt2 - pt1);
         dFloat mag = Util::get_vector_magnitude(dir);
         if (mag > M_EPSILON) {
-            Util::scale_vector(dir, 1.0f / mag);
-            EdgeData *edge_data = new EdgeData(mag, 0.0f, pt_index, i + 1);
+            Util::scale_vector(dir, 1.0 / mag);
+            EdgeData *edge_data = new EdgeData(mag, 0.0, pt_index, i + 1);
             Util::rotate_matrix_to_dir(last_matrix, dir, edge_data->m_normal_matrix);
             edge_data->m_normal_matrix.m_posit = cj_data->m_points[pt_index];
             temp_edges[pt_index] = edge_data;
@@ -74,8 +75,8 @@ void MSP::CurvySlider::c_update_curve_edges(MSP::Joint::JointData* joint_data) {
         dVector dir(pt2 - pt1);
         dFloat mag = Util::get_vector_magnitude(dir);
         if (mag > M_EPSILON) {
-            Util::scale_vector(dir, 1.0f / mag);
-            EdgeData *edge_data = new EdgeData(mag, 0.0f, i - 1, pt_index);
+            Util::scale_vector(dir, 1.0 / mag);
+            EdgeData *edge_data = new EdgeData(mag, 0.0, i - 1, pt_index);
             Util::rotate_matrix_to_dir(last_matrix, dir, edge_data->m_normal_matrix);
             edge_data->m_normal_matrix.m_posit = cj_data->m_points[i - 1];
             temp_edges[i - 1] = edge_data;
@@ -85,7 +86,7 @@ void MSP::CurvySlider::c_update_curve_edges(MSP::Joint::JointData* joint_data) {
         }
     }
     // Update the edges map so there is no jumps in indexes
-    dFloat elapsed_curve_len = 0.0f;
+    dFloat elapsed_curve_len = 0.0;
     unsigned int index = 0;
     for (std::map<unsigned int, EdgeData*>::iterator it = temp_edges.begin(); it != temp_edges.end(); ++it) {
         cj_data->m_edges[index] = it->second;
@@ -101,11 +102,11 @@ bool MSP::CurvySlider::c_calc_curve_data_at_position(const MSP::Joint::JointData
     const CurvySliderData* cj_data = reinterpret_cast<CurvySliderData*>(joint_data->m_cj_data);
     if (cj_data->m_loop) {
         distance = fmod(position, cj_data->m_curve_len);
-        if (distance < 0.0f) distance += cj_data->m_curve_len;
-        overpass = 0.0f;
+        if (distance < 0.0) distance += cj_data->m_curve_len;
+        overpass = 0.0;
     }
     else {
-        distance = Util::clamp_float(position, 0.0f, cj_data->m_curve_len);
+        distance = Util::clamp_dFloat(position, 0.0, cj_data->m_curve_len);
         overpass = position - distance;
         if (overpass < -M_EPSILON) {
             normal_matrix = cj_data->m_edges.begin()->second->m_normal_matrix;
@@ -118,7 +119,7 @@ bool MSP::CurvySlider::c_calc_curve_data_at_position(const MSP::Joint::JointData
             return true;
         }
     }
-    dFloat traveled_dist = 0.0f;
+    dFloat traveled_dist = 0.0;
     for (std::map<unsigned int, EdgeData*>::const_iterator it = cj_data->m_edges.begin(); it != cj_data->m_edges.end(); ++it) {
         const EdgeData* edge_data = it->second;
         if (traveled_dist + edge_data->m_length >= distance) {
@@ -139,8 +140,8 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point(const MSP::Joint::JointData* j
     const CurvySliderData* cj_data = reinterpret_cast<CurvySliderData*>(joint_data->m_cj_data);
     // Find the closest point on curve
     dVector closest_point;
-    dFloat closest_distance = 0.0f;
-    dFloat closest_left_over = 0.0f;
+    dFloat closest_distance = 0.0;
+    dFloat closest_left_over = 0.0;
     unsigned int closest_normal1_index;
     unsigned int closest_normal2_index;
     bool closest_set = false;
@@ -152,11 +153,11 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point(const MSP::Joint::JointData* j
         dFloat left_over;
         unsigned int normal1_index;
         unsigned int normal2_index;
-        if (lpointz < 0.0f) {
+        if (lpointz < 0.0) {
             normal1_index = it->first - 1;
             normal2_index = it->first;
             cpoint = cj_data->m_points[edge_data->m_start_index];
-            section_dist = 0.0f;
+            section_dist = 0.0;
             left_over = lpointz;
         }
         else if (lpointz > edge_data->m_length) {
@@ -171,7 +172,7 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point(const MSP::Joint::JointData* j
             normal2_index = it->first;
             cpoint = edge_data->m_normal_matrix.m_posit + edge_data->m_normal_matrix.m_right.Scale(lpointz);
             section_dist = lpointz;
-            left_over = 0.0f;
+            left_over = 0.0;
         }
         dFloat cdist = Util::get_vector_magnitude2(location - cpoint);
         if (!closest_set || cdist < closest_distance) {
@@ -208,7 +209,7 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point(const MSP::Joint::JointData* j
         if (it1 == it2 && !cj_data->m_loop)
             overpass = closest_left_over;
         else
-            overpass = 0.0f;
+            overpass = 0.0;
     }
     else {
         if (dSqrt(closest_distance) > M_EPSILON) {
@@ -223,7 +224,7 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point(const MSP::Joint::JointData* j
         }
         else
             normal_matrix = it1->second->m_normal_matrix;
-        overpass = 0.0f;
+        overpass = 0.0;
     }
     normal_matrix.m_posit = closest_point;
     return closest_set;
@@ -233,10 +234,10 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point2(const MSP::Joint::JointData* 
     const CurvySliderData* cj_data = reinterpret_cast<CurvySliderData*>(joint_data->m_cj_data);
     unsigned int points_size = (unsigned int)cj_data->m_points.size();
     if (points_size < 2) return false;
-    dFloat closest_dist = 0.0f;
-    dFloat closest_left_over = 0.0f;
+    dFloat closest_dist = 0.0;
+    dFloat closest_left_over = 0.0;
     bool closest_set = false;
-    dFloat traveled_dist = 0.0f;
+    dFloat traveled_dist = 0.0;
     unsigned int pt1_index = 0;
     for (unsigned int i = 0; i < (cj_data->m_loop ? points_size : points_size - 1); ++i) {
         const dVector& pt1 = cj_data->m_points[pt1_index];
@@ -244,14 +245,14 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point2(const MSP::Joint::JointData* 
         dVector edge_dir(pt2 - pt1);
         dFloat edge_len = Util::get_vector_magnitude(edge_dir);
         if (edge_len > M_EPSILON) {
-            Util::scale_vector(edge_dir, 1.0f / edge_len);
+            Util::scale_vector(edge_dir, 1.0 / edge_len);
             dFloat lpointz = (location - pt1).DotProduct3(edge_dir);
             dVector cpoint;
             dFloat section_dist;
             dFloat left_over;
-            if (lpointz < 0.0f) {
+            if (lpointz < 0.0) {
                 cpoint = pt1;
-                section_dist = 0.0f;
+                section_dist = 0.0;
                 left_over = lpointz;
             }
             else if (lpointz > edge_len) {
@@ -262,7 +263,7 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point2(const MSP::Joint::JointData* 
             else {
                 cpoint = pt1 + edge_dir.Scale(lpointz);
                 section_dist = lpointz;
-                left_over = 0.0f;
+                left_over = 0.0;
             }
             dFloat cdist = Util::get_vector_magnitude2(location - cpoint);
             if (!closest_set || cdist < closest_dist) {
@@ -282,7 +283,7 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point2(const MSP::Joint::JointData* 
     }
     if (!closest_set) return false;
     if (dAbs(closest_left_over) > M_EPSILON) {
-        dFloat temp_curve_len = 0.0f;
+        dFloat temp_curve_len = 0.0;
         pt1_index = 0;
         for (unsigned int i = 0; i < (cj_data->m_loop ? points_size : points_size - 1); ++i) {
             const dVector& pt1 = cj_data->m_points[pt1_index];
@@ -297,11 +298,11 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point2(const MSP::Joint::JointData* 
         distance += closest_left_over;
         if (cj_data->m_loop) {
             distance = fmod(distance, temp_curve_len);
-            if (distance < 0.0f) distance += temp_curve_len;
+            if (distance < 0.0) distance += temp_curve_len;
         }
         else
-            distance = Util::clamp_float(distance, 0.0f, temp_curve_len);
-        traveled_dist = 0.0f;
+            distance = Util::clamp_dFloat(distance, 0.0, temp_curve_len);
+        traveled_dist = 0.0;
         pt1_index = 0;
         for (unsigned int i = 0; i < (cj_data->m_loop ? points_size : points_size - 1); ++i) {
             const dVector& pt1 = cj_data->m_points[pt1_index];
@@ -310,7 +311,7 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point2(const MSP::Joint::JointData* 
             dFloat edge_len = Util::get_vector_magnitude(edge_dir);
             if (edge_len > M_EPSILON) {
                 if (traveled_dist + edge_len >= distance) {
-                    Util::scale_vector(edge_dir, 1.0f / edge_len);
+                    Util::scale_vector(edge_dir, 1.0 / edge_len);
                     point = pt1 + edge_dir.Scale(distance - traveled_dist);
                     vector = edge_dir;
                     edge_index = pt1_index;
@@ -345,11 +346,11 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
     }
     // First check if the location denotes the current edge data.
     dFloat cur_lpointz = (location - cur_edge_data->m_normal_matrix.m_posit).DotProduct3(cur_edge_data->m_normal_matrix.m_right);
-    if (cur_lpointz >= 0.0f && cur_lpointz <= cur_edge_data->m_length) {
+    if (cur_lpointz >= 0.0 && cur_lpointz <= cur_edge_data->m_length) {
         normal_matrix = cur_edge_data->m_normal_matrix;
         normal_matrix.m_posit += normal_matrix.m_right.Scale(cur_lpointz);
         distance = cur_edge_data->m_preceding_curve_length + cur_lpointz;
-        overpass = 0.0f;
+        overpass = 0.0;
         return true;
     }
     // Otherwise check all the preceding and consequent edges.
@@ -358,7 +359,7 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
     if (cj_data->m_loop) {
         // Check all the preceding edges until reach the half curve length.
         // Do first run in reverse, starting from the current edge and proceeding until we reach the beginning.
-        dFloat previous_left_over = 0.0f;
+        dFloat previous_left_over = 0.0;
         const EdgeData* previous_edge_data = nullptr;
         bool previous_set = false;
         bool cur_edge_data_found = false;
@@ -373,8 +374,8 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
             // Otherwise do the processing
             const EdgeData* edge_data = it->second;
             dFloat lpointz = (location - edge_data->m_normal_matrix.m_posit).DotProduct3(edge_data->m_normal_matrix.m_right);
-            dFloat left_over = 0.0f;
-            if (lpointz < 0.0f)
+            dFloat left_over = 0.0;
+            if (lpointz < 0.0)
                 left_over = lpointz;
             else if (lpointz > edge_data->m_length)
                 left_over = lpointz - edge_data->m_length;
@@ -383,15 +384,15 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
                 normal_matrix = edge_data->m_normal_matrix;
                 normal_matrix.m_posit = edge_data->m_normal_matrix.m_posit + edge_data->m_normal_matrix.m_right.Scale(lpointz);
                 distance = edge_data->m_preceding_curve_length + lpointz;
-                overpass = 0.0f;
+                overpass = 0.0;
                 found_potential_ref_point = true;
                 break;
             }
             // Snap to point of the previous edge in case left_over changes from negative to positive
-            if (previous_set && previous_left_over < 0.0f && left_over > 0.0f) {
+            if (previous_set && previous_left_over < 0.0 && left_over > 0.0) {
                 c_calc_pivot_normal(edge_data->m_normal_matrix, previous_edge_data->m_normal_matrix, previous_edge_data->m_normal_matrix.m_posit, location, normal_matrix);
                 distance = previous_edge_data->m_preceding_curve_length;
-                overpass = 0.0f;
+                overpass = 0.0;
                 found_potential_ref_point = true;
                 break;
             }
@@ -409,8 +410,8 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
                 // Otherwise do the processing
                 const EdgeData* edge_data = it->second;
                 dFloat lpointz = (location - edge_data->m_normal_matrix.m_posit).DotProduct3(edge_data->m_normal_matrix.m_right);
-                dFloat left_over = 0.0f;
-                if (lpointz < 0.0f)
+                dFloat left_over = 0.0;
+                if (lpointz < 0.0)
                     left_over = lpointz;
                 else if (lpointz > edge_data->m_length)
                     left_over = lpointz - edge_data->m_length;
@@ -419,15 +420,15 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
                     normal_matrix = edge_data->m_normal_matrix;
                     normal_matrix.m_posit = edge_data->m_normal_matrix.m_posit + edge_data->m_normal_matrix.m_right.Scale(lpointz);
                     distance = edge_data->m_preceding_curve_length + lpointz;
-                    overpass = 0.0f;
+                    overpass = 0.0;
                     found_potential_ref_point = true;
                     break;
                 }
                 // Snap to point of the previous edge in case left_over changes from negative to positive
-                if (previous_set && previous_left_over < 0.0f && left_over > 0.0f) {
+                if (previous_set && previous_left_over < 0.0 && left_over > 0.0) {
                     c_calc_pivot_normal(edge_data->m_normal_matrix, previous_edge_data->m_normal_matrix, previous_edge_data->m_normal_matrix.m_posit, location, normal_matrix);
                     distance = previous_edge_data->m_preceding_curve_length;
-                    overpass = 0.0f;
+                    overpass = 0.0;
                     found_potential_ref_point = true;
                     break;
                 }
@@ -452,8 +453,8 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
             // Otherwise do the processing
             const EdgeData* edge_data = it->second;
             dFloat lpointz = (location - edge_data->m_normal_matrix.m_posit).DotProduct3(edge_data->m_normal_matrix.m_right);
-            dFloat left_over = 0.0f;
-            if (lpointz < 0.0f)
+            dFloat left_over = 0.0;
+            if (lpointz < 0.0)
                 left_over = lpointz;
             else if (lpointz > edge_data->m_length)
                 left_over = lpointz - edge_data->m_length;
@@ -471,11 +472,11 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
                 normal_matrix = edge_data->m_normal_matrix;
                 normal_matrix.m_posit = edge_data->m_normal_matrix.m_posit + edge_data->m_normal_matrix.m_right.Scale(lpointz);
                 distance = edge_data->m_preceding_curve_length + lpointz;
-                overpass = 0.0f;
+                overpass = 0.0;
                 return true;
             }
             // Snap to point of the current edge in case left_over changes from positive to negative
-            if (previous_set && previous_left_over > 0.0f && left_over < 0.0f) {
+            if (previous_set && previous_left_over > 0.0 && left_over < 0.0) {
                 if (found_potential_ref_point) {
                     dFloat original_dist1 = dAbs(last_dist - distance);
                     dFloat original_dist2 = cj_data->m_curve_len - original_dist1;
@@ -487,7 +488,7 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
                 }
                 c_calc_pivot_normal(previous_edge_data->m_normal_matrix, edge_data->m_normal_matrix, edge_data->m_normal_matrix.m_posit, location, normal_matrix);
                 distance = edge_data->m_preceding_curve_length;
-                overpass = 0.0f;
+                overpass = 0.0;
                 return true;
             }
             // Update previous data
@@ -503,8 +504,8 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
             // Otherwise do the processing
             const EdgeData* edge_data = it->second;
             dFloat lpointz = (location - edge_data->m_normal_matrix.m_posit).DotProduct3(edge_data->m_normal_matrix.m_right);
-            dFloat left_over = 0.0f;
-            if (lpointz < 0.0f)
+            dFloat left_over = 0.0;
+            if (lpointz < 0.0)
                 left_over = lpointz;
             else if (lpointz > edge_data->m_length)
                 left_over = lpointz - edge_data->m_length;
@@ -522,11 +523,11 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
                 normal_matrix = edge_data->m_normal_matrix;
                 normal_matrix.m_posit = edge_data->m_normal_matrix.m_posit + edge_data->m_normal_matrix.m_right.Scale(lpointz);
                 distance = edge_data->m_preceding_curve_length + lpointz;
-                overpass = 0.0f;
+                overpass = 0.0;
                 return true;
             }
             // Snap to point of the current edge in case left_over changes from positive to negative
-            if (previous_set && previous_left_over > 0.0f && left_over < 0.0f) {
+            if (previous_set && previous_left_over > 0.0 && left_over < 0.0) {
                 if (found_potential_ref_point) {
                     dFloat original_dist1 = dAbs(last_dist - distance);
                     dFloat original_dist2 = cj_data->m_curve_len - original_dist1;
@@ -538,7 +539,7 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
                 }
                 c_calc_pivot_normal(previous_edge_data->m_normal_matrix, edge_data->m_normal_matrix, edge_data->m_normal_matrix.m_posit, location, normal_matrix);
                 distance = edge_data->m_preceding_curve_length;
-                overpass = 0.0f;
+                overpass = 0.0;
                 return true;
             }
             // Update previous data
@@ -551,14 +552,14 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
             const EdgeData* edge_data1 = cj_data->m_edges.rbegin()->second;
             const EdgeData* edge_data2 = cj_data->m_edges.begin()->second;
             c_calc_pivot_normal(edge_data1->m_normal_matrix, edge_data2->m_normal_matrix, edge_data2->m_normal_matrix.m_posit, location, normal_matrix);
-            distance = 0.0f;
-            overpass = 0.0f;
+            distance = 0.0;
+            overpass = 0.0;
             return true;
         }
     }
     else { // Loop disabled
         // Find the closest preceding edge
-        dFloat previous_left_over = 0.0f;
+        dFloat previous_left_over = 0.0;
         const EdgeData* previous_edge_data = nullptr;
         bool previous_set = false;
         bool cur_edge_data_found = false;
@@ -573,13 +574,13 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
             // Otherwise do the processing
             const EdgeData* edge_data = it->second;
             dFloat lpointz = (location - edge_data->m_normal_matrix.m_posit).DotProduct3(edge_data->m_normal_matrix.m_right);
-            dFloat left_over = 0.0f;
-            if (lpointz < 0.0f) {
+            dFloat left_over = 0.0;
+            if (lpointz < 0.0) {
                 left_over = lpointz;
                 // Minimum limit
                 if (it->first == 0) {
                     normal_matrix = edge_data->m_normal_matrix;
-                    distance = 0.0f;
+                    distance = 0.0;
                     overpass = left_over;
                     found_potential_ref_point = true;
                     break;
@@ -592,15 +593,15 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
                 normal_matrix = edge_data->m_normal_matrix;
                 normal_matrix.m_posit = edge_data->m_normal_matrix.m_posit + edge_data->m_normal_matrix.m_right.Scale(lpointz);
                 distance = edge_data->m_preceding_curve_length + lpointz;
-                overpass = 0.0f;
+                overpass = 0.0;
                 found_potential_ref_point = true;
                 break;
             }
             // Snap to point of the previous edge in case left_over changes from negative to positive
-            if (previous_set && previous_left_over < 0.0f && left_over > 0.0f) {
+            if (previous_set && previous_left_over < 0.0 && left_over > 0.0) {
                 c_calc_pivot_normal(edge_data->m_normal_matrix, previous_edge_data->m_normal_matrix, previous_edge_data->m_normal_matrix.m_posit, location, normal_matrix);
                 distance = previous_edge_data->m_preceding_curve_length;
-                overpass = 0.0f;
+                overpass = 0.0;
                 found_potential_ref_point = true;
                 break;
             }
@@ -623,8 +624,8 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
             // Otherwise do the processing
             const EdgeData* edge_data = it->second;
             dFloat lpointz = (location - edge_data->m_normal_matrix.m_posit).DotProduct3(edge_data->m_normal_matrix.m_right);
-            dFloat left_over = 0.0f;
-            if (lpointz < 0.0f)
+            dFloat left_over = 0.0;
+            if (lpointz < 0.0)
                 left_over = lpointz;
             else if (lpointz > edge_data->m_length) {
                 left_over = lpointz - edge_data->m_length;
@@ -652,11 +653,11 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
                 normal_matrix = edge_data->m_normal_matrix;
                 normal_matrix.m_posit = edge_data->m_normal_matrix.m_posit + edge_data->m_normal_matrix.m_right.Scale(lpointz);
                 distance = edge_data->m_preceding_curve_length + lpointz;
-                overpass = 0.0f;
+                overpass = 0.0;
                 return true;
             }
             // Snap to point of the current edge in case left_over changes from positive to negative
-            if (previous_set && previous_left_over > 0.0f && left_over < 0.0f) {
+            if (previous_set && previous_left_over > 0.0 && left_over < 0.0) {
                 if (found_potential_ref_point) {
                     dFloat original_dist = dAbs(last_dist - distance);
                     dFloat current_dist = dAbs(edge_data->m_preceding_curve_length - last_dist);
@@ -664,7 +665,7 @@ bool MSP::CurvySlider::c_calc_curve_data_at_point3(const MSP::Joint::JointData* 
                 }
                 c_calc_pivot_normal(previous_edge_data->m_normal_matrix, edge_data->m_normal_matrix, edge_data->m_normal_matrix.m_posit, location, normal_matrix);
                 distance = edge_data->m_preceding_curve_length;
-                overpass = 0.0f;
+                overpass = 0.0;
                 return true;
             }
             // Update previous data
@@ -708,7 +709,7 @@ void MSP::CurvySlider::submit_constraints(const NewtonJoint* joint, dFloat times
     MSP::Joint::JointData* joint_data = reinterpret_cast<MSP::Joint::JointData*>(NewtonJointGetUserData(joint));
     CurvySliderData* cj_data = reinterpret_cast<CurvySliderData*>(joint_data->m_cj_data);
 
-    dFloat inv_timestep = 1.0f / timestep;
+    dFloat inv_timestep = 1.0 / timestep;
 
     // Calculate position of pivot points and Jacobian direction vectors in global space.
     dMatrix matrix0, matrix1, matrix2;
@@ -748,17 +749,15 @@ void MSP::CurvySlider::submit_constraints(const NewtonJoint* joint, dFloat times
 
     // Restrict movement on the pivot point along the normal and bi normal of the path.
     NewtonUserJointAddLinearRow(joint, &p0[0], &p1[0], &normal_matrix.m_front[0]);
-    NewtonUserJointSetRowSpringDamperAcceleration(joint, joint_data->m_stiffness, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
     NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
 
     NewtonUserJointAddLinearRow(joint, &p0[0], &p1[0], &normal_matrix.m_up[0]);
-    NewtonUserJointSetRowSpringDamperAcceleration(joint, joint_data->m_stiffness, Joint::LINEAR_STIFF, Joint::LINEAR_DAMP);
     NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
 
     // Align to curve
     if (cj_data->m_align) {
-        NewtonUserJointAddAngularRow(joint, Joint::c_calculate_angle2(matrix0.m_right, normal_matrix.m_right, normal_matrix.m_front), &normal_matrix.m_front[0]);
-        NewtonUserJointSetRowSpringDamperAcceleration(joint, joint_data->m_stiffness, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP2);
+        dFloat angle0 = Joint::c_calculate_angle2(matrix0.m_right, normal_matrix.m_right, normal_matrix.m_front);
+        NewtonUserJointAddAngularRow(joint, angle0, &normal_matrix.m_front[0]);
         if (cj_data->m_alignment_power < M_EPSILON) {
             NewtonUserJointSetRowMinimumFriction(joint, -Joint::CUSTOM_LARGE_VALUE);
             NewtonUserJointSetRowMaximumFriction(joint, Joint::CUSTOM_LARGE_VALUE);
@@ -768,9 +767,13 @@ void MSP::CurvySlider::submit_constraints(const NewtonJoint* joint, dFloat times
             NewtonUserJointSetRowMaximumFriction(joint, cj_data->m_alignment_power);
         }
         NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
+        if (dAbs(angle0) > joint_data->m_max_angle_error) {
+		    const dFloat alpha = NewtonUserJointCalculateRowZeroAcceleration(joint) + dFloat(0.25f) * angle0 / (timestep * timestep);
+		    NewtonUserJointSetRowAcceleration(joint, alpha);
+	    }
 
-        NewtonUserJointAddAngularRow(joint, Joint::c_calculate_angle2(matrix0.m_right, normal_matrix.m_right, normal_matrix.m_up), &normal_matrix.m_up[0]);
-        NewtonUserJointSetRowSpringDamperAcceleration(joint, joint_data->m_stiffness, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP2);
+        dFloat angle1 = Joint::c_calculate_angle2(matrix0.m_right, normal_matrix.m_right, normal_matrix.m_up);
+        NewtonUserJointAddAngularRow(joint, angle1, &normal_matrix.m_up[0]);
         if (cj_data->m_alignment_power < M_EPSILON) {
             NewtonUserJointSetRowMinimumFriction(joint, -Joint::CUSTOM_LARGE_VALUE);
             NewtonUserJointSetRowMaximumFriction(joint, Joint::CUSTOM_LARGE_VALUE);
@@ -780,24 +783,28 @@ void MSP::CurvySlider::submit_constraints(const NewtonJoint* joint, dFloat times
             NewtonUserJointSetRowMaximumFriction(joint, cj_data->m_alignment_power);
         }
         NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
+        if (dAbs(angle1) > joint_data->m_max_angle_error) {
+		    const dFloat alpha = NewtonUserJointCalculateRowZeroAcceleration(joint) + dFloat(0.25f) * angle1 / (timestep * timestep);
+		    NewtonUserJointSetRowAcceleration(joint, alpha);
+	    }
     }
 
     // Add linear friction or limits
     if (!cj_data->m_loop && overpass < -M_EPSILON) {
         dVector p2(normal_matrix.m_posit + normal_matrix.m_right.Scale(Joint::LINEAR_LIMIT_EPSILON));
         NewtonUserJointAddLinearRow(joint, &p0[0], &p2[0], &normal_matrix.m_right[0]);
-        NewtonUserJointSetRowMinimumFriction(joint, 0.0f);
+        NewtonUserJointSetRowMinimumFriction(joint, 0.0);
         NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
     }
     else if (!cj_data->m_loop && overpass > M_EPSILON) {
         dVector p2(normal_matrix.m_posit + normal_matrix.m_right.Scale(-Joint::LINEAR_LIMIT_EPSILON));
         NewtonUserJointAddLinearRow(joint, &p0[0], &p2[0], &normal_matrix.m_right[0]);
-        NewtonUserJointSetRowMaximumFriction(joint, 0.0f);
+        NewtonUserJointSetRowMaximumFriction(joint, 0.0);
         NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
     }
     else {
         dVector point(normal_matrix.UntransformVector(matrix0.m_posit));
-        point.m_z = 0.0f;
+        point.m_z = 0.0;
         point = normal_matrix.TransformVector(point);
         NewtonUserJointAddLinearRow(joint, &point[0], &normal_matrix.m_posit[0], &normal_matrix.m_right[0]);
         NewtonUserJointSetRowAcceleration(joint, -cj_data->m_cur_vel * inv_timestep);
@@ -809,34 +816,34 @@ void MSP::CurvySlider::submit_constraints(const NewtonJoint* joint, dFloat times
 
     // Add angular friction or limits
     if (cj_data->m_rotate) {
-        dVector omega0(0.0f);
-        dVector omega1(0.0f);
+        dVector omega0(0.0);
+        dVector omega1(0.0);
         NewtonBodyGetOmega(joint_data->m_child, &omega0[0]);
         if (joint_data->m_parent != nullptr)
             NewtonBodyGetOmega(joint_data->m_parent, &omega1[0]);
         dVector rel_omega(omega0 - omega1);
         dFloat friction = cj_data->m_angular_friction * cj_data->m_controller;
         if (cj_data->m_align) {
-            NewtonUserJointAddAngularRow(joint, 0.0f, &normal_matrix.m_right[0]);
+            NewtonUserJointAddAngularRow(joint, 0.0, &normal_matrix.m_right[0]);
             NewtonUserJointSetRowAcceleration(joint, -rel_omega.DotProduct3(normal_matrix.m_right) * inv_timestep);
             NewtonUserJointSetRowMinimumFriction(joint, -friction);
             NewtonUserJointSetRowMaximumFriction(joint, friction);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
         }
         else {
-            NewtonUserJointAddAngularRow(joint, 0.0f, &normal_matrix.m_front[0]);
+            NewtonUserJointAddAngularRow(joint, 0.0, &normal_matrix.m_front[0]);
             NewtonUserJointSetRowAcceleration(joint, -rel_omega.DotProduct3(normal_matrix.m_front) * inv_timestep);
             NewtonUserJointSetRowMinimumFriction(joint, -friction);
             NewtonUserJointSetRowMaximumFriction(joint, friction);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
 
-            NewtonUserJointAddAngularRow(joint, 0.0f, &normal_matrix.m_up[0]);
+            NewtonUserJointAddAngularRow(joint, 0.0, &normal_matrix.m_up[0]);
             NewtonUserJointSetRowAcceleration(joint, -rel_omega.DotProduct3(normal_matrix.m_up) * inv_timestep);
             NewtonUserJointSetRowMinimumFriction(joint, -friction);
             NewtonUserJointSetRowMaximumFriction(joint, friction);
             NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
 
-            NewtonUserJointAddAngularRow(joint, 0.0f, &normal_matrix.m_right[0]);
+            NewtonUserJointAddAngularRow(joint, 0.0, &normal_matrix.m_right[0]);
             NewtonUserJointSetRowAcceleration(joint, -rel_omega.DotProduct3(normal_matrix.m_right) * inv_timestep);
             NewtonUserJointSetRowMinimumFriction(joint, -friction);
             NewtonUserJointSetRowMaximumFriction(joint, friction);
@@ -844,8 +851,8 @@ void MSP::CurvySlider::submit_constraints(const NewtonJoint* joint, dFloat times
         }
     }
     else if (cj_data->m_align) {
-        NewtonUserJointAddAngularRow(joint, Joint::c_calculate_angle2(matrix0.m_front, normal_matrix.m_front, normal_matrix.m_right), &normal_matrix.m_right[0]);
-        NewtonUserJointSetRowSpringDamperAcceleration(joint, joint_data->m_stiffness, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP2);
+        dFloat angle0 = Joint::c_calculate_angle2(matrix0.m_front, normal_matrix.m_front, normal_matrix.m_right);
+        NewtonUserJointAddAngularRow(joint, angle0, &normal_matrix.m_right[0]);
         if (cj_data->m_alignment_power < M_EPSILON) {
             NewtonUserJointSetRowMinimumFriction(joint, -Joint::CUSTOM_LARGE_VALUE);
             NewtonUserJointSetRowMaximumFriction(joint, Joint::CUSTOM_LARGE_VALUE);
@@ -855,19 +862,35 @@ void MSP::CurvySlider::submit_constraints(const NewtonJoint* joint, dFloat times
             NewtonUserJointSetRowMaximumFriction(joint, cj_data->m_alignment_power);
         }
         NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
+        if (dAbs(angle0) > joint_data->m_max_angle_error) {
+		    const dFloat alpha = NewtonUserJointCalculateRowZeroAcceleration(joint) + dFloat(0.25f) * angle0 / (timestep * timestep);
+		    NewtonUserJointSetRowAcceleration(joint, alpha);
+	    }
     }
     else {
-        NewtonUserJointAddAngularRow(joint, Joint::c_calculate_angle2(matrix0.m_right, matrix1.m_right, matrix1.m_front), &matrix1.m_front[0]);
-        NewtonUserJointSetRowSpringDamperAcceleration(joint, joint_data->m_stiffness, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP2);
+        dFloat angle0 = Joint::c_calculate_angle2(matrix0.m_right, matrix1.m_right, matrix1.m_front);
+        NewtonUserJointAddAngularRow(joint, angle0, &matrix1.m_front[0]);
         NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
+        if (dAbs(angle0) > joint_data->m_max_angle_error) {
+		    const dFloat alpha = NewtonUserJointCalculateRowZeroAcceleration(joint) + dFloat(0.25f) * angle0 / (timestep * timestep);
+		    NewtonUserJointSetRowAcceleration(joint, alpha);
+	    }
 
-        NewtonUserJointAddAngularRow(joint, Joint::c_calculate_angle2(matrix0.m_right, matrix1.m_right, matrix1.m_up), &matrix1.m_up[0]);
-        NewtonUserJointSetRowSpringDamperAcceleration(joint, joint_data->m_stiffness, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP2);
+        dFloat angle1 = Joint::c_calculate_angle2(matrix0.m_right, matrix1.m_right, matrix1.m_up);
+        NewtonUserJointAddAngularRow(joint, angle1, &matrix1.m_up[0]);
         NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
+        if (dAbs(angle1) > joint_data->m_max_angle_error) {
+		    const dFloat alpha = NewtonUserJointCalculateRowZeroAcceleration(joint) + dFloat(0.25f) * angle1 / (timestep * timestep);
+		    NewtonUserJointSetRowAcceleration(joint, alpha);
+	    }
 
-        NewtonUserJointAddAngularRow(joint, Joint::c_calculate_angle2(matrix0.m_front, matrix1.m_front, matrix1.m_right), &matrix1.m_right[0]);
-        NewtonUserJointSetRowSpringDamperAcceleration(joint, joint_data->m_stiffness, Joint::ANGULAR_STIFF, Joint::ANGULAR_DAMP2);
+        dFloat angle2 = Joint::c_calculate_angle2(matrix0.m_front, matrix1.m_front, matrix1.m_right);
+        NewtonUserJointAddAngularRow(joint, angle2, &matrix1.m_right[0]);
         NewtonUserJointSetRowStiffness(joint, joint_data->m_stiffness);
+        if (dAbs(angle2) > joint_data->m_max_angle_error) {
+		    const dFloat alpha = NewtonUserJointCalculateRowZeroAcceleration(joint) + dFloat(0.25f) * angle2 / (timestep * timestep);
+		    NewtonUserJointSetRowAcceleration(joint, alpha);
+	    }
     }
 }
 
@@ -884,10 +907,10 @@ void MSP::CurvySlider::on_connect(MSP::Joint::JointData* joint_data) {
 
 void MSP::CurvySlider::on_disconnect(MSP::Joint::JointData* joint_data) {
     CurvySliderData* cj_data = reinterpret_cast<CurvySliderData*>(joint_data->m_cj_data);
-    cj_data->m_cur_pos = 0.0f;
-    cj_data->m_cur_vel = 0.0f;
-    cj_data->m_cur_accel = 0.0f;
-    cj_data->m_cur_dist = 0.0f;
+    cj_data->m_cur_pos = 0.0;
+    cj_data->m_cur_vel = 0.0;
+    cj_data->m_cur_accel = 0.0;
+    cj_data->m_cur_dist = 0.0;
     cj_data->m_cur_normal_matrix_set = false;
     c_clear_curve_edges(joint_data);
 }
@@ -1082,7 +1105,7 @@ VALUE MSP::CurvySlider::rbf_get_linear_friction(VALUE self, VALUE v_joint) {
 VALUE MSP::CurvySlider::rbf_set_linear_friction(VALUE self, VALUE v_joint, VALUE v_friction) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::CURVY_SLIDER);
     CurvySliderData* cj_data = reinterpret_cast<CurvySliderData*>(joint_data->m_cj_data);
-    cj_data->m_linear_friction = Util::max_float(Util::value_to_dFloat(v_friction) * M_METER_TO_INCH, 0.0f);
+    cj_data->m_linear_friction = Util::max_dFloat(Util::value_to_dFloat(v_friction) * M_METER_TO_INCH, 0.0);
     return Qnil;
 }
 
@@ -1095,7 +1118,7 @@ VALUE MSP::CurvySlider::rbf_get_angular_friction(VALUE self, VALUE v_joint) {
 VALUE MSP::CurvySlider::rbf_set_angular_friction(VALUE self, VALUE v_joint, VALUE v_friction) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::CURVY_SLIDER);
     CurvySliderData* cj_data = reinterpret_cast<CurvySliderData*>(joint_data->m_cj_data);
-    cj_data->m_angular_friction = Util::max_float(Util::value_to_dFloat(v_friction) * M_METER2_TO_INCH2, 0.0f);
+    cj_data->m_angular_friction = Util::max_dFloat(Util::value_to_dFloat(v_friction) * M_METER2_TO_INCH2, 0.0);
     return Qnil;
 }
 
@@ -1108,7 +1131,7 @@ VALUE MSP::CurvySlider::rbf_get_controller(VALUE self, VALUE v_joint) {
 VALUE MSP::CurvySlider::rbf_set_controller(VALUE self, VALUE v_joint, VALUE v_controller) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::CURVY_SLIDER);
     CurvySliderData* cj_data = reinterpret_cast<CurvySliderData*>(joint_data->m_cj_data);
-    cj_data->m_controller = Util::max_float(Util::value_to_dFloat(v_controller), 0.0f);
+    cj_data->m_controller = Util::max_dFloat(Util::value_to_dFloat(v_controller), 0.0);
     return Qnil;
 }
 
@@ -1127,7 +1150,7 @@ VALUE MSP::CurvySlider::rbf_enable_loop(VALUE self, VALUE v_joint, VALUE v_state
         c_update_curve_edges(joint_data);
         if (!cj_data->m_loop) {
             cj_data->m_cur_pos = fmod(cj_data->m_cur_pos, cj_data->m_curve_len);
-            if (cj_data->m_cur_pos < 0.0f)
+            if (cj_data->m_cur_pos < 0.0)
                 cj_data->m_cur_pos += cj_data->m_curve_len;
         }
     }
@@ -1156,7 +1179,7 @@ VALUE MSP::CurvySlider::rbf_get_alignment_power(VALUE self, VALUE v_joint) {
 VALUE MSP::CurvySlider::rbf_set_alignment_power(VALUE self, VALUE v_joint, VALUE v_power) {
     MSP::Joint::JointData* joint_data = MSP::Joint::c_value_to_joint2(v_joint, MSP::Joint::CURVY_SLIDER);
     CurvySliderData* cj_data = reinterpret_cast<CurvySliderData*>(joint_data->m_cj_data);
-    cj_data->m_alignment_power = Util::max_float(Util::value_to_dFloat(v_power) * M_METER2_TO_INCH2, 0.0f);
+    cj_data->m_alignment_power = Util::max_dFloat(Util::value_to_dFloat(v_power) * M_METER2_TO_INCH2, 0.0);
     return Qnil;
 }
 

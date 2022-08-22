@@ -6,6 +6,7 @@
  * ---------------------------------------------------------------------------------------------------------------------
  */
 
+#include "pch.h"
 #include "msp_particle.h"
 
 /*
@@ -121,7 +122,7 @@ bool MSP::Particle::c_update_particle(ParticleData* data, dFloat timestep) {
         if (data->m_use_gravity)
             data->m_velocity += data->m_gravity.Scale(timestep);
         if (data->m_velocity_damp > M_EPSILON) {
-            dFloat s = 1.0f - data->m_velocity_damp;
+            dFloat s = 1.0 - data->m_velocity_damp;
             data->m_velocity.m_x *= s;
             data->m_velocity.m_y *= s;
             data->m_velocity.m_z *= s;
@@ -137,11 +138,11 @@ void MSP::Particle::c_draw_particle(ParticleData* data, VALUE v_view, VALUE v_bb
     if (nmag < M_EPSILON)
         zaxis = camera_tra.m_right;
     else {
-        dFloat r = 1.0f / nmag;
+        dFloat r = 1.0 / nmag;
         zaxis.m_x *= r;
         zaxis.m_y *= r;
         zaxis.m_z *= r;
-        zaxis.m_w = 0.0f;
+        zaxis.m_w = 0.0;
     }
     //VALUE v_pts = c_points_on_circle3d(data->position, data->radius, normal, data->num_seg, data->rot_angle);
     //~rb_funcall(v_bb, Util::INTERN_ADD, 1, Util::point_to_value2(data->position));
@@ -156,7 +157,7 @@ void MSP::Particle::c_draw_particle(ParticleData* data, VALUE v_view, VALUE v_bb
     dFloat offset = M_2PI / data->num_seg;
     for (unsigned int i = 0; i < data->num_seg; ++i) {
         dFloat angle = data->rot_angle + i * offset;
-        dVector pt(dCos(angle) * data->radius, dSin(angle) * data->radius, 0.0f);
+        dVector pt(dCos(angle) * data->radius, dSin(angle) * data->radius, 0.0);
         rb_ary_store(v_pts, i, Util::point_to_value2(cmatrix.TransformVector(pt)));
     }
     rb_funcall(v_view, Util::INTERN_DRAW, 2, V_GL_POLYGON, v_pts);*/ // 42/45 FPS at 6
@@ -166,7 +167,7 @@ void MSP::Particle::c_draw_particle(ParticleData* data, VALUE v_view, VALUE v_bb
     dMatrix cmatrix;
     Util::matrix_from_pin_dir(data->position, normal, cmatrix);
     for (unsigned int i = 0; i < data->num_seg; ++i) {
-        dVector pt(data->pts[i*2] * data->radius, data->pts[i*2+1] * data->radius, 0.0f);
+        dVector pt(data->pts[i*2] * data->radius, data->pts[i*2+1] * data->radius, 0.0);
         rb_ary_store(v_pts, i+1, Util::point_to_value2(cmatrix.TransformVector(pt)));
     }
     rb_ary_store(v_pts, data->num_seg+1, rb_ary_entry(v_pts, 1));
@@ -179,14 +180,14 @@ void MSP::Particle::c_draw_particle(ParticleData* data, VALUE v_view, VALUE v_bb
     if (dAbs(zaxis.m_z) > 0.9999995f) {
         //xaxis = Y_AXIS.CrossProduct(zaxis);
         xaxis.m_x = zaxis.m_z;
-        xaxis.m_y = 0.0f;
+        xaxis.m_y = 0.0;
         xaxis.m_z = -zaxis.m_x;
     }
     else {
         //xaxis = Z_AXIS.CrossProduct(zaxis);
         xaxis.m_x = -zaxis.m_y;
         xaxis.m_y = zaxis.m_x;
-        xaxis.m_z = 0.0f;
+        xaxis.m_z = 0.0;
     }
     dVector yaxis(zaxis.CrossProduct(xaxis));
     nmag = Util::get_vector_magnitude(xaxis);
@@ -194,16 +195,16 @@ void MSP::Particle::c_draw_particle(ParticleData* data, VALUE v_view, VALUE v_bb
     xaxis.m_x *= r;
     xaxis.m_y *= r;
     xaxis.m_z *= r;
-    xaxis.m_w = 0.0f;
+    xaxis.m_w = 0.0;
     nmag = Util::get_vector_magnitude(yaxis);
     r = data->m_radius / nmag;
     yaxis.m_x *= r;
     yaxis.m_y *= r;
     yaxis.m_z *= r;
-    yaxis.m_w = 0.0f;
+    yaxis.m_w = 0.0;
     dMatrix cmatrix(xaxis, yaxis, zaxis, data->m_position);
     for (unsigned int i = 0; i < data->m_num_seg; ++i) {
-        dVector pt(data->m_pts[i*2], data->m_pts[i*2+1], 0.0f);
+        dVector pt(data->m_pts[i*2], data->m_pts[i*2+1], 0.0);
         rb_ary_store(v_pts, i, Util::point_to_value(cmatrix.TransformVector(pt)));
     }
     rb_funcall(v_view, Util::INTERN_DRAW, 2, V_GL_POLYGON, v_pts); // 44/46 FPS at 6
@@ -228,7 +229,7 @@ VALUE MSP::Particle::c_points_on_circle3d(const dVector& origin, dFloat radius, 
     dFloat angle = rot_angle * M_DEG_TO_RAD;
     VALUE v_pts = rb_ary_new2(num_seg);
     for (unsigned int i = 0; i < num_seg; ++i) {
-        dVector pt(dCos(angle) * radius, dSin(angle) * radius, 0.0f);
+        dVector pt(dCos(angle) * radius, dSin(angle) * radius, 0.0);
         rb_ary_store(v_pts, i, Util::point_to_value(cmatrix.TransformVector(pt)));
         angle += offset;
     }
@@ -266,7 +267,7 @@ VALUE MSP::Particle::rbf_create(VALUE self, VALUE v_opts) {
         tdata.m_use_velocity = false;
     // Velocity damp
     val = rb_hash_aref(v_opts, SYM_VELOCITY_DAMP);
-    tdata.m_velocity_damp = (val != Qnil) ? Util::clamp_float(Util::value_to_dFloat(val), 0.0f, 1.0f) : 0.0f;
+    tdata.m_velocity_damp = (val != Qnil) ? Util::clamp_dFloat(Util::value_to_dFloat(val), 0.0, 1.0) : 0.0;
     // Gravity
     val = rb_hash_aref(v_opts, SYM_GRAVITY);
     if (val != Qnil) {
@@ -277,13 +278,13 @@ VALUE MSP::Particle::rbf_create(VALUE self, VALUE v_opts) {
         tdata.m_use_gravity = false;
     // Radius
     val = rb_hash_aref(v_opts, SYM_RADIUS);
-    tdata.m_radius = (val != Qnil) ? Util::clamp_float(Util::value_to_dFloat(val), 0.01f, 10000.0f) : 1.0f;
+    tdata.m_radius = (val != Qnil) ? Util::clamp_dFloat(Util::value_to_dFloat(val), 0.01f, 10000.0) : 1.0;
     // Scale
     val = rb_hash_aref(v_opts, SYM_SCALE);
-    tdata.m_scale = (val != Qnil) ? Util::clamp_float(Util::value_to_dFloat(val), 0.001f, 1000.0f) : 1.01f;
+    tdata.m_scale = (val != Qnil) ? Util::clamp_dFloat(Util::value_to_dFloat(val), 0.001f, 1000.0) : 1.01f;
     // Color1
     val = rb_hash_aref(v_opts, SYM_COLOR1);
-    tdata.m_color1 = (val != Qnil) ? Util::value_to_color(val) : dVector(100.0f, 100.0f, 100.0f, 1.0f);
+    tdata.m_color1 = (val != Qnil) ? Util::value_to_color(val) : dVector(100.0, 100.0, 100.0, 1.0);
     // Color2
     val = rb_hash_aref(v_opts, SYM_COLOR2);
     if (val != Qnil) {
@@ -294,34 +295,34 @@ VALUE MSP::Particle::rbf_create(VALUE self, VALUE v_opts) {
         tdata.m_use_color2 = false;
     // Alpha1
     val = rb_hash_aref(v_opts, SYM_ALPHA1);
-    tdata.m_alpha1 = (val != Qnil) ? Util::clamp_float(Util::value_to_dFloat(val), 0.0f, 1.0f) : 1.0f;
+    tdata.m_alpha1 = (val != Qnil) ? Util::clamp_dFloat(Util::value_to_dFloat(val), 0.0, 1.0) : 1.0;
     // Alpha2
     val = rb_hash_aref(v_opts, SYM_ALPHA2);
     if (val != Qnil) {
-        tdata.m_alpha2 = Util::clamp_float(Util::value_to_dFloat(val), 0.0f, 1.0f);
+        tdata.m_alpha2 = Util::clamp_dFloat(Util::value_to_dFloat(val), 0.0, 1.0);
         tdata.m_use_alpha2 = true;
     }
     else
         tdata.m_use_alpha2 = false;
     // Fade
     val = rb_hash_aref(v_opts, SYM_FADE);
-    tdata.m_fade = (val != Qnil) ? Util::clamp_float(Util::value_to_dFloat(val), 0.0f, 1.0f) : 1.0f;
+    tdata.m_fade = (val != Qnil) ? Util::clamp_dFloat(Util::value_to_dFloat(val), 0.0, 1.0) : 1.0;
     // Lifetime
     val = rb_hash_aref(v_opts, SYM_LIFETIME);
-    tdata.m_lifetime = (val != Qnil) ? Util::max_float(Util::value_to_dFloat(val), M_EPSILON) : 2.0f;
+    tdata.m_lifetime = (val != Qnil) ? Util::max_dFloat(Util::value_to_dFloat(val), M_EPSILON) : 2.0;
     // Number of segments
     val = rb_hash_aref(v_opts, SYM_NUM_SEG);
     tdata.m_num_seg = (val != Qnil) ? Util::clamp_uint(Util::value_to_uint(val), 3, 120) : 16;
     // Rotate angle
     val = rb_hash_aref(v_opts, SYM_ROT_ANGLE);
-    tdata.m_rot_angle = (val != Qnil) ? Util::value_to_dFloat(val) * M_DEG_TO_RAD : 0.0f;
+    tdata.m_rot_angle = (val != Qnil) ? Util::value_to_dFloat(val) * M_DEG_TO_RAD : 0.0;
 
     ParticleData* data = new ParticleData(tdata);
     // Preset current color
     data->m_color = data->m_color1;
-    data->m_alpha = data->m_fade < M_EPSILON ? data->m_alpha1 : 0.0f;
+    data->m_alpha = data->m_fade < M_EPSILON ? data->m_alpha1 : 0.0;
     // Preset current life
-    data->m_cur_life = 0.0f;
+    data->m_cur_life = 0.0;
     // Calculate normal points on circle
     data->m_pts = new dFloat[data->m_num_seg*2];
     dFloat offset = M_SPI * (dFloat)(2.0) / data->m_num_seg;

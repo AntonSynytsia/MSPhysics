@@ -79,10 +79,10 @@ public:
         bool m_gravity_enabled;
         int m_material_id;
         BodyData(const dVector& matrix_scale, const dVector& default_collision_scale, const dVector& default_collision_offset, int material_id, const VALUE& v_group) :
-            m_add_force(0.0f),
-            m_add_torque(0.0f),
-            m_set_force(0.0f),
-            m_set_torque(0.0f),
+            m_add_force(0.0),
+            m_add_torque(0.0),
+            m_set_force(0.0),
+            m_set_torque(0.0),
             m_add_force_state(false),
             m_add_torque_state(false),
             m_set_force_state(false),
@@ -90,8 +90,8 @@ public:
             m_dynamic(false),
             m_bstatic(false),
             m_density(DEFAULT_DENSITY),
-            m_volume(0.0f),
-            m_mass(0.0f),
+            m_volume(0.0),
+            m_mass(0.0),
             m_elasticity(DEFAULT_ELASTICITY),
             m_softness(DEFAULT_SOFTNESS),
             m_static_friction(DEFAULT_STATIC_FRICTION_COEF),
@@ -105,9 +105,9 @@ public:
             m_collidable(DEFAULT_COLLIDABLE),
             m_record_touch_data(false),
             m_magnet_mode(1),
-            m_magnet_force(0.0f),
-            m_magnet_range(0.0f),
-            m_magnet_strength(0.0f),
+            m_magnet_force(0.0),
+            m_magnet_range(0.0),
+            m_magnet_strength(0.0),
             m_magnetic(DEFAULT_MAGNETIC),
             m_destructor_proc(Qnil),
             m_user_data(Qnil),
@@ -121,10 +121,10 @@ public:
         {
         }
         BodyData(const BodyData* other_body, const VALUE& v_group) :
-            m_add_force(0.0f),
-            m_add_torque(0.0f),
-            m_set_force(0.0f),
-            m_set_torque(0.0f),
+            m_add_force(0.0),
+            m_add_torque(0.0),
+            m_set_force(0.0),
+            m_set_torque(0.0),
             m_add_force_state(false),
             m_add_torque_state(false),
             m_set_force_state(false),
