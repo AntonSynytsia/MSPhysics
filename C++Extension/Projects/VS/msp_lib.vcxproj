@@ -108,7 +108,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
-    <PlatformToolset>v141_xp</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release (2.0)|Win32'" Label="Configuration">
@@ -116,7 +116,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
-    <PlatformToolset>v141_xp</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release (2.0)|x64'" Label="Configuration">
@@ -581,6 +581,9 @@
       <LinkErrorReporting>PromptImmediately</LinkErrorReporting>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(OutDir)$(TargetFileName)" "$(SolutionDir)..\..\..\RubyExtension\MSPhysics\libraries\stage\win32\1.8\" /i /y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release (2.0)|Win32'">
     <ClCompile>
@@ -626,6 +629,9 @@
       </IgnoreSpecificDefaultLibraries>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(OutDir)$(TargetFileName)" "$(SolutionDir)..\..\..\RubyExtension\MSPhysics\libraries\stage\win32\2.0\" /i /y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release (2.0)|x64'">
     <ClCompile>
@@ -670,6 +676,9 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <DataExecutionPrevention>false</DataExecutionPrevention>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(OutDir)$(TargetFileName)" "$(SolutionDir)..\..\..\RubyExtension\MSPhysics\libraries\stage\win64\2.0\" /i /y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release (2.2)|x64'">
     <ClCompile>
@@ -713,6 +722,9 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <DataExecutionPrevention>false</DataExecutionPrevention>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(OutDir)$(TargetFileName)" "$(SolutionDir)..\..\..\RubyExtension\MSPhysics\libraries\stage\win64\2.2\" /i /y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release (2.5)|x64'">
     <ClCompile>
@@ -756,6 +768,9 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <DataExecutionPrevention>false</DataExecutionPrevention>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(OutDir)$(TargetFileName)" "$(SolutionDir)..\..\..\RubyExtension\MSPhysics\libraries\stage\win64\2.5\" /i /y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release (2.7)|x64'">
     <ClCompile>
@@ -799,6 +814,9 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <DataExecutionPrevention>false</DataExecutionPrevention>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(OutDir)$(TargetFileName)" "$(SolutionDir)..\..\..\RubyExtension\MSPhysics\libraries\stage\win64\2.7\" /i /y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ProjectReference Include="dMath.vcxproj">

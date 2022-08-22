@@ -1,3 +1,4 @@
 # Remove third party from linguist
 package-lock.json linguist-vendored
 /C++Extension/Source/ThirdParty* linguist-vendored
+/RubyExtension/MSPhysics/libraries* linguist-vendored

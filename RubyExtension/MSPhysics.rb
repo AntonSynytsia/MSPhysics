@@ -7,7 +7,7 @@ module MSPhysics
 
   NAME         = 'MSPhysics'.freeze
   VERSION      = '1.1.0'.freeze
-  RELEASE_DATE = 'October 1, 2020'.freeze
+  RELEASE_DATE = 'TBD'.freeze
 
   # Create the extension.
   dir = ::File.expand_path(::File.dirname(__FILE__))

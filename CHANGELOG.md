@@ -1,4 +1,4 @@
-## 1.1.0 -
+## 1.1.0 - TBD
 - Updated to latest revision of NewtonDynamics 3.14.
 - Removed world scale option.
 - Made dialog and control panel non-modal on Mac OS X.
