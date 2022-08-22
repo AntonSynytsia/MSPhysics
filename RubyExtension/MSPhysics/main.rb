@@ -4,8 +4,9 @@ if Sketchup.version.to_i >= 14
 end
 
 # Require all files
-ext_dir = File.dirname(__FILE__)
-ext_dir.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18
+cfpath = __FILE__.dup
+cfpath.force_encoding('UTF-8') if cfpath.respond_to?(:force_encoding)
+ext_dir = ::File.expand_path(::File.dirname(cfpath))
 
 ext_manager = AMS::ExtensionManager.new(ext_dir, MSPhysics::VERSION)
 if AMS::IS_PLATFORM_WINDOWS
