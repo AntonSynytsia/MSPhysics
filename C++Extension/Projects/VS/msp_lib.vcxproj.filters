@@ -212,9 +212,6 @@
     <ClInclude Include="..\..\Source\main\msp_world.h">
       <Filter>main</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\main\ruby_prep.h">
-      <Filter>main</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Source\utils\ruby_prep.h">
       <Filter>utils</Filter>
     </ClInclude>

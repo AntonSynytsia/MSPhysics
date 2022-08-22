@@ -801,6 +801,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ProjectReference Include="dMath.vcxproj">
+      <Project>{2928f15f-0650-4261-b759-36c7792267dc}</Project>
+    </ProjectReference>
     <ProjectReference Include="newton.vcxproj">
       <Project>{f8604c1c-867d-4efd-afac-15404f17084e}</Project>
     </ProjectReference>

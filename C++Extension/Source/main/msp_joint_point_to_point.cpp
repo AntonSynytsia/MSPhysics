@@ -49,7 +49,7 @@ void MSP::PointToPoint::submit_constraints(const NewtonJoint* joint, dFloat time
         NewtonBodyGetVelocity(joint_data->m_parent, &veloc1[0]);
     dVector rel_veloc(veloc0 - veloc1);
 
-    dFloat stiffness = 0.999f - (1.0 - joint_data->m_stiffness_ratio * cj_data->m_strength) * Joint::DEFAULT_STIFFNESS_RANGE;
+    dFloat stiffness = 0.999f - (1.0 - joint_data->m_stiffness * cj_data->m_strength) * Joint::DEFAULT_STIFFNESS_RANGE;
 
     if (cj_data->m_mode == 0) {
         dVector dir(p0 - p1);

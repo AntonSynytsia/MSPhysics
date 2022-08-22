@@ -50,7 +50,7 @@ void MSP::UpVector::submit_constraints(const NewtonJoint* joint, dFloat timestep
     dFloat cur_omega_x = (cj_data->m_cone_angle_x - last_cone_angle_x) * inv_timestep;
     dFloat cur_omega_y = (cj_data->m_cone_angle_y - last_cone_angle_y) * inv_timestep;
 
-    dFloat stiffness = 0.999f - (1.0 - joint_data->m_stiffness_ratio * cj_data->m_strength) * Joint::DEFAULT_STIFFNESS_RANGE;
+    dFloat stiffness = 0.999f - (1.0 - joint_data->m_stiffness * cj_data->m_strength) * Joint::DEFAULT_STIFFNESS_RANGE;
 
     // Add cone omegas
     NewtonUserJointAddAngularRow(joint, cj_data->m_cone_angle_x, &pin_matrix.m_front[0]);

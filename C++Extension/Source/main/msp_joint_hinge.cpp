@@ -147,7 +147,7 @@ void MSP::Hinge::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
             NewtonUserJointAddAngularRow(joint, cur_angle, &matrix1.m_right[0]);
             dFloat accel = cj_data->m_accel * -cur_angle - cj_data->m_cur_omega * inv_timestep * cj_data->m_damp;
             NewtonUserJointSetRowAcceleration(joint, accel);
-            dFloat stiffness = 0.999f - (1.0 - joint_data->m_stiffness_ratio * cj_data->m_strength) * Joint::DEFAULT_STIFFNESS_RANGE;
+            dFloat stiffness = 0.999f - (1.0 - joint_data->m_stiffness * cj_data->m_strength) * Joint::DEFAULT_STIFFNESS_RANGE;
             NewtonUserJointSetRowStiffness(joint, stiffness);
         }
         else {

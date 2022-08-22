@@ -1611,60 +1611,70 @@ VALUE MSP::Body::rbf_apply_buoyancy(VALUE self, VALUE v_body, VALUE v_plane_orig
     dVector normal(Util::value_to_vector(v_plane_normal));
     dVector linear_current(Util::value_to_vector(v_linear_current));
     dVector angular_current(Util::value_to_vector(v_angular_current));
-    dFloat density = Util::max_dFloat(Util::value_to_dFloat(v_density), MIN_DENSITY);
+    dFloat fluid_density = Util::max_dFloat(Util::value_to_dFloat(v_density), MIN_DENSITY);
     dFloat linear_viscosity = Util::clamp_dFloat(Util::value_to_dFloat(v_linear_viscosity), 0.0, 1.0);
     dFloat angular_viscosity = Util::clamp_dFloat(Util::value_to_dFloat(v_angular_viscosity), 0.0, 1.0);
     dFloat timestep = Util::value_to_dFloat(v_timestep);
 
     if (body_data->m_bstatic) return Qfalse;
 
-    dMatrix plane_matrix;
-    Util::matrix_from_pin_dir(origin, normal, plane_matrix);
-    normal.m_w = plane_matrix.UntransformVector(Util::ORIGIN).m_z;
+    // dMatrix plane_matrix;
+    // Util::matrix_from_pin_dir(origin, normal, plane_matrix);
+    // normal.m_w = plane_matrix.UntransformVector(Util::ORIGIN).m_z;
+
+
+    normal.m_w = -normal.DotProduct3(origin);
 
     dMatrix transformation_matrix;
-    dVector com;
+    //dVector com;
     NewtonBodyGetMatrix(body, &transformation_matrix[0][0]);
-    NewtonBodyGetCentreOfMass(body, &com[0]);
-    com = transformation_matrix.TransformVector(com);
+    //NewtonBodyGetCentreOfMass(body, &com[0]);
+    //com = transformation_matrix.TransformVector(com);
 
-    dVector force(0.0);
-    dVector torque(0.0);
     dVector centerOfPreasure(0.0f);
 
-    NewtonConvexCollisionCalculateBuoyancyVolume(collision, &transformation_matrix[0][0], )
-    //NewtonConvexCollisionCalculateBuoyancyAcceleration(collision, &transformation_matrix[0][0], &com[0], &world_data->m_gravity[0], &normal[0], density, 0.0, &force[0], &torque[0]);
+    dFloat volume = NewtonConvexCollisionCalculateBuoyancyVolume(collision, &transformation_matrix[0][0], &normal[0], &centerOfPreasure[0]);
+    if (volume > 0.0) {
 
-    dVector inertia;
-    dFloat mass;
-    NewtonBodyGetMass(body, &mass, &inertia.m_x, &inertia.m_y, &inertia.m_z);
+        dVector inertia;
+        dFloat mass;
+        NewtonBodyGetMass(body, &mass, &inertia.m_x, &inertia.m_y, &inertia.m_z);
 
-    if (dAbs(force.m_x) > M_EPSILON || dAbs(force.m_y) > M_EPSILON || dAbs(force.m_z) > M_EPSILON) {
+        // if some part of the shape si under water, calculate the buoyancy force base on 
+		// Archimedes's buoyancy principle, which is the buoyancy force is equal to the 
+		// weight of the fluid displaced by the volume under water. 
+		dVector cog(0.0f);
+		//const dFloat solidDentityFactor = 1.35f;
+
+		// calculate the ratio of volumes an use it calculate a density equivalent
+		dFloat shapeVolume = NewtonConvexCollisionCalculateVolume(collision);
+		dFloat density = mass / shapeVolume;
+
+		dFloat displacedMass = density * volume;
+		NewtonBodyGetCentreOfMass(body, &cog[0]);
+		centerOfPreasure -= transformation_matrix.TransformVector(cog);
+
+		// now with the mass and center of mass of the volume under water, calculate buoyancy force and torque
+		dVector force(world_data->m_gravity.Scale(displacedMass));
+		dVector torque(centerOfPreasure.CrossProduct(force));
+
         c_body_add_force(body_data, force);
-        if (linear_viscosity > M_EPSILON) {
-            dVector veloc;
-            NewtonBodyGetVelocity(body, &veloc[0]);
-            dVector viscous_force((linear_current - veloc).Scale(mass * linear_viscosity / timestep));
-            c_body_add_force(body_data, viscous_force);
-        }
-    }
-    if (dAbs(torque.m_x) > M_EPSILON || dAbs(torque.m_y) > M_EPSILON || dAbs(torque.m_z) > M_EPSILON) {
         c_body_add_torque(body_data, torque);
-        if (angular_viscosity > M_EPSILON) {
-            dVector omega;
-            NewtonBodyGetOmega(body, &omega[0]);
-            omega = transformation_matrix.UnrotateVector(angular_current - omega);
-            dFloat mag = angular_viscosity / timestep;
-            dVector viscous_torque(
-                omega.m_x * inertia.m_x * mag,
-                omega.m_y * inertia.m_y * mag,
-                omega.m_z * inertia.m_z * mag);
-            viscous_torque = transformation_matrix.RotateVector(viscous_torque);
-            c_body_add_torque(body_data, viscous_torque);
-        }
-    }
 
-    return Qtrue;
+		// apply a fake viscous drag to damp the under water motion 
+		dVector omega(0.0f);
+		dVector veloc(0.0f);
+		NewtonBodyGetOmega(body, &omega[0]);
+		NewtonBodyGetVelocity(body, &veloc[0]);
+		omega = omega.Scale(angular_viscosity);
+		veloc = veloc.Scale(linear_viscosity);
+		NewtonBodySetOmega(body, &omega[0]);
+		NewtonBodySetVelocity(body, &veloc[0]);
+
+        return Qtrue;
+    } else {
+        return Qfalse;
+    }
 }
 
 VALUE MSP::Body::rbf_apply_aerodynamics(VALUE self, VALUE v_body, VALUE v_drag, VALUE v_wind) {
