@@ -64,6 +64,7 @@ void MSP::World::destructor_callback(const NewtonWorld* const world) {
         if (joint_data->m_world == world)
             MSP::Joint::c_destroy(joint_data);
     }
+    NewtonDestroyAllBodies(world); // make sure all bodies are destroyed prior to destroying the world!
     delete world_data;
 }
 
@@ -83,11 +84,15 @@ int MSP::World::aabb_overlap_callback(const NewtonJoint* const contact, dFloat t
         (data1->m_non_collidable_bodies.find(body0) != data1->m_non_collidable_bodies.end())) {
         if (NewtonBodyGetContinuousCollisionMode(body0) == 1) {
             NewtonBodySetContinuousCollisionMode(body0, 0);
+            world_data->m_temp_cccd_bodies_mutex.lock();
             world_data->m_temp_cccd_bodies.push_back(body0);
+            world_data->m_temp_cccd_bodies_mutex.unlock();
         }
         if (NewtonBodyGetContinuousCollisionMode(body1) == 1) {
             NewtonBodySetContinuousCollisionMode(body1, 0);
+            world_data->m_temp_cccd_bodies_mutex.lock();
             world_data->m_temp_cccd_bodies.push_back(body1);
+            world_data->m_temp_cccd_bodies_mutex.unlock();
         }
         return 0;
     }
@@ -143,6 +148,7 @@ void MSP::World::contact_callback(const NewtonJoint* const contact_joint, dFloat
     void* contact = NewtonContactJointGetFirstContact(contact_joint);
     const NewtonMaterial* material = NewtonContactGetMaterial(contact);
     if (data0->m_record_touch_data) {
+        world_data->m_touch_mutex.lock();
         if (data0->m_touchers.find(body1) == data0->m_touchers.end()) {
             dVector point;
             dVector normal;
@@ -155,8 +161,10 @@ void MSP::World::contact_callback(const NewtonJoint* const contact_joint, dFloat
         }
         else
             data0->m_touchers[body1] = 2;
+        world_data->m_touch_mutex.unlock();
     }
     if (data1->m_record_touch_data) {
+        world_data->m_touch_mutex.lock();
         if (data1->m_touchers.find(body0) == data1->m_touchers.end()) {
             dVector point;
             dVector normal;
@@ -169,6 +177,7 @@ void MSP::World::contact_callback(const NewtonJoint* const contact_joint, dFloat
         }
         else
             data1->m_touchers[body0] = 2;
+        world_data->m_touch_mutex.unlock();
     }
 }
 

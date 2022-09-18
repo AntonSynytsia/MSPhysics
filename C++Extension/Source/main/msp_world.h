@@ -107,6 +107,9 @@ public:
         double m_time;
         int m_material_id;
         std::vector<const NewtonBody*> m_temp_cccd_bodies;
+        std::mutex m_temp_cccd_bodies_mutex;
+        std::mutex m_touch_mutex;
+        std::mutex m_joints_to_disconnect_mutex;
         NewtonWorldConvexCastReturnInfo m_hit_buffer[MSP_MAX_RAY_HITS];
         WorldData(int material_id) :
             m_max_threads(1),

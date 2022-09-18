@@ -2062,7 +2062,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
       camera_tra = Geom::Transformation.new(camera.xaxis, camera.zaxis, camera.yaxis, camera.eye)
       # Motion
       if !AMS::IS_PLATFORM_WINDOWS || AMS::Sketchup.is_main_window_active?
-        dir = Geom::Vector3d.new(AMS::Keyboard.key('d') - AMS::Keyboard.key('a'), AMS::Keyboard.key('w') - AMS::Keyboard.key('s'), AMS::Keyboard.key('e') - AMS::Keyboard.key('q'))
+        dir = Geom::Vector3d.new(AMS::Keyboard.get_key_state('d') - AMS::Keyboard.get_key_state('a'), AMS::Keyboard.get_key_state('w') - AMS::Keyboard.get_key_state('s'), AMS::Keyboard.get_key_state('e') - AMS::Keyboard.get_key_state('q'))
       else
         dir = Geom::Vector3d.new(0,0,0)
       end
@@ -2086,8 +2086,8 @@ class MSPhysics::Simulation < MSPhysics::Entity
       key_nav_veloc_len = @key_nav_veloc.length.to_f
       # Rotation
       if !AMS::IS_PLATFORM_WINDOWS || AMS::Sketchup.is_main_window_active?
-        rls = AMS::Keyboard.key('right') - AMS::Keyboard.key('left')
-        dir = Geom::Vector3d.new(AMS::Keyboard.key('up') - AMS::Keyboard.key('down'), AMS::Keyboard.control_down? ? rls : 0, AMS::Keyboard.control_up? ? -rls : 0)
+        rls = AMS::Keyboard.get_key_state('right') - AMS::Keyboard.get_key_state('left')
+        dir = Geom::Vector3d.new(AMS::Keyboard.get_key_state('up') - AMS::Keyboard.get_key_state('down'), AMS::Keyboard.control_down? ? rls : 0, AMS::Keyboard.control_up? ? -rls : 0)
       else
         dir = Geom::Vector3d.new(0,0,0)
       end
@@ -2139,7 +2139,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
       camera_tra2 = Geom::Transformation.new(xaxis, xaxis.cross(new_zaxis).normalize, new_zaxis, camera.eye)
       # Motion
       if !AMS::IS_PLATFORM_WINDOWS || AMS::Sketchup.is_main_window_active?
-        dir = Geom::Vector3d.new(AMS::Keyboard.key('d') - AMS::Keyboard.key('a'), AMS::Keyboard.key('s') - AMS::Keyboard.key('w'), AMS::Keyboard.key('e') - AMS::Keyboard.key('q'))
+        dir = Geom::Vector3d.new(AMS::Keyboard.get_key_state('d') - AMS::Keyboard.get_key_state('a'), AMS::Keyboard.get_key_state('s') - AMS::Keyboard.get_key_state('w'), AMS::Keyboard.get_key_state('e') - AMS::Keyboard.get_key_state('q'))
       else
         dir = Geom::Vector3d.new(0,0,0)
       end
@@ -2163,7 +2163,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
       key_nav_veloc_len = @key_nav_veloc.length.to_f
       # Rotation
       if !AMS::IS_PLATFORM_WINDOWS || AMS::Sketchup.is_main_window_active?
-        dir = Geom::Vector3d.new(AMS::Keyboard.key('up') - AMS::Keyboard.key('down'), 0, AMS::Keyboard.key('left') - AMS::Keyboard.key('right'))
+        dir = Geom::Vector3d.new(AMS::Keyboard.get_key_state('up') - AMS::Keyboard.get_key_state('down'), 0, AMS::Keyboard.get_key_state('left') - AMS::Keyboard.get_key_state('right'))
       else
         dir = Geom::Vector3d.new(0,0,0)
       end
@@ -2294,7 +2294,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
         next true unless body.valid?
         value = nil
         begin
-          value = @controller_context.eval_script(data[:controller], CONTROLLER_NAME, 0)
+          value = @controller_context.eval_script(data[:controller], ::MSPhysics::CONTROLLER_NAME, 0)
         rescue Exception => err
           err_message = err.message
           err_message.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18
@@ -2327,7 +2327,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
         next true unless body.valid?
         value = nil
         begin
-          value = @controller_context.eval_script(data[:controller], CONTROLLER_NAME, 0)
+          value = @controller_context.eval_script(data[:controller], ::MSPhysics::CONTROLLER_NAME, 0)
         rescue Exception => err
           err_message = err.message
           err_message.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18
@@ -2390,7 +2390,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
         end
         value = nil
         begin
-          value = @controller_context.eval_script(controller, CONTROLLER_NAME, 0)
+          value = @controller_context.eval_script(controller, ::MSPhysics::CONTROLLER_NAME, 0)
         rescue Exception => err
           err_message = err.message
           err_message.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18

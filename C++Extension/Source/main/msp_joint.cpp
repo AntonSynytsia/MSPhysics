@@ -75,7 +75,9 @@ void MSP::Joint::submit_constraints(const NewtonJoint* joint, dFloat timestep, i
         for (int i = 0; i < NewtonUserJoinRowsCount(joint); ++i) {
             if (dAbs(NewtonUserJointGetRowForce(joint, i)) >= joint_data->m_breaking_force) {
                 MSP::World::WorldData* world_data = reinterpret_cast<MSP::World::WorldData*>(NewtonWorldGetUserData(joint_data->m_world));
+                world_data->m_joints_to_disconnect_mutex.lock();
                 world_data->m_joints_to_disconnect.push_back(joint);
+                world_data->m_joints_to_disconnect_mutex.unlock();
                 return;
             }
         }

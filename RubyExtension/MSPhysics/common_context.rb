@@ -168,7 +168,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   #   key('space') * 10
   def key(vk)
     return 0 if AMS::IS_PLATFORM_WINDOWS && !AMS::Sketchup.is_main_window_active?
-    AMS::Keyboard.key(vk)
+    AMS::Keyboard.get_key_state(vk)
   end
 
   # Get toggled state of a keyboard key.
@@ -321,7 +321,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   # @return [Numeric] A value ranging from -1.0 to 1.0.
   def rightx
     return 0.0 if AMS::IS_PLATFORM_WINDOWS && !AMS::Sketchup.is_main_window_active?
-    v = AMS::Keyboard.key('right') - AMS::Keyboard.key('left')
+    v = AMS::Keyboard.get_key_state('right') - AMS::Keyboard.get_key_state('left')
     return v.to_f if v != 0
     v = MSPhysics::Simulation.instance.joystick_data['rightx']
     v ? v : 0.0
@@ -332,7 +332,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   # @return [Numeric] A value ranging from -1.0 to 1.0.
   def righty
     return 0.0 if AMS::IS_PLATFORM_WINDOWS && !AMS::Sketchup.is_main_window_active?
-    v = AMS::Keyboard.key('up') - AMS::Keyboard.key('down')
+    v = AMS::Keyboard.get_key_state('up') - AMS::Keyboard.get_key_state('down')
     return v.to_f if v != 0
     v = MSPhysics::Simulation.instance.joystick_data['righty']
     v ? v : 0.0
@@ -343,7 +343,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   # @return [Numeric] A value ranging from -1.0 to 1.0.
   def rightz
     return 0.0 if AMS::IS_PLATFORM_WINDOWS && !AMS::Sketchup.is_main_window_active?
-    v = AMS::Keyboard.key('PageUp') - AMS::Keyboard.key('PageDown')
+    v = AMS::Keyboard.get_key_state('PageUp') - AMS::Keyboard.get_key_state('PageDown')
     return v.to_f if v != 0
     v = MSPhysics::Simulation.instance.joystick_data['rightz']
     v ? v : 0.0
@@ -354,7 +354,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   # @return [Numeric] A value ranging from -1.0 to 1.0.
   def leftx
     return 0.0 if AMS::IS_PLATFORM_WINDOWS && !AMS::Sketchup.is_main_window_active?
-    v = AMS::Keyboard.key('d') - AMS::Keyboard.key('a')
+    v = AMS::Keyboard.get_key_state('d') - AMS::Keyboard.get_key_state('a')
     return v.to_f if v != 0
     v = MSPhysics::Simulation.instance.joystick_data['leftx']
     v ? v : 0.0
@@ -364,7 +364,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   # @return [Numeric] A value ranging from -1.0 to 1.0.
   def lefty
     return 0.0 if AMS::IS_PLATFORM_WINDOWS && !AMS::Sketchup.is_main_window_active?
-    v = AMS::Keyboard.key('w') - AMS::Keyboard.key('s')
+    v = AMS::Keyboard.get_key_state('w') - AMS::Keyboard.get_key_state('s')
     return v.to_f if v != 0
     v = MSPhysics::Simulation.instance.joystick_data['lefty']
     v ? v : 0.0
@@ -374,7 +374,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   # @return [Numeric] A value ranging from -1.0 to 1.0.
   def leftz
     return 0.0 if AMS::IS_PLATFORM_WINDOWS && !AMS::Sketchup.is_main_window_active?
-    v = AMS::Keyboard.key('e') - AMS::Keyboard.key('q')
+    v = AMS::Keyboard.get_key_state('e') - AMS::Keyboard.get_key_state('q')
     return v.to_f if v != 0
     v = MSPhysics::Simulation.instance.joystick_data['leftz']
     v ? v : 0.0
@@ -385,7 +385,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   # @return [Integer] -1, 0, or 1.
   def numx
     return 0 if AMS::IS_PLATFORM_WINDOWS && !AMS::Sketchup.is_main_window_active?
-    v = AMS::Keyboard.key('numpad6') - AMS::Keyboard.key('numpad4')
+    v = AMS::Keyboard.get_key_state('numpad6') - AMS::Keyboard.get_key_state('numpad4')
     return v if v != 0
     jpd = MSPhysics::Simulation.instance.joypad_data
     jpd == 2 ? 1 : (jpd == 8 ? -1 : 0)
@@ -396,7 +396,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
   # @return [Integer] -1, 0, or 1.
   def numy
     return 0 if AMS::IS_PLATFORM_WINDOWS && !AMS::Sketchup.is_main_window_active?
-    v = AMS::Keyboard.key('numpad8') - AMS::Keyboard.key('numpad5')
+    v = AMS::Keyboard.get_key_state('numpad8') - AMS::Keyboard.get_key_state('numpad5')
     return v if v != 0
     jpd = MSPhysics::Simulation.instance.joypad_data
     jpd == 1 ? 1 : (jpd == 4 ? -1 : 0)
@@ -518,7 +518,7 @@ class MSPhysics::CommonContext < MSPhysics::Entity
     def update_key_sliders(timestep)
       return if AMS::IS_PLATFORM_WINDOWS && !AMS::Sketchup.is_main_window_active?
       @@_key_sliders.each { |name, data|
-        data[:value] += (AMS::Keyboard.key(data[:key1]) - AMS::Keyboard.key(data[:key2])) * data[:step] * timestep
+        data[:value] += (AMS::Keyboard.get_key_state(data[:key1]) - AMS::Keyboard.get_key_state(data[:key2])) * data[:step] * timestep
         if data[:value] < data[:min]
           data[:value] = data[:min]
         elsif data[:value] > data[:max]
