@@ -9,31 +9,31 @@ cfpath.force_encoding('UTF-8') if cfpath.respond_to?(:force_encoding)
 ext_dir = ::File.expand_path(::File.dirname(cfpath))
 
 # ext_manager = AMS::ExtensionManager.new(ext_dir, MSPhysics::VERSION, false)
-ext_manager = AMS::ExtensionManager.new(ext_dir, MSPhysics::VERSION, false)
-# if AMS::IS_PLATFORM_WINDOWS
-#   ext_manager.add_optional_library('libFLAC-8')
-#   ext_manager.add_optional_library('libmikmod-2')
-#   ext_manager.add_optional_library('libmodplug-1')
-#   ext_manager.add_optional_library('libogg')
-#   ext_manager.add_optional_library('libvorbis')
-#   ext_manager.add_optional_library('libvorbisfile-3')
-#   ext_manager.add_required_library('SDL2')
-#   ext_manager.add_required_library('SDL2_mixer')
-#   ext_manager.add_optional_library('smpeg2')
-#   # ext_manager.add_required_library('newton')
-#   ext_manager.add_required_library('newton_d')
-# else
-#   ext_manager.add_required_library('libSDL2-2.0.0')
-#   ext_manager.add_required_library('libSDL2_mixer-2.0.0')
-#   ext_manager.add_required_library('newton')
-# end
-AMS::DLL.load_library('C:/Users/anton/Projects/MSPhysics/RubyExtension/MSPhysics/libraries/stage/win64/SDL2.dll')
-AMS::DLL.load_library('C:/Users/anton/Projects/MSPhysics/RubyExtension/MSPhysics/libraries/stage/win64/SDL2_mixer.dll')
-AMS::DLL.load_library('C:/Users/anton/Projects/MSPhysics/RubyExtension/MSPhysics/libraries/stage/win64/newton.dll')
+ext_manager = AMS::ExtensionManager.new(ext_dir, MSPhysics::VERSION, true)
+if AMS::IS_PLATFORM_WINDOWS
+  ext_manager.add_optional_library('libFLAC-8')
+  ext_manager.add_optional_library('libmikmod-2')
+  ext_manager.add_optional_library('libmodplug-1')
+  ext_manager.add_optional_library('libogg')
+  ext_manager.add_optional_library('libvorbis')
+  ext_manager.add_optional_library('libvorbisfile-3')
+  ext_manager.add_required_library('SDL2')
+  ext_manager.add_required_library('SDL2_mixer')
+  ext_manager.add_optional_library('smpeg2')
+  ext_manager.add_required_library('newton')
+  # ext_manager.add_required_library('newton_d')
+else
+  ext_manager.add_required_library('libSDL2-2.0.0')
+  ext_manager.add_required_library('libSDL2_mixer-2.0.0')
+  ext_manager.add_required_library('newton')
+end
+# AMS::DLL.load_library('C:/Users/anton/Projects/MSPhysics/RubyExtension/MSPhysics/libraries/stage/win64/SDL2.dll')
+# AMS::DLL.load_library('C:/Users/anton/Projects/MSPhysics/RubyExtension/MSPhysics/libraries/stage/win64/SDL2_mixer.dll')
+# AMS::DLL.load_library('C:/Users/anton/Projects/MSPhysics/RubyExtension/MSPhysics/libraries/stage/win64/newton.dll')
 # AMS::DLL.load_library('C:/Users/anton/Projects/MSPhysics/RubyExtension/MSPhysics/libraries/stage/win64/newton_d.dll')
 # require 'C:/Users/anton/Projects/MSPhysics/C++Extension/Projects/VS/x64/msp_lib/Debug (2.7)/msp_lib.so'
-require 'C:/Users/anton/Projects/MSPhysics/RubyExtension/MSPhysics/libraries/stage/win64/2.7/msp_lib.so'
-# ext_manager.add_c_extension('msp_lib')
+# require 'C:/Users/anton/Projects/MSPhysics/RubyExtension/MSPhysics/libraries/stage/win64/2.7/msp_lib.so'
+ext_manager.add_c_extension('msp_lib')
 ext_manager.add_ruby_no_require('main')
 ext_manager.add_ruby_no_require('main_entry')
 ext_manager.add_ruby('entity')
@@ -293,7 +293,7 @@ module MSPhysics
     :current_y              => 0,
     :current_z              => 0,
     :plane_size             => 10000,
-    :color                  => Sketchup::Color.new(40,60,220),
+    :color                  => ::Sketchup::Color.new(40,60,220),
     :alpha                  => 0.7
   }.freeze
 
@@ -329,7 +329,7 @@ module MSPhysics
 
   DEFAULT_JOINT_SCALE = 1.0
 
-  WATERMARK_COLOR = Sketchup::Color.new(126, 42, 168)
+  WATERMARK_COLOR = ::Sketchup::Color.new(126, 42, 168)
 
   DEFAULT_ANGLE_UNITS = 'deg'.freeze
   DEFAULT_POSITION_UNITS = 'cm'.freeze

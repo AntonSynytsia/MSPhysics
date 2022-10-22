@@ -497,12 +497,19 @@ VALUE MSP::World::rbf_create(VALUE self) {
     valid_worlds[world] = world_data;
     NewtonWorldSetUserData(world, world_data);
     NewtonInvalidateCache(world);
+
+    NewtonSetNumberOfSubsteps(world, 2);
+	NewtonSetSolverIterations(world, DEFAULT_SOLVER_MODEL);
+	NewtonSetThreadsCount(world, 1);
+
+	NewtonSelectBroadphaseAlgorithm(world, 0);
+	NewtonSetParallelSolverOnLargeIsland(world, 1);	
+
     NewtonSetContactMergeTolerance(world, DEFAULT_CONTACT_MERGE_TOLERANCE);
     NewtonMaterialSetSurfaceThickness(world, id, id, DEFAULT_MATERIAL_THICKNESS);
     NewtonMaterialSetDefaultFriction(world, id, id, MSP::Body::DEFAULT_STATIC_FRICTION_COEF, MSP::Body::DEFAULT_KINETIC_FRICTION_COEF);
     NewtonMaterialSetDefaultElasticity(world, id, id, MSP::Body::DEFAULT_ELASTICITY);
     NewtonMaterialSetDefaultSoftness(world, id, id, MSP::Body::DEFAULT_SOFTNESS);
-    NewtonSetSolverIterations(world, DEFAULT_SOLVER_MODEL);
     //NewtonSetSolverConvergenceQuality(world, DEFAULT_CONVERGENCE_QUALITY);
     //NewtonSelectBroadphaseAlgorithm(world, 0);
     NewtonMaterialSetCollisionCallback(world, id, id, aabb_overlap_callback, contact_callback);

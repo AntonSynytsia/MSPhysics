@@ -94,7 +94,7 @@ module MSPhysics::ControlPanel
           @fade_time = FADE_DURATION
           @fade_wait_time = 0.0
         end
-        AMS::Sketchup.activate if AMS::IS_PLATFORM_WINDOWS
+        AMS::Sketchup.bring_to_top if AMS::IS_PLATFORM_WINDOWS
       }
 
       @dialog.add_action_callback('update_note') { |acs, params|
@@ -169,7 +169,7 @@ module MSPhysics::ControlPanel
         AMS::Window.set_pos(@handle, 0, 0, 0, 0, 0, 0x0267)
         AMS::Window.set_layered_attributes(@handle, 0, MAX_OPACITY, 2)
         AMS::Sketchup.ignore_dialog(@handle)
-        AMS::Sketchup.activate
+        AMS::Sketchup.bring_to_top
         @fade_time = FADE_DURATION
         @fade_wait_time = 0.0
       end

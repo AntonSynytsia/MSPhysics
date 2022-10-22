@@ -83,12 +83,12 @@ class MSPhysics::Simulation < MSPhysics::Entity
       :text => "Fullscreen Detected\nPress ESC to Reset Simulation",
       :font => "Verdana",
       :align => TextAlignCenter,
-      :color => Sketchup::Color.new(255,255,255),
+      :color => ::Sketchup::Color.new(255,255,255),
       :size => 12,
       :italic => false,
       :bold => false,
       :duration => 5,
-      :background => Sketchup::Color.new(10,10,10, 200),
+      :background => ::Sketchup::Color.new(10,10,10, 200),
       :bgw => 300,
       :bgh => 80,
       :bvo => 20,
@@ -114,8 +114,8 @@ class MSPhysics::Simulation < MSPhysics::Entity
       :bold => false,
       :italic => false,
       :align => TextAlignLeft,
-      :color => Sketchup::Color.new(255,255,255,255),
-      :background => Sketchup::Color.new(0,140,255,220),
+      :color => ::Sketchup::Color.new(255,255,255,255),
+      :background => ::Sketchup::Color.new(0,140,255,220),
       :padding => 10,
       :hratio => 0.0,
       :vratio => 0.0,
@@ -139,26 +139,26 @@ class MSPhysics::Simulation < MSPhysics::Entity
       :show           => false,
       :point_size     => 3,
       :point_style    => 2,
-      :point_color    => Sketchup::Color.new(109, 206, 255)
+      :point_color    => ::Sketchup::Color.new(109, 206, 255)
     }
     @contact_forces = {
       :show           => false,
       :line_width     => 1,
       :line_stipple   => '',
-      :line_color     => Sketchup::Color.new(247, 40, 85)
+      :line_color     => ::Sketchup::Color.new(247, 40, 85)
     }
     @aabb = {
       :show           => false,
       :line_width     => 1,
       :line_stipple   => '',
-      :line_color     => Sketchup::Color.new(68, 53, 165)
+      :line_color     => ::Sketchup::Color.new(68, 53, 165)
     }
     @collision_wireframe = {
       :show           => false,
       :line_width     => 1,
       :line_stipple   => '',
-      :active         => Sketchup::Color.new(221, 38, 165),
-      :sleeping       => Sketchup::Color.new(255, 255, 100),
+      :active         => ::Sketchup::Color.new(221, 38, 165),
+      :sleeping       => ::Sketchup::Color.new(255, 255, 100),
       :show_edges     => nil,
       :show_profiles  => nil
     }
@@ -167,22 +167,22 @@ class MSPhysics::Simulation < MSPhysics::Entity
       :line_width     => 2,
       :line_stipple   => '',
       :size           => 20,
-      :xaxis          => Sketchup::Color.new(255, 0, 0),
-      :yaxis          => Sketchup::Color.new(0, 255, 0),
-      :zaxis          => Sketchup::Color.new(0, 0, 255)
+      :xaxis          => ::Sketchup::Color.new(255, 0, 0),
+      :yaxis          => ::Sketchup::Color.new(0, 255, 0),
+      :zaxis          => ::Sketchup::Color.new(0, 0, 255)
     }
     @pick_and_drag = {
       :line_width     => 1,
       :line_stipple   => '_',
-      :line_color     => Sketchup::Color.new(250, 10, 10),
+      :line_color     => ::Sketchup::Color.new(250, 10, 10),
       :point_width    => 2,
       :point_size     => 10,
       :point_style    => 4,
-      :point_color    => Sketchup::Color.new(4, 4, 4),
+      :point_color    => ::Sketchup::Color.new(4, 4, 4),
       :vline_width    => 1,
       :vline_stipple1 => '',
       :vline_stipple2 => '-',
-      :vline_color    => Sketchup::Color.new(0, 40, 255)
+      :vline_color    => ::Sketchup::Color.new(0, 40, 255)
     }
     @controller_context = MSPhysics::ControllerContext.new
     @thrusters = {}
@@ -976,7 +976,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
       @log_line[:ent] = MSPhysics.add_watermark_text2(10, 50, '', 'LogLine')
       @log_line[:ent].material = @log_line[:mat]
     end
-    color = Sketchup::Color.new(color) unless color.is_a?(Sketchup::Color)
+    color = ::Sketchup::Color.new(color) unless color.is_a?(Sketchup::Color)
     @log_line[:mat].color = color if @log_line[:mat].color.to_i != color.to_i
     @log_line[:log] << text.to_s
     @log_line[:log].shift if @log_line[:log].size > @log_line[:limit]
@@ -1024,7 +1024,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
       @display_note[:ent] = MSPhysics.add_watermark_text2(10, 30, '', 'DisplayNote')
       @display_note[:ent].material = @display_note[:mat]
     end
-    color = Sketchup::Color.new(color) unless color.is_a?(Sketchup::Color)
+    color = ::Sketchup::Color.new(color) unless color.is_a?(Sketchup::Color)
     @display_note[:mat].color = color if @display_note[:mat].color.to_i != color.to_i
     @display_note[:ent].set_text(text.to_s)
   end
@@ -1072,9 +1072,9 @@ class MSPhysics::Simulation < MSPhysics::Entity
     data[:bold] = opts.has_key?(:bold) ? opts[:bold] : @fancy_note_defaults[:bold]
     data[:italic] = opts.has_key?(:italic) ? opts[:italic] : @fancy_note_defaults[:italic]
     data[:align] = opts.has_key?(:align) ? opts[:align].to_i : @fancy_note_defaults[:align]
-    data[:color] = opts.has_key?(:color) ? Sketchup::Color.new(opts[:color]) : @fancy_note_defaults[:color]
+    data[:color] = opts.has_key?(:color) ? ::Sketchup::Color.new(opts[:color]) : @fancy_note_defaults[:color]
     if opts.has_key?(:background)
-      data[:background] = opts[:background] ? Sketchup::Color.new(opts[:background]) : nil
+      data[:background] = opts[:background] ? ::Sketchup::Color.new(opts[:background]) : nil
     else
       data[:background] = @fancy_note_defaults[:background]
     end
@@ -1100,8 +1100,8 @@ class MSPhysics::Simulation < MSPhysics::Entity
     data[:time] = 0.0
     data[:sx] = size.x + data[:padding] * 2
     data[:sy] = size.y + data[:padding] * 2
-    data[:color2] = Sketchup::Color.new(data[:color])
-    data[:background2] = data[:background] ? Sketchup::Color.new(data[:background]) : nil
+    data[:color2] = ::Sketchup::Color.new(data[:color])
+    data[:background2] = data[:background] ? ::Sketchup::Color.new(data[:background]) : nil
     data[:alpha] = 0.0
     @fancy_note = data
   end
@@ -1549,8 +1549,8 @@ class MSPhysics::Simulation < MSPhysics::Entity
       :gravity        => opts[:gravity] ? Geom::Vector3d.new(opts[:gravity]) : nil,
       :radius         => opts[:radius] ? AMS.clamp(opts[:radius].to_f, 1.0e-4, 1.0e6) : 0.1,
       :scale          => opts[:scale] ? AMS.clamp(opts[:scale].to_f, 1.0e-4, 1.0e6) : 1.01,
-      :color1         => opts[:color1] ? Sketchup::Color.new(opts[:color1]) : Sketchup::Color.new('Gray'),
-      :color2         => opts[:color2] ? Sketchup::Color.new(opts[:color2]) : nil,
+      :color1         => opts[:color1] ? ::Sketchup::Color.new(opts[:color1]) : ::Sketchup::Color.new('Gray'),
+      :color2         => opts[:color2] ? ::Sketchup::Color.new(opts[:color2]) : nil,
       :alpha1         => opts[:alpha1] ? AMS.clamp(opts[:alpha1].to_f, 0.0, 1.0) : 1.0,
       :alpha2         => opts[:alpha2] ? AMS.clamp(opts[:alpha2].to_f, 0.0, 1.0) : nil,
       :fade           => opts[:fade] ? AMS.clamp(opts[:fade].to_f, 0.0, 1.0) : 0.0,
@@ -1561,7 +1561,7 @@ class MSPhysics::Simulation < MSPhysics::Entity
     }
     opts2[:life_start] = @world.time
     opts2[:life_end] = opts2[:life_start] + opts2[:lifetime]
-    opts2[:color] = Sketchup::Color.new(opts2[:color1])
+    opts2[:color] = ::Sketchup::Color.new(opts2[:color1])
     opts2[:color].alpha = opts2[:fade].zero? ? opts2[:alpha1] : 0.0
     @particles << opts2
     model = Sketchup.active_model
@@ -2399,13 +2399,13 @@ class MSPhysics::Simulation < MSPhysics::Entity
         return false unless self.class.active?
         next true if !joint.valid?
         begin
-          if joint.is_a?(Servo) || joint.is_a?(Piston) || joint.is_a?(CurvyPiston)
+          if joint.is_a?(MSPhysics::Servo) || joint.is_a?(MSPhysics::Piston) || joint.is_a?(MSPhysics::CurvyPiston)
             if value.is_a?(Numeric)
               joint.controller = value * ratio
             elsif value.nil?
               joint.controller = nil
             end
-          elsif joint.is_a?(UpVector)
+          elsif joint.is_a?(MSPhysics::UpVector)
             if (value.is_a?(Array) || value.is_a?(Geom::Vector3d)) && value.x.is_a?(Numeric) && value.y.is_a?(Numeric) && value.z.is_a?(Numeric)
               joint.set_pin_dir(value)
             end

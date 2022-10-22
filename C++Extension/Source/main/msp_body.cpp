@@ -584,7 +584,7 @@ VALUE MSP::Body::rbf_create(VALUE self, VALUE v_world, VALUE v_collision, VALUE 
     if (collision_type == SERIALIZE_ID_NULL)
         body_data->m_volume = 1.0;
     else if (collision_type < SERIALIZE_ID_TREE)
-        body_data->m_volume = NewtonConvexCollisionCalculateVolume(collision);
+        body_data->m_volume = NewtonConvexCollisionCalculateVolume(collision) * M_INCH3_TO_METER3;
     else
         body_data->m_volume = 0.0;
 
@@ -920,7 +920,7 @@ VALUE MSP::Body::rbf_reset_mass_properties(VALUE self, VALUE v_body, VALUE v_den
     if (!body_data->m_dynamic) return Qfalse;
     const NewtonCollision* collision = NewtonBodyGetCollision(body);
     body_data->m_density = density;
-    body_data->m_volume = Util::clamp_dFloat(NewtonConvexCollisionCalculateVolume(collision), MIN_VOLUME, MAX_VOLUME);
+    body_data->m_volume = Util::clamp_dFloat(NewtonConvexCollisionCalculateVolume(collision) * M_INCH3_TO_METER3, MIN_VOLUME, MAX_VOLUME);
     body_data->m_mass = Util::clamp_dFloat(body_data->m_density * body_data->m_volume, MIN_MASS, MAX_MASS);
     NewtonBodySetMassProperties(body, body_data->m_bstatic ? 0.0 : body_data->m_mass, collision);
     return Qtrue;
@@ -1647,7 +1647,7 @@ VALUE MSP::Body::rbf_apply_buoyancy(VALUE self, VALUE v_body, VALUE v_plane_orig
 		//const dFloat solidDentityFactor = 1.35f;
 
 		// calculate the ratio of volumes an use it calculate a density equivalent
-		dFloat shapeVolume = NewtonConvexCollisionCalculateVolume(collision);
+		dFloat shapeVolume = NewtonConvexCollisionCalculateVolume(collision) * M_INCH3_TO_METER3;
 		dFloat density = mass / shapeVolume;
 
 		dFloat displacedMass = density * volume;
@@ -1982,7 +1982,7 @@ VALUE MSP::Body::rbf_set_collision_scale(VALUE self, VALUE v_body, VALUE v_scale
     col_matrix.m_posit.m_z = dco.m_z * scale.m_z / dcs.m_z;
     NewtonCollisionSetMatrix(collision, &col_matrix[0][0]);
     NewtonBodySetCollisionScale(body, cscale.m_x, cscale.m_y, cscale.m_z);
-    body_data->m_volume = Util::clamp_dFloat(NewtonConvexCollisionCalculateVolume(collision), MIN_VOLUME, MAX_VOLUME) * M_INCH3_TO_METER3;
+    body_data->m_volume = Util::clamp_dFloat(NewtonConvexCollisionCalculateVolume(collision) * M_INCH3_TO_METER3, MIN_VOLUME, MAX_VOLUME);
     body_data->m_mass = Util::clamp_dFloat(body_data->m_density * body_data->m_volume, MIN_MASS, MAX_MASS);
     dVector com;
     NewtonBodyGetCentreOfMass(body, &com[0]);
