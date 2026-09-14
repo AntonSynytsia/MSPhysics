@@ -3345,7 +3345,10 @@ class MSPhysics::Simulation < MSPhysics::Entity
       MSPhysics::C::Particle.destroy_all
     end
     # Destroy world
-    @world.destroy if @world.valid?
+    if @world.valid?
+    @world.destroy_all_bodies
+    @world.destroy
+    end
     @world = nil
     # Erase log-line and display-note
     if @log_line[:ent] != nil && @log_line[:ent].valid?

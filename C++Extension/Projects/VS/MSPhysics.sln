@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2010
+# Visual Studio Version 18
+VisualStudioVersion = 18.10.12201.205 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dgCore", "dgCore.vcxproj", "{75A4A856-914E-4D41-A28D-23EAF8F8F9C9}"
 EndProject
@@ -46,6 +46,8 @@ Global
 		Release (2.2)|x86 = Release (2.2)|x86
 		Release (2.5)|x64 = Release (2.5)|x64
 		Release (2.5)|x86 = Release (2.5)|x86
+		Release (3.2)|x64 = Release (3.2)|x64
+		Release (3.2)|x86 = Release (3.2)|x86
 		release_double|x64 = release_double|x64
 		release_double|x86 = release_double|x86
 		Release|x64 = Release|x64
@@ -92,6 +94,10 @@ Global
 		{75A4A856-914E-4D41-A28D-23EAF8F8F9C9}.Release (2.5)|x64.Build.0 = Release|x64
 		{75A4A856-914E-4D41-A28D-23EAF8F8F9C9}.Release (2.5)|x86.ActiveCfg = Release (2.5)|Win32
 		{75A4A856-914E-4D41-A28D-23EAF8F8F9C9}.Release (2.5)|x86.Build.0 = Release (2.5)|Win32
+		{75A4A856-914E-4D41-A28D-23EAF8F8F9C9}.Release (3.2)|x64.ActiveCfg = Release (3.2)|x64
+		{75A4A856-914E-4D41-A28D-23EAF8F8F9C9}.Release (3.2)|x64.Build.0 = Release (3.2)|x64
+		{75A4A856-914E-4D41-A28D-23EAF8F8F9C9}.Release (3.2)|x86.ActiveCfg = Release (3.2)|Win32
+		{75A4A856-914E-4D41-A28D-23EAF8F8F9C9}.Release (3.2)|x86.Build.0 = Release (3.2)|Win32
 		{75A4A856-914E-4D41-A28D-23EAF8F8F9C9}.release_double|x64.ActiveCfg = release_double|x64
 		{75A4A856-914E-4D41-A28D-23EAF8F8F9C9}.release_double|x64.Build.0 = release_double|x64
 		{75A4A856-914E-4D41-A28D-23EAF8F8F9C9}.release_double|x86.ActiveCfg = release_double|Win32
@@ -140,6 +146,10 @@ Global
 		{34AD435B-7662-49D5-AF13-5974FEC5F578}.Release (2.5)|x64.Build.0 = Release|x64
 		{34AD435B-7662-49D5-AF13-5974FEC5F578}.Release (2.5)|x86.ActiveCfg = Release (2.5)|Win32
 		{34AD435B-7662-49D5-AF13-5974FEC5F578}.Release (2.5)|x86.Build.0 = Release (2.5)|Win32
+		{34AD435B-7662-49D5-AF13-5974FEC5F578}.Release (3.2)|x64.ActiveCfg = Release (3.2)|x64
+		{34AD435B-7662-49D5-AF13-5974FEC5F578}.Release (3.2)|x64.Build.0 = Release (3.2)|x64
+		{34AD435B-7662-49D5-AF13-5974FEC5F578}.Release (3.2)|x86.ActiveCfg = Release (3.2)|Win32
+		{34AD435B-7662-49D5-AF13-5974FEC5F578}.Release (3.2)|x86.Build.0 = Release (3.2)|Win32
 		{34AD435B-7662-49D5-AF13-5974FEC5F578}.release_double|x64.ActiveCfg = release_double|x64
 		{34AD435B-7662-49D5-AF13-5974FEC5F578}.release_double|x64.Build.0 = release_double|x64
 		{34AD435B-7662-49D5-AF13-5974FEC5F578}.release_double|x86.ActiveCfg = release_double|Win32
@@ -182,6 +192,10 @@ Global
 		{3E0D2D8C-5418-4489-BE01-AA00B051399E}.Release (2.5)|x64.ActiveCfg = Release (2.5)|x64
 		{3E0D2D8C-5418-4489-BE01-AA00B051399E}.Release (2.5)|x64.Build.0 = Release (2.5)|x64
 		{3E0D2D8C-5418-4489-BE01-AA00B051399E}.Release (2.5)|x86.ActiveCfg = Release (2.5)|x64
+		{3E0D2D8C-5418-4489-BE01-AA00B051399E}.Release (3.2)|x64.ActiveCfg = Release (3.2)|x64
+		{3E0D2D8C-5418-4489-BE01-AA00B051399E}.Release (3.2)|x64.Build.0 = Release (3.2)|x64
+		{3E0D2D8C-5418-4489-BE01-AA00B051399E}.Release (3.2)|x86.ActiveCfg = Release (3.2)|Win32
+		{3E0D2D8C-5418-4489-BE01-AA00B051399E}.Release (3.2)|x86.Build.0 = Release (3.2)|Win32
 		{3E0D2D8C-5418-4489-BE01-AA00B051399E}.release_double|x64.ActiveCfg = Release (2.5)|x64
 		{3E0D2D8C-5418-4489-BE01-AA00B051399E}.release_double|x64.Build.0 = Release (2.5)|x64
 		{3E0D2D8C-5418-4489-BE01-AA00B051399E}.release_double|x86.ActiveCfg = Release (2.0)|Win32
@@ -230,6 +244,10 @@ Global
 		{F8604C1C-867D-4EFD-AFAC-15404F17084E}.Release (2.5)|x64.Build.0 = Release|x64
 		{F8604C1C-867D-4EFD-AFAC-15404F17084E}.Release (2.5)|x86.ActiveCfg = Release (2.5)|Win32
 		{F8604C1C-867D-4EFD-AFAC-15404F17084E}.Release (2.5)|x86.Build.0 = Release (2.5)|Win32
+		{F8604C1C-867D-4EFD-AFAC-15404F17084E}.Release (3.2)|x64.ActiveCfg = Release (3.2)|x64
+		{F8604C1C-867D-4EFD-AFAC-15404F17084E}.Release (3.2)|x64.Build.0 = Release (3.2)|x64
+		{F8604C1C-867D-4EFD-AFAC-15404F17084E}.Release (3.2)|x86.ActiveCfg = Release (3.2)|Win32
+		{F8604C1C-867D-4EFD-AFAC-15404F17084E}.Release (3.2)|x86.Build.0 = Release (3.2)|Win32
 		{F8604C1C-867D-4EFD-AFAC-15404F17084E}.release_double|x64.ActiveCfg = release_double|x64
 		{F8604C1C-867D-4EFD-AFAC-15404F17084E}.release_double|x64.Build.0 = release_double|x64
 		{F8604C1C-867D-4EFD-AFAC-15404F17084E}.release_double|x86.ActiveCfg = release_double|Win32
@@ -278,6 +296,10 @@ Global
 		{2928F15F-0650-4261-B759-36C7792267DC}.Release (2.5)|x64.Build.0 = Release|x64
 		{2928F15F-0650-4261-B759-36C7792267DC}.Release (2.5)|x86.ActiveCfg = Release|Win32
 		{2928F15F-0650-4261-B759-36C7792267DC}.Release (2.5)|x86.Build.0 = Release|Win32
+		{2928F15F-0650-4261-B759-36C7792267DC}.Release (3.2)|x64.ActiveCfg = Release (3.2)|x64
+		{2928F15F-0650-4261-B759-36C7792267DC}.Release (3.2)|x64.Build.0 = Release (3.2)|x64
+		{2928F15F-0650-4261-B759-36C7792267DC}.Release (3.2)|x86.ActiveCfg = Release (3.2)|Win32
+		{2928F15F-0650-4261-B759-36C7792267DC}.Release (3.2)|x86.Build.0 = Release (3.2)|Win32
 		{2928F15F-0650-4261-B759-36C7792267DC}.release_double|x64.ActiveCfg = release_double|x64
 		{2928F15F-0650-4261-B759-36C7792267DC}.release_double|x64.Build.0 = release_double|x64
 		{2928F15F-0650-4261-B759-36C7792267DC}.release_double|x86.ActiveCfg = release_double|Win32

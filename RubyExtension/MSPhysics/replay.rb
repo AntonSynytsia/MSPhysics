@@ -1423,7 +1423,7 @@ module MSPhysics::Replay
       mspr_name = File.basename(model_path, '.skp') + '.mspreplay'
       mspr_fpath = File.join(mspr_path, mspr_name)
       # Return if file doesn't exist.
-      return false unless File.exists?(mspr_fpath)
+      return false unless File.exist?(mspr_fpath)
       # Notify
       Sketchup.set_status_text("Loading Replay data from file. This might take a while...", SB_PROMPT)
       # Clear active data
@@ -1600,7 +1600,7 @@ module MSPhysics::Replay
       mspr_name = File.basename(model_path, '.skp') + '.mspreplay'
       mspr_fpath = File.join(mspr_path, mspr_name)
       # Return if file doesn't exist.
-      return false unless File.exists?(mspr_fpath)
+      return false unless File.exist?(mspr_fpath)
       begin
         File.delete(mspr_fpath)
       rescue Exception => err
