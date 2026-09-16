@@ -485,7 +485,7 @@ module MSPhysics
       ext_dir = File.dirname(__FILE__)
       ext_dir.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18
       path = File.join(ext_dir, "models/#{component}")
-      return unless File.exists?(path)
+      return unless File.exist?(path)
       model = Sketchup.active_model
       view = model.active_view
       cd = model.definitions.load(path)
@@ -522,7 +522,7 @@ module MSPhysics
       ext_dir = File.dirname(__FILE__)
       ext_dir.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18
       path = File.join(ext_dir, "models/#{component}")
-      return unless File.exists?(path)
+      return unless File.exist?(path)
       model = Sketchup.active_model
       view = model.active_view
       cd = model.definitions.load(path)

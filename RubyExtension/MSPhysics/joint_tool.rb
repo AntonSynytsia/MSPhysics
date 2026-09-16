@@ -31,7 +31,7 @@ class MSPhysics::JointTool
     dir.force_encoding('UTF-8') unless AMS::IS_RUBY_VERSION_18
     @path = File.join(dir, 'models')
     @full_path = File.join(@path, joint_fname + '.skp')
-    raise(TypeError, "File to the given joint ID doesn't exist!", caller) unless File.exists?(@full_path)
+    raise(TypeError, "File to the given joint ID doesn't exist!", caller) unless File.exist?(@full_path)
     @ip1 = Sketchup::InputPoint.new
     @ip2 = Sketchup::InputPoint.new
     @ip = Sketchup::InputPoint.new
